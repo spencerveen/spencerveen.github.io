@@ -21,6 +21,9 @@
   .site-links a:hover{color:#fff}
   .site-links a[aria-current=page]{color:var(--gold);border:1px solid #eac28c70;border-radius:8px;padding:8px 12px;font-weight:750}
   a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+  .site-menu-button{display:none;margin-left:auto;border:1px solid #354350;border-radius:8px;background:#19232d;padding:8px 12px;color:#ecf0f4;font:inherit;cursor:pointer}
+  .site-context{color:#d6b482;font-size:13px;white-space:nowrap}
+  @media(max-width:800px){.site-inner{position:relative}.site-menu-button{display:block}.site-links{display:none;position:absolute;left:0;right:0;top:100%;max-height:calc(100dvh - 60px);overflow-y:auto;flex-direction:column;align-items:stretch;gap:4px;background:#080d14;padding:12px 20px 16px;border:1px solid #ffffff24;border-top:0;border-radius:0 0 12px 12px;box-shadow:0 20px 45px #0008}.site-links.open{display:flex}.site-links a{width:100%;padding:11px 5px;font-size:14px}}
   #game{border:0;background:#091221;display:block;width:100%;flex:1 1 auto;min-height:0}
   @media(max-width:620px){.site-topbar{height:54px;min-height:54px}.site-inner{gap:13px;padding:0 12px}.site-brand{font-size:17px}.site-links{gap:13px}.site-links a{font-size:12px}.site-links a[aria-current=page]{padding:7px 9px}}
 </style>
@@ -29,7 +32,9 @@
 <header class="site-topbar">
   <div class="site-inner">
     <a class="site-brand" href="/" aria-label="Spencer Veen home">SV<span>.</span></a>
-    <nav class="site-links" aria-label="Site-wide navigation">
+    <span class="site-context">/ Emberforge</span>
+    <button class="site-menu-button" type="button" aria-controls="game-site-nav" aria-expanded="false">Menu ☰</button>
+    <nav class="site-links" id="game-site-nav" aria-label="Site-wide navigation">
       <a href="/">Home</a>
       <a href="/ai-projects/">AI Projects</a>
       <a href="/non-ai-projects/">Non-AI Projects</a>
@@ -41,6 +46,16 @@
 </header>
 <iframe id="game" src="./game.html" title="Emberforge game" allow="fullscreen; clipboard-write"></iframe>
 <script>
+  const menuButton = document.querySelector('.site-menu-button');
+  const menuLinks = document.querySelector('.site-links');
+  menuButton.addEventListener('click', () => {
+    const open = menuLinks.classList.toggle('open');
+    menuButton.setAttribute('aria-expanded', String(open));
+  });
+  menuLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+    menuLinks.classList.remove('open');
+    menuButton.setAttribute('aria-expanded', 'false');
+  }));
   // Cosmetic labels only. The game code, mechanics and save keys are unchanged.
   document.getElementById('game').addEventListener('load',function(){
     try{
