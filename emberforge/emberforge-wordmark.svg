@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 140" role="img" aria-labelledby="logoTitle logoDesc">
+<title id="logoTitle">Emberforge</title><desc id="logoDesc">Dark iron fantasy wordmark with an ember-lit anvil crest.</desc>
+<defs>
+  <linearGradient id="iron" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#edf0e9"/><stop offset=".22" stop-color="#cbd0cb"/><stop offset=".5" stop-color="#6f7b7f"/><stop offset=".54" stop-color="#39434c"/><stop offset=".78" stop-color="#b2aaa0"/><stop offset="1" stop-color="#5b4040"/></linearGradient>
+  <linearGradient id="obsidian" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4f5a5c"/><stop offset=".28" stop-color="#131b25"/><stop offset=".74" stop-color="#070c12"/><stop offset="1" stop-color="#7d402e"/></linearGradient>
+  <linearGradient id="ember" x1=".12" y1="1" x2=".66" y2="0"><stop stop-color="#9f291e"/><stop offset=".34" stop-color="#e35b23"/><stop offset=".7" stop-color="#f29a43"/><stop offset="1" stop-color="#ffdab0"/></linearGradient>
+  <filter id="shadow" x="-20%" y="-60%" width="145%" height="210%"><feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/><feOffset dy="3" result="off"/><feMerge><feMergeNode in="off"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="coalglow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<g transform="translate(69 69)" filter="url(#shadow)">
+  <path d="M0 -63 L14 -48 L37 -43 L47 -19 L60 0 L47 25 L29 47 L0 60 L-31 46 L-48 22 L-59 0 L-44 -24 L-27 -47 Z" fill="#080c11" stroke="#765242" stroke-width="2"/>
+  <path d="M0 -55 L13 -40 L32 -35 L40 -14 L49 0 L39 20 L24 39 L0 51 L-25 39 L-42 19 L-50 0 L-37 -20 L-21 -39 Z" fill="url(#obsidian)" stroke="#49535a" stroke-width="1.5"/>
+  <path d="M0 -46 C22 -25 11 -18 20 -7 C26 5 14 16 0 20 C-18 15 -24 1 -14 -14 C-7 -24 -8 -33 0 -46Z" fill="#d85a26" opacity=".48" filter="url(#coalglow)"/>
+  <path d="M1 -48 C17 -30 7 -24 16 -13 C22 -1 13 10 0 16 C-15 9 -18 -2 -12 -15 C-4 -27 -7 -35 1 -48Z" fill="url(#ember)"/>
+  <path d="M0 -29 C8 -18 3 -11 8 -5 C10 3 6 8 0 12 C-7 7 -8 0 -4 -8 C0 -15 -3 -20 0 -29Z" fill="#ffe3a5" opacity=".9"/>
+  <path d="M-28 8 L28 8 L33 15 L15 18 L10 29 L-10 29 L-15 18 L-32 15 Z" fill="#080d13" stroke="#a58566" stroke-width="2"/>
+  <path d="M-35 5 H35 L28 11 H-28 Z" fill="#a6a9a3" stroke="#343940" stroke-width="2"/>
+  <path d="M-12 23 H12 L17 34 H-17 Z" fill="#3b4247" stroke="#76675a" stroke-width="1"/>
+  <path d="M-45 -5 L-39 -3 M42 -14 L48 -10 M-38 31 L-32 28 M40 31 L33 27" stroke="#d4743d" stroke-width="2" stroke-linecap="round"/>
+</g>
+<g filter="url(#shadow)">
+  <text x="148" y="92" font-family="Georgia,'Times New Roman',serif" font-size="69" font-weight="700" letter-spacing="2.7" fill="#0a0e12" stroke="#090c0e" stroke-width="8" paint-order="stroke">EMBERFORGE</text>
+  <text x="148" y="92" font-family="Georgia,'Times New Roman',serif" font-size="69" font-weight="700" letter-spacing="2.7" fill="url(#iron)" stroke="#5b3d35" stroke-width="1.4" paint-order="stroke">EMBERFORGE</text>
+</g>
+<path d="M150 108 H423 M451 108 H727" stroke="#67483f" stroke-width="2" opacity=".75"/>
+<path d="M434 108 L439 103 L444 108 L439 113 Z" fill="url(#ember)" stroke="#67382a" stroke-width="1"/>
+<path d="M151 104 H426 M449 104 H730" stroke="#f18b4c" stroke-width=".65" opacity=".6"/>
+</svg>
