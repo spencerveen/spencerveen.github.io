@@ -3,80 +3,61 @@
 Website: https://spenceraveen.com  
 Repository: https://github.com/spencerveen/spencerveen.github.io
 
-This is a static GitHub Pages portfolio with two separate project sections:
+A static GitHub Pages portfolio. Projects are organized into **AI Projects** and **Non-AI Projects** with separate landing pages.
 
-- **AI-assisted projects**, featuring the playable Emberforge VI: Living Kingdoms browser game.
-- **Independent (non-AI) projects**, initially empty until you add projects you want to showcase.
-
-## Files
+## Structure
 
 ```text
-spencerveen.github.io/
-├── index.html               # Portfolio homepage (CSS and JS included)
-├── projects.json            # Editable project listings
-├── emberforge/
-│   └── index.html           # Full playable Emberforge game, unchanged
-├── CNAME                    # Keep spenceraveen.com custom domain configured
-├── .nojekyll                # Publish static files without Jekyll processing
-└── README.md
+index.html                  Homepage with About and project category links
+ai-projects/index.html      AI project gallery (Emberforge and future releases)
+non-ai-projects/index.html  Independent project gallery
+connect/index.html          GitHub and other public profile links
+resume/index.html           Short professional profile (PDF not uploaded)
+assets/site.css             Shared stylesheet for subpages
+assets/site.js              Mobile navigation and copyright year
+assets/projects.js          JSON-driven, text-safe project cards
+projects.json               Single editable index of projects
+emberforge/index.html       Game navigation wrapper
+emberforge/game.html        Actual game, unchanged
+CNAME                       Custom domain configuration
+.nojekyll                   Static Pages publishing
 ```
 
-## First deployment (GitHub website)
+## Adding projects
 
-1. Download and unzip the bundle.
-2. Open https://github.com/spencerveen/spencerveen.github.io
-3. Select **Add file → Upload files** (or the `+` menu, then Upload files).
-4. Drag the **contents** of the unzipped folder (the root files **and** the `emberforge` folder) onto GitHub's upload area. Do not drag the ZIP itself, or an extra wrapper folder.
-5. Confirm the upload list includes both `index.html` and `emberforge/index.html`. Overwrite the existing homepage and README; keep the `CNAME` text as `spenceraveen.com`.
-6. Commit to `main`.
-7. Visit https://spenceraveen.com/ and https://spenceraveen.com/emberforge/ after deployment completes.
+Edit `projects.json`: `ai` feeds `/ai-projects/` and `independent` feeds `/non-ai-projects/`. Every item appears, including items with `"featured": true`.
 
-If your browser does not preserve the `emberforge/` folder, upload the root files first, then visit the `emberforge` folder in GitHub and upload its `index.html` there in a second commit.
-
-**Tip:** A more reliable option for uploading the entire folder tree is GitHub Desktop: clone the repository, copy the bundle's contents into the cloned repository folder, commit, and push. The repository must retain the folder layout shown above. Do not upload the ZIP itself; GitHub Pages will not automatically extract it.
-
-## Updating Emberforge from your browser
-
-- Open https://spenceraveen.com/?manage=1 for a small **Site management** bar in the footer. This is just a shortcut menu, **not** access control.
-- Choose **Update Emberforge files**. In GitHub, open the `emberforge` directory, choose **Add file → Upload files** and upload a new game file named exactly `index.html` to overwrite the previous version. Then commit to `main`.
-- GitHub Pages automatically publishes changes to `main`. You may need a hard refresh (`Ctrl+F5`) after deployment.
-- This particular Emberforge HTML is large (~5.8 MB), so uploading a replacement file is easier than editing it in GitHub's in-browser text editor.
-
-## Updating project cards
-
-Use the **Edit project listings** link at https://spenceraveen.com/?manage=1 (or edit `projects.json` in GitHub). Example:
+Example entry (illustrative only; not included in the site):
 
 ```json
 {
-  "ai": [
-    {
-      "title": "Emberforge VI: Living Kingdoms",
-      "subtitle": "Featured playable project",
-      "description": "My playable fantasy browser game",
-      "tags": ["JavaScript", "AI-assisted"],
-      "url": "/emberforge/",
-      "button": "Play Emberforge",
-      "featured": true
-    }
-  ],
-  "independent": [
-    {
-      "title": "My original Python tool",
-      "subtitle": "Python / Automation",
-      "description": "A description of a real project I've completed.",
-      "url": "https://github.com/spencerveen/YOUR-REPO",
-      "button": "View source"
-    }
-  ]
+  "title": "My independent Python utility",
+  "subtitle": "Python / Automation",
+  "description": "A short description of a completed project.",
+  "tags": ["Python", "Automation"],
+  "url": "https://github.com/spencerveen/REPO-NAME",
+  "button": "View source"
 }
 ```
 
-The example independent project is **only an example**; it has not been added to your live portfolio.
+Use confirmed project URLs; project links accept site-relative paths or HTTP(S) URLs. The project renderer uses `textContent` rather than injecting untrusted HTML.
 
-## Save-game warning
+## Emberforge
 
-Emberforge saves progress in browser `localStorage`. Saves from the original local HTML file or another domain are **not automatically available** on `spenceraveen.com` because browser storage is origin-specific. Use Emberforge's built-in **Export save** on the old location and **Import save** on the new location to migrate progress. Keep your export backed up before switching versions.
+The playable game is still at https://spenceraveen.com/emberforge/ and is linked from the AI Projects gallery. Its existing `game.html` file and save logic are not changed by the redesign. The wrapper iframe continues to load `./game.html`.
 
-## What GitHub Pages can't do
+Saved progress uses browser `localStorage`, which is tied to the site's origin. Migrating from a local HTML file or another domain requires using the game's **Export save** and **Import save** features.
 
-GitHub Pages is static hosting. Visitors can play the game, but the portfolio itself cannot safely allow direct code modifications or host a private admin API. The management shortcuts open GitHub, where your account's authentication and permissions govern edits. Never put GitHub access tokens, passwords, or private keys in HTML or JavaScript.
+## Résumé and social profiles
+
+The `/resume/` page currently provides a short public summary, **not a downloadable PDF**. When the approved PDF is supplied, place it under `/assets/` and add its download link to `resume/index.html`.
+
+The `/connect/` page lists the known GitHub URL and the résumé page. Add LinkedIn or other profiles once their real URLs are supplied; don't publish made-up accounts or contact details.
+
+## Workflow
+
+Make changes on a development branch, review the pull request, then merge into `main` when approved. GitHub Pages publishes from `main`. Test the homepage, project galleries, résumé, Connect page, and Emberforge after deployment.
+
+The homepage's `?manage=1` footer exposes GitHub editing shortcuts only; it is **not** an authentication mechanism. Do not put secrets or tokens into static HTML or JavaScript.
+
+Keep the `CNAME` and `.nojekyll` files intact.
