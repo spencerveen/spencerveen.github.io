@@ -45,6 +45,7 @@
   </div>
 </header>
 <iframe id="game" src="./game.html" title="Emberforge game" allow="fullscreen; clipboard-write"></iframe>
+<script src="./emberforge-hud.js"></script>
 <script>
   const menuButton = document.querySelector('.site-menu-button');
   const menuLinks = document.querySelector('.site-links');
@@ -56,18 +57,13 @@
     menuLinks.classList.remove('open');
     menuButton.setAttribute('aria-expanded', 'false');
   }));
-  // Cosmetic labels only. The game code, mechanics and save keys are unchanged.
-  document.getElementById('game').addEventListener('load',function(){
-    try{
-      var doc=this.contentDocument;
-      if(!doc)return;
-      doc.title='Emberforge';
-      var title=doc.querySelector('#ef4 .ef-head .brand');
-      var kicker=doc.querySelector('#ef4 .ef-head .kicker');
-      if(title)title.textContent='Emberforge';
-      if(kicker)kicker.textContent='Idle RPG · Emberforge';
-    }catch(e){console.warn('Game loaded; title sync unavailable.',e)}
-  });
+  // The HUD uses the original game elements and keeps save/combat logic in game.html.
+  const gameFrame = document.getElementById('game');
+  function attachHud() {
+    if (window.EmberforgeHUD) window.EmberforgeHUD.mount(gameFrame);
+  }
+  gameFrame.addEventListener('load', attachHud);
+  if (gameFrame.contentDocument?.querySelector('#ef4')) attachHud();
 </script>
 </body>
 </html>
