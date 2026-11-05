@@ -19,7 +19,6 @@
     .topbar-inner{display:flex;align-items:center;gap:35px;min-height:74px}
     .brand{font-weight:900;font-size:22px;letter-spacing:-1.4px;white-space:nowrap}.brand b{color:var(--gold)}
     .nav{display:flex;align-items:center;gap:28px;margin-left:auto}.nav a{font-size:13px;color:#b6c2cf;transition:color .2s}.nav a:hover{color:#fff}
-    .nav .nav-game{border:1px solid #eac28c70;border-radius:8px;padding:10px 14px;color:var(--gold);font-weight:700}
     .menu-toggle{display:none;margin-left:auto;background:none;border:1px solid var(--line);padding:8px 12px;color:#fff;border-radius:8px;cursor:pointer}
     .mini{font-size:11px;font-weight:800;letter-spacing:.17em;text-transform:uppercase}
     .accent{color:var(--gold)}.green{color:var(--green)}
@@ -41,20 +40,17 @@
     .signal{position:absolute;right:24px;bottom:23px;display:flex;align-items:center;gap:8px;color:#a7e1c1;font-size:11px}.signal:before{content:"";width:8px;height:8px;border-radius:50%;background:#83deaf;box-shadow:0 0 18px #83deaf}
     .statline{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0;display:flex;gap:28px;justify-content:space-between;flex-wrap:wrap;color:#8394a7;font-size:12px;letter-spacing:.04em;text-transform:uppercase}.statline span b{color:#dae2e9;font-weight:600}
     section{padding:105px 0} .section-head{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:38px}.section-head h2{font-size:clamp(36px,4.1vw,57px);line-height:1.05;letter-spacing:-.06em;margin:16px 0 0}.section-head p{max-width:410px;margin:0;color:#9aabbc;font-size:14px}
-    .feature{border:1px solid #7051398e;background:linear-gradient(130deg,#211c1b 0%,#101925 48%,#14212a 100%);border-radius:18px;display:grid;grid-template-columns:1.08fr .92fr;overflow:hidden;min-height:370px;box-shadow:0 25px 90px #0004}
-    .feature-info{padding:47px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}.feature-info h3{font-size:clamp(34px,3.2vw,50px);letter-spacing:-.06em;line-height:1.08;margin:18px 0}.feature-info p{color:#c3bdba;max-width:460px;font-size:15px}.taglist{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0 25px}.tag{border:1px solid #ffffff2c;color:#bec7d0;background:#ffffff08;font:600 11px var(--sans);border-radius:5px;padding:7px 10px}
-    .forge-art{position:relative;min-height:340px;background:radial-gradient(ellipse at 58% 65%,#b0612e5b,transparent 34%),radial-gradient(ellipse at 50% 68%,#f6c97c2b,transparent 42%),linear-gradient(150deg,#272626,#141d27 65%);overflow:hidden;display:flex;justify-content:center;align-items:center}
     .forge-art:before,.forge-art:after{content:"";position:absolute;left:0;right:0;bottom:0;background:#0c121c;clip-path:polygon(0 100%,0 70%,9% 70%,9% 43%,15% 43%,15% 69%,23% 69%,23% 30%,30% 30%,30% 58%,37% 58%,37% 40%,45% 40%,45% 63%,55% 63%,55% 22%,62% 22%,62% 69%,72% 69%,72% 36%,79% 36%,79% 71%,91% 71%,91% 48%,97% 48%,97% 75%,100% 75%,100% 100%);height:150px;z-index:1}.forge-art:after{transform:translateY(20px) scaleX(-1);opacity:.4;background:#0b1420}
-    .sigil{width:190px;height:190px;border:2px solid #e9bc7b93;border-radius:50%;position:relative;display:grid;place-items:center;box-shadow:0 0 0 15px #e8bc6b0e,0 0 0 32px #e8bc6b0a,0 0 85px #e6a45370,inset 0 0 65px #eaaf6340;transform:translateY(-16px)}.sigil:before{content:"";position:absolute;inset:24px;border:1px dashed #ecc79191;transform:rotate(25deg)}.sigil span{font-size:73px;color:#f8d5a0;text-shadow:0 0 22px #f8af5f;line-height:1}
-    .embers i{position:absolute;display:block;width:4px;height:4px;border-radius:50%;background:#edae5a;box-shadow:0 0 13px #ed9c3b}.embers i:nth-child(1){top:17%;left:20%}.embers i:nth-child(2){top:32%;left:76%}.embers i:nth-child(3){top:76%;left:63%}.embers i:nth-child(4){top:62%;left:33%}.embers i:nth-child(5){top:17%;left:61%}
     .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px}.project{min-height:230px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,#162029,#111720);padding:26px;display:flex;flex-direction:column;align-items:flex-start;transition:border-color .2s,transform .2s}.project:hover{border-color:#7f9c9b;transform:translateY(-2px)}.project h3{font-size:21px;letter-spacing:-.04em;line-height:1.2;margin:12px 0}.project p{font-size:13px;color:#9eacba;line-height:1.7}.project .bottom{margin-top:auto;color:var(--green);font-size:12px;font-weight:750}
-    .empty{grid-column:1/-1;border:1px dashed #405462;background:#111c23b9;border-radius:14px;padding:30px 32px;color:#99b0b9;display:flex;justify-content:space-between;align-items:center;gap:20px}.empty strong{display:block;color:#e1e9ed;margin-bottom:6px;font-size:19px}.empty p{margin:0;font-size:13px}.empty .tag{white-space:nowrap;color:var(--green);border-color:#446b5f}
     .split-intro{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:70px 0}.split-intro h2{font-size:clamp(36px,4vw,53px);letter-spacing:-.06em;line-height:1.12;margin-bottom:0}.split-intro p{font-size:15px;color:#aebdca;margin-bottom:16px}.skills{display:flex;flex-wrap:wrap;gap:10px}.skills span{background:#15212b;border:1px solid #334451;color:#c7d5df;padding:10px 14px;font-size:12px;border-radius:8px}
     .cta{display:flex;justify-content:space-between;align-items:center;gap:40px;background:linear-gradient(110deg,#1d252a,#23261e);border:1px solid #586150;border-radius:16px;padding:42px 50px}.cta h2{margin:10px 0 7px;font-size:35px;letter-spacing:-.05em}.cta p{color:#b7beb9;font-size:14px;margin:0}
     footer{border-top:1px solid var(--line);padding:28px 0 45px;color:#9eafbf;font-size:12px}.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px}.footer-links{display:flex;gap:20px}.footer-links a:hover{color:#fff}
     #owner-tools{display:none;border-top:1px solid #ffffff24;background:#112520;margin-top:30px;padding:16px 0;color:#c9e8d6;font-size:13px}#owner-tools strong{margin-right:18px}#owner-tools a{margin-right:18px;text-decoration:underline;text-underline-offset:3px}
-    @media(max-width:900px){.hero{grid-template-columns:1fr;min-height:auto;padding:70px 0 82px}.code-art{min-height:355px}.feature{grid-template-columns:1fr}.forge-art{min-height:290px}.cards{grid-template-columns:repeat(2,1fr)}.section-head{display:block}.section-head p{margin-top:18px}.split-intro{gap:25px}.nav{gap:16px}}
-    @media(max-width:640px){.wrap{width:min(100% - 34px,1160px)}.topbar-inner{min-height:66px;flex-wrap:wrap}.menu-toggle{display:block}.nav{display:none;flex-basis:100%;flex-direction:column;align-items:stretch;margin:0;padding:0 0 18px;gap:6px}.nav.open{display:flex}.nav a{padding:11px 5px;font-size:14px}.nav .nav-game{text-align:center}.hero{gap:40px;padding:64px 0 72px}h1{font-size:clamp(48px,13vw,70px)}.intro{font-size:15px}.code-art{min-height:330px}.terminal{padding:30px 19px;font-size:11px}section{padding:76px 0}.section-head h2{font-size:39px}.feature-info{padding:31px 26px}.feature-info h3{font-size:35px}.cards{grid-template-columns:1fr}.empty{display:block}.empty .tag{display:inline-block;margin-top:18px}.split-intro{grid-template-columns:1fr;padding:52px 0}.cta{display:block;padding:33px 26px}.cta .btn{margin-top:24px}.statline{gap:12px}.statline span{font-size:10px}}
+    .category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.category-card{min-height:305px;border-color:#64503c;background:linear-gradient(135deg,#2c251f,#18242b 60%,#14262b)}.category-card.independent{border-color:#386055;background:linear-gradient(135deg,#16292a,#131f29 70%)}.category-card h3{font-size:clamp(27px,3vw,38px);margin:22px 0 13px}.category-card .bottom{margin-top:auto}.category-grid .category-card:hover{border-color:var(--gold)}
+    @media(max-width:900px){.hero{grid-template-columns:1fr;min-height:auto;padding:70px 0 82px}.code-art{min-height:355px}.cards{grid-template-columns:repeat(2,1fr)}.section-head{display:block}.section-head p{margin-top:18px}.split-intro{gap:25px}.nav{gap:16px}}
+    @media(max-width:740px){.topbar-inner{min-height:66px;flex-wrap:wrap}.menu-toggle{display:block}.nav{display:none;flex-basis:100%;flex-direction:column;align-items:stretch;margin:0;padding:0 0 18px;gap:6px}.nav.open{display:flex}.nav a{padding:11px 5px;font-size:14px}}
+    @media(max-width:640px){.wrap{width:min(100% - 34px,1160px)}.topbar-inner{min-height:66px;flex-wrap:wrap}.menu-toggle{display:block}.nav{display:none;flex-basis:100%;flex-direction:column;align-items:stretch;margin:0;padding:0 0 18px;gap:6px}.nav.open{display:flex}.nav a{padding:11px 5px;font-size:14px}.nav .nav-game{text-align:center}.hero{gap:40px;padding:64px 0 72px}h1{font-size:clamp(48px,13vw,70px)}.intro{font-size:15px}.code-art{min-height:330px}.terminal{padding:30px 19px;font-size:11px}section{padding:76px 0}.section-head h2{font-size:39px}.cards{grid-template-columns:1fr}.split-intro{grid-template-columns:1fr;padding:52px 0}.cta{display:block;padding:33px 26px}.cta .btn{margin-top:24px}.statline{gap:12px}.statline span{font-size:10px}}
+    @media(max-width:640px){.category-grid{grid-template-columns:1fr}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
   </style>
 </head>
@@ -64,7 +60,7 @@
       <a class="brand" href="/" aria-label="Spencer Veen home">SV<span class="accent">.</span></a>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu ☰</button>
       <nav class="nav" id="main-nav" aria-label="Main navigation">
-        <a href="/#home">Home</a><a href="/#ai-projects">AI Projects</a><a href="/#independent-projects">Non-AI Projects</a><a href="/#about">About</a><a class="nav-game" href="/emberforge/">Emberforge ↗</a>
+        <a href="/">Home</a><a href="/ai-projects/">AI Projects</a><a href="/non-ai-projects/">Non-AI Projects</a><a href="/#about">About</a><a href="/resume/">Résumé</a><a href="/connect/">Connect</a>
       </nav>
     </div>
   </header>
@@ -76,7 +72,7 @@
           <span class="mini eyebrow">Personal portfolio & digital workshop</span>
           <h1>Systems thinker.<br><span class="italic">Relentless</span> <span class="outline">builder.</span></h1>
           <p class="intro">I'm <strong style="color:#fff">Spencer Veen</strong>, an IT professional and computer science student. I work with technology every day and build my own software, experiments, and interactive worlds along the way.</p>
-          <div class="hero-actions"><a class="btn" href="/emberforge/">Enter Emberforge <span aria-hidden="true">↗</span></a><a class="btn btn-secondary" href="#ai-projects">Explore projects ↓</a></div>
+          <div class="hero-actions"><a class="btn" href="/ai-projects/">Explore AI Projects <span aria-hidden="true">↗</span></a><a class="btn btn-secondary" href="/non-ai-projects/">Non-AI Projects ↗</a></div>
         </div>
         <div class="code-art" aria-label="Stylized developer terminal illustration">
           <div class="panel-head"><div class="dots"><i></i><i></i><i></i></div><span>spenceraveen.com / workspace</span><span>⌘</span></div>
@@ -99,33 +95,26 @@
       <div class="statline" aria-label="Areas of focus"><span>01 / <b>Systems & infrastructure</b></span><span>02 / <b>Software projects</b></span><span>03 / <b>AI-assisted creativity</b></span></div>
     </div>
 
-    <section id="ai-projects">
+    <section id="projects">
       <div class="wrap">
         <div class="section-head">
-          <div><span class="mini accent">01 / AI-assisted projects</span><h2>Creative work,<br>amplified by AI.</h2></div>
-          <p>Projects where I direct the design, engineering decisions, and iteration while using AI as a development tool. Transparency matters, so they're in their own section.</p>
+          <div><span class="mini accent">01 / Project library</span><h2>Builds worth<br>exploring.</h2></div>
+          <p>Two dedicated collections: AI-assisted experiments and independent work. Each project gets its own space as the portfolio grows.</p>
         </div>
-        <article class="feature" aria-labelledby="emberforge-title">
-          <div class="feature-info">
-            <span class="mini accent">Featured experience • Playable now</span>
-            <h3 id="emberforge-title">EMBERFORGE<span class="accent">.</span></h3>
-            <p>A growing fantasy clicker RPG with kingdoms, combat, upgrades, and persistent progress. This is the actual playable game, hosted right here on the site.</p>
-            <div class="taglist"><span class="tag">Idle RPG</span><span class="tag">HTML / JavaScript</span><span class="tag">AI-assisted</span></div>
-            <a class="btn" href="/emberforge/">Play Emberforge <span aria-hidden="true">↗</span></a>
-          </div>
-          <div class="forge-art" aria-hidden="true"><div class="embers"><i></i><i></i><i></i><i></i><i></i></div><div class="sigil"><span>✦</span></div></div>
-        </article>
-        <div class="cards" id="ai-grid" aria-live="polite"></div>
-      </div>
-    </section>
-
-    <section id="independent-projects" style="padding-top:20px">
-      <div class="wrap">
-        <div class="section-head">
-          <div><span class="mini green">02 / Non-AI projects</span><h2>Built by hand.<br>From the ground up.</h2></div>
-          <p>Independent programming, cybersecurity labs, automation, and systems work. Only projects I add intentionally will appear here.</p>
+        <div class="cards category-grid">
+          <a class="project category-card" href="/ai-projects/">
+            <span class="mini accent">AI-assisted</span>
+            <h3>AI Projects<span class="accent">.</span></h3>
+            <p>Creative experiments, interactive experiences, and software built with AI as a collaborator. Emberforge lives here.</p>
+            <span class="bottom">Explore AI projects ↗</span>
+          </a>
+          <a class="project category-card independent" href="/non-ai-projects/">
+            <span class="mini green">Built independently</span>
+            <h3>Non-AI Projects<span class="green">.</span></h3>
+            <p>Original coding projects, cybersecurity labs, automation, and hands-on IT work.</p>
+            <span class="bottom">Explore independent projects ↗</span>
+          </a>
         </div>
-        <div class="cards" id="independent-grid" aria-live="polite"></div>
       </div>
     </section>
 
@@ -139,12 +128,12 @@
     </section>
 
     <section style="padding-top:0">
-      <div class="wrap"><div class="cta"><div><span class="mini green">Ready to explore?</span><h2>The forge is open.</h2><p>Play Emberforge directly in your browser. New builds are published right here.</p></div><a class="btn" href="/emberforge/">Launch the game ↗</a></div></div>
+      <div class="wrap"><div class="cta"><div><span class="mini green">Curious what comes next?</span><h2>Explore the workshop.</h2><p>Discover games, tools, experiments, and future projects from one place.</p></div><a class="btn" href="/ai-projects/">Browse AI Projects ↗</a></div></div>
     </section>
   </main>
 
   <footer>
-    <div class="wrap footer-inner"><span>© <span id="year">2026</span> Spencer Veen. Built with curiosity.</span><div class="footer-links"><a href="https://github.com/spencerveen" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="/emberforge/">Emberforge ↗</a><a href="#home">Back to top ↑</a></div></div>
+    <div class="wrap footer-inner"><span>© <span id="year">2026</span> Spencer Veen. Built with curiosity.</span><div class="footer-links"><a href="https://github.com/spencerveen" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="/resume/">Résumé</a><a href="/connect/">Connect</a><a href="#home">Back to top ↑</a></div></div>
     <div id="owner-tools"><div class="wrap"><strong>Site management</strong><a href="https://github.com/spencerveen/spencerveen.github.io/edit/main/projects.json" target="_blank" rel="noopener noreferrer">Edit project listings ↗</a><a href="https://github.com/spencerveen/spencerveen.github.io/tree/main/emberforge" target="_blank" rel="noopener noreferrer">Update Emberforge files ↗</a><a href="https://github.dev/spencerveen/spencerveen.github.io" target="_blank" rel="noopener noreferrer">Open website code ↗</a></div></div>
   </footer>
 
@@ -167,58 +156,6 @@
       document.getElementById('owner-tools').style.display = 'block';
     }
 
-    function makeCard(project) {
-      const card = document.createElement('article');
-      card.className = 'project';
-      const type = document.createElement('span');
-      type.className = 'mini green';
-      type.textContent = project.subtitle || 'Portfolio project';
-      const title = document.createElement('h3');
-      title.textContent = project.title || 'Untitled project';
-      const description = document.createElement('p');
-      description.textContent = project.description || '';
-      card.append(type, title, description);
-      if (project.url) {
-        const link = document.createElement('a');
-        link.className = 'bottom';
-        link.href = project.url;
-        link.textContent = (project.button || 'View project') + ' ↗';
-        card.append(link);
-      }
-      return card;
-    }
-    function renderProjects(containerId, projects, emptyText) {
-      const container = document.getElementById(containerId);
-      container.replaceChildren();
-      const items = projects.filter(p => !p.featured);
-      if (!items.length) {
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        const copy = document.createElement('div');
-        const head = document.createElement('strong');
-        head.textContent = emptyText;
-        const detail = document.createElement('p');
-        detail.textContent = 'This section is ready. Add your next project to projects.json to publish it here.';
-        copy.append(head,detail);
-        const badge = document.createElement('span');
-        badge.className = 'tag';
-        badge.textContent = 'Space for the next build';
-        empty.append(copy,badge);
-        container.append(empty);
-      } else {
-        items.forEach(project => container.append(makeCard(project)));
-      }
-    }
-    fetch('projects.json', {cache:'no-store'})
-      .then(res => { if(!res.ok) throw Error('Unable to fetch project list'); return res.json(); })
-      .then(data => {
-        renderProjects('ai-grid', Array.isArray(data.ai) ? data.ai : [], 'More AI-assisted projects coming soon');
-        renderProjects('independent-grid', Array.isArray(data.independent) ? data.independent : [], 'Independent projects will appear here');
-      })
-      .catch(() => {
-        renderProjects('ai-grid', [], 'More AI-assisted projects coming soon');
-        renderProjects('independent-grid', [], 'Independent projects will appear here');
-      });
   </script>
 </body>
 </html>
