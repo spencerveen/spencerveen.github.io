@@ -1,0 +1,71 @@
+/* Dedicated resume styles: shared navigation and tokens are in site.css */
+html{scroll-padding-top:100px}
+.resume-hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);align-items:center;gap:clamp(28px,6vw,80px);padding:84px 0 80px}
+.resume-kicker{display:inline-flex;gap:12px;align-items:center}
+.resume-live-dot{height:7px;width:7px;background:var(--gold);box-shadow:0 0 0 5px #eac28c15;border-radius:50%}
+.resume-hero h1{font-size:clamp(61px,8.6vw,118px);letter-spacing:-.085em;line-height:1;margin:17px 0 26px}
+.resume-hero h1 em,.resume-section-heading h2 em,.resume-end h2 em{font-family:Georgia,serif;font-weight:500;color:var(--gold);letter-spacing:-.06em}
+.resume-hero h2{font-size:clamp(22px,2.7vw,33px);font-weight:650;line-height:1.25;letter-spacing:-.04em;margin:0 0 24px}
+.resume-hero-main>p{font-size:15px;color:#afbdc9;line-height:1.83;max-width:600px}
+.resume-actions{display:flex;gap:12px;flex-wrap:wrap;margin:28px 0}
+.resume-actions .button{min-height:48px}
+.resume-contact{display:flex;flex-wrap:wrap;gap:12px 19px;color:#a9bac8;font-size:12px}
+.resume-contact a{border-bottom:1px solid #52606a}.resume-contact a:hover{color:var(--gold)}
+.resume-snapshot{position:relative;overflow:hidden;min-height:450px;border:1px solid #775e43;border-radius:20px;padding:30px;background:linear-gradient(137deg,#302721 0%,#1b2931 49%,#10242b 100%);box-shadow:0 24px 85px #0006}
+.resume-snapshot:before{content:"";position:absolute;top:-110px;right:-130px;width:320px;height:320px;border-radius:50%;border:1px solid #eac28c2b;box-shadow:0 0 0 35px #eac28c06,0 0 0 90px #eac28c06;pointer-events:none}
+.resume-snapshot-top{display:flex;align-items:center;justify-content:space-between;position:relative}
+.resume-symbol{font-size:33px;color:var(--gold)}
+.resume-snapshot-role{margin:61px 0 35px;position:relative}
+.resume-caption{font-size:10px;font-weight:850;letter-spacing:.15em;color:#94a8b4}
+.resume-snapshot h3{font-size:clamp(28px,3.4vw,39px);letter-spacing:-.06em;line-height:1.12;margin:12px 0 9px}
+.resume-snapshot-role p{font-size:14px;color:#bdcacf;margin:0 0 6px}
+.resume-small{font-size:12px;color:#94aab5}
+.resume-figures{display:grid;grid-template-columns:1fr 1fr;gap:20px;border-top:1px solid #ffffff24;border-bottom:1px solid #ffffff24;padding:24px 0}
+.resume-figures>div+div{border-left:1px solid #ffffff20;padding-left:19px}
+.resume-figures strong{font-size:35px;letter-spacing:-.07em;color:#f0c995;line-height:1}
+.resume-figures strong span{font-size:20px}
+.resume-figures p{color:#a6b9bd;font-size:11px;line-height:1.5;margin:7px 0 0}
+.resume-snapshot-bottom{font-size:11px;letter-spacing:.045em;color:#a2b8ad;margin-top:20px}
+.resume-jump{display:flex;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 0 12px}
+.resume-jump a{flex:1;text-align:center;padding:22px 12px;font-size:13px;font-weight:750;color:#c6d2dc}
+.resume-jump a+a{border-left:1px solid var(--line)}
+.resume-jump a:hover{background:#15212b;color:#fff}
+.resume-jump span{color:var(--gold);font-size:11px;letter-spacing:.1em;margin-right:10px}
+.resume-section{padding:100px 0 0}
+.resume-section-heading{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:42px}
+.resume-section-heading h2{font-size:clamp(37px,5.5vw,61px);letter-spacing:-.07em;line-height:1.08;margin:12px 0 0}
+.resume-section-heading>p{max-width:340px;color:#9faebd;font-size:14px;line-height:1.8;margin:0}
+.resume-timeline{position:relative}
+.resume-timeline:before{content:"";position:absolute;top:18px;bottom:42px;left:145px;width:1px;background:linear-gradient(#b99b6b,#395b58,#273643)}
+.resume-job{display:grid;grid-template-columns:145px minmax(0,1fr);gap:35px;position:relative}
+.resume-job:before{content:"";position:absolute;left:141px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--gold);border:3px solid var(--bg);outline:1px solid #b69360}
+.resume-date{color:#d1ad7a;font-size:12px;line-height:1.6;font-weight:750;padding-top:15px;max-width:130px}
+.resume-job-panel{min-width:0;margin-bottom:26px;border:1px solid var(--line);border-radius:17px;padding:35px 40px;background:linear-gradient(145deg,#1a2531,#121923)}
+.resume-job-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}
+.resume-job-head h3{font-size:clamp(26px,3.2vw,38px);letter-spacing:-.06em;line-height:1.16;margin:12px 0 6px}
+.resume-location{font-size:12px;color:#94a8b7}
+.resume-ordinal{font-weight:850;font-size:28px;letter-spacing:-.06em;color:#ffffff1e}
+.resume-job-panel ul{padding-left:19px;margin:23px 0;color:#b6c4cf;font-size:14px;line-height:1.85}
+.resume-job-panel li{margin:0 0 10px;padding-left:4px}
+.resume-job-panel li::marker{color:var(--gold)}
+.resume-tags,.resume-chip-list{display:flex;flex-wrap:wrap;gap:8px}
+.resume-tags span,.resume-chip-list span{font-size:11px;font-weight:650;color:#c2d0d6;border:1px solid #3a5059;border-radius:6px;padding:7px 10px;background:#ffffff05}
+.resume-education-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.55fr);gap:35px;align-items:center;background:linear-gradient(110deg,#1d2a2b,#202523);border:1px solid #55614a;border-radius:19px;padding:48px 50px}
+.resume-education-card h3{font-size:clamp(30px,4vw,47px);line-height:1.18;letter-spacing:-.06em;margin:18px 0}
+.resume-education-card p{font-size:14px;color:#adbfca;line-height:2;margin:0}
+.resume-ed-facts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.resume-ed-facts>div{display:flex;flex-direction:column;padding-left:20px;border-left:1px solid #ffffff22}
+.resume-ed-facts span{font-size:10px;letter-spacing:.14em;color:#a8b8bc;font-weight:800}
+.resume-ed-facts strong{font-size:clamp(37px,4.3vw,54px);color:var(--gold);letter-spacing:-.07em;margin-top:9px}
+.resume-skill-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.resume-skill-card{border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#1b2831,#121a24);min-height:308px;padding:30px}
+.resume-skill-card h3{font-size:clamp(22px,2.5vw,29px);line-height:1.22;letter-spacing:-.05em;margin:23px 0}
+.resume-chip-list span{font-size:12px;padding:8px 10px}
+.resume-end{padding:105px 0}
+.resume-end-panel{display:flex;align-items:center;justify-content:space-between;gap:35px;border:1px solid #5e604d;border-radius:17px;padding:42px 45px;background:linear-gradient(110deg,#242a25,#17252b)}
+.resume-end h2{font-size:clamp(30px,3.9vw,45px);letter-spacing:-.06em;margin:8px 0}
+.resume-end p{font-size:14px;color:#aebdbf;margin:0}
+.resume-end-actions{display:flex;gap:11px;flex-wrap:wrap}
+@media(max-width:980px){.resume-hero{grid-template-columns:1fr;gap:28px;padding-top:68px}.resume-snapshot{min-height:365px;max-width:650px}.resume-snapshot-role{margin:28px 0}.resume-section-heading{flex-direction:column;align-items:start;gap:11px}.resume-section-heading>p{max-width:640px}.resume-education-card{grid-template-columns:1fr}.resume-skill-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.resume-hero{padding:50px 0 48px}.resume-hero h1{font-size:clamp(56px,15vw,83px)}.resume-snapshot{padding:25px;min-height:auto}.resume-contact{flex-direction:column;align-items:start}.resume-jump{flex-direction:column}.resume-jump a{text-align:left;padding:15px}.resume-jump a+a{border-top:1px solid var(--line);border-left:0}.resume-section{padding-top:70px}.resume-section-heading{margin-bottom:26px}.resume-timeline{padding-left:18px}.resume-timeline:before{left:1px}.resume-job{grid-template-columns:1fr;gap:4px}.resume-job:before{left:-21px;top:8px}.resume-date{padding:0;max-width:none}.resume-job-panel{padding:27px 24px;margin-bottom:30px}.resume-job-panel ul{font-size:13px;line-height:1.8}.resume-education-card{padding:29px 24px}.resume-ed-facts{max-width:350px}.resume-skill-grid{grid-template-columns:1fr}.resume-skill-card{padding:26px;min-height:auto}.resume-end{padding:70px 0}.resume-end-panel{display:block;padding:29px 24px}.resume-end-actions{margin-top:22px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

@@ -1,63 +1,34 @@
 # Spencer Veen — Personal Website
 
 Website: https://spenceraveen.com  
-Repository: https://github.com/spencerveen/spencerveen.github.io
+Source: https://github.com/spencerveen/spencerveen.github.io
 
-A static GitHub Pages portfolio. Projects are organized into **AI Projects** and **Non-AI Projects** with separate landing pages.
+A static GitHub Pages portfolio with AI Projects and Non-AI Projects galleries, playable Emberforge, an online résumé, and a Connect page.
 
-## Structure
+## Important routes
 
-```text
-index.html                  Homepage with About and project category links
-ai-projects/index.html      AI project gallery (Emberforge and future releases)
-non-ai-projects/index.html  Independent project gallery
-connect/index.html          GitHub and other public profile links
-resume/index.html           Short professional profile (PDF not uploaded)
-assets/site.css             Shared stylesheet for subpages
-assets/site.js              Mobile navigation and copyright year
-assets/projects.js          JSON-driven, text-safe project cards
-projects.json               Single editable index of projects
-emberforge/index.html       Game navigation wrapper
-emberforge/game.html        Actual game, unchanged
-CNAME                       Custom domain configuration
-.nojekyll                   Static Pages publishing
-```
+- `/` — portfolio home
+- `/ai-projects/` — AI-assisted projects, including Emberforge
+- `/non-ai-projects/` — independent project gallery
+- `/resume/` — stylized, accessible résumé matching the uploaded source
+- `/resume/Spencer-Veen-Resume.pdf` — downloadable one-page, reformatted PDF résumé
+- `/connect/` — GitHub and contact hub
+- `/emberforge/` — playable game; this change does not touch its code
 
-## Adding projects
+## Resume maintenance
 
-Edit `projects.json`: `ai` feeds `/ai-projects/` and `independent` feeds `/non-ai-projects/`. Every item appears, including items with `"featured": true`.
+The résumé page is `resume/index.html` with a dedicated stylesheet at `assets/resume.css`. It uses the existing shared `assets/site.css` and `assets/site.js` for consistent site-wide navigation.
 
-Example entry (illustrative only; not included in the site):
+The résumé information is drawn from Spencer's supplied PDF. The downloadable PDF is a one-page typeset copy with the same resume facts rather than a byte-for-byte copy of the uploaded design.
 
-```json
-{
-  "title": "My independent Python utility",
-  "subtitle": "Python / Automation",
-  "description": "A short description of a completed project.",
-  "tags": ["Python", "Automation"],
-  "url": "https://github.com/spencerveen/REPO-NAME",
-  "button": "View source"
-}
-```
+**Public information:** The résumé page and PDF display the email address, telephone number, and Sussex NJ location appearing in the supplied résumé. Treat this as public portfolio content.
 
-Use confirmed project URLs; project links accept site-relative paths or HTTP(S) URLs. The project renderer uses `textContent` rather than injecting untrusted HTML.
+If résumé facts change, update both the HTML and the PDF. The degree is **Bachelor of Arts in Computer Science**, with a 3.5 GPA, undergraduate certificates in Cybersecurity and Computer Information Systems, and 2027 graduation as provided.
 
-## Emberforge
+## Updating projects
 
-The playable game is still at https://spenceraveen.com/emberforge/ and is linked from the AI Projects gallery. Its existing `game.html` file and save logic are not changed by the redesign. The wrapper iframe continues to load `./game.html`.
+Edit `projects.json`: the `ai` array populates `/ai-projects/` and `independent` populates `/non-ai-projects/`. Emberforge is a featured AI listing and remains at its original URL.
 
-Saved progress uses browser `localStorage`, which is tied to the site's origin. Migrating from a local HTML file or another domain requires using the game's **Export save** and **Import save** features.
+## Deploying
 
-## Résumé and social profiles
-
-The `/resume/` page currently provides a short public summary, **not a downloadable PDF**. When the approved PDF is supplied, place it under `/assets/` and add its download link to `resume/index.html`.
-
-The `/connect/` page lists the known GitHub URL and the résumé page. Add LinkedIn or other profiles once their real URLs are supplied; don't publish made-up accounts or contact details.
-
-## Workflow
-
-Make changes on a development branch, review the pull request, then merge into `main` when approved. GitHub Pages publishes from `main`. Test the homepage, project galleries, résumé, Connect page, and Emberforge after deployment.
-
-The homepage's `?manage=1` footer exposes GitHub editing shortcuts only; it is **not** an authentication mechanism. Do not put secrets or tokens into static HTML or JavaScript.
-
-Keep the `CNAME` and `.nojekyll` files intact.
+Open a feature branch, review a pull request, then merge into `main` to trigger GitHub Pages publishing. Preserve `CNAME`, `.nojekyll`, and `emberforge/game.html`. No private tokens should be committed to the static site.
