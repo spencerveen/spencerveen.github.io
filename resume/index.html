@@ -4,48 +4,108 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080d14">
-  <meta name="description" content="Spencer Veen's professional background, computer science education, and technical skills.">
+  <meta name="description" content="Spencer Veen: enterprise IT support experience, computer science education, technical skills, and a downloadable résumé PDF.">
   <title>Résumé | Spencer Veen</title>
   <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/assets/resume.css">
   <script src="/assets/site.js" defer></script>
 </head>
 <body>
   <header class="site-header">
     <div class="container header-content">
-      <a class="brand" href="/" aria-label="Spencer Veen, homepage">SV<span>.</span></a>
+      <a class="brand" href="/" aria-label="Spencer Veen, home">SV<span>.</span></a>
       <button class="nav-toggle" type="button" aria-controls="site-navigation" aria-expanded="false">Menu <span aria-hidden="true">☰</span></button>
       <nav id="site-navigation" class="site-navigation" aria-label="Site navigation">
-        <a href="/">Home</a>
-        <a href="/ai-projects/">AI Projects</a>
-        <a href="/non-ai-projects/">Non-AI Projects</a>
-        <a href="/#about">About</a>
-        <a href="/resume/" aria-current="page">Résumé</a>
-        <a href="/connect/">Connect</a>
+        <a href="/">Home</a><a href="/ai-projects/">AI Projects</a><a href="/non-ai-projects/">Non-AI Projects</a><a href="/#about">About</a><a href="/resume/" aria-current="page">Résumé</a><a href="/connect/">Connect</a>
       </nav>
     </div>
   </header>
   <main>
     <div class="container">
       <div class="breadcrumbs"><a href="/">Home</a> / Résumé</div>
-      <section class="page-hero">
-        <span class="mini gold">Professional profile</span>
-        <h1>Behind the <em>builds.</em></h1>
-        <p class="lead">I'm Spencer Veen, an IT professional and Computer Science student with experience supporting enterprise technology, solving complex problems, and building software projects.</p>
-        <div class="intro-actions"><a class="button" href="https://github.com/spencerveen" target="_blank" rel="noopener noreferrer">View GitHub ↗</a><a class="button secondary" href="/connect/">Connect ↗</a></div>
+      <section class="resume-hero" aria-labelledby="resume-name">
+        <div class="resume-hero-main">
+          <span class="mini gold resume-kicker"><span class="resume-live-dot" aria-hidden="true"></span> Professional résumé</span>
+          <h1 id="resume-name">Spencer <em>Veen.</em></h1>
+          <h2>Enterprise IT support.<br>Systems, software &amp; security.</h2>
+          <p>My background spans enterprise technical support, field service, and small-office infrastructure. I work across Windows environments, networking, access management, and troubleshooting while pursuing a degree in Computer Science.</p>
+          <div class="resume-actions">
+            <a href="/resume/Spencer-Veen-Resume.pdf" class="button" download="Spencer-Veen-Resume.pdf">↓ Download résumé PDF</a>
+            <a href="/resume/Spencer-Veen-Resume.pdf" class="button secondary" target="_blank" rel="noopener noreferrer">Preview PDF ↗</a>
+          </div>
+          <div class="resume-contact" aria-label="Contact information">
+            <a href="mailto:spencerveen95@gmail.com">spencerveen95@gmail.com</a>
+            <a href="tel:+18622666462">862-266-6462</a>
+            <span>Sussex, NJ 07461</span>
+          </div>
+        </div>
+        <aside class="resume-snapshot" aria-label="Career summary">
+          <div class="resume-snapshot-top"><span class="mini green">Career snapshot</span><span class="resume-symbol" aria-hidden="true">✳</span></div>
+          <div class="resume-snapshot-role"><span class="resume-caption">CURRENT POSITION</span><h3>Senior Helpdesk<br>Support</h3><p>DXC Technologies</p><span class="resume-small">December 2022 – Present</span></div>
+          <div class="resume-figures"><div><strong>100<span>+</span></strong><p>Daily ServiceNow<br>support tickets</p></div><div><strong>2027</strong><p>Expected<br>graduation</p></div></div>
+          <div class="resume-snapshot-bottom">Support / infrastructure / programming</div>
+        </aside>
       </section>
-      <section class="resume-layout" aria-label="Professional background">
-        <article class="info-card"><span class="mini green">Focus</span><h2>Technical experience</h2><p>Enterprise IT support, troubleshooting, systems administration, and security-minded operations. I enjoy working across both the infrastructure and development sides of technology.</p><ul class="clean-list"><li>Windows and Active Directory environments</li><li>Networking and system troubleshooting</li><li>IT support and end-user technologies</li><li>Virtualization and security fundamentals</li></ul></article>
-        <article class="info-card"><span class="mini green">Education</span><h2>Thomas Edison State University</h2><p>Bachelor of Science in Computer Science, in progress.</p></article>
-        <article class="info-card"><span class="mini green">Tools &amp; interests</span><h2>Development skills</h2><p>Python, JavaScript, software projects, automation, and cybersecurity.</p></article>
-      </section>
-      <p class="note" style="margin:-56px 0 85px">This is a short public profile. A downloadable PDF résumé can be added after the final document is supplied.</p>
+      <nav class="resume-jump" aria-label="Jump to résumé section">
+        <a href="#experience"><span>01</span> Experience ↗</a>
+        <a href="#education"><span>02</span> Education ↗</a>
+        <a href="#skills"><span>03</span> Technical skills ↗</a>
+      </nav>
     </div>
+
+    <section class="resume-section" id="experience" aria-labelledby="resume-experience">
+      <div class="container">
+        <div class="resume-section-heading"><div><span class="mini gold">01 / The journey</span><h2 id="resume-experience">Professional <em>experience.</em></h2></div><p>Hands-on work supporting enterprise systems, customers, and business-critical technology.</p></div>
+        <div class="resume-timeline"><article class="resume-job">
+  <div class="resume-date">December 2022 – Present</div>
+  <div class="resume-job-panel">
+    <div class="resume-job-head"><div><span class="mini green">Senior Helpdesk Support</span><h3>DXC Technologies</h3><span class="resume-location">Plano, TX</span></div><span class="resume-ordinal">01</span></div>
+    <ul><li>Provide enterprise support for managing account access, BitLocker recovery, Windows domain authentication, and VoIP systems.</li><li>Troubleshoot endpoint, application, and network connectivity issues across enterprise Windows environments, including TCP/IP, DNS, DHCP, and Microsoft 365.</li><li>Manage 100+ daily support tickets in ServiceNow while maintaining accurate documentation for incident tracking and audit compliance.</li></ul>
+    <div class="resume-tags"><span>ServiceNow</span><span>Microsoft 365</span><span>BitLocker</span><span>Networking</span></div>
+  </div>
+</article>
+<article class="resume-job">
+  <div class="resume-date">April 2021 – December 2021</div>
+  <div class="resume-job-panel">
+    <div class="resume-job-head"><div><span class="mini green">Field Service Technician</span><h3>NerdsToGo</h3><span class="resume-location">Franklin, NJ</span></div><span class="resume-ordinal">02</span></div>
+    <ul><li>Delivered on-site technical support for residential and commercial clients, resolving hardware, networking, and server-related issues.</li><li>Installed, configured, and maintained Windows Server 2019 systems, including user management, file services, and system updates.</li><li>Deployed and managed virtual machines using Hyper-V to support client infrastructure needs.</li><li>Supported multi-platform environments including Windows, Linux, macOS, and ChromeOS systems.</li><li>Assisted with network setup and configuration, including router, firewall, and endpoint connectivity.</li></ul>
+    <div class="resume-tags"><span>Windows Server 2019</span><span>Hyper-V</span><span>Networking</span><span>Multi-platform</span></div>
+  </div>
+</article>
+<article class="resume-job">
+  <div class="resume-date">November 2018 – December 2021</div>
+  <div class="resume-job-panel">
+    <div class="resume-job-head"><div><span class="mini green">Helpdesk Technician</span><h3>Morris Rehab &amp; Physical Therapy</h3><span class="resume-location">Morristown, NJ</span></div><span class="resume-ordinal">03</span></div>
+    <ul><li>Administered MySQL Server to support EMR software functionality and ensure data reliability.</li><li>Managed Windows Server 2019 and Active Directory user provisioning with appropriate access controls.</li><li>Maintained account permissions and group memberships following least-privilege practices.</li><li>Provided technical support for workstations, printers, and small-office network infrastructure.</li><li>Assisted with network configuration and troubleshooting for a multi-user office environment.</li></ul>
+    <div class="resume-tags"><span>MySQL</span><span>Active Directory</span><span>Windows Server</span><span>EMR</span></div>
+  </div>
+</article></div>
+      </div>
+    </section>
+
+    <section class="resume-section" id="education" aria-labelledby="resume-education">
+      <div class="container">
+        <div class="resume-section-heading"><div><span class="mini gold">02 / Education</span><h2 id="resume-education">Always <em>learning.</em></h2></div><p>Bringing a formal computer science foundation to practical IT experience.</p></div>
+        <article class="resume-education-card">
+          <div><span class="mini green">Thomas Edison State University · Trenton, NJ</span><h3>Bachelor of Arts in<br>Computer Science</h3><p>Undergraduate Certificate in Cybersecurity<br>Undergraduate Certificate in Computer Information Systems</p></div>
+          <div class="resume-ed-facts"><div><span>GPA</span><strong>3.5</strong></div><div><span>GRADUATING</span><strong>2027</strong></div></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="resume-section" id="skills" aria-labelledby="resume-skills">
+      <div class="container">
+        <div class="resume-section-heading"><div><span class="mini gold">03 / The toolkit</span><h2 id="resume-skills">Technical <em>skills.</em></h2></div><p>Development, cybersecurity and infrastructure experience, with proficiency qualifications retained from my résumé.</p></div>
+        <div class="resume-skill-grid"><article class="resume-skill-card"><span class="mini green">01 / Programming</span><h3>Development languages</h3><div class="resume-chip-list"><span>Python</span><span>Java</span><span>C</span><span>JavaScript</span><span>SQL</span></div></article>
+<article class="resume-skill-card"><span class="mini green">02 / Cybersecurity</span><h3>Security &amp; access</h3><div class="resume-chip-list"><span>Zscaler</span><span>Splunk (SIEM – lab exposure)</span><span>Wireshark</span><span>Active Directory</span><span>RBAC</span><span>Zero Trust Principles</span><span>CIA Triad</span></div></article>
+<article class="resume-skill-card"><span class="mini green">03 / Infrastructure</span><h3>Networking &amp; cloud</h3><div class="resume-chip-list"><span>Azure (foundational knowledge)</span><span>Hyper-V</span><span>VMware</span><span>DNS</span><span>TCP/IP</span><span>LAN/WAN troubleshooting</span><span>Windows Server 2012–2019</span><span>Linux (including Kali)</span><span>VoIP &amp; PBX systems</span></div></article></div>
+      </div>
+    </section>
+
+    <section class="resume-end">
+      <div class="container"><div class="resume-end-panel"><div><span class="mini green">Explore beyond the résumé</span><h2>See what I'm <em>building.</em></h2><p>Games, tools, experiments, and development projects.</p></div><div class="resume-end-actions"><a href="/ai-projects/" class="button">Browse projects ↗</a><a href="https://github.com/spencerveen" class="button secondary" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></div>
+    </section>
   </main>
-  <footer class="site-footer">
-    <div class="container footer-content">
-      <span>© <span data-current-year>2026</span> Spencer Veen. Built with curiosity.</span>
-      <div class="footer-links"><a href="/">Home</a><a href="/ai-projects/">AI Projects</a><a href="/resume/">Résumé</a><a href="https://github.com/spencerveen" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
-    </div>
-  </footer>
+  <footer class="site-footer"><div class="container footer-content"><span>© <span data-current-year>2026</span> Spencer Veen. Built with curiosity.</span><div class="footer-links"><a href="/">Home</a><a href="/ai-projects/">AI Projects</a><a href="/resume/">Résumé</a><a href="/connect/">Connect</a></div></div></footer>
 </body>
 </html>
