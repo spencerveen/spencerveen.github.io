@@ -1,0 +1,103 @@
+%PDF-1.4
+% Portable ASCII PDF
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 5999 >>
+stream
+.07 .43 .42 rg 0 780 612 12 re f
+.12 .17 .23 rg BT /F2 24 Tf 1 0 0 1 47 742.0 Tm (SPENCER VEEN) Tj ET
+.07 .43 .42 rg BT /F1 9.4 Tf 1 0 0 1 48 721.0 Tm (Enterprise IT Support  |  Systems Administration  |  Computer Science) Tj ET
+.37 .44 .51 rg BT /F1 8.6 Tf 1 0 0 1 48 701.0 Tm (spencerveen95@gmail.com  |  862-266-6462  |  Sussex, NJ 07461) Tj ET
+.84 .89 .90 RG .6 w 47 684.0 m 565 684.0 l S
+.07 .43 .42 rg BT /F2 9.3 Tf 1 0 0 1 47 666.0 Tm (EDUCATION) Tj ET
+.84 .89 .90 RG .6 w 47 658.0 m 565 658.0 l S
+.12 .17 .23 rg BT /F2 10.3 Tf 1 0 0 1 47 639.0 Tm (Thomas Edison State University  |  Trenton, NJ) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 465 639.0 Tm (Graduating 2027) Tj ET
+.12 .17 .23 rg BT /F1 9 Tf 1 0 0 1 59 624.0 Tm (Bachelor of Arts in Computer Science  -  3.5 GPA) Tj ET
+.37 .44 .51 rg BT /F1 8.8 Tf 1 0 0 1 59 611.0 Tm (Undergraduate Certificate in Cybersecurity) Tj ET
+.37 .44 .51 rg BT /F1 8.8 Tf 1 0 0 1 59 598.0 Tm (Undergraduate Certificate in Computer Information Systems) Tj ET
+.07 .43 .42 rg BT /F2 9.3 Tf 1 0 0 1 47 573.0 Tm (PROFESSIONAL EXPERIENCE) Tj ET
+.84 .89 .90 RG .6 w 47 565.0 m 565 565.0 l S
+.12 .17 .23 rg BT /F2 9.4 Tf 1 0 0 1 47 546.0 Tm (DXC Technologies  |  Plano, TX) Tj ET
+.37 .44 .51 rg BT /F2 8.2 Tf 1 0 0 1 483 546.0 Tm (Dec 2022 - Present) Tj ET
+.07 .43 .42 rg BT /F1 8.7 Tf 1 0 0 1 59 532.5 Tm (Senior Helpdesk Support) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 518.5 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 518.5 Tm (Provide enterprise support for managing account access, BitLocker recovery, Windows domain authentication, and VoIP) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 509.0 Tm (systems.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 496.0 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 496.0 Tm (Troubleshoot endpoint, application, and network connectivity issues across enterprise Windows environments,) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 486.5 Tm (including TCP/IP, DNS, DHCP, and Microsoft 365.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 473.5 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 473.5 Tm (Manage 100+ daily support tickets in ServiceNow while maintaining accurate documentation for incident tracking and) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 464.0 Tm (audit compliance.) Tj ET
+.12 .17 .23 rg BT /F2 9.4 Tf 1 0 0 1 47 444.0 Tm (NerdsToGo  |  Franklin, NJ) Tj ET
+.37 .44 .51 rg BT /F2 8.2 Tf 1 0 0 1 478.5 444.0 Tm (Apr 2021 - Dec 2021) Tj ET
+.07 .43 .42 rg BT /F1 8.7 Tf 1 0 0 1 59 430.5 Tm (Field Service Technician) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 416.5 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 416.5 Tm (Delivered on-site technical support for residential and commercial clients, resolving hardware, networking, and) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 407.0 Tm (server-related issues.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 394.0 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 394.0 Tm (Installed, configured, and maintained Windows Server 2019 systems, including user management, file services, and) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 384.5 Tm (system updates.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 371.5 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 371.5 Tm (Deployed and managed virtual machines using Hyper-V to support client infrastructure needs.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 358.5 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 358.5 Tm (Supported multi-platform environments including Windows, Linux, macOS, and ChromeOS systems.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 345.5 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 345.5 Tm (Assisted with network setup and configuration, including router, firewall, and endpoint connectivity.) Tj ET
+.12 .17 .23 rg BT /F2 9.4 Tf 1 0 0 1 47 325.5 Tm (Morris Rehab & Physical Therapy  |  Morristown, NJ) Tj ET
+.37 .44 .51 rg BT /F2 8.2 Tf 1 0 0 1 478.5 325.5 Tm (Nov 2018 - Dec 2021) Tj ET
+.07 .43 .42 rg BT /F1 8.7 Tf 1 0 0 1 59 312.0 Tm (Helpdesk Technician) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 298.0 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 298.0 Tm (Administered MySQL Server to support EMR software functionality and ensure data reliability.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 285.0 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 285.0 Tm (Managed Windows Server 2019 and Active Directory user provisioning with appropriate access controls.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 272.0 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 272.0 Tm (Maintained account permissions and group memberships following least-privilege practices.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 259.0 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 259.0 Tm (Provided technical support for workstations, printers, and small-office network infrastructure.) Tj ET
+.07 .43 .42 rg BT /F2 8.8 Tf 1 0 0 1 59 246.0 Tm (-) Tj ET
+.12 .17 .23 rg BT /F1 8.15 Tf 1 0 0 1 69 246.0 Tm (Assisted with network configuration and troubleshooting for a multi-user office environment.) Tj ET
+.07 .43 .42 rg BT /F2 9.3 Tf 1 0 0 1 47 224.0 Tm (SKILLS) Tj ET
+.84 .89 .90 RG .6 w 47 216.0 m 565 216.0 l S
+.12 .17 .23 rg BT /F2 8.65 Tf 1 0 0 1 47 197.0 Tm (Programming:) Tj ET
+.37 .44 .51 rg BT /F1 8.5 Tf 1 0 0 1 115 197.0 Tm (Python, Java, C, JavaScript, SQL) Tj ET
+.12 .17 .23 rg BT /F2 8.65 Tf 1 0 0 1 47 180.0 Tm (Cybersecurity:) Tj ET
+.37 .44 .51 rg BT /F1 8.5 Tf 1 0 0 1 125 180.0 Tm (Zscaler, Splunk \(SIEM - lab exposure\), Wireshark, Active Directory, RBAC, Zero Trust Principles, CIA Triad) Tj ET
+.12 .17 .23 rg BT /F2 8.65 Tf 1 0 0 1 47 163.0 Tm (Networking / Cloud:) Tj ET
+.37 .44 .51 rg BT /F1 8.5 Tf 1 0 0 1 150 163.0 Tm (Azure \(foundational knowledge\), Hyper-V, VMware, DNS, TCP/IP, LAN/WAN Troubleshooting, Windows Server) Tj ET
+.37 .44 .51 rg BT /F1 8.5 Tf 1 0 0 1 59 152.0 Tm (2012-2019, Linux \(including Kali\), VoIP & PBX Systems) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+7 0 obj
+<< /Title (Spencer Veen - Resume) /Author (Spencer Veen) /Creator (Spencer Veen Portfolio) >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000030 00000 n 
+0000000079 00000 n 
+0000000136 00000 n 
+0000000272 00000 n 
+0000006322 00000 n 
+0000006419 00000 n 
+0000006521 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 7 0 R >>
+startxref
+6630
+%%EOF
