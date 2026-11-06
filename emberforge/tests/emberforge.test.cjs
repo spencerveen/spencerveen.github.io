@@ -723,3 +723,19 @@ test('bulk salvage preserves same-ID items that are protected or equipped',()=>{
  assert.ok(context.s.items.includes(items[2]));
  assert.ok(context.s.items.includes(items[3]));
 });
+
+test('Armory fantasy header keeps Equip Best functional and mobile layout scoped',()=>{
+ const html=read('game.html'),css=read('styles/armory.css'),views=read('ui/views.js');
+ const armory=html.slice(html.indexOf('<section class="page" data-view="gear">'),html.indexOf('<section class="page" data-view="kingdom">'));
+ assert.match(armory,/class="efg-armory-header"/);
+ assert.match(armory,/class="efg-armory-crest"/);
+ assert.match(armory,/Equipment &amp; Inventory/);
+ assert.match(armory,/class="page-title">The Armory/);
+ assert.match(armory,/class="efg-armory-subtitle"/);
+ assert.match(armory,/data-action="best"/);
+ assert.equal((armory.match(/data-action="best"/g)||[]).length,1);
+ assert.match(views,/if\(a==='best'\)/);
+ assert.match(css,/#ef4 \.efg-armory-header\{/);
+ assert.match(css,/#ef4 \.efg-armory-best:focus-visible/);
+ assert.match(css,/@media\(max-width:450px\)/);
+});
