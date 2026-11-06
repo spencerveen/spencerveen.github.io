@@ -1,0 +1,152 @@
+/* Emberforge Forge v1 — scene-first fantasy HUD.
+   The original scene, clickable crystal and game data remain in the DOM.
+   Cosmetic-only: this file never changes a save or combat value. */
+#ef4 [data-view="forge"].ef-forge-v2-on {
+  position:relative;
+  width:100%;
+  padding:0!important;
+  background:#090f19;
+}
+#ef4 [data-view="forge"].ef-forge-v2-on > :not(.ef-forge-v2) {display:none!important}
+#ef4 .ef-forge-v2 {
+  position:relative;isolation:isolate;
+  width:100%;min-height:clamp(540px,calc(100dvh - 255px),940px);
+  overflow:hidden;border:1px solid #895137;border-radius:16px;
+  background:radial-gradient(ellipse at 50% 62%,#9e4b2045,transparent 45%),#0d111c;
+  box-shadow:inset 0 0 0 2px #f7b36b11,inset 0 0 90px #030508a8,0 13px 36px #0008;
+  color:#fce8cf;font-family:Georgia,"Times New Roman",serif;
+}
+#ef4 .ef-forge-v2:before {
+  content:"";position:absolute;z-index:2;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,#080b15bd 0%,#080b153c 21%,transparent 38%,transparent 58%,#100b0aca 100%),
+    linear-gradient(90deg,#090b1380 0%,transparent 22%,transparent 78%,#090b1380 100%);
+}
+#ef4 .ef-forge-v2:after {
+  content:"";position:absolute;inset:6px;z-index:7;pointer-events:none;
+  border:1px solid #cb855239;border-radius:10px;
+  box-shadow:inset 0 0 12px #0605087a;
+}
+#ef4 .ef-forge-v2-scene {
+  position:absolute;inset:0;z-index:0;overflow:hidden;
+  display:block!important;pointer-events:auto;
+}
+#ef4 .ef-forge-v2-scene > * {
+  display:block!important;position:relative!important;
+  width:100%!important;height:100%!important;min-height:100%!important;
+  max-width:none!important;margin:0!important;border:0!important;
+  border-radius:0!important;box-shadow:none!important;
+}
+#ef4 .ef-forge-v2-scene > img {object-fit:cover}
+#ef4 .ef-forge-v2-scene > *:first-child {background-size:cover!important;background-position:center 52%!important}
+#ef4 .ef-forge-v2-scene .ef-forge-old-chip {display:none!important}
+#ef4 .ef-forge-v2-scene button:not(.ef-forge-old-chip) {cursor:pointer}
+/* Game controls always remain clickable through the visual gradients. */
+#ef4 .ef-forge-v2-top {
+  position:absolute;top:clamp(17px,2.5vw,34px);left:clamp(14px,3vw,45px);
+  right:clamp(14px,3vw,45px);z-index:5;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:15px;
+  pointer-events:none;
+}
+#ef4 .ef-forge-stats {
+  position:relative;z-index:5;display:flex;flex-wrap:wrap;gap:clamp(9px,1.25vw,20px);
+  width:max-content;max-width:calc(100% - 135px);pointer-events:none;
+}
+#ef4 .ef-forge-stats .ef-hud-metric {
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  min-height:66px;min-width:clamp(154px,16vw,232px);
+  padding:10px 19px;
+  border:1px solid #cb8a52;border-radius:8px;
+  clip-path:polygon(0 22%,7% 0,93% 0,100% 22%,100% 78%,93% 100%,7% 100%,0 78%);
+  background:linear-gradient(145deg,#5d3428e8 0%,#151923f5 32%,#18151be8 80%,#6a3823e8 100%);
+  box-shadow:inset 0 1px #f8c58d7d,inset 0 -1px #ffc07550,0 3px 17px #000d;
+  color:#f9dcba;font:600 clamp(14px,1.1vw,17px)/1.1 Georgia,serif;
+  text-shadow:0 2px 7px #000;white-space:nowrap;
+}
+#ef4 .ef-forge-stats .ef-hud-metric .ico {width:30px!important;height:30px!important;filter:drop-shadow(0 0 6px #fa81479c)}
+#ef4 .ef-forge-stats .ef-hud-metric > span:not(:has(.ico)):not(:last-child) {color:#e2b784}
+#ef4 .ef-forge-stats .ef-hud-metric strong {
+  font:700 clamp(22px,2vw,30px)/1 Georgia,serif;
+  color:#ffe3b2;text-shadow:0 1px 9px #e8744475;
+  font-variant-numeric:tabular-nums;
+}
+#ef4 .ef-forge-v2-level {
+  position:relative;pointer-events:none;flex:0 0 auto;
+  min-width:106px;min-height:98px;padding:12px 13px 11px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:2px solid #d9a066;border-radius:19px 19px 30px 30px;
+  background:radial-gradient(circle at 50% 11%,#a65125b0,transparent 61%),linear-gradient(150deg,#35221eec,#130f19f7);
+  box-shadow:inset 0 0 0 3px #1d1312,inset 0 0 18px #ff943638,0 0 25px #f581362b,0 6px 15px #000d;
+  text-shadow:0 2px 5px #000;
+}
+#ef4 .ef-forge-v2-level:before {
+  content:"✦";position:absolute;top:-19px;left:50%;transform:translateX(-50%);
+  color:#ffb96d;font-size:33px;text-shadow:0 0 9px #f87c30;
+}
+#ef4 .ef-forge-v2-level .ef-forge-level-caption {font-size:13px;letter-spacing:.1em;color:#e6bb8e;text-transform:uppercase}
+#ef4 .ef-forge-v2-level strong {font-size:clamp(25px,2.5vw,35px);line-height:1.15;color:#ffe3bc}
+#ef4 .ef-forge-progress {
+  position:absolute;z-index:5;left:clamp(20px,7vw,120px);right:clamp(20px,7vw,120px);
+  bottom:clamp(19px,4.2vw,51px);pointer-events:none;
+}
+#ef4 .ef-forge-progress-titles {
+  display:flex;justify-content:space-between;align-items:flex-end;gap:14px;
+  padding:0 18px 10px;color:#f4c58e;font-weight:750;
+  text-shadow:0 2px 6px #000e;
+  font-size:clamp(13px,1.55vw,23px);
+}
+#ef4 .ef-forge-progress-numbers {color:#fce4c2;font-size:clamp(13px,1.4vw,22px);font-variant-numeric:tabular-nums}
+#ef4 .ef-forge-progress-track {
+  position:relative;height:clamp(24px,3.3vw,42px);overflow:hidden;
+  border:4px ridge #b47745;border-radius:9px;
+  background:linear-gradient(#0b0b15,#2b1717 45%,#100c13);
+  box-shadow:inset 0 5px 13px #020207e0,0 0 0 3px #211713,0 0 0 4px #8b542f77,0 5px 20px #000f;
+}
+#ef4 .ef-forge-progress-fill {
+  position:relative;width:0%;height:100%;max-width:100%;
+  background:repeating-linear-gradient(-50deg,transparent 0 19px,#ffd47b22 21px 25px,transparent 28px 38px),
+    linear-gradient(180deg,#ffd88a 0%,#ff902f 29%,#ef521e 72%,#8f2518 100%);
+  box-shadow:inset 0 2px #fff2bfba,inset 0 -3px #6b1c16b7,0 0 15px #ff8a29;
+  transition:width .3s ease;
+}
+#ef4 .ef-forge-progress-fill:after {
+  content:"";position:absolute;top:0;bottom:0;right:0;width:5px;
+  background:#fff0af;box-shadow:0 0 20px 5px #f79331;
+}
+#ef4 .ef-forge-progress-track:before {
+  content:"";position:absolute;inset:2px;z-index:1;pointer-events:none;
+  border-top:1px solid #ffe2a19a;border-radius:4px;
+}
+#ef4 .ef-forge-v2-ember {
+  position:absolute;inset:auto 0 20% 0;z-index:3;
+  pointer-events:none;text-align:center;color:#ffac63;font-size:16px;opacity:.66;
+  text-shadow:0 0 15px #f76727;animation:ef-forge-float 7s ease-in-out infinite;
+}
+@keyframes ef-forge-float {50%{transform:translateY(-13px);opacity:.9}}
+@media(max-width:800px) {
+  #ef4 .ef-forge-v2 {min-height:clamp(470px,72dvh,740px);border-radius:10px}
+  #ef4 .ef-forge-v2-top {top:18px;left:13px;right:13px}
+  #ef4 .ef-forge-stats {max-width:calc(100% - 91px);gap:6px}
+  #ef4 .ef-forge-stats .ef-hud-metric {min-width:115px;min-height:50px;padding:7px 9px;gap:5px}
+  #ef4 .ef-forge-stats .ef-hud-metric .ico {width:23px!important;height:23px!important}
+  #ef4 .ef-forge-stats .ef-hud-metric strong {font-size:21px}
+  #ef4 .ef-forge-v2-level {min-width:79px;min-height:75px;padding:9px 7px;border-radius:15px 15px 25px 25px}
+  #ef4 .ef-forge-v2-level strong {font-size:24px}
+  #ef4 .ef-forge-v2-level .ef-forge-level-caption {font-size:10px}
+  #ef4 .ef-forge-progress {left:18px;right:18px;bottom:22px}
+}
+@media(max-width:520px) {
+  #ef4 .ef-forge-v2 {min-height:clamp(420px,70dvh,680px)}
+  #ef4 .ef-forge-v2-top {top:15px;right:12px;left:12px}
+  #ef4 .ef-forge-stats {flex-direction:column;max-width:calc(100% - 90px)}
+  #ef4 .ef-forge-stats .ef-hud-metric {min-height:40px;min-width:132px;gap:7px;padding:6px 9px;font-size:12px}
+  #ef4 .ef-forge-stats .ef-hud-metric strong {font-size:19px}
+  #ef4 .ef-forge-stats .ef-hud-metric .ico {width:18px!important;height:18px!important}
+  #ef4 .ef-forge-progress {left:14px;right:14px;bottom:22px}
+  #ef4 .ef-forge-progress-titles {padding:0 3px 8px;font-size:12px}
+  #ef4 .ef-forge-progress-numbers {font-size:12px}
+  #ef4 .ef-forge-progress-track {height:21px;border-width:3px}
+}
+@media(prefers-reduced-motion:reduce){
+  #ef4 .ef-forge-v2-ember{animation:none}
+  #ef4 .ef-forge-progress-fill{transition:none}
+}
