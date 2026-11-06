@@ -97,3 +97,8 @@
 
 /* Hide only the obsolete special-attack/loot boss mechanics tip card. */
 #ef4 [data-view="battle"] .efb-boss-tip-hidden {display:none!important}
+
+/* Engine-created overlays are hidden at their source, not merely behind the HUD. */
+#ef4 [data-view="battle"] .efb-old-chest-hidden,
+#ef4 [data-view="battle"] .efb-boss-tip-hidden {display:none!important}
+#ef4 .efb-shell > .efb-chest-reward {z-index:20!important}
