@@ -247,7 +247,7 @@ function combatHarness() {
   const s={
     zone:0,stage:9,ascensions:0,unlocked:0,stageUnlocked:[10],
     firstClears:[9],bossCleared:[false],build:{},skills:{},souls:0,
-    items:[],equipped:{weapon:null,armor:null,charm:null},
+    items:[],equipped:{mainHand:null,chest:null,charm:null},
     combatLevel:1,hp:105,downUntil:0,autoMode:'selected',auto:true,
     enemyHP:10,enemyTimer:2,enemyHits:2,autoProgress:0.5,
     engagedUntil:15000,smartResting:false,journal:[],
@@ -255,6 +255,8 @@ function combatHarness() {
   };
   const context={
     s, Date:{now:()=>10000}, Math, console,
+    LEGACY_EQUIPMENT_SLOTS:{weapon:'mainHand',armor:'chest',charm:'charm'},
+    EQUIPMENT_SLOT_KEYS:['mainHand','chest','charm'],
     realms:[['Ashen Wilds','','','','Cinder Warden','boss',20,8]],
     MONSTER_LADDERS:[Array.from({length:9},(_,i)=>['Foe '+(i+1),'imp'])],
     REALM_ASCENSIONS:[0],XP_GAIN:()=>15,
@@ -454,4 +456,56 @@ test('Upgrades header contains generated banner with valid WebP size and concise
   assert.match(css,/\.\.\/art\/upgrades-banner\.webp/);
   assert.match(views,/efa-effect-caption">Upgrade Effect/);
   assert.doesNotMatch(views,/efa-effect-caption">Arcane effect/);
+});
+
+test('Armory creates 14 empty equipment slots around a neutral character', () => {
+ const defs=read('data/definitions.js'),gear=read('ui/views.js');
+ const css=read('styles/armory.css'),html=read('game.html');
+ const declared=defs.slice(defs.indexOf('const EQUIPMENT_SLOTS='),defs.indexOf('const lootAbilityText='));
+ const context={};
+ vm.createContext(context);
+ vm.runInContext(declared,context);
+ const slots=vm.runInContext('EQUIPMENT_SLOT_KEYS',context);
+ const expected=['helmet','chest','legs','gloves','boots','mainHand','offHand','ring1','ring2','ring3','ring4','necklace','charm','back'];
+ assert.deepEqual([...slots].sort(),expected.sort());
+ assert.match(gear,/efg-character-layout/);
+ assert.match(gear,/efg-figure/);
+ assert.match(gear,/data-unequip/);
+ assert.match(html,/id="ef4-equipped"/);
+ assert.match(html,/styles\/armory\.css\?v=/);
+ assert.match(css,/\.efg-head/);
+ assert.match(css,/\.efg-leg/);
+});
+
+test('legacy weapon armor and charm mapping preserves stats and valid equipment IDs',()=>{
+ const source=read('core/formatting.js');
+ const block=source.slice(source.indexOf('// Migrate existing equipped legacy slots'),source.indexOf("x.claimed=Array.isArray"));
+ const items=[
+  {id:'blade',slot:'weapon',power:14},
+  {id:'plate',slot:'armor',power:7},
+  {id:'amulet',slot:'charm',power:4}
+ ];
+ const keys=['mainHand','chest','charm','helmet','offHand','gloves','legs','boots','ring1','ring2','ring3','ring4','necklace','back'];
+ const context={
+  obj:{equipped:{weapon:'blade',armor:'plate',charm:'amulet'}},
+  x:{items,equipped:{}},
+  f:{equipped:Object.fromEntries(keys.map(k=>[k,null]))},
+  EQUIPMENT_SLOT_KEYS:keys,
+  LEGACY_EQUIPMENT_SLOTS:{weapon:'mainHand',armor:'chest',charm:'charm'},
+  equipmentSlotFor:g=>({weapon:'mainHand',armor:'chest',charm:'charm'}[g.slot]||g.slot)
+ };
+ vm.createContext(context);
+ vm.runInContext(block,context);
+ assert.equal(context.x.equipped.mainHand,'blade');
+ assert.equal(context.x.equipped.chest,'plate');
+ assert.equal(context.x.equipped.charm,'amulet');
+ assert.equal(context.x.equipped.helmet,null);
+ assert.equal(context.x.avatarBody,'neutral');
+ context.obj.equipped={mainHand:'nonexistent',chest:'blade',charm:'amulet'};
+ vm.runInContext(block,context);
+ assert.equal(context.x.equipped.mainHand,null);
+ assert.equal(context.x.equipped.chest,null);
+ assert.equal(context.x.equipped.charm,'amulet');
+ assert.match(read('systems/combat.js'),/gearPower\('armor'\)/);
+ assert.match(read('systems/combat.js'),/LEGACY_EQUIPMENT_SLOTS\[slot\]/);
 });
