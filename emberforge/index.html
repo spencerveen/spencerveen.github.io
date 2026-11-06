@@ -61,59 +61,16 @@
   }));
   // The HUD uses the original game elements and keeps save/combat logic in game.html.
   const gameFrame = document.getElementById('game');
-  // The legacy game creates this boss instruction banner dynamically.
-  // Remove the actual banner node, including after combat rerenders.
-  function removeLegacyBossTip(d) {
-    if (!d || !d.body) return;
-    const all = d.body.querySelectorAll('div, p, aside, section, span, small, strong');
-    for (const el of all) {
-      const value = (el.textContent || '').replace(/\s+/g, ' ').trim();
-      if (!value.includes('Bosses strike hard with a special every fourth hit.') ||
-          !value.includes('Legendary drops start at Obsidian Wastes.')) continue;
-      if (Array.from(el.children).some(child => {
-        const t = (child.textContent || '').replace(/\s+/g, ' ');
-        return t.includes('Bosses strike hard with a special every fourth hit.') &&
-               t.includes('Legendary drops start at Obsidian Wastes.');
-      })) continue;
-      // The combat engine updates this element every frame. Hide it, never remove it.
-      // Removing it makes stats() throw and permanently stops combat timers.
-      if (el.id === 'ef4-combattip' || el.closest('#ef4-combattip')) {
-        const tip = el.id === 'ef4-combattip' ? el : el.closest('#ef4-combattip');
-        tip.style.setProperty('display', 'none', 'important');
-        continue;
-      }
-      let banner = el;
-      // If a wrapper supplies the border/padding, remove that wrapper too,
-      // but never remove a gameplay view or any ancestor with controls.
-      for (let i = 0; i < 2 && banner.parentElement; i++) {
-        const parent = banner.parentElement;
-        if (parent === d.body || parent.id || parent.querySelector('button, input, canvas, iframe')) break;
-        if ((parent.textContent || '').trim() !== (banner.textContent || '').trim()) break;
-        banner = parent;
-      }
-      banner.remove();
-    }
-  }
-  function watchLegacyBossTip(d) {
-    if (!d || !d.body || d.__emberforgeBossTipWatcher) return;
-    removeLegacyBossTip(d);
-    const observer = new MutationObserver(() => removeLegacyBossTip(d));
-    observer.observe(d.body, { childList: true, subtree: true, characterData: true });
-    d.__emberforgeBossTipWatcher = observer;
-  }
+  // Hide only the engine-owned boss instruction elements, never remove nodes.
   function attachHud() {
-    // The legacy game engine still writes the obsolete combat tip.
-    // Keep its DOM node for engine compatibility, but never display it.
     try {
       const d = gameFrame.contentDocument;
-      watchLegacyBossTip(d);
       if (d && !d.getElementById('efb-tip-off')) {
         const rule = d.createElement('style');
         rule.id = 'efb-tip-off';
-        rule.textContent = '#ef4-combattip { display: none !important; visibility: hidden !important; }';
+        rule.textContent = '#ef4-combattip,#ef4-bosslootnote {display:none!important;visibility:hidden!important}';
         (d.head || d.documentElement).appendChild(rule);
       }
-      d?.getElementById('ef4-combattip')?.style.setProperty('display', 'none', 'important');
     } catch (_) {}
     if (window.EmberforgeHUD) window.EmberforgeHUD.mount(gameFrame);
     if (window.EmberforgeForge) window.EmberforgeForge.mount(gameFrame);
@@ -136,8 +93,9 @@
       const d = gameFrame.contentDocument;
       const view = d?.querySelector('#ef4 [data-view="battle"]');
       if (!view) return;
-      if (view.dataset.efBattleSkin === '1') return;
+      if (view.dataset.efBattleSkin === '1') { clearInterval(battleMountRetry); return; }
       window.EmberforgeBattle?.mount(gameFrame);
+      if (view.dataset.efBattleSkin === "1") clearInterval(battleMountRetry);
     } catch (error) {
       console.warn('[Emberforge Battle] mount retry:', error);
     }
