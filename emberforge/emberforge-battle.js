@@ -58,23 +58,38 @@ function mount(frame){
  shell.insertBefore(sceneHost,shell.firstChild);
  // Escape the original two-column layout so the artwork fills Battle width.
  battle.insertBefore(shell,battle.firstChild);
- var attacks=findButton(enemy,/^Strike$/i),autofarm=findButton(enemy,/Farm Target|Auto.?Farm|Auto Attack/i),heal=findButton(enemy,/^Heal\b/i),retreat=findButton(enemy,/^Retreat$/i);
+
  var actionArea=shell.querySelector(".efb-actions");
- if(autofarm)actionArea.appendChild(proxied(autofarm,"Auto Attack","efb-action efb-attack"));
- if(heal)actionArea.appendChild(proxied(heal,"Heal","efb-action efb-heal"));
- if(retreat)actionArea.appendChild(proxied(retreat,"Retreat","efb-action efb-retreat"));
- if(!actionArea.children.length)return;
  var prev=shell.querySelector(".efb-prev"),next=shell.querySelector(".efb-next");
- var selected=0;
- function getStages(){return stageButtons.filter(function(x){return x.isConnected})}
+ var selected=0,autoOn=false;
+ var originalStatus=elements(battle,"*").find(function(el){return el.children.length===0&&/YOUR ADVENTURER/i.test(txt(el))});
+ var statusCard=originalStatus&&originalStatus.closest(".card,.panel");
+ function liveBoard(){return board.isConnected?board:smallCard("HUNT BOARD",battle)}
+ function liveEnemy(){return enemy.isConnected?enemy:smallCard("CURRENT ENEMY",battle)}
+ function liveStages(){var b=liveBoard();return b?elements(b,"button,[role=button]").filter(function(el){return /#\s*\d+|BOSS|Cinder|Soot|Skeleton|Magma|Revenant|Hound|Imp|Scarab|Marauder/i.test(txt(el))}):[]}
+ function liveControl(re,scope){return findButton(scope||liveEnemy()||battle,re)}
+ function activate(el){if(el&&el.isConnected&&!el.disabled){el.click();return true}return false}
+ function farmControl(){return liveControl(/Farm Target|Auto.?Farm|Auto Attack/i,liveBoard())||liveControl(/Farm Target|Auto.?Farm|Auto Attack/i)}
+ function stopControl(){return liveControl(/^Retreat$|^Stop\b/i)}
+ function healControl(){return liveControl(/^Heal\b/i)}
+ var autoButton=doc.createElement("button");autoButton.type="button";autoButton.className="efb-action efb-attack";
+ var healButton=doc.createElement("button");healButton.type="button";healButton.className="efb-action efb-heal";
+ actionArea.append(autoButton,healButton);
+ autoButton.addEventListener("click",function(){
+   if(autoOn){if(activate(stopControl()))autoOn=false}
+   else if(activate(farmControl()))autoOn=true;
+   refresh();
+ });
+ healButton.addEventListener("click",function(){activate(healControl());refresh()});
  function nav(dir){
-   var stages=getStages();var candidate=stages[selected+dir];
-   if(candidate&&!candidate.disabled){candidate.click();selected+=dir;refresh();}
+   var stages=liveStages(),index=selected+dir;
+   if(index>=0&&index<stages.length&&activate(stages[index]))selected=index;
+   refresh();
  }
  prev.addEventListener("click",function(){nav(-1)});
  next.addEventListener("click",function(){nav(1)});
  function refresh(){
-   var stages=getStages();
+   var stages=liveStages();
    var picked=stages.findIndex(function(el){return el.matches('[aria-pressed=true],[aria-selected=true],.active,.selected')||/current/i.test(el.className)});
    if(picked<0){
      var stageText=txt(battle.querySelector(".space")?.parentElement||battle).match(/Stage\s*(\d+)\s*\/\s*(\d+)/i);
@@ -84,10 +99,10 @@ function mount(frame){
    prev.disabled=selected<=0;
    next.disabled=selected>=stages.length-1||!!stages[selected+1]?.disabled;
    var stage=stages[selected],stageName=txt(stage).replace(/(?:✓\s*Farm|New|#\s*\d+|BOSS)/gi,"").trim();
-   shell.querySelector(".efb-stage").textContent=(selected===stages.length-1?"Boss encounter":"Stage "+(selected+1)+" / "+stages.length);
+   shell.querySelector(".efb-stage").textContent=(selected===stages.length-1?"Boss encounter":"Stage "+(selected+1)+" / "+Math.max(10,stages.length));
    var headerText=txt(battle).match(/(Ashen Wilds|Whispering Forest|[A-Z][a-z]+ (?:Wastes|Wilds|Ruins|Citadel|Forest|Depths|Keep))/);
    if(headerText)shell.querySelector(".efb-realm").textContent=headerText[1];
-   var enText=txt(enemy);
+   var enText=txt(liveEnemy()||enemy);
    var name=enText.match(/CURRENT ENEMY\s*(?:\+\S+\s*Ember\s*)?([^\n]*?)(?:\s+\d[\d,.KMB]*\s*\/\s*\d[\d,.KMB]*\s*HP|\s+Enemy hit|\s+\d+\s*\/\s*10)/i);
    var title=elements(enemy,"h1,h2,h3,h4,strong").map(txt).find(function(t){return t&&t!=="CURRENT ENEMY"&&!/^[\d+]/.test(t)&&!/Ember|XP|HP|Attack/i.test(t)});
    shell.querySelector(".efb-name").textContent=title||name?.[1]?.trim()||stageName||"Current enemy";
@@ -102,13 +117,22 @@ function mount(frame){
    }
    if(Number.isFinite(percent)){percent=Math.min(100,Math.max(0,percent));shell.querySelector(".efb-health-fill").style.width=percent+"%";shell.querySelector(".efb-health").setAttribute("aria-valuenow",String(Math.round(percent)))}
    var reward=enText.match(/\+\s*[\d,.]+[KMB]?\s*Ember/i);shell.querySelector(".efb-reward").textContent=reward?reward[0]:"";
-   [autofarm,heal,retreat].forEach(function(origin,i){var control=actionArea.children[i];if(origin&&control){control.disabled=origin.disabled;control.textContent=i===0?"Auto Attack":(i===1?(txt(origin)||"Heal"):"Retreat")}});
+   var h=healControl(),f=farmControl();
+   autoButton.disabled=!autoOn&&(!f||f.disabled);
+   autoButton.textContent="Auto Attack: "+(autoOn?"On":"Off");
+   autoButton.setAttribute("aria-pressed",String(autoOn));
+   healButton.disabled=!h||h.disabled;
+   healButton.textContent=h?txt(h):"Heal";
+   var status=statusCard&&txt(statusCard).match(/\b(Resting|In combat|Recovering|Defeated)\b/i);
+   shell.querySelector(".efb-status").textContent=status?status[1]:"";
+
  }
  // Original interface remains connected so combat, unlocks and saves work.
  board.classList.add("efb-source-hidden");
  enemy.classList.add("efb-source-hidden");
  if(training)training.classList.add("efb-source-hidden");
  if(report)report.classList.add("efb-source-hidden");
+ if(statusCard)statusCard.classList.add("efb-source-hidden");
  battle.classList.add("efb-redesigned");battle.dataset.efBattleSkin="1";
  // Only hide the redundant title/subtitle, not other gameplay labels.
  elements(battle,"h1,h2,h3").forEach(function(h){
