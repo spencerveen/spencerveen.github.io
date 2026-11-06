@@ -9,6 +9,20 @@ const LOOT_REGIONS=[
 {early:[['Stardust Knife','weapon','🗡️',12],['Astral Cutter','weapon','⚔️',15],['Cometweave Vest','armor','🥋',11],['Meteorite Talisman','charm','⭐',10]],mid:[['Nebula Glaive','weapon','🔱',25],['Eventide Sword','weapon','⚔️',28],['Eclipse Mail','armor','🛡️',24],['Lunar Prism','charm','🔮',21]],late:[['Cosmic Riftblade','weapon','⚔️',43],['Stellar Bulwark','armor','🛡️',39],['Starbreaker','weapon','🔨',46],['Oracle’s Eye','charm','👁️',35]],epic:[['Sunfall Edge','weapon','🌠',67],['Armor of the Eclipse','armor','🛡️',61],['Solar Nexus','charm','☀️',56]],legendary:[['Sunsunder','weapon','☀️',125,'bossDamage',.36],['Heavenfall Plate','armor','🛡️',113,'health',.37],['Astral Eternity','charm','🌌',106,'regen',.43]]},
 {early:[['Royal Steel Knife','weapon','🗡️',17],['Citadel Bastard Sword','weapon','⚔️',19],['Sentinel Hauberk','armor','🛡️',15],['Golden Sigil','charm','💍',14]],mid:[['Throneguard Glaive','weapon','🔱',34],['Crownfire Claymore','weapon','⚔️',38],['Imperial Plate','armor','🛡️',32],['King’s Ward','charm','👑',28]],late:[['Kingslayer','weapon','🗡️',60],['Eternal Guardian Mail','armor','🛡️',55],['Dawnbringer','weapon','⚔️',67],['Eternity Charm','charm','🌟',52]],epic:[['Sword of the Lost Throne','weapon','⚔️',100],['Immortal Aegis','armor','🛡️',91],['Crown of Ages','charm','👑',82]],legendary:[['Ash King’s Ruin','weapon','⚔️',195,'bossDamage',.48],['Armor of Eternity','armor','🛡️',181,'health',.5],['Heart of Creation','charm','🌟',169,'regen',.55]]}
 ];
+// Future-proof equipment layout. Today's loot keeps its legacy weapon/armor/charm types.
+const EQUIPMENT_SLOTS=[
+ ['helmet','Helmet','medal','head'],['necklace','Necklace','gem','jewelry'],
+ ['mainHand','Main Hand','swordglow','hands'],['chest','Chestplate','guardian','body'],
+ ['offHand','Off-Hand','guardian','hands'],['gloves','Gauntlets','tap','hands'],
+ ['legs','Greaves / Platelegs','guardian','body'],['boots','Boots','guardian','body'],
+ ['ring1','Ring I','gem','jewelry'],['ring2','Ring II','gem','jewelry'],
+ ['ring3','Ring III','gem','jewelry'],['ring4','Ring IV','gem','jewelry'],
+ ['charm','Charm','crystal','jewelry'],['back','Back / Cape','backpack','body']
+];
+const EQUIPMENT_SLOT_KEYS=EQUIPMENT_SLOTS.map(slot=>slot[0]);
+const LEGACY_EQUIPMENT_SLOTS={weapon:'mainHand',armor:'chest',charm:'charm'};
+const equipmentSlotFor=item=>LEGACY_EQUIPMENT_SLOTS[item?.slot]||item?.slot;
+const equipmentPowerType=slot=>slot==='mainHand'?'attack':slot==='chest'?'armor':slot==='charm'?'recovery':'bonus';
 const lootAbilityText=g=>!g.ability?'':({bossDamage:'Boss damage',health:'Max health',regen:'HP recovery'}[g.ability]+' +'+Math.round((g.abilityValue||0)*100)+'%');
 const lootVisual=(id,size='lg')=>ICON_DATA[id]?iconHTML(id,size):`<span class="lootemoji ${size}" role="img" aria-label="Item">${esc(id||'🗡️')}</span>`;
 const bossClearedAt=i=>!!s.bossCleared?.[i]||i<s.unlocked;
@@ -70,5 +84,5 @@ const encounterBook=()=>realms.flatMap((r,z)=>[
  ...MONSTER_LADDERS[z].map((m,i)=>({id:'mob-'+z+'-'+(i+1),realm:z,stage:i+1,name:m[0],icon:m[1],boss:false,desc:'Stage '+(i+1)+' · '+currentTrait(i+1).name+' encounter. Farm for '+(i<=2?'starter':i<=5?'intermediate':'advanced')+' equipment.'})),
  {id:r[5],realm:z,stage:10,name:r[4],icon:r[5],boss:true,desc:'Stage 10 Guardian. Guaranteed Rare+ chest, epic chance; Legendary exclusive to later realms.'}
 ]);
-const fresh=()=>({version:7,kingdomVistaMax:0,pendingRelics:[],stageUnlocked:[1,0,0,0,0,0],bossCleared:[false,false,false,false,false,false],firstClears:[0,0,0,0,0,0],autoMode:'off',smartResting:false,upgradeView:'unlocked',showOwned:false,ember:0,lifetime:0,runEarned:0,clicks:0,gens:Object.fromEntries(workers.map(w=>[w[0],0])),ups:{},build:Object.fromEntries(buildings.map(b=>[b[0],0])),skills:{},skillPoints:0,level:1,souls:0,ascensions:0,zone:0,unlocked:0,stage:1,enemyHP:0,kills:0,bosses:0,lootFound:0,items:[],equipped:{weapon:null,armor:null,charm:null},auto:false,salvage:'common',autoProgress:0,claimed:[],ach:[],bounty:0,bountyStart:0,updated:Date.now(),journal:[],codex:{},lastBossLoot:null,combatLevel:1,combatXP:0,hp:null,training:{vitality:0,guard:0,blade:0,regen:0},enemyTimer:0,enemyHits:0,manualAt:0,engagedUntil:0,downUntil:0,potionReady:0,combatMessage:"Ready for battle"});
+const fresh=()=>({version:7,kingdomVistaMax:0,pendingRelics:[],stageUnlocked:[1,0,0,0,0,0],bossCleared:[false,false,false,false,false,false],firstClears:[0,0,0,0,0,0],autoMode:'off',smartResting:false,upgradeView:'unlocked',showOwned:false,ember:0,lifetime:0,runEarned:0,clicks:0,gens:Object.fromEntries(workers.map(w=>[w[0],0])),ups:{},build:Object.fromEntries(buildings.map(b=>[b[0],0])),skills:{},skillPoints:0,level:1,souls:0,ascensions:0,zone:0,unlocked:0,stage:1,enemyHP:0,kills:0,bosses:0,lootFound:0,items:[],equipped:Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(k=>[k,null])),avatarBody:'neutral',auto:false,salvage:'common',autoProgress:0,claimed:[],ach:[],bounty:0,bountyStart:0,updated:Date.now(),journal:[],codex:{},lastBossLoot:null,combatLevel:1,combatXP:0,hp:null,training:{vitality:0,guard:0,blade:0,regen:0},enemyTimer:0,enemyHits:0,manualAt:0,engagedUntil:0,downUntil:0,potionReady:0,combatMessage:"Ready for battle"});
 
