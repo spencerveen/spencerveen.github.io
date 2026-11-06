@@ -65,3 +65,10 @@
 
 /* Hide only the redundant compact Hunting [enemy] toast above the battle. */
 #ef4 .efb-hunting-toast-suppressed {visibility:hidden!important;pointer-events:none!important}
+
+/* Battle events are part of the arena, not floating screen-level notifications. */
+#ef4 .efb-native-toast-hidden {display:none!important}
+#ef4 .efb-event-log {display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:flex-end;max-width:100%;margin:0 auto 10px;pointer-events:none}
+#ef4 .efb-event-log:empty {display:none}
+#ef4 .efb-event-line {max-width:100%;padding:7px 13px;border-radius:9px;border:1px solid #c18d5d88;background:#10131cdb;color:#f9d6a3;text-shadow:0 1px 4px #000;font:700 clamp(11px,1vw,14px)/1.3 Georgia,serif;box-shadow:0 4px 12px #0008;overflow-wrap:anywhere}
+@media(max-width:760px){#ef4 .efb-event-log{margin-bottom:8px}#ef4 .efb-event-line{padding:6px 9px;font-size:11px}}
