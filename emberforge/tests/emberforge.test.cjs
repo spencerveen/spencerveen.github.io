@@ -16,7 +16,7 @@ test('all game and UI JavaScript parses', () => {
   const paths = [
     'emberforge-battle.js', 'emberforge-forge.js', 'emberforge-hud.js',
     'core/formatting.js', 'core/storage.js', 'core/loop.js',
-    'systems/combat.js', 'ui/adventurer.js', 'ui/views.js',
+    'systems/combat.js', 'systems/travel.js', 'ui/adventurer.js', 'ui/views.js',
     'data/catalogs.js', 'data/definitions.js'
   ];
   for (const file of paths) {
@@ -36,7 +36,7 @@ test('game HTML loads engine dependencies in the required order', () => {
     'data/realm-backgrounds.js', 'data/boss-backgrounds.js',
     'data/forge-backgrounds.js', 'data/kingdom-vistas.js',
     'core/formatting.js', 'core/storage.js', 'systems/combat.js',
-    'ui/views.js', 'core/loop.js'
+    'systems/travel.js', 'ui/views.js', 'core/loop.js'
   ];
   let last = -1;
   for (const name of expected) {
@@ -262,6 +262,7 @@ function combatHarness() {
     REALM_ASCENSIONS:[0],XP_GAIN:()=>15,
     currentTrait:()=>({name:'Standard',hp:1,atk:1,speed:1}),
     maxSelectable:()=>10,activeBuild:()=>0,activeSkill:()=>0,
+    inExpedition:()=>true,atKingdom:()=>false,
     activeTraining:()=>0,upgradeUnlocked:()=>true,
     rollBattleBackground:()=>{},renderPage:()=>{},stats:()=>{},
     $:()=>({style:{},textContent:''}),toastTimer:0,setTimeout:()=>0,clearTimeout:()=>{},
@@ -643,8 +644,8 @@ test('backpack capacity is 30 and preserves existing inventories above the new l
 
 test('Armory inventory only equips and locks, Kingdom owns selling and salvaging',()=>{
  const html=read('game.html'),views=read('ui/views.js'),css=read('styles/inventory.css');
- const gear=html.slice(html.indexOf('<section class="page" data-view="gear">'),html.indexOf('<section class="page" data-view="kingdom">'));
- const kingdom=html.slice(html.indexOf('<section class="page" data-view="kingdom">'),html.indexOf('<section class="page" data-view="world">'));
+ const gear=html.slice(html.indexOf('<section class="page" data-view="gear">'),html.indexOf('<section class="page" data-view="world">'));
+ const kingdom=html.slice(html.indexOf('<section class="caladryn-kingdom-interior"'),html.indexOf('<section class="page" data-view="mastery">'));
  assert.match(gear,/ef4-bagtitle/);
  assert.match(gear,/ef4-bagprogress/);
  assert.match(gear,/ef4-baglist/);
@@ -659,8 +660,8 @@ test('Armory inventory only equips and locks, Kingdom owns selling and salvaging
  assert.match(bag,/data-lock=/);
  assert.doesNotMatch(bag,/data-sell=/);
  assert.match(views,/function renderKingdomMerchant\(\)/);
- assert.match(views,/if\(b\.dataset\.sell\)\{if\(page!=='kingdom'\)return;/);
- assert.match(views,/if\(a\.startsWith\('salvage-'\)&&page!=='kingdom'\)return;/);
+ assert.match(views,/if\(b\.dataset\.sell\)\{if\(!atKingdom\(\)\)return;/);
+ assert.match(views,/if\(a\.startsWith\('salvage-'\)&&!atKingdom\(\)\)return;/);
  assert.match(css,/\.efg-bag-grid/);
  assert.match(css,/\.efk-merchant-item/);
  assert.match(html,/styles\/inventory\.css\?v=1/);
@@ -711,6 +712,7 @@ test('bulk salvage preserves same-ID items that are protected or equipped',()=>{
   s:{items,equipped:{mainHand:'equipped'}},toast:()=>{},fmt:n=>String(n),
   equippedGearIds:()=>new Set(['equipped']),
   isGearTradeProtected:(g,ids)=>g.locked||ids.has(g.id),
+  atKingdom:()=>true,
   sellValue:g=>g.power, gain:n=>{earned+=n},save:()=>{saved++},renderPage:()=>{rendered++}
  };
  vm.createContext(context);
