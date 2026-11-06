@@ -7,7 +7,14 @@ const skillfactor=()=>1+.03*activeSkill('aura');
 const totalWorkers=()=>workers.reduce((v,w)=>v+(s.gens[w[0]]||0),0);
 const multiplier=type=>1+upgrades.reduce((v,u)=>v+(u[4]===type&&s.ups[u[0]]&&upgradeUnlocked(u)?Math.max(0,u[5]-1)*.68:0),0);
 const clicks=()=> (1+upgrades.reduce((v,u)=>v+(u[4]==='clickAdd'&&s.ups[u[0]]&&upgradeUnlocked(u)?u[5]:0),0))*multiplier('clickMult')*(1+.07*activeBuild('library'))*(1+.12*activeSkill('harvest'))*soulfactor()*skillfactor();
-const income=()=>workers.reduce((v,w)=>v+(workerUnlocked(w)?(s.gens[w[0]]||0)*w[4]:0),0)*multiplier('prodMult')*(1+.07*activeBuild('mine'))*(1+.12*activeSkill('industry'))*soulfactor()*skillfactor();
+// Workforce milestones apply only to the current run; they reset with workers on Ascension.
+const WORKER_MILESTONES=[[10,.05],[25,.10],[50,.15],[100,.20]];
+const workerMilestoneBonus=count=>WORKER_MILESTONES.reduce((sum,m)=>sum+(count>=m[0]?m[1]:0),0);
+const workerSharedFactor=()=>multiplier('prodMult')*(1+.07*activeBuild('mine'))*(1+.12*activeSkill('industry'))*soulfactor()*skillfactor();
+const workerBaseOutput=(w,count=s.gens[w[0]]||0)=>count*w[4]*(1+workerMilestoneBonus(count));
+const workerProduction=w=>workerUnlocked(w)?workerBaseOutput(w)*workerSharedFactor():0;
+const workerMarginalProduction=(w,count=1)=>{let owned=s.gens[w[0]]||0;return (workerBaseOutput(w,owned+count)-workerBaseOutput(w,owned))*workerSharedFactor();};
+const income=()=>workers.reduce((v,w)=>v+workerProduction(w),0);
 const equippedItem=slot=>s.items.find(g=>g.id===s.equipped[slot]);
 const gearPower=slot=>equippedItem(slot)?.power||0;
 const gearAbility=type=>['weapon','armor','charm'].reduce((n,slot)=>{let g=equippedItem(slot);return n+(g&&g.ability===type?(g.abilityValue||0):0)},0);
