@@ -256,19 +256,14 @@
 }
 
 
-/* Desktop Forge artwork, sourced separately from the low-resolution tier spritesheet.
-   The browser only loads these files for a sufficiently wide tier-I Forge.
-   Other Forge tiers and narrow/mobile layouts keep their original backgrounds. */
-@media (min-width: 820px) {
-  #ef4 .ef-forge-v2[data-ef-forge-tier="0"][data-ef-forge-wide="1"] .ef-forge-v2-scene #ef4-forgebg {
-    background-image: url("./forge-tier0-desktop.webp") !important;
-    background-size: cover !important;
-    background-position: center center !important;
-    background-repeat: no-repeat !important;
-  }
-}
-@media (min-width: 1600px), (min-width: 960px) and (min-resolution: 1.5dppx) {
-  #ef4 .ef-forge-v2[data-ef-forge-tier="0"][data-ef-forge-wide="1"] .ef-forge-v2-scene #ef4-forgebg {
-    background-image: url("./forge-tier0-ultra.webp") !important;
-  }
+/* Tier-I Forge: use the same crisp ultra-resolution painted landscape for
+   all sufficiently wide desktop *panels*, regardless of browser width.
+   Earlier versions swapped down to a blurrier desktop file below 1600px.
+   The wide flag comes from the actual scene aspect ratio (not viewport width).
+   Narrow and portrait scenes retain the original game artwork and tier logic. */
+#ef4 .ef-forge-v2[data-ef-forge-tier="0"][data-ef-forge-wide="1"] .ef-forge-v2-scene #ef4-forgebg {
+  background-image:url("./forge-tier0-ultra.webp") !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
 }
