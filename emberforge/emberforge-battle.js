@@ -94,6 +94,17 @@ function mount(frame){
      if(el.closest(".efb-stage-top,.efb-bottom,.efb-arrow"))return;
      if(el.children.length>1)return;
      var label=txt(el);
+     // Hide only the obsolete boss-mechanics banner, keeping combat feedback.
+     if(/^Bosses strike hard with a special every fourth hit\b/i.test(label)){
+       var tip=el;
+       for(var j=0;j<3&&tip.parentElement;j++){
+         var parent=tip.parentElement;
+         if(parent===sceneHost||parent===scene||parent===shell||parent.contains(shell)||txt(parent)!==label)break;
+         tip=parent;
+       }
+       tip.classList.add("efb-source-label-hidden");
+       return;
+     }
      if(/^(?:BOSS BATTLE|STAGE\s+\d+(?:\s*\/\s*\d+)?|(?:BOSS BATTLE|ASHEN WILDS)\s*[·•-]\s*(?:ASHEN WILDS|BOSS BATTLE))$/i.test(label)){
        el.classList.add("efb-source-label-hidden");
      }
