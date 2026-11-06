@@ -19,6 +19,7 @@ jobs:
         run: test "$(git hash-object emberforge/game.html)" = "544d8d7c47928b14353fe7d3819de84d71a37a1d"
       - name: Patch and syntax-check game
         run: |
+          python3 - <<'PY'
           from pathlib import Path
           import re
           import subprocess
@@ -77,6 +78,7 @@ jobs:
           
           path.write_text(source, encoding="utf-8")
           print("World-event system removed; validated JavaScript and existing game source.")
+          PY
       - name: Commit updated game source
         run: |
           git config user.name "github-actions[bot]"
