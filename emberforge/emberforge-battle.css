@@ -62,6 +62,3 @@
 
 /* Superseded game-stage banners, formerly shown on stage changes. */
 #ef4 .efb-shell .efb-source-label-hidden {display:none!important}
-
-/* Only the redundant global "Hunting [enemy]" toast. */
-#ef4 .efb-hunt-toast-hidden, .efb-hunt-toast-hidden {display:none!important}
