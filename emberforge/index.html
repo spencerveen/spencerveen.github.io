@@ -47,7 +47,7 @@
 <iframe id="game" src="./game.html" title="Emberforge game" allow="fullscreen; clipboard-write"></iframe>
 <script src="./emberforge-hud.js?v=5"></script>
 <script src="./emberforge-forge.js?v=7"></script>
-<script src="./emberforge-battle.js?v=22"></script>
+<script src="./emberforge-battle.js?v=23"></script>
 <script>
   const menuButton = document.querySelector('.site-menu-button');
   const menuLinks = document.querySelector('.site-links');
@@ -62,6 +62,18 @@
   // The HUD uses the original game elements and keeps save/combat logic in game.html.
   const gameFrame = document.getElementById('game');
   function attachHud() {
+    // The legacy game engine still writes the obsolete combat tip.
+    // Keep its DOM node for engine compatibility, but never display it.
+    try {
+      const d = gameFrame.contentDocument;
+      if (d && !d.getElementById('efb-tip-off')) {
+        const rule = d.createElement('style');
+        rule.id = 'efb-tip-off';
+        rule.textContent = '#ef4-combattip { display: none !important; visibility: hidden !important; }';
+        (d.head || d.documentElement).appendChild(rule);
+      }
+      d?.getElementById('ef4-combattip')?.style.setProperty('display', 'none', 'important');
+    } catch (_) {}
     if (window.EmberforgeHUD) window.EmberforgeHUD.mount(gameFrame);
     if (window.EmberforgeForge) window.EmberforgeForge.mount(gameFrame);
     if (window.EmberforgeBattle) window.EmberforgeBattle.mount(gameFrame);
