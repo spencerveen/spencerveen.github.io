@@ -8,7 +8,7 @@ function mount(frame){
  if(!battle||battle.dataset.efBattleSkin==="1")return;
  var master=doc.getElementById("ef4-mastercontent");
  if(!master)return;
- var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=6";doc.head.appendChild(s);
+ var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=7";doc.head.appendChild(s);
  var norm=function(t){return (t||"").replace(/\s+/g," ").trim()};
  var txt=function(el){return norm(el&&el.textContent)};
  var elements=function(base,selector){return Array.from(base.querySelectorAll(selector))};
@@ -60,6 +60,51 @@ function mount(frame){
  // Escape the original two-column layout so the artwork fills Battle width.
  battle.insertBefore(shell,battle.firstChild);
 
+ // Reward presentation sits above the controls, not inside the original
+ // scene layer where the engine's loot card gets obscured.
+ var chestReward=doc.createElement("aside");
+ chestReward.className="efb-chest-reward";
+ chestReward.setAttribute("role","status");
+ chestReward.setAttribute("aria-label","Boss chest reward");
+ chestReward.hidden=true;
+ chestReward.innerHTML='<span class="efb-chest-title">BOSS CHEST OPENED</span><strong class="efb-chest-item"></strong><span class="efb-chest-bonus"></span>';
+ shell.appendChild(chestReward);
+ var lastChestText="",chestShownAt=0;
+ function updateBossChest(){
+   // Only inspect actual boss-chest banners in the original illustrated
+   // scene. Never hide an inventory card, combat control, or the whole scene.
+   var headings=elements(sceneHost,"div,span,strong,b,h1,h2,h3,h4,p").filter(function(el){
+     return !el.closest(".efb-chest-reward")&&
+       /^BOSS CHEST OPENED$/i.test(txt(el));
+   });
+   var found=false;
+   headings.forEach(function(heading){
+     var source=heading;
+     for(var k=0;k<3&&source.parentElement;k++){
+       var parent=source.parentElement;
+       if(parent===sceneHost||parent===shell||parent.contains(shell))break;
+       var text=txt(parent);
+       if(!/^BOSS CHEST OPENED\b/i.test(text)||text.length>200)break;
+       source=parent;
+     }
+     var rewardText=txt(source);
+     if(rewardText==="BOSS CHEST OPENED"&&heading.parentElement)
+       rewardText=txt(heading.parentElement);
+     if(!/^BOSS CHEST OPENED\b/i.test(rewardText))return;
+     found=true;
+     source.classList.add("efb-old-chest-hidden");
+     if(rewardText!==lastChestText){
+       lastChestText=rewardText;
+       chestShownAt=Date.now();
+       var details=rewardText.replace(/^BOSS CHEST OPENED\s*/i,"").trim();
+       var bonus=details.match(/(?:\+\s*[\d,.]+\s*[A-Za-z][\w\s%+-]{0,40})$/);
+       var item=bonus?details.slice(0,bonus.index).trim():details;
+       chestReward.querySelector(".efb-chest-item").textContent=item||"Reward received";
+       chestReward.querySelector(".efb-chest-bonus").textContent=bonus?bonus[0]:"";
+     }
+   });
+   chestReward.hidden=!found && Date.now()-chestShownAt>6200;
+ }
  var actionArea=shell.querySelector(".efb-actions");
  var prev=shell.querySelector(".efb-prev"),next=shell.querySelector(".efb-next");
  var selected=0,autoOn=false;
@@ -266,6 +311,7 @@ function mount(frame){
    purgeEventLog(Date.now());
  }
  function refresh(){
+   updateBossChest();
    suppressLegacyPanels();
    routeBattleToasts();
    var stages=liveStages();
@@ -365,7 +411,7 @@ function mount(frame){
    if(records.some(function(record){
      var target=record.target.nodeType===1?record.target:record.target.parentElement;
      return target&&!target.closest(".efb-shell");
-   }))routeBattleToasts();
+   })){updateBossChest();routeBattleToasts();}
  });
  toastObserver.observe(root,{subtree:true,childList:true,characterData:true});
  tab("original");refresh();
