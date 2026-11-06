@@ -21,19 +21,19 @@ elapsedUI+=dt;elapsedAutoSave+=dt;elapsedShop+=dt;if(elapsedUI>.2){stats();elaps
 // Keep engine state, combat timers, and save data owned by the game itself.
 window.EmberforgeGame=Object.freeze({
   getCombatState:()=>({
-    zone:s.zone,stage:s.stage,maxStage:maxSelectable(s.zone),
+    zone:s.zone,location:s.location,stage:s.stage,maxStage:maxSelectable(s.zone),
     auto:s.auto,autoMode:s.autoMode,enemyHP:s.enemyHP,
     enemyMaxHP:enemy().hp,enemyName:enemy().name,
     playerHP:s.hp,down:isDown(),fighting:activeFight()
   }),
   selectStage:(stage)=>{
-    if(!Number.isInteger(stage)||isDown())return false;
+    if(!inExpedition()||!Number.isInteger(stage)||isDown())return false;
     const changed=setTarget(stage,{keepAuto:true});
     if(changed){stats();save();}
     return changed;
   },
   setAutoAttack:(enabled)=>{
-    if(isDown())return false;
+    if(!inExpedition()||isDown())return false;
     s.autoMode=enabled?'selected':'off';
     s.auto=!!enabled;
     s.smartResting=false;
@@ -43,7 +43,7 @@ window.EmberforgeGame=Object.freeze({
     stats();save();
     return true;
   },
-  strike:()=>{if(isDown())return false;manualAttack();return true;},
+  strike:()=>{if(!inExpedition()||isDown())return false;manualAttack();return true;},
   heal:()=>{if(isDown())return false;usePotion();return true;}
 });
 load();rollBattleBackground();if(s.hp===0&&!s.downUntil)s.hp=Math.ceil(maxHealth()*.5);if(s.hp===null||!Number.isFinite(s.hp))s.hp=maxHealth();s.hp=Math.min(maxHealth(),s.hp);if(s.enemyHP<=0)s.enemyHP=enemy().hp;let offline=Math.min(28800,Math.max(0,(Date.now()-s.updated)/1000));if(offline>10){let amount=income()*offline*.5;gain(amount);if(amount>0)note('Offline income +'+fmt(amount)+' Ember')}honorCheck();requestAnimationFrame(tick);try{stats();go('forge');save()}catch(error){console.error('[Emberforge] Initial render failed:',error)}window.addEventListener('pagehide',save);let hiddenAt=null;document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now();save()}else if(hiddenAt){let secs=Math.min(28800,Math.max(0,(Date.now()-hiddenAt)/1000));if(secs>5){let n=income()*secs*.5;gain(n);if(n>0)note('Away earnings: +'+fmt(n)+' Ember');}last=performance.now();hiddenAt=null;renderPage()}});
