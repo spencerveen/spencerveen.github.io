@@ -150,3 +150,107 @@
   #ef4 .ef-forge-v2-ember{animation:none}
   #ef4 .ef-forge-progress-fill{transition:none}
 }
+
+
+/* Emberforge Forge v2: interaction, fit, and art cleanup */
+/* The game area, not the viewport, determines the Forge's usable height. */
+#ef4 .main:has([data-view="forge"].ef-forge-v2-on.active) {
+  display:flex; flex-direction:column; min-height:0; overflow:hidden;
+  padding:9px 11px;
+}
+#ef4 [data-view="forge"].ef-forge-v2-on.active {
+  display:flex; flex:1 1 auto; min-width:0; min-height:0; overflow:hidden;
+}
+#ef4 [data-view="forge"].ef-forge-v2-on .ef-forge-v2 {
+  display:block; flex:1 1 auto; height:100%; min-height:0; max-height:100%;
+  border-radius:11px;
+}
+/* Restore the source scene's actual flex and illustrated layers.
+   The first version forced it to block, leaving the live crystal off-center. */
+#ef4 .ef-forge-v2-scene > #ef4-forgescene {
+  display:flex!important; align-items:center!important; justify-content:center!important;
+  flex-direction:column!important; position:relative!important; height:100%!important;
+  min-height:0!important; width:100%!important; max-width:100%!important;
+  overflow:hidden!important;
+}
+/* The scene art already contains the physical crystal. Make the original
+   accessible mining button the invisible full-scene click target.
+   This preserves the game's delegated mine() handler and all save logic. */
+#ef4 .ef-forge-v2-scene #ef4-crystal {
+  position:absolute!important; inset:0!important;
+  display:block!important; width:100%!important; height:100%!important;
+  max-width:none!important; min-height:0!important;
+  margin:0!important; padding:0!important; border:0!important;
+  opacity:0!important; background:transparent!important;
+  transform:none!important; filter:none!important;
+  pointer-events:auto!important; cursor:pointer!important; z-index:4!important;
+}
+#ef4 .ef-forge-v2-scene #ef4-crystal:focus-visible {
+  outline:2px solid #ffbe73!important; outline-offset:-8px;
+}
+/* These source labels are generated again whenever game stats update;
+   hide their container instead of hiding individual, transient chips. */
+#ef4 .ef-forge-v2 #ef4-forgeoverlay,
+#ef4 .ef-forge-v2 #ef4-forgescene .ground-label,
+#ef4 .ef-forge-v2 .ef-forge-v2-ember {display:none!important}
+/* Preserve original spritesheet proportions as much as possible across
+   landscape and portrait screens, without overriding engine tier selection. */
+#ef4 .ef-forge-v2-scene #ef4-forgebg {
+  background-repeat:no-repeat!important;
+  filter:saturate(1.04) contrast(1.04) brightness(.95);
+}
+/* Compact, unobstructed fantasy HUD: two live values and one level crest. */
+#ef4 .ef-forge-v2 .ef-forge-v2-top {
+  top:16px; left:18px; right:18px;
+}
+#ef4 .ef-forge-v2 .ef-forge-stats {gap:9px; max-width:calc(100% - 94px)}
+#ef4 .ef-forge-v2 .ef-forge-stats .ef-hud-metric {
+  min-width:172px; min-height:55px; padding:8px 13px;
+  gap:7px; font-size:13px; border-color:#bc794b;
+}
+#ef4 .ef-forge-v2 .ef-forge-stats .ef-hud-metric .ico {
+  width:25px!important; height:25px!important;
+}
+#ef4 .ef-forge-v2 .ef-forge-stats .ef-hud-metric strong {font-size:24px}
+#ef4 .ef-forge-v2 .ef-forge-v2-level {
+  min-width:82px; min-height:78px; border-radius:16px 16px 24px 24px;
+  padding:11px 7px 8px;
+}
+#ef4 .ef-forge-v2 .ef-forge-v2-level:before {top:-13px;font-size:23px}
+#ef4 .ef-forge-v2 .ef-forge-v2-level strong {font-size:27px}
+#ef4 .ef-forge-v2 .ef-forge-progress {
+  bottom:22px; left:clamp(18px,5vw,76px); right:clamp(18px,5vw,76px);
+}
+#ef4 .ef-forge-v2 .ef-forge-progress-titles {
+  font-size:clamp(13px,1.2vw,18px); padding:0 8px 7px;
+}
+#ef4 .ef-forge-v2 .ef-forge-progress-numbers {font-size:clamp(13px,1.2vw,18px)}
+#ef4 .ef-forge-v2 .ef-forge-progress-track {
+  height:clamp(21px,2.1vw,30px); border-width:3px;
+}
+/* Narrow windows retain a usable tappable scene instead of clipping.
+   Short mobile devices may scroll, but desktop will fit without overflow. */
+@media(max-width:760px) {
+  #ef4 .main:has([data-view="forge"].ef-forge-v2-on.active){
+    overflow:auto; padding:7px;
+  }
+  #ef4 [data-view="forge"].ef-forge-v2-on.active {flex:0 0 auto;overflow:visible}
+  #ef4 [data-view="forge"].ef-forge-v2-on .ef-forge-v2 {
+    height:clamp(390px,64dvh,630px); max-height:none; min-height:390px;
+  }
+  #ef4 .ef-forge-v2 .ef-forge-v2-top {left:10px;right:10px;top:12px}
+  #ef4 .ef-forge-v2 .ef-forge-stats {gap:5px;max-width:calc(100% - 73px)}
+  #ef4 .ef-forge-v2 .ef-forge-stats .ef-hud-metric {
+    min-width:112px;min-height:42px;padding:6px 9px;font-size:12px
+  }
+  #ef4 .ef-forge-v2 .ef-forge-stats .ef-hud-metric strong {font-size:18px}
+  #ef4 .ef-forge-v2 .ef-forge-stats .ef-hud-metric .ico {width:19px!important;height:19px!important}
+  #ef4 .ef-forge-v2 .ef-forge-v2-level {min-width:66px;min-height:66px;padding:7px 5px}
+  #ef4 .ef-forge-v2 .ef-forge-v2-level strong {font-size:22px}
+  #ef4 .ef-forge-v2 .ef-forge-v2-level .ef-forge-level-caption {font-size:9px}
+  #ef4 .ef-forge-v2 .ef-forge-progress {left:14px;right:14px;bottom:18px}
+}
+@media(max-width:425px) {
+  #ef4 .ef-forge-v2 .ef-forge-stats {flex-direction:column}
+  #ef4 .ef-forge-v2 .ef-forge-stats .ef-hud-metric {min-height:38px}
+}
