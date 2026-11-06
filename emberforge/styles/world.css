@@ -22,29 +22,11 @@
 @keyframes caladryn-location-glow{50%{box-shadow:0 0 0 7px #f0b56a40,0 0 28px #ffbc7cbb}}
 #ef4 .caladryn-map-caption{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:7px 2px 15px;color:#a8b9ce;font-size:11px}
 #ef4 .caladryn-map-caption span:first-child{color:#ebbd80;font-weight:800;letter-spacing:1px}
-#ef4 .caladryn-progress{margin:12px 0 17px;padding:11px 16px;border:1px solid #7d6248;background:#1c2a3f;border-radius:10px;font-size:12px;color:#c0ccdb;line-height:1.55}
-#ef4 .caladryn-progress strong{color:#f3d4a7}
-#ef4 .caladryn-destinations{display:grid;grid-template-columns:repeat(auto-fit,minmax(202px,1fr));gap:9px;margin-bottom:14px}
-#ef4 .caladryn-destination{display:flex;align-items:center;gap:10px;text-align:left;min-width:0;min-height:76px;padding:10px 11px;border:1px solid #594e52;border-radius:11px;background:linear-gradient(128deg,#1b293d,#11192b);color:#e5eaf1;box-shadow:inset 0 1px #e8ba7d21}
-#ef4 .caladryn-destination.available{border-color:#8b694d}
-#ef4 .caladryn-destination.current{border-color:#f2bb7b;background:linear-gradient(128deg,#352f3e,#19283c);box-shadow:inset 0 1px #ffe1a35f,0 0 15px #b87b382a}
-#ef4 .caladryn-destination.available:hover{border-color:#ffd49a;background:#27344a}
-#ef4 .caladryn-destination.locked{opacity:.56;filter:saturate(.55)}
-#ef4 .caladryn-destination-symbol{flex:0 0 39px;display:grid;place-items:center;width:39px;height:39px;border:1px solid #9f764f;border-radius:9px;background:#2f2b36;color:#ffca86;font-size:23px;font-family:Georgia,serif}
-#ef4 .caladryn-destination-body{flex:1;display:flex;flex-direction:column;min-width:0;gap:4px}
-#ef4 .caladryn-destination-body strong{font-size:12px;line-height:1.3;color:#ffddb1}
-#ef4 .caladryn-destination-body small{font-size:10px;line-height:1.35;color:#aab9ca}
-#ef4 .caladryn-destination-state{font-size:10px;flex:0 0 auto;font-weight:800;color:#e7bb83;text-transform:uppercase;letter-spacing:.5px}
-#ef4 .caladryn-region-actions{margin:16px 0}
-#ef4 .caladryn-home-message,#ef4 .caladryn-away-message{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:13px;padding:14px 17px;border-radius:12px;border:1px solid #96734c;background:linear-gradient(110deg,#24283c,#152038);color:#bec9d8;font-size:12px}
-#ef4 .caladryn-home-message strong,#ef4 .caladryn-away-message strong{color:#ffdb9c}
-#ef4 .caladryn-away-message>div:first-child{display:flex;flex-direction:column;gap:4px}
-#ef4 .caladryn-away-buttons{display:flex;gap:8px;flex-wrap:wrap}
 #ef4 .caladryn-kingdom-interior{margin:28px 0 0;padding-top:21px;border-top:2px solid #99704a}
 #ef4 .caladryn-kingdom-interior>.page-title{font-size:clamp(23px,2.6vw,32px);color:#ffe0b3;font-family:Georgia,serif}
 @media(max-width:1100px){#ef4 .caladryn-map-viewport{width:100%}}
-@media(max-width:680px){#ef4 .caladryn-header{padding:14px}#ef4 .caladryn-header .page-title{font-size:32px}#ef4 .caladryn-destinations{grid-template-columns:repeat(2,minmax(0,1fr))}#ef4 .caladryn-destination{min-height:78px;padding:8px}#ef4 .caladryn-destination-symbol{flex-basis:30px;width:30px;height:30px;font-size:18px}#ef4 .caladryn-destination-state{font-size:9px}#ef4 .caladryn-map-caption{font-size:10px}#ef4 .caladryn-map-pin{width:30px;height:30px}}
-@media(max-width:420px){#ef4 .caladryn-destinations{grid-template-columns:1fr}#ef4 .caladryn-map-pin{width:23px;height:23px}#ef4 .caladryn-map-caption{align-items:center}}
+@media(max-width:680px){#ef4 .caladryn-header{padding:14px}#ef4 .caladryn-header .page-title{font-size:32px}#ef4 .caladryn-map-caption{font-size:10px}#ef4 .caladryn-map-pin{width:30px;height:30px}}
+@media(max-width:420px){#ef4 .caladryn-map-pin{width:23px;height:23px}#ef4 .caladryn-map-caption{align-items:center}}
 @media(prefers-reduced-motion:reduce){#ef4 .caladryn-map-pin.current{animation:none}}
 
 /* Default: scale the entire illustration to the available width.
@@ -61,3 +43,21 @@
  #ef4 .caladryn-map-viewport.zoomed .caladryn-map-canvas{width:1150px;min-width:1150px}
  #ef4 .caladryn-battle-interior{margin-top:15px;padding-top:14px}
 }
+
+/* The illustrated atlas is the sole destination selector. The controls remain
+   visible while the map is collapsed, so getting home never requires reopening it. */
+#ef4 .caladryn-map-region[hidden]{display:none!important}
+#ef4 .caladryn-map-toggle{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:9px 14px;min-height:37px;
+  border-color:#99704c;
+  background:linear-gradient(115deg,#2a3042,#1b2738);
+  color:#f7d3a0;
+}
+#ef4 .caladryn-map-toggle:hover:not(:disabled){background:linear-gradient(115deg,#3e3640,#223044);border-color:#e7ae70}
+#ef4 .caladryn-header.map-collapsed{padding:10px 17px;margin-bottom:9px;gap:10px}
+#ef4 .caladryn-header.map-collapsed .page-title{font-size:clamp(21px,2vw,27px);margin:0}
+#ef4 .caladryn-header.map-collapsed .caladryn-kicker,
+#ef4 .caladryn-header.map-collapsed p{display:none}
+#ef4 .caladryn-header.map-collapsed .caladryn-head-actions{gap:8px}
+#ef4 .caladryn-header.map-collapsed .caladryn-current{padding:7px 10px}
