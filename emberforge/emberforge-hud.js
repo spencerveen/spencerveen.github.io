@@ -14,10 +14,10 @@ function mount(frame){
   var saveButton=header.querySelector("[data-action=save]");
   var forge=root.querySelector("[data-view=forge]"),battle=root.querySelector("[data-view=battle]"),master=id("mastercontent");
   if(!saveButton||!forge||!battle||!master)return;
-  var sheet=doc.createElement("link");sheet.rel="stylesheet";sheet.href="./emberforge-hud.css";doc.head.append(sheet);
+  var sheet=doc.createElement("link");sheet.rel="stylesheet";sheet.href="./emberforge-hud.css?v=3";doc.head.append(sheet);
   header.innerHTML=[
     '<div class="ef-hud-top">',
-      '<img class="ef-hud-logo" src="./emberforge-painted-logo.webp" alt="Emberforge" width="500" height="146" draggable="false">',
+      '<img class="ef-hud-logo" src="./emberforge-logo-v3.webp" alt="Emberforge" width="400" height="117" draggable="false">',
       '<div class="ef-hud-actions" data-hud="actions"></div>',
     '</div>',
     '<div class="ef-hud-vitals">',
