@@ -1,73 +1,88 @@
-/* Emberforge HUD v3. Separate painterly scenery and readable live game statistics. */
+/* Emberforge HUD v4: one compact status rail with live Combat, Embers and HP.
+   Scene and logo art remain separate; gameplay state and save functions are unchanged. */
 #ef4 .ef-head.ef-hud {
-  position:relative; isolation:isolate; overflow:hidden; flex:0 0 auto;
-  padding:6px clamp(10px,1.45vw,24px) 8px;
-  background:
-    linear-gradient(180deg,#070b1123 0%,#070b1150 46%,#070b11df 90%,#080e17 100%),
-    url('./emberforge-scene-v3.webp') center 37% / cover no-repeat;
+  position:relative;isolation:isolate;overflow:hidden;flex:0 0 auto;
+  padding:5px clamp(9px,1.35vw,22px) 8px;
+  background:linear-gradient(180deg,#070b111c 0%,#070b1140 45%,#080e17e8 100%),url('./emberforge-scene-v3.webp') center 35% / cover no-repeat;
   border-bottom:2px solid #a05d37;
-  box-shadow:0 5px 16px #0007, inset 0 -1px #ffc07b55;
+  box-shadow:0 4px 14px #0008,inset 0 -1px #ffc07b55;
 }
 #ef4 .ef-head.ef-hud::before {
   content:"";position:absolute;pointer-events:none;inset:0;z-index:-1;
-  background:linear-gradient(90deg,#080b1025,transparent 25%,transparent 70%,#080b1030),
-    linear-gradient(0deg,#080e1777,transparent 50%);
+  background:linear-gradient(90deg,#080b1030,transparent 26%,transparent 71%,#080b1033),
+    linear-gradient(0deg,#080e1766,transparent 55%);
 }
 #ef4 .ef-hud-top {
   position:relative;display:flex;align-items:flex-start;justify-content:space-between;
-  min-height:115px; gap:14px;
+  min-height:75px;gap:12px;
 }
 #ef4 .ef-hud-logo {
-  display:block; width:clamp(250px,28vw,425px);height:110px;min-width:0;
-  max-width:calc(100% - 172px); flex:0 1 auto;
-  object-fit:contain;object-position:left center;
-  filter:drop-shadow(0 4px 12px #000b);
+  display:block;width:clamp(205px,25vw,360px);height:70px;min-width:0;
+  max-width:calc(100% - 152px);flex:0 1 auto;
+  object-fit:contain;object-position:left center;filter:drop-shadow(0 3px 8px #000d);
 }
-#ef4 .ef-hud-actions {display:flex;align-items:center;gap:9px;flex:0 0 auto;padding-top:10px;}
+#ef4 .ef-hud-actions {display:flex;align-items:center;gap:8px;flex:0 0 auto;padding-top:5px;}
 #ef4 .ef-hud-savebadge {
   display:inline-flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:750;color:#d5eedd;white-space:nowrap;
-  min-height:35px;padding:7px 13px;border-radius:8px;
+  min-height:31px;padding:6px 11px;border-radius:8px;
   border:1px solid #5b796a;background:linear-gradient(180deg,#1c292aee,#101a23ee);
   box-shadow:inset 0 1px #edfbe019,0 3px 8px #0009;
 }
 #ef4 .ef-hud-save {
-  min-height:37px;padding:7px 17px!important;border-radius:8px;
+  min-height:33px;padding:6px 15px!important;border-radius:8px;
   font-weight:850;color:#ffdeb4;border:1px solid #b36a3e;
   background:linear-gradient(180deg,#633c2ded,#23171bee);
   box-shadow:inset 0 1px #f6c28b63,0 3px 12px #0009;
 }
 #ef4 .ef-hud-save:hover {background:linear-gradient(180deg,#835037,#362021);}
 
-/* One continuous dark-steel status rail, not two floating widgets. */
+/* Continuous three-section rail. Fixed-width status counters, flexible health. */
 #ef4 .ef-hud-vitals {
-  position:relative;display:grid;grid-template-columns:minmax(190px,23%) minmax(0,1fr);
-  gap:0; margin-top:-1px; border:1px solid #865338;border-radius:9px;
-  background:linear-gradient(180deg,#10141be8,#0c1018f8);
-  box-shadow:inset 0 1px #dda06a55,0 6px 17px #000a;
+  position:relative;display:grid;
+  grid-template-columns:minmax(175px,220px) minmax(185px,245px) minmax(0,1fr);
+  gap:0;margin-top:0;border:1px solid #865338;border-radius:9px;
+  background:linear-gradient(180deg,#10141bea,#0c1018f9);
+  box-shadow:inset 0 1px #dda06a55,0 5px 14px #000a;
 }
-#ef4 .ef-hud-vitals::before {content:"";pointer-events:none;position:absolute;top:2px;left:6px;right:6px;height:1px;background:linear-gradient(90deg,#d48750,transparent 48%,#d48750);opacity:.55;}
-#ef4 .ef-hud-panel {position:relative;min-width:0;min-height:67px;border:0;border-radius:0;background:transparent;box-shadow:none;}
-#ef4 .ef-hud-combat {display:flex;align-items:center;gap:13px;padding:10px 19px;border-right:1px solid #79503d;}
-#ef4 .ef-hud-combat .ico {width:34px;height:34px;filter:drop-shadow(0 0 4px #d7674160);}
-#ef4 .ef-hud-label {font-weight:850;font-size:clamp(10px,.86vw,12px);text-transform:uppercase;letter-spacing:.105em;color:#dbc2a9;white-space:nowrap;text-shadow:0 2px 5px #000;}
-#ef4 #ef4-topcombat {margin-left:auto;font:700 clamp(27px,2.2vw,36px)/1 Georgia,serif;color:#f8c588;text-shadow:0 0 12px #e8793659;white-space:nowrap;}
-#ef4 .ef-hud-health {padding:10px 17px 11px;}
-#ef4 .ef-hud-health-top {display:flex;align-items:center;gap:10px;min-width:0;}
-#ef4 .ef-hud-heart {color:#f34d44;font-size:23px;line-height:1;text-shadow:0 0 9px #f23a3bad;}
-#ef4 #ef4-tophealth {margin-left:auto;white-space:nowrap;font-size:clamp(15px,1.15vw,18px);font-weight:900;letter-spacing:.01em;color:#f5e6d7;font-variant-numeric:tabular-nums;}
-#ef4 .ef-hud-track {height:13px;margin-top:7px;overflow:hidden;border:1px solid #a65b43;border-radius:4px;background:repeating-linear-gradient(120deg,#25121b 0 13px,#39191f 13px 16px);box-shadow:inset 0 2px 6px #000a;}
-#ef4 .ef-hud-fill {height:100%;max-width:100%;width:100%;background:linear-gradient(180deg,#ffbd8b 0%,#f05a48 24%,#c52837 78%,#8b202d 100%);box-shadow:inset 0 1px #ffcabd9e,0 0 9px #f4433c7a;transition:width .2s ease;}
+#ef4 .ef-hud-vitals::before {
+  content:"";pointer-events:none;position:absolute;top:2px;left:6px;right:6px;height:1px;
+  background:linear-gradient(90deg,#d48750,transparent 48%,#d48750);opacity:.55;
+}
+#ef4 .ef-hud-panel {position:relative;min-width:0;min-height:56px;border:0;border-radius:0;background:transparent;box-shadow:none;}
+#ef4 .ef-hud-label {
+  font-weight:850;font-size:clamp(10px,.82vw,12px);text-transform:uppercase;letter-spacing:.08em;
+  color:#dbc2a9;white-space:nowrap;text-shadow:0 2px 5px #000;
+}
+#ef4 .ef-hud-combat,#ef4 .ef-hud-ember {
+  display:flex;align-items:center;justify-content:flex-start;gap:10px;
+  padding:8px 13px;border-right:1px solid #79503d;
+}
+#ef4 .ef-hud-combat .ico {width:28px;height:28px;filter:drop-shadow(0 0 4px #d7674160);}
+#ef4 .ef-hud-ember .ico {width:24px;height:24px;}
+#ef4 #ef4-topcombat,#ef4 #ef4-ember {
+  margin-left:auto;white-space:nowrap;
+  font:700 clamp(20px,1.65vw,27px)/1 Georgia,serif;
+  color:#ffce90;text-shadow:0 0 10px #e8793659;font-variant-numeric:tabular-nums;
+}
+#ef4 .ef-hud-health {padding:7px 12px 8px;min-width:0;}
+#ef4 .ef-hud-health-top {display:flex;align-items:center;gap:8px;min-width:0;}
+#ef4 .ef-hud-heart {color:#f34d44;font-size:19px;line-height:1;text-shadow:0 0 9px #f23a3bad;}
+#ef4 #ef4-tophealth {
+  margin-left:auto;white-space:nowrap;font-size:clamp(13px,1.03vw,16px);font-weight:900;
+  color:#f5e6d7;font-variant-numeric:tabular-nums;
+}
+#ef4 .ef-hud-track {
+  height:11px;margin-top:5px;overflow:hidden;border:1px solid #a65b43;border-radius:5px;
+  background:repeating-linear-gradient(120deg,#25121b 0 13px,#39191f 13px 16px);
+  box-shadow:inset 0 2px 6px #000a;
+}
+#ef4 .ef-hud-fill {
+  height:100%;max-width:100%;width:100%;
+  background:linear-gradient(180deg,#ffbd8b 0%,#f05a48 24%,#c52837 78%,#8b202d 100%);
+  box-shadow:inset 0 1px #ffcabd9e,0 0 9px #f4433c7a;transition:width .2s ease;
+}
 #ef4 .ef-hud-track.low {border-color:#ffab61;box-shadow:0 0 8px #dc3a3994;}
-
-/* Embers is a compact footer plaque, with room for the actual game beneath. */
-#ef4 .ef-hud-bottom {display:flex;align-items:center;justify-content:center;min-height:49px;margin-top:7px;position:relative;gap:13px;}
-#ef4 .ef-hud-ember {display:flex;align-items:center;justify-content:center;gap:11px;min-width:275px;max-width:100%;min-height:42px;padding:7px 20px;border:1px solid #986044;border-radius:7px;background:linear-gradient(120deg,#241919fa,#121921f5 54%,#2b1c1bfa);box-shadow:inset 0 1px #d09b7050,0 3px 12px #0009;}
-#ef4 .ef-hud-ember .ico {width:23px;height:23px;}
-#ef4 #ef4-ember {color:#ffd49c;font:700 clamp(22px,1.65vw,27px)/1 Georgia,serif;font-variant-numeric:tabular-nums;text-shadow:0 0 9px #e47e4566;}
-#ef4 .ef-hud-decor {position:absolute;z-index:-1;inset:auto 10% auto;display:flex;align-items:center;gap:14px;color:#d18b50;font-size:11px;}
-#ef4 .ef-hud-decor::before,#ef4 .ef-hud-decor::after {content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,#9d5c3980);}
-#ef4 .ef-hud-decor::after {transform:scaleX(-1);}
 #ef4 .ef-hud-hidden {display:none!important;}
 /* Contextual statistics remain in their designated screens. */
 #ef4 .ef-hud-context {display:flex;flex-wrap:wrap;gap:8px;margin:0 0 11px;}
@@ -76,33 +91,47 @@
 #ef4 .ef-hud-metric strong {color:#ffd49c;font-size:14px;}
 #ef4 .ef-hud-ascend {width:max-content;max-width:100%;display:flex;align-items:center;justify-content:center;gap:11px;padding:8px 15px;margin:-2px auto 15px;color:#dec2ef;background:#423052aa;border:1px solid #735b80;border-radius:8px;}
 #ef4 .ef-hud-ascend strong {color:#f5d1ff;font-size:17px;}
-@media(max-width:800px){
-  #ef4 .ef-hud-top{min-height:112px;}
-  #ef4 .ef-hud-logo{width:clamp(200px,43vw,360px);height:105px;max-width:calc(100% - 126px);}
-  #ef4 .ef-hud-vitals{grid-template-columns:minmax(148px,29%) minmax(0,1fr);}
-  #ef4 .ef-hud-combat{gap:8px;padding:9px;}
-  #ef4 .ef-hud-combat .ico{width:29px;height:29px;}
-  #ef4 .ef-hud-health{padding:8px 10px 9px;}
-  #ef4 .ef-hud-actions{gap:6px;}
-  #ef4 .ef-hud-savebadge{padding:7px 8px;}
-  #ef4 .ef-hud-save{padding:7px 10px!important;}
+@media(max-width:900px) {
+  #ef4 .ef-hud-logo {width:clamp(190px,32vw,300px);}
+  #ef4 .ef-hud-vitals {grid-template-columns:minmax(140px,24%) minmax(152px,26%) minmax(0,1fr);}
+  #ef4 .ef-hud-combat,#ef4 .ef-hud-ember {gap:6px;padding:7px 9px;}
+  #ef4 .ef-hud-combat .ico {width:23px;height:23px;}
+  #ef4 .ef-hud-ember .ico {width:21px;height:21px;}
+  #ef4 .ef-hud-label {font-size:10px;letter-spacing:.035em;}
+  #ef4 .ef-hud-health {padding:7px 9px;}
+  #ef4 .ef-hud-actions {gap:5px;}
 }
-@media(max-width:570px){
-  #ef4 .ef-head.ef-hud{padding:6px 9px 8px;}
-  #ef4 .ef-hud-top{min-height:77px;}
-  #ef4 .ef-hud-logo{width:min(58vw,250px);height:72px;max-width:calc(100% - 106px);}
-  #ef4 .ef-hud-savebadge{font-size:0;padding:7px 9px;}
-  #ef4 .ef-hud-savebadge::before{content:"●";font-size:11px;color:#91eeb5;}
-  #ef4 .ef-hud-vitals{grid-template-columns:1fr;}
-  #ef4 .ef-hud-combat{border-right:0;border-bottom:1px solid #79503d;min-height:44px;padding:8px 12px;}
-  #ef4 .ef-hud-health{min-height:60px;}
-  #ef4 .ef-hud-panel{min-height:44px;}
-  #ef4 .ef-hud-track{height:12px;}
-  #ef4 .ef-hud-ember{min-width:min(95%,260px);min-height:38px;padding:6px 13px;}
-  #ef4 .ef-hud-bottom{min-height:41px;margin-top:5px;}
-  #ef4 .ef-hud-label{font-size:10px;letter-spacing:.075em;}
-  #ef4 #ef4-topcombat{font-size:25px;}
-  #ef4 #ef4-ember{font-size:22px;}
+@media(max-width:720px) {
+  /* Two shorter rows on small screens; the health bar gets full width. */
+  #ef4 .ef-hud-vitals {grid-template-columns:repeat(2,minmax(0,1fr));}
+  #ef4 .ef-hud-ember {border-right:0;}
+  #ef4 .ef-hud-health {grid-column:1/-1;border-top:1px solid #79503d;min-height:50px;}
+  #ef4 .ef-hud-top {min-height:68px;}
+  #ef4 .ef-hud-logo {width:min(50vw,260px);height:64px;max-width:calc(100% - 118px);}
+  #ef4 .ef-hud-panel {min-height:47px;}
+  #ef4 .ef-hud-combat,#ef4 .ef-hud-ember {padding:7px 10px;}
+  #ef4 #ef4-topcombat,#ef4 #ef4-ember {font-size:23px;}
 }
-@media(max-width:350px){#ef4 .ef-hud-logo{width:175px;max-width:calc(100% - 100px);}#ef4 .ef-hud-save{padding:6px 8px!important;font-size:11px;}}
-@media(prefers-reduced-motion:reduce){#ef4 .ef-hud-fill{transition:none;}}
+@media(max-width:480px) {
+  #ef4 .ef-head.ef-hud {padding:5px 8px 7px;}
+  #ef4 .ef-hud-top {min-height:59px;gap:6px;}
+  #ef4 .ef-hud-logo {width:min(51vw,218px);height:56px;max-width:calc(100% - 105px);}
+  #ef4 .ef-hud-actions {padding-top:5px;gap:5px;}
+  #ef4 .ef-hud-savebadge {font-size:0;padding:6px 8px;}
+  #ef4 .ef-hud-savebadge::before {content:"●";font-size:11px;color:#91eeb5;}
+  #ef4 .ef-hud-save {padding:5px 9px!important;font-size:11px;min-height:30px;}
+  #ef4 .ef-hud-combat,#ef4 .ef-hud-ember {gap:5px;padding:6px 7px;}
+  #ef4 .ef-hud-label {font-size:9px;letter-spacing:.02em;}
+  #ef4 .ef-hud-combat .ico {width:19px;height:19px;}
+  #ef4 .ef-hud-ember .ico {width:19px;height:19px;}
+  #ef4 #ef4-topcombat,#ef4 #ef4-ember {font-size:20px;}
+  #ef4 .ef-hud-health {padding:6px 8px 8px;}
+  #ef4 .ef-hud-track {height:10px;margin-top:4px;}
+}
+@media(max-width:355px) {
+  #ef4 .ef-hud-logo {width:165px;max-width:calc(100% - 94px);}
+  #ef4 .ef-hud-label {font-size:8px;}
+  #ef4 .ef-hud-combat,#ef4 .ef-hud-ember {gap:3px;padding:6px 5px;}
+  #ef4 #ef4-topcombat,#ef4 #ef4-ember {font-size:18px;}
+}
+@media(prefers-reduced-motion:reduce) {#ef4 .ef-hud-fill {transition:none;}}
