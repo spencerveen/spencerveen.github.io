@@ -26,16 +26,17 @@ function mount(frame){
    el.addEventListener("click",function(){if(button&&!button.disabled)button.click()});
    return el;
  }
- var board=smallCard("HUNT BOARD",battle);
- if(!board)board=elements(battle,"*").find(function(x){return x.children.length===0 && /HUNT BOARD/.test(txt(x))})?.closest(".card,.panel")||null;
+ // Stable engine IDs/classes work in normal fights AND boss encounters.
+ var board=battle.querySelector(".huntboard")||doc.getElementById("ef4-huntsteps")?.closest(".card")||smallCard("HUNT BOARD",battle);
  if(!board){console.warn("[Emberforge Battle] Awaiting Hunt Board");return;}
- var stageButtons=elements(board,"button,[role=button]").filter(function(x){return /#\s*\d+|BOSS|Cinder|Soot|Skeleton|Magma|Revenant|Hound|Imp|Scarab|Marauder/i.test(txt(x))});
+ var stageButtons=elements(doc.getElementById("ef4-huntsteps")||board,"button,[role=button]").filter(function(x){return /#\s*\d+|BOSS|Cinder|Soot|Skeleton|Magma|Revenant|Hound|Imp|Scarab|Marauder/i.test(txt(x))});
  if(stageButtons.length<2){console.warn("[Emberforge Battle] Awaiting stage controls:",stageButtons.length);return;}
  // The stage items are identified once; leave engine-managed listeners intact.
  var training=smallCard("Combat training",battle);
  var report=smallCard("Battle report",battle);
- var enemy=smallCard("CURRENT ENEMY",battle);
- if(!enemy)enemy=elements(battle,"*").find(function(x){return x.children.length===0 && /CURRENT ENEMY/i.test(txt(x))})?.closest(".card,.panel")||null;
+ // The enemy label switches from "Current enemy" to "Realm boss":
+ // never use its changing text as the mount prerequisite.
+ var enemy=doc.getElementById("ef4-enemyname")?.closest(".card")||smallCard("CURRENT ENEMY",battle);
  if(!enemy){console.warn("[Emberforge Battle] Awaiting Current Enemy panel");return;}
  var scene=doc.getElementById("ef4-battlescene")||null;
  if(!scene){
@@ -77,15 +78,15 @@ function mount(frame){
    return null;
  }
  var statusCard=locateAdventurerCard();
- function liveBoard(){return board.isConnected?board:smallCard("HUNT BOARD",battle)}
- function liveEnemy(){return enemy.isConnected?enemy:smallCard("CURRENT ENEMY",battle)}
- function liveStages(){var b=liveBoard();return b?elements(b,"button,[role=button]").filter(function(el){return /#\s*\d+|BOSS|Cinder|Soot|Skeleton|Magma|Revenant|Hound|Imp|Scarab|Marauder/i.test(txt(el))}):[]}
+ function liveBoard(){return board.isConnected?board:(battle.querySelector(".huntboard")||doc.getElementById("ef4-huntsteps")?.closest(".card"))}
+ function liveEnemy(){return enemy.isConnected?enemy:doc.getElementById("ef4-enemyname")?.closest(".card")}
+ function liveStages(){var b=doc.getElementById("ef4-huntsteps")||liveBoard();return b?elements(b,"button,[role=button]").filter(function(el){return /#\s*\d+|BOSS|Cinder|Soot|Skeleton|Magma|Revenant|Hound|Imp|Scarab|Marauder/i.test(txt(el))}):[]}
  function liveControl(re,scope){return findButton(scope||liveEnemy()||battle,re)}
  function activate(el){if(el&&el.isConnected&&!el.disabled){el.click();return true}return false}
- function farmControl(){return liveControl(/Farm Target|Auto.?Farm|Auto Attack/i,liveBoard())||liveControl(/Farm Target|Auto.?Farm|Auto Attack/i)}
- function stopControl(){return liveControl(/^Retreat$|^Stop\b/i)}
- function healControl(){return liveControl(/^Heal\b/i)}
- function strikeControl(){return liveControl(/^Strike(?:\s|$)/i)}
+ function farmControl(){return doc.getElementById("ef4-auto")||liveControl(/Farm Target|Auto.?Farm|Auto Attack/i,liveBoard())||liveControl(/Farm Target|Auto.?Farm|Auto Attack/i)}
+ function stopControl(){return doc.getElementById("ef4-retreat")||liveControl(/^Retreat$|^Stop\b/i)}
+ function healControl(){return doc.getElementById("ef4-potion")||liveControl(/^Heal\b/i)}
+ function strikeControl(){return doc.getElementById("ef4-strike")||liveControl(/^Strike(?:\s|$)/i)}
  // Stage-change notices from the old art layer are redundant with the new
  // realm/stage badge. Hide only the old scene labels; do not silence game logs.
  function hideSceneLabels(){
