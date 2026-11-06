@@ -345,9 +345,11 @@ function mount(frame){
    var enText=txt(liveEnemy()||enemy);
    var name=enText.match(/CURRENT ENEMY\s*(?:\+\S+\s*Ember\s*)?([^\n]*?)(?:\s+\d[\d,.KMB]*\s*\/\s*\d[\d,.KMB]*\s*HP|\s+Enemy hit|\s+\d+\s*\/\s*10)/i);
    var title=elements(enemy,"h1,h2,h3,h4,strong").map(txt).find(function(t){return t&&t!=="CURRENT ENEMY"&&!/^[\d+]/.test(t)&&!/Ember|XP|HP|Attack/i.test(t)});
-   shell.querySelector(".efb-name").textContent=title||name?.[1]?.trim()||stageName||"Current enemy";
+   shell.querySelector(".efb-name").textContent=state?.enemyName||title||name?.[1]?.trim()||stageName||"Current enemy";
    var hp=enText.match(/([\d,.]+[KMB]?)\s*\/\s*([\d,.]+[KMB]?)\s*HP/i);
-   shell.querySelector(".efb-hp-text").textContent=hp?hp[0]:"";
+   shell.querySelector(".efb-hp-text").textContent=state&&Number.isFinite(state.enemyMaxHP)&&state.enemyMaxHP>0
+     ?Math.ceil(state.enemyHP).toLocaleString()+" / "+Math.ceil(state.enemyMaxHP).toLocaleString()+" HP"
+     :hp?hp[0]:"";
    var originalBars=elements(enemy,'[role=progressbar], [id$="enemyhpbar"], [class*="hpbar"], .bar > div');
    var bar=originalBars.find(function(x){return /enemy|hp/i.test(x.id+" "+x.className+" "+x.getAttribute("aria-label"))})||originalBars[0];
    var percent=bar?parseFloat(bar.style.width):NaN;
@@ -355,10 +357,11 @@ function mount(frame){
      var num=function(s){var m=s.match(/([\d,.]+)\s*([KMB])?/i);return m?parseFloat(m[1].replace(/,/g,""))*({K:1e3,M:1e6,B:1e9}[m[2]]||1):NaN};
      percent=100*num(hp[1])/num(hp[2]);
    }
+   if(state&&Number.isFinite(state.enemyHP)&&Number.isFinite(state.enemyMaxHP)&&state.enemyMaxHP>0)percent=100*state.enemyHP/state.enemyMaxHP;
    if(Number.isFinite(percent)){percent=Math.min(100,Math.max(0,percent));shell.querySelector(".efb-health-fill").style.width=percent+"%";shell.querySelector(".efb-health").setAttribute("aria-valuenow",String(Math.round(percent)))}
    var reward=enText.match(/\+\s*[\d,.]+[KMB]?\s*Ember/i);shell.querySelector(".efb-reward").textContent=reward?reward[0]:"";
    var h=healControl(),f=farmControl();
-   // Our Auto Attack runs native Strike clicks, not the engine's farming cycle.
+   // Auto Attack uses the engine's selected-target farming mode.
    // If knocked out, stop until the player explicitly re-enables it.
    var nativeControl=doc.getElementById("ef4-auto");
    if(nativeControl?.disabled&&autoOn)endAuto();
@@ -370,7 +373,7 @@ function mount(frame){
    if(!statusCard||!statusCard.isConnected)statusCard=locateAdventurerCard();
    if(statusCard)statusCard.classList.add("efb-source-hidden");
    var status=statusCard&&txt(statusCard).match(/\b(Resting|In combat|Recovering|Defeated)\b/i);
-   shell.querySelector(".efb-status").textContent=status?status[1]:"";
+   shell.querySelector(".efb-status").textContent=state?(state.down?"Recovering":state.fighting?"In combat":"Resting"):(status?status[1]:"");
 
  }
  // Original interface remains connected so combat, unlocks and saves work.
