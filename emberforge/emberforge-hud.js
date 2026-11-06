@@ -15,6 +15,13 @@ function mount(frame){
   var forge=root.querySelector("[data-view=forge]"),battle=root.querySelector("[data-view=battle]"),master=id("mastercontent");
   if(!saveButton||!forge||!battle||!master)return;
   var sheet=doc.createElement("link");sheet.rel="stylesheet";sheet.href="./emberforge-hud.css?v=4";doc.head.append(sheet);
+  // Apply the in-game navigation theme without touching gameplay or save logic.
+  var sideSheet=doc.createElement("link");
+  sideSheet.rel="stylesheet";
+  sideSheet.href="./emberforge-sidebar.css?v=1";
+  doc.head.append(sideSheet);
+  var nav=root.querySelector("#ef4-nav");
+  if(nav)nav.setAttribute("aria-label","Emberforge game sections");
   header.innerHTML=[
     '<div class="ef-hud-top">',
       '<img class="ef-hud-logo" src="./emberforge-logo-v3.webp" alt="Emberforge" width="400" height="117" draggable="false">',
