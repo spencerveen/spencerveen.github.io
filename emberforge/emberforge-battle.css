@@ -42,3 +42,7 @@
  #ef4 .efb-bottom {bottom:20px;width:calc(100% - 88px)}
  #ef4 .efb-action {font-size:12px;min-height:44px;padding:6px}
 }
+
+/* Remove empty legacy two-column rows after their contents are superseded. */
+#ef4 [data-view=battle].efb-redesigned .grid2:has(> .efb-source-hidden) {display:none!important}
+#ef4 [data-view=battle].efb-redesigned > .efb-shell {width:100%;max-width:none;margin:0 0 12px}
