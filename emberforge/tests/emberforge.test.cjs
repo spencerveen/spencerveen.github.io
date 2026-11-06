@@ -328,3 +328,67 @@ test('Workers guild makeover retains original hiring contracts', () => {
   assert.match(css, /mask-image:radial-gradient/);
   assert.match(css, /@media\(max-width:640px\)/);
 });
+
+test('workforce production milestones apply per type and reset with worker ownership', () => {
+  const source=read('systems/combat.js');
+  const part=source.slice(source.indexOf('const WORKER_MILESTONES='),source.indexOf('const equippedItem='));
+  const worker=['sprite','Spark Sprite','sprite',15,2];
+  const state={gens:{sprite:0}};
+  const context={
+    s:state,workers:[worker],
+    workerUnlocked:()=>true,
+    multiplier:()=>1,activeBuild:()=>0,activeSkill:()=>0,
+    soulfactor:()=>1,skillfactor:()=>1
+  };
+  vm.createContext(context);
+  vm.runInContext(part,context);
+  const calculate=code=>vm.runInContext(code,context);
+  for(const [count,mult] of [[0,1],[9,1],[10,1.05],[25,1.15],[50,1.30],[100,1.50]]) {
+    state.gens.sprite=count;
+    assert.ok(Math.abs(calculate('income()')-count*2*mult)<1e-9,'worker count '+count);
+  }
+  state.gens.sprite=9;
+  assert.ok(Math.abs(calculate('workerMarginalProduction(workers[0])')-(10*2*1.05-9*2))<1e-9);
+  state.gens.sprite=0;
+  assert.equal(calculate('income()'),0,'Ascension resetting workers removes milestone output');
+});
+
+test('four workforce achievements are registered in permanent Mastery honors', () => {
+  const definitions=read('data/definitions.js');
+  const source=definitions.slice(definitions.indexOf('honors.push('),definitions.indexOf('const encounterBook='));
+  const workers=Array.from({length:12},(_,i)=>['worker'+i]);
+  const context={
+    honors:[],workers
+  };
+  vm.createContext(context);
+  vm.runInContext(source,context);
+  assert.equal(context.honors.length,4);
+  const conditions=Object.fromEntries(context.honors.map(h=>[h[0],h[3]]));
+  const state={gens:Object.fromEntries(workers.map(w=>[w[0],0]))};
+  state.gens.worker0=25;
+  assert.equal(conditions.crew25(state),true);
+  assert.equal(conditions.workforce100(state),false);
+  state.gens.worker0=100;
+  assert.equal(conditions.workforce100(state),true);
+  assert.equal(conditions.veterancrew(state),true);
+  state.gens=Object.fromEntries(workers.map(w=>[w[0],1]));
+  assert.equal(conditions.allworkers(state),true);
+  assert.match(read('ui/views.js'), /'ascensions','ach','skills'/);
+  assert.match(read('ui/views.js'), /honorCheck\(\);renderWorkers\(\)/);
+});
+
+test('Workers overview and efficiency use the authoritative production helpers', () => {
+  const html=read('game.html');
+  const views=read('ui/views.js');
+  const css=read('styles/workers.css');
+  assert.match(html,/id="ef4-worker-summary"/);
+  assert.match(views,/function renderWorkerSummary\(/);
+  assert.match(views,/workerProduction\(w\)/);
+  assert.match(views,/workerMarginalProduction\(w\)/);
+  assert.match(views,/WORKER_MILESTONES\.find/);
+  assert.match(views,/costWorker\(w,1\)\.price/);
+  assert.match(views,/renderWorkerSummary\(\)/);
+  assert.match(css,/\.efw-summary-item/);
+  assert.match(css,/\.efw-milestone-track/);
+  assert.doesNotMatch(views.slice(views.indexOf('function renderWorkers()'),views.indexOf('function renderUpgrades()')),/efw-locked/);
+});
