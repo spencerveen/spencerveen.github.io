@@ -8,7 +8,7 @@ function mount(frame){
  if(!battle||battle.dataset.efBattleSkin==="1")return;
  var master=doc.getElementById("ef4-mastercontent");
  if(!master)return;
- var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=3";doc.head.appendChild(s);
+ var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=4";doc.head.appendChild(s);
  var norm=function(t){return (t||"").replace(/\s+/g," ").trim()};
  var txt=function(el){return norm(el&&el.textContent)};
  var elements=function(base,selector){return Array.from(base.querySelectorAll(selector))};
@@ -231,46 +231,9 @@ function mount(frame){
    if(activeTab==="statistics")clonePanel(report,sections.statistics);
  }
  menu.addEventListener("click",function(){refreshMaster()});
-
- // The original game's global hunting toast sits over the HUD, outside the
- // Battle artwork. Suppress ONLY that redundant announcement; leave damage
- // numbers, save notices, level ups, and other game messages untouched.
- var huntingNotice=/^Hunting\s+[\w][\w\s'’·-]{1,85}$/i;
- function hideHuntNotice(node){
-   if(!node)return;
-   var el=node.nodeType===3?node.parentElement:node;
-   if(!el||el.nodeType!==1)return;
-   var candidates=[el];
-   if(el.querySelectorAll)candidates.push.apply(candidates,Array.from(el.querySelectorAll("div,span,p,strong,small,[role=status],[role=alert]")));
-   candidates.forEach(function(candidate){
-     if(candidate.classList.contains("efb-hunt-toast-hidden")||candidate.closest(".efb-shell"))return;
-     var t=(candidate.textContent||"").replace(/\s+/g," ").trim();
-     if(!huntingNotice.test(t))return;
-     // Prefer hiding the full toast capsule, but never a full page/header.
-     var target=candidate;
-     for(var k=0;k<3&&target.parentElement;k++){
-       var parent=target.parentElement;
-       if(parent===root||parent===doc.body||parent.closest(".efb-shell"))break;
-       var pt=(parent.textContent||"").replace(/\s+/g," ").trim();
-       if(pt!==t)break;
-       var rect=parent.getBoundingClientRect();
-       if(rect.width>550||rect.height>140)break;
-       target=parent;
-     }
-     target.classList.add("efb-hunt-toast-hidden");
-   });
- }
- hideHuntNotice(doc.body);
- var toastObserver=new doc.defaultView.MutationObserver(function(mutations){
-   mutations.forEach(function(m){
-     if(m.type==="characterData")hideHuntNotice(m.target);
-     else m.addedNodes.forEach(hideHuntNotice);
-   });
- });
- toastObserver.observe(doc.body,{subtree:true,childList:true,characterData:true});
  tab("original");refresh();
  var timer=doc.defaultView.setInterval(function(){
-   if(!shell.isConnected){doc.defaultView.clearInterval(timer);toastObserver.disconnect();endAuto();return}
+   if(!shell.isConnected){doc.defaultView.clearInterval(timer);endAuto();return}
    refresh();
    if(root.querySelector('[data-view="mastery"].active,[data-view="master"].active'))refreshMaster();
  },750);
