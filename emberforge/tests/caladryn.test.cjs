@@ -1,0 +1,69 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const root=path.resolve(__dirname,'..');
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+
+function setup(location='kingdom'){
+ const s={location,zone:0,stage:8,unlocked:2,stageUnlocked:[10,7,1,0,0,0],
+  items:[{id:'keepsake',locked:true}],equipped:{mainHand:'keepsake'},
+  auto:true,autoMode:'selected',autoProgress:.8,smartResting:false,engagedUntil:1200,
+  enemyTimer:3,enemyHits:2,manualAt:1200,enemyHP:12,downUntil:0,combatMessage:''};
+ let saves=0,sceneUpdates=0;
+ const context={s,Number,realms:[['Ashen Wilds'],['Whispering Forest'],['Frostspire Peaks']],
+  realmAccessible:i=>i>=0&&i<=2,enemy:()=>({hp:100}),note:()=>{},
+  save:()=>saves++,rollBattleBackground:()=>sceneUpdates++,
+  atKingdom:()=>s.location==='kingdom',inExpedition:()=>s.location==='realm'};
+ vm.createContext(context);
+ vm.runInContext(read('systems/travel.js'),context);
+ return {s,run:x=>vm.runInContext(x,context),saves:()=>saves,scenes:()=>sceneUpdates};
+}
+test('traveling to a realm stops old encounters but preserves inventory and equipment',()=>{
+ const x=setup(),items=x.s.items,equipped=x.s.equipped;
+ assert.equal(x.run('travelToRealm(1)'),true);
+ assert.equal(x.s.location,'realm');assert.equal(x.s.zone,1);assert.equal(x.s.stage,1);
+ assert.equal(x.s.auto,false);assert.equal(x.s.autoMode,'off');
+ assert.equal(x.s.engagedUntil,0);assert.equal(x.s.enemyTimer,0);
+ assert.equal(x.s.enemyHits,0);assert.equal(x.s.enemyHP,100);
+ assert.equal(x.s.items,items);assert.equal(x.s.equipped,equipped);
+ assert.equal(x.saves(),1);assert.equal(x.scenes(),1);
+});
+test('players can always return home, even when defeated',()=>{
+ const x=setup('realm');x.s.downUntil=100000;x.s.hp=0;
+ assert.equal(x.run('travelToKingdom()'),true);
+ assert.equal(x.s.location,'kingdom');assert.equal(x.s.auto,false);
+ assert.equal(x.s.stage,8);assert.equal(x.s.hp,0);
+ assert.equal(x.s.items.length,1);assert.equal(x.saves(),1);
+});
+test('locked travel is rejected without changing the last location',()=>{
+ const x=setup();
+ assert.equal(x.run('travelToRealm(4)'),false);
+ assert.equal(x.run('travelToRealm(-1)'),false);
+ assert.equal(x.run('travelToRealm(1.5)'),false);
+ assert.equal(x.s.location,'kingdom');assert.equal(x.saves(),0);
+});
+test('World includes Kingdom and six realms, but keeps Kingdom services local',()=>{
+ const html=read('game.html'),view=read('ui/views.js'),def=read('data/definitions.js');
+ const clean=read('core/formatting.js'),combat=read('systems/combat.js'),loop=read('core/loop.js');
+ assert.match(html,/id="ef4-mapmarkers"/);
+ assert.match(html,/id="ef4-kingdominterior"/);
+ assert.match(html,/id="ef4-worldlocation"/);
+ assert.match(html,/data-return-home/);
+ assert.doesNotMatch(html,/data-page="kingdom"/);
+ assert.doesNotMatch(html,/data-view="kingdom"/);
+ assert.match(html,/systems\/travel\.js\?v=/);
+ assert.match(view,/const CALADRYN_STOPS=\[/);
+ assert.match(view,/if\(home\)renderKingdom\(\)/);
+ assert.match(view,/if\(!atKingdom\(\)\)\{toast\('Return to the Kingdom to construct buildings/);
+ assert.match(view,/if\(b\.dataset\.sell\)\{if\(!atKingdom\(\)\)return;/);
+ assert.match(view,/function inventorySell\(predicate\)\{if\(!atKingdom\(\)\)return;/);
+ assert.match(view,/travelToRealm\(z\)/);
+ assert.match(view,/travelToKingdom\(\)/);
+ assert.match(def,/location:'kingdom'/);
+ assert.match(clean,/obj\.location\)\?obj\.location:'realm'/);
+ assert.match(combat,/const activeFight=\(\)=>inExpedition\(\)/);
+ assert.match(loop,/location:s\.location/);
+});
