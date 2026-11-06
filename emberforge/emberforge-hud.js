@@ -14,7 +14,7 @@ function mount(frame){
   var saveButton=header.querySelector("[data-action=save]");
   var forge=root.querySelector("[data-view=forge]"),battle=root.querySelector("[data-view=battle]"),master=id("mastercontent");
   if(!saveButton||!forge||!battle||!master)return;
-  var sheet=doc.createElement("link");sheet.rel="stylesheet";sheet.href="./emberforge-hud.css?v=4";doc.head.append(sheet);
+  var sheet=doc.createElement("link");sheet.rel="stylesheet";sheet.href="./emberforge-hud.css?v=5";doc.head.append(sheet);
   // Apply the in-game navigation theme without touching gameplay or save logic.
   var sideSheet=doc.createElement("link");
   sideSheet.rel="stylesheet";
@@ -28,7 +28,7 @@ function mount(frame){
       '<div class="ef-hud-actions" data-hud="actions"></div>',
     '</div>',
     '<div class="ef-hud-vitals">',
-      '<div class="ef-hud-combat ef-hud-panel"><span data-hud="combat-icon"></span><span class="ef-hud-label">Combat level</span><strong data-hud="combat-value"></strong></div>',
+      '<div class="ef-hud-combat ef-hud-panel"><div class="ef-hud-combat-line"><span data-hud="combat-icon"></span><span class="ef-hud-label">Combat level</span><strong data-hud="combat-value"></strong></div><div class="ef-hud-xp-track" role="progressbar" aria-label="Combat experience to next level" aria-valuemin="0" aria-valuemax="100"><span class="ef-hud-xp-fill"></span></div></div>',
       '<div class="ef-hud-ember ef-hud-panel"><span data-hud="ember-icon"></span><span class="ef-hud-label">Total Embers</span><strong data-hud="ember-value"></strong></div>',
       '<div class="ef-hud-health ef-hud-panel">',
         '<div class="ef-hud-health-top"><span class="ef-hud-heart" aria-hidden="true">♥</span><span class="ef-hud-label">Health</span><strong data-hud="health-value"></strong></div>',
@@ -63,7 +63,20 @@ function mount(frame){
   battleRow.append(metric(old["cur-power"],old.power,"Attack damage",""));
   battle.querySelector(".space").insertAdjacentElement("afterend",battleRow);
   var bar=doc.getElementById("ef-hud-health-fill"),track=doc.getElementById("ef-hud-health-track"),source=id("playerhpbar");
+  var combatXpTrack=header.querySelector(".ef-hud-xp-track");
+  var combatXpFill=header.querySelector(".ef-hud-xp-fill");
+  function refreshCombatXp(){
+    var exact=id("playerxpbar")||id("combatxpbar")||id("xpbar");
+    var candidates=exact?[exact]:Array.from(battle.querySelectorAll('[id*="xpbar"],[class*="xpbar"],[role="progressbar"]'));
+    var xp=candidates.find(function(el){return /combat|xp/i.test((el.id||"")+" "+(el.className||"")) && Number.isFinite(parseFloat(el.style.width))});
+    if(!xp)xp=candidates.find(function(el){return Number.isFinite(parseFloat(el.style.width)) && /xp/i.test((el.parentElement?.textContent||"").slice(0,150))});
+    if(!xp){combatXpTrack.style.visibility="hidden";return}
+    var percent=Math.min(100,Math.max(0,parseFloat(xp.style.width)));
+    combatXpTrack.style.visibility="visible";combatXpFill.style.width=percent+"%";
+    combatXpTrack.setAttribute("aria-valuenow",String(Math.round(percent)));
+  }
   function update(){
+    refreshCombatXp();
     var pct=source?parseFloat(source.style.width):100;
     if(!Number.isFinite(pct))pct=100;
     pct=Math.max(0,Math.min(100,pct));
@@ -90,7 +103,9 @@ function mount(frame){
     var n=new MutationObserver(mountAscension);
     n.observe(master,{childList:true});
   }
-  mountAscension();update();doc.title="Emberforge";
+  mountAscension();update();
+  var xpPoll=doc.defaultView.setInterval(function(){if(!header.isConnected){doc.defaultView.clearInterval(xpPoll);return}refreshCombatXp()},900);
+  doc.title="Emberforge";
 }
 window.EmberforgeHUD={mount:mount};
 })();
