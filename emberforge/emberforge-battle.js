@@ -295,11 +295,25 @@ function mount(frame){
    return routineNotice.test(t)||importantNotice.test(t);
  }
  function routeBattleToasts(){
+   // Preserve engine notifications in the arena without restoring the
+   // unwanted boss introduction or routine auto/farming status messages.
+   var nativeToast=doc.getElementById("ef4-toast");
+   if(nativeToast&&nativeToast.style.display!=="none"){
+     var notification=txt(nativeToast);
+     if(notification&&lastToastMessage.get(nativeToast)!==notification){
+       if(!routineNotice.test(notification)&&
+          !/^Bosses?\\s+(?:strike|attack|use|have)\\b.*(?:special|fourth|4th)/i.test(notification)){
+         queueEvent(notification);
+       }
+       lastToastMessage.set(nativeToast,notification);
+     }
+     if(notification)nativeToast.classList.add("efb-native-toast-hidden");
+   }
    // The overlay can be reused to show new text. Do not permanently hide
    // non-battle content when that happens.
    elements(root,".efb-native-toast-hidden").forEach(function(el){
      var message=txt(el);
-     if(!isToastText(message)){
+     if(!isToastText(message)&&el.id!=="ef4-toast"){
        el.classList.remove("efb-native-toast-hidden");
        lastToastMessage.delete(el);
        return;
