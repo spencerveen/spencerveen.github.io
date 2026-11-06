@@ -194,9 +194,9 @@ function mount(frame){
      }
    });
  }
- // Let the original game own combat timers, damage, retaliation and recovery.
- // Its native Auto control cycles OFF -> Farm Target -> Smart Hunt -> OFF.
- // The redesigned control exposes only OFF / ON (Farm Target), never Smart Hunt.
+ // Use the game's actual Strike control, which calls manualAttack().
+ // A native Strike activates the encounter, starts enemy retaliation,
+ // and applies damage/cooldown through the original engine.
  function nativeAutoMode(){
    var control=doc.getElementById("ef4-auto");
    if(!control)return "unknown";
@@ -206,25 +206,40 @@ function mount(frame){
    if(/Auto OFF/i.test(label))return "off";
    return "unknown";
  }
- function changeNativeAuto(desired){
-   var control=doc.getElementById("ef4-auto");
-   if(!control||control.disabled)return false;
-   var mode=nativeAutoMode();
-   // At most two native clicks: selected -> smart -> off,
-   // or smart -> off -> selected. The engine updates its label in stats().
-   for(var attempts=0;attempts<3&&mode!=="unknown"&&mode!==desired;attempts++){
+ function stopNativeAuto(){
+   var control=doc.getElementById("ef4-auto"),mode=nativeAutoMode();
+   if(!control||control.disabled)return mode==="off";
+   for(var i=0;i<3&&mode!=="off"&&mode!=="unknown";i++){
      if(!activate(control))break;
      var updated=nativeAutoMode();
      if(updated===mode)break;
      mode=updated;
    }
-   return mode===desired;
+   return mode==="off";
+ }
+ var autoTimer=null,lastStrike=0;
+ function attackTick(){
+   if(!autoOn||!shell.isConnected){
+     if(autoTimer){doc.defaultView.clearInterval(autoTimer);autoTimer=null;}
+     return;
+   }
+   var strike=strikeControl();
+   if(strike&&strike.isConnected&&!strike.disabled&&Date.now()-lastStrike>=650){
+     if(activate(strike))lastStrike=Date.now();
+   }
+   // The native engine handles enemy attacks as soon as Strike engages combat.
  }
  function beginAuto(){
-   if(changeNativeAuto("selected"))autoOn=true;
+   // Disarm legacy farming first. Do not click a target or Retreat.
+   if(!stopNativeAuto())return;
+   autoOn=true;
+   if(autoTimer)doc.defaultView.clearInterval(autoTimer);
+   attackTick();
+   autoTimer=doc.defaultView.setInterval(attackTick,700);
  }
  function endAuto(){
-   if(changeNativeAuto("off"))autoOn=false;
+   autoOn=false;
+   if(autoTimer){doc.defaultView.clearInterval(autoTimer);autoTimer=null;}
  }
  var autoButton=doc.createElement("button");autoButton.type="button";autoButton.className="efb-action efb-attack";
  var healButton=doc.createElement("button");healButton.type="button";healButton.className="efb-action efb-heal";
@@ -411,10 +426,11 @@ function mount(frame){
    if(Number.isFinite(percent)){percent=Math.min(100,Math.max(0,percent));shell.querySelector(".efb-health-fill").style.width=percent+"%";shell.querySelector(".efb-health").setAttribute("aria-valuenow",String(Math.round(percent)))}
    var reward=enText.match(/\+\s*[\d,.]+[KMB]?\s*Ember/i);shell.querySelector(".efb-reward").textContent=reward?reward[0]:"";
    var h=healControl(),f=farmControl();
-   // Sync with engine state, including automatic stop on defeat.
-   var nativeMode=nativeAutoMode();
-   if(nativeMode!=="unknown")autoOn=nativeMode!=="off";
-   autoButton.disabled=nativeMode==="unknown"||!!doc.getElementById("ef4-auto")?.disabled;
+   // Our Auto Attack runs native Strike clicks, not the engine's farming cycle.
+   // If knocked out, stop until the player explicitly re-enables it.
+   var nativeControl=doc.getElementById("ef4-auto");
+   if(nativeControl?.disabled&&autoOn)endAuto();
+   autoButton.disabled=!strikeControl()||!!nativeControl?.disabled;
    autoButton.textContent="Auto Attack: "+(autoOn?"On":"Off");
    autoButton.setAttribute("aria-pressed",String(autoOn));
    healButton.disabled=!h||h.disabled;
