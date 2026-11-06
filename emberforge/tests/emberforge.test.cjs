@@ -774,3 +774,17 @@ test('Adventurer portraits have no visible diamond markers over characters',()=>
  }
  assert.doesNotMatch(css,/efg-anchor-aura|efg-anchor-mark/);
 });
+
+test('Armory banner uses committed optimized image with readable gradient overlay',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=read('styles/armory.css');
+ const asset=fs.readFileSync(path.join(gameDir,'art','armory-banner.webp'));
+ assert.equal(asset.toString('ascii',0,4),'RIFF');
+ assert.equal(asset.toString('ascii',8,12),'WEBP');
+ assert.equal(asset.readUInt32LE(4)+8,asset.length);
+ assert.ok(asset.length>1000 && asset.length<30000);
+ assert.match(css,/url\('\.\.\/art\/armory-banner\.webp'\)/);
+ assert.match(css,/\.efg-armory-header\{/);
+ assert.match(css,/rgba\(9,15,28,\.82\)/);
+ assert.match(css,/\.efg-armory-best/);
+});
