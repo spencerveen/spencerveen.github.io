@@ -40,6 +40,6 @@ for(const slot of EQUIPMENT_SLOT_KEYS){
  if(equippedIds.has(x.equipped[slot]))x.equipped[slot]=null;
  if(x.equipped[slot])equippedIds.add(x.equipped[slot]);
 }
-x.avatarBody='neutral';
+x.avatarBody=['male','female'].includes(obj.avatarBody)?obj.avatarBody:'male';x.avatarName=typeof obj.avatarName==='string'?obj.avatarName.trim().slice(0,32):'';
 x.claimed=Array.isArray(obj.claimed)?obj.claimed.filter(z=>typeof z==='string').slice(0,30):[];x.ach=Array.isArray(obj.ach)?obj.ach.filter(z=>typeof z==='string').slice(0,20):[];x.journal=Array.isArray(obj.journal)?obj.journal.filter(z=>typeof z==='string').slice(0,8):[];
 x.bounty=Math.max(0,Math.floor(clamp(x.bounty,0,1e5)));x.bountyStart=Math.max(0,Math.floor(clamp(x.bountyStart,0,1e12)));x.auto=!!x.auto;x.autoProgress=clamp(x.autoProgress,0,1);x.upgradeView=['unlocked','affordable','all'].includes(x.upgradeView)?x.upgradeView:'unlocked';x.showOwned=!!x.showOwned;x.kingdomVistaMax=Math.floor(clamp(x.kingdomVistaMax??0,0,5));x.version=7;x.updated=Number.isFinite(+x.updated)?+x.updated:Date.now();delete x.event;delete x.eventEnd;delete x.nextEvent;return x;}
