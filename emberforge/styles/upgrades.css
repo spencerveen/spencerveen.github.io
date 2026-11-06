@@ -1,7 +1,7 @@
 /* Arcane Upgrades visual skin. State, prices and purchases stay in the game engine. */
 #ef4 [data-view="upgrades"].active{position:relative;isolation:isolate;padding:3px 2px 20px}
 #ef4 [data-view="upgrades"]::before{content:"";position:absolute;inset:-15px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 94% 10%,#8743222b,transparent 47%),radial-gradient(ellipse at 2% 82%,#53345626,transparent 46%),linear-gradient(130deg,#0b1324,#101726 70%,#0b1120)}
-#ef4 .efa-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;padding:15px 18px 19px;margin-bottom:12px;border:1px solid #895d45;border-radius:13px;background:linear-gradient(115deg,#1b2233,#141b2c 62%,#281e2b);box-shadow:inset 0 1px #f5b56b4c,0 9px 23px #0005}
+#ef4 .efa-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;padding:15px 18px 19px;margin-bottom:12px;border:1px solid #895d45;border-radius:13px;background:linear-gradient(90deg,rgba(9,15,29,.72),rgba(12,19,33,.55) 47%,rgba(10,17,30,.78)),url('../art/upgrades-banner.webp') center/100% 100% no-repeat;box-shadow:inset 0 1px #f5b56b4c,0 9px 23px #0005}
 #ef4 .efa-heading{display:flex;align-items:center;gap:15px;min-width:0}
 #ef4 .efa-crest{display:grid;place-items:center;flex:0 0 65px;width:65px;height:68px;border:1px solid #b87f50;border-radius:12px;background:radial-gradient(circle,#663c41,#28243c 62%,#1b2235);color:#ffba6c;font-family:Georgia,serif;font-size:36px;text-shadow:0 0 18px #ff9e55}
 #ef4 .efa-header .page-title{margin:0;color:#ffdebb;font-family:Georgia,serif;font-size:clamp(25px,3.1vw,39px);font-weight:760;letter-spacing:-.5px;text-shadow:0 0 17px #e8873b35}
