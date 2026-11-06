@@ -67,11 +67,11 @@
     if (!d || !d.body) return;
     const all = d.body.querySelectorAll('div, p, aside, section, span, small, strong');
     for (const el of all) {
-      const value = (el.textContent || '').replace(/\\s+/g, ' ').trim();
+      const value = (el.textContent || '').replace(/\s+/g, ' ').trim();
       if (!value.includes('Bosses strike hard with a special every fourth hit.') ||
           !value.includes('Legendary drops start at Obsidian Wastes.')) continue;
       if (Array.from(el.children).some(child => {
-        const t = (child.textContent || '').replace(/\\s+/g, ' ');
+        const t = (child.textContent || '').replace(/\s+/g, ' ');
         return t.includes('Bosses strike hard with a special every fourth hit.') &&
                t.includes('Legendary drops start at Obsidian Wastes.');
       })) continue;
