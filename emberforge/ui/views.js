@@ -63,7 +63,29 @@ function stats(){
 }
 function renderTraining(){let box=$('traininglist'),cap=trainingCap();box.innerHTML=TRAINING.map(t=>{let lv=s.training[t[0]]||0,c=trainCost(t),maxed=lv>=cap;return `<div class="train-item"><div class="smalltop"><strong>${t[1]}</strong><span class="pill">Lv ${lv}/${cap}</span></div><div class="hint">${t[3]}${lv>cap?' · extra ranks dormant until Ascension':''}</div><div class="space" style="margin-top:auto"><span class="price">${maxed?(cap>=30?'MAX':'Next cap: Ascension') :fmt(c)+' Ember'}</span><button class="btn" data-train="${t[0]}" data-price="${c}" ${maxed||s.ember<c?'disabled':''}>Train</button></div></div>`}).join('')}
 function shopButton(action,id,price,disabled,text='Buy'){return `<button class="btn btn-gold" data-${action}="${esc(id)}" data-price="${price}" ${disabled?'disabled':''}>${text}</button>`}
-function renderWorkers(){let visible=workers.filter(workerUnlocked);$('workerlist').innerHTML=visible.map(w=>{let c=costWorker(w,buyMode),owned=s.gens[w[0]]||0;return `<div class="shopitem"><div class="space"><span class="small-icon">${iconHTML(w[2],'lg')}</span><span class="pill">Owned ${fmt(owned)}</span></div><div><strong>${w[1]}</strong><div class="hint">${w[5]}</div></div><div class="hint">+${fmt(w[4])} / sec each · +${fmt(w[4]*c.count)} base / sec</div><div class="shopbottom"><span class="price">${c.count?short(c.price):'MAXED'}</span>${shopButton('worker',w[0],c.price,c.count===0||s.ember<c.price,c.count?'Hire '+(buyMode==='max'?'×'+fmt(c.count):'×'+c.count):'Not enough')}</div></div>`}).join('');let next=workers.filter(w=>!workerUnlocked(w)).slice(0,2);if(next.length)$('workerlist').innerHTML+=`<div class="upgrade-empty"><strong>More workers await</strong><div class="hint" style="margin-top:8px">${next.map(w=>w[1]+' · Asc '+workerReq(w)[1]+', Forge '+workerReq(w)[2]).join(' · ')}</div></div>`}
+function renderWorkers(){
+ const visible=workers.filter(workerUnlocked);
+ $('workerlist').innerHTML=visible.map(w=>{
+   const c=costWorker(w,buyMode),owned=s.gens[w[0]]||0;
+   const unit=fmt(w[4]),batch=fmt(w[4]*c.count);
+   const label=c.count?'Hire '+(buyMode==='max'?'×'+fmt(c.count):'×'+c.count):'Unavailable';
+   return `<article class="efw-worker shopitem">
+     <div class="efw-portrait" aria-hidden="true"><span class="efw-portrait-glow"></span>${iconHTML(w[2],'xl')}</div>
+     <div class="efw-worker-info">
+       <div class="efw-title-row"><div class="efw-worker-title"><strong>${esc(w[1])}</strong><p>${esc(w[5])}</p></div><span class="efw-owned pill">Owned <b>${fmt(owned)}</b></span></div>
+       <div class="efw-output"><span class="efw-flame" aria-hidden="true">✦</span><span>+${unit} / sec each</span><span class="efw-output-divider">·</span><span>+${batch} base / sec</span></div>
+       <div class="efw-bottom shopbottom"><span class="efw-price price"><span aria-hidden="true">◆</span> ${c.count?short(c.price):'MAXED'}</span>${shopButton('worker',w[0],c.price,c.count===0||s.ember<c.price,label)}</div>
+     </div>
+   </article>`;
+ }).join('');
+ const next=workers.filter(w=>!workerUnlocked(w)).slice(0,2);
+ if(next.length)$('workerlist').innerHTML+=`<div class="efw-locked">
+   <span class="efw-lock" aria-hidden="true">♜</span>
+   <div class="efw-locked-heading">More workers await</div>
+   <div class="efw-locked-subtitle">Expand your workforce to unlock greater production.</div>
+   <div class="efw-upcoming">${next.map(w=>`<div class="efw-upcoming-tier"><strong>${esc(w[1])}</strong><span>Asc ${workerReq(w)[1]} · Forge ${workerReq(w)[2]}</span></div>`).join('')}</div>
+ </div>`;
+}
 function renderUpgrades(){
  let view=s.upgradeView||'unlocked',showOwned=!!s.showOwned;
  $('upgradeview').value=view;$('showowned').checked=showOwned;
