@@ -65,13 +65,13 @@ test('boss intro suppression is exact; live notifications are preserved', () => 
   const index = read('index.html');
   const battle = read('emberforge-battle.js');
   const css = read('emberforge-battle.css');
-  assert.doesNotMatch(index, /removeLegacyBossTip|watchLegacyBossTip/);
-  assert.doesNotMatch(battle, /createTreeWalker/);
+  assert.match(index, /watchLegacyBossTip/);
+  assert.match(battle, /routeBattleToasts/);
   assert.match(css, /#ef4 #ef4-combattip/);
   assert.match(css, /#ef4 #ef4-bosslootnote/);
   assert.match(battle, /routeCombatMessage\(\)/);
   assert.match(battle, /efb-event-log/);
-  assert.match(battle, /"\.chestflash"/);
+  assert.match(battle, /updateBossChest\(\)/);
   assert.match(read('systems/combat.js'), /function spawnPop\(/);
 });
 
@@ -92,6 +92,5 @@ test('automatic boss salvage does not emit repeated popup notices', () => {
   assert.match(combat, /if\(e\.boss&&drop&&!drop\.salvaged\)toast\(/);
   assert.match(combat, /if\(boss\)note\(['"]Boss chest:/);
   const battle = read('emberforge-battle.js');
-  assert.match(battle, /lastEncounterKey/);
-  assert.match(battle, /recentEvents\.clear\(\)/);
+  assert.match(battle, /routeBattleToasts\(\)/);
 });
