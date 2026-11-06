@@ -14,7 +14,7 @@ function mount(frame){
   var saveButton=header.querySelector("[data-action=save]");
   var forge=root.querySelector("[data-view=forge]"),battle=root.querySelector("[data-view=battle]"),master=id("mastercontent");
   if(!saveButton||!forge||!battle||!master)return;
-  var sheet=doc.createElement("link");sheet.rel="stylesheet";sheet.href="./emberforge-hud.css?v=3";doc.head.append(sheet);
+  var sheet=doc.createElement("link");sheet.rel="stylesheet";sheet.href="./emberforge-hud.css?v=4";doc.head.append(sheet);
   header.innerHTML=[
     '<div class="ef-hud-top">',
       '<img class="ef-hud-logo" src="./emberforge-logo-v3.webp" alt="Emberforge" width="400" height="117" draggable="false">',
@@ -22,14 +22,12 @@ function mount(frame){
     '</div>',
     '<div class="ef-hud-vitals">',
       '<div class="ef-hud-combat ef-hud-panel"><span data-hud="combat-icon"></span><span class="ef-hud-label">Combat level</span><strong data-hud="combat-value"></strong></div>',
+      '<div class="ef-hud-ember ef-hud-panel"><span data-hud="ember-icon"></span><span class="ef-hud-label">Total Embers</span><strong data-hud="ember-value"></strong></div>',
       '<div class="ef-hud-health ef-hud-panel">',
         '<div class="ef-hud-health-top"><span class="ef-hud-heart" aria-hidden="true">♥</span><span class="ef-hud-label">Health</span><strong data-hud="health-value"></strong></div>',
         '<div id="ef-hud-health-track" class="ef-hud-track" role="progressbar" aria-label="Adventurer HP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="ef-hud-health-fill" class="ef-hud-fill"></div></div>',
       '</div>',
     '</div>',
-    '<div class="ef-hud-bottom"><div class="ef-hud-ember">',
-      '<span data-hud="ember-icon"></span><span class="ef-hud-label">Total Embers</span><strong data-hud="ember-value"></strong>',
-    '</div><span class="ef-hud-decor" aria-hidden="true">✧</span></div>',
     '<div class="ef-hud-hidden" hidden aria-hidden="true"></div>'
   ].join("");
   header.classList.add("ef-hud");header.dataset.hudRedesigned="1";
