@@ -194,31 +194,37 @@ function mount(frame){
      }
    });
  }
- var lastStrike=0,autoTimer=null;
- function attackTick(){
-   if(!autoOn||!shell.isConnected){
-     if(autoTimer){doc.defaultView.clearInterval(autoTimer);autoTimer=null}
-     return;
+ // Let the original game own combat timers, damage, retaliation and recovery.
+ // Its native Auto control cycles OFF -> Farm Target -> Smart Hunt -> OFF.
+ // The redesigned control exposes only OFF / ON (Farm Target), never Smart Hunt.
+ function nativeAutoMode(){
+   var control=doc.getElementById("ef4-auto");
+   if(!control)return "unknown";
+   var label=txt(control);
+   if(/Smart Hunt/i.test(label))return "smart";
+   if(/Farm Target/i.test(label))return "selected";
+   if(/Auto OFF/i.test(label))return "off";
+   return "unknown";
+ }
+ function changeNativeAuto(desired){
+   var control=doc.getElementById("ef4-auto");
+   if(!control||control.disabled)return false;
+   var mode=nativeAutoMode();
+   // At most two native clicks: selected -> smart -> off,
+   // or smart -> off -> selected. The engine updates its label in stats().
+   for(var attempts=0;attempts<3&&mode!=="unknown"&&mode!==desired;attempts++){
+     if(!activate(control))break;
+     var updated=nativeAutoMode();
+     if(updated===mode)break;
+     mode=updated;
    }
-   var strike=strikeControl();
-   // Let the original combat engine enforce hit damage and cooldown.
-   if(strike&&!strike.disabled&&Date.now()-lastStrike>=650){
-     if(activate(strike))lastStrike=Date.now();
-   }
+   return mode===desired;
  }
  function beginAuto(){
-   if(autoOn)return;
-   // Auto Attack controls ONLY repeated strikes. Clicking Farm Target here
-   // retargets/resets the boss encounter and can refill its health.
-   autoOn=true;
-   if(autoTimer)doc.defaultView.clearInterval(autoTimer);
-   attackTick();
-   autoTimer=doc.defaultView.setInterval(attackTick,700);
+   if(changeNativeAuto("selected"))autoOn=true;
  }
  function endAuto(){
-   // Never click the legacy Retreat control just to toggle Auto Attack off.
-   autoOn=false;
-   if(autoTimer){doc.defaultView.clearInterval(autoTimer);autoTimer=null}
+   if(changeNativeAuto("off"))autoOn=false;
  }
  var autoButton=doc.createElement("button");autoButton.type="button";autoButton.className="efb-action efb-attack";
  var healButton=doc.createElement("button");healButton.type="button";healButton.className="efb-action efb-heal";
@@ -405,7 +411,10 @@ function mount(frame){
    if(Number.isFinite(percent)){percent=Math.min(100,Math.max(0,percent));shell.querySelector(".efb-health-fill").style.width=percent+"%";shell.querySelector(".efb-health").setAttribute("aria-valuenow",String(Math.round(percent)))}
    var reward=enText.match(/\+\s*[\d,.]+[KMB]?\s*Ember/i);shell.querySelector(".efb-reward").textContent=reward?reward[0]:"";
    var h=healControl(),f=farmControl();
-   autoButton.disabled=false;
+   // Sync with engine state, including automatic stop on defeat.
+   var nativeMode=nativeAutoMode();
+   if(nativeMode!=="unknown")autoOn=nativeMode!=="off";
+   autoButton.disabled=nativeMode==="unknown"||!!doc.getElementById("ef4-auto")?.disabled;
    autoButton.textContent="Auto Attack: "+(autoOn?"On":"Off");
    autoButton.setAttribute("aria-pressed",String(autoOn));
    healButton.disabled=!h||h.disabled;
@@ -477,7 +486,7 @@ function mount(frame){
  toastObserver.observe(root,{subtree:true,childList:true,characterData:true});
  tab("original");refresh();
  var timer=doc.defaultView.setInterval(function(){
-   if(!shell.isConnected){doc.defaultView.clearInterval(timer);toastObserver.disconnect();endAuto();return}
+   if(!shell.isConnected){doc.defaultView.clearInterval(timer);toastObserver.disconnect();return}
    refresh();
    if(root.querySelector('[data-view="mastery"].active,[data-view="master"].active'))refreshMaster();
  },750);
