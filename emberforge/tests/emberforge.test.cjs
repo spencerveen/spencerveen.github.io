@@ -605,3 +605,19 @@ test('empty Jewelry placeholders load optimized assets and reuse one ring image'
  assert.match(gear,/iconHTML\(def\[2\],'lg'\)/);
  assert.match(css,/\.efg-slot-badge \.efg-slot-placeholder-art/);
 });
+
+test('Equipped placeholders have distinct art tiles and preserve live loot artwork',()=>{
+ const views=read('ui/views.js'),css=read('styles/armory.css');
+ const art=fs.readFileSync(path.join(gameDir,'art','armory-equipped-placeholders.webp'));
+ assert.equal(art.toString('ascii',0,4),'RIFF');
+ assert.equal(art.toString('ascii',8,12),'WEBP');
+ assert.equal(art.readUInt32LE(4)+8,art.length);
+ const gear=views.slice(views.indexOf('function renderGear(){'),views.indexOf(' const equippedSlots=',views.indexOf('function renderGear(){')));
+ assert.match(gear,/helmet:0,chest:1,gloves:2,legs:3,boots:4,mainHand:5,offHand:6,back:7/);
+ assert.match(gear,/Object\.prototype\.hasOwnProperty\.call\(equippedEmptyArt,key\)/);
+ assert.match(gear,/efg-equipped-placeholder-/);
+ assert.match(gear,/g\?lootVisual\(g\.icon,'lg'\)/);
+ for(let n=0;n<8;n++)assert.ok(css.includes('.efg-equipped-placeholder-'+n+'{background-position-x:'),'missing atlas position '+n);
+ assert.match(css,/armory-equipped-placeholders\.webp/);
+ assert.match(gear,/jewelryEmptyArt\[key\]/);
+});
