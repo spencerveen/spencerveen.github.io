@@ -17,7 +17,7 @@ function mount(frame){
  if(!battle||battle.dataset.efBattleSkin==="1")return;
  var master=doc.getElementById("ef4-mastercontent");
  if(!master)return;
- var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=10";doc.head.appendChild(s);
+ var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=11";doc.head.appendChild(s);
  var norm=function(t){return (t||"").replace(/\s+/g," ").trim()};
  var txt=function(el){return norm(el&&el.textContent)};
  var elements=function(base,selector){return Array.from(base.querySelectorAll(selector))};
@@ -317,7 +317,7 @@ function mount(frame){
      var notification=txt(nativeToast);
      if(notification&&lastToastMessage.get(nativeToast)!==notification){
        if(!routineNotice.test(notification)&&
-          !/^Bosses?\\s+(?:strike|attack|use|have)\\b.*(?:special|fourth|4th)/i.test(notification)){
+          !/^Bosses?\s+(?:strike|attack|use|have)\b.*(?:special|fourth|4th)/i.test(notification)){
          queueEvent(notification);
        }
        lastToastMessage.set(nativeToast,notification);
