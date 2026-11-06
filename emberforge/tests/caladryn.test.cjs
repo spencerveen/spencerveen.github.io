@@ -67,3 +67,25 @@ test('World includes Kingdom and six realms, but keeps Kingdom services local',(
  assert.match(combat,/const activeFight=\(\)=>inExpedition\(\)/);
  assert.match(loop,/location:s\.location/);
 });
+
+test('Caladryn map artwork is self-contained and aligned with interactive waypoints',()=>{
+ const html=read('game.html'),map=read('art/caladryn-world-map.svg'),css=read('styles/world.css'),view=read('ui/views.js');
+ assert.match(map,/<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+ assert.match(map,/viewBox="0 0 1672 941"/);
+ assert.match(map,/<\/svg>\s*$/);
+ assert.match(map,/CALADRYN/);
+ assert.match(html,/src="\.\/art\/caladryn-world-map\.svg"/);
+ assert.match(css,/\.caladryn-map-viewport\{/);
+ assert.match(css,/\.caladryn-map-pin\.current\{/);
+ assert.match(css,/overflow-x:auto/);
+ assert.match(view,/const CALADRYN_STOPS=\[/);
+ const stops=view.slice(view.indexOf('const CALADRYN_STOPS=['),view.indexOf('function renderWorld(){'));
+ assert.equal((stops.match(/name:/g)||[]).length,7);
+});
+test('legacy users resume their expedition and new users start in Kingdom',()=>{
+ const defs=read('data/definitions.js'),formatting=read('core/formatting.js');
+ assert.match(defs,/version:8,location:'kingdom'/);
+ assert.match(formatting,/x\.location=\['kingdom','realm'\]\.includes\(obj\.location\)\?obj\.location:'realm'/);
+ assert.match(formatting,/if\(x\.location==='kingdom'\)\{x\.autoMode='off';x\.auto=false;/);
+ assert.match(formatting,/x\.version=8;/);
+});
