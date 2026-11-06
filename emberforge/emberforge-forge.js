@@ -83,7 +83,7 @@
       '<div class="ef-forge-v2-top">' +
         '<div class="ef-forge-v2-stats"></div>' +
         '<div class="ef-forge-v2-level" aria-label="Forge level">' +
-          '<span class="ef-forge-level-caption">Forge</span>' +
+          '<span class="ef-forge-level-caption">Level</span>' +
           '<strong id="ef-forge-level">8</strong>' +
         '</div>' +
       '</div>' +
