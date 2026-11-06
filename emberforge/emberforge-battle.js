@@ -148,32 +148,30 @@ function mount(frame){
  // Stage-change notices from the old art layer are redundant with the new
  // realm/stage badge. Hide only the old scene labels; do not silence game logs.
  function hideSceneLabels(){
-   // Match the actual rendered text node, even if the engine inserts the tip
-   // outside the Battle section or nests its lettering in multiple elements.
-   // Restrict suppression to the exact obsolete boss-mechanics sentence.
-   var hintStart="Bosses strike hard with a special every fourth hit";
-   var textWalker=doc.createTreeWalker(doc.body,doc.defaultView.NodeFilter.SHOW_TEXT);
-   var textNode;
-   while((textNode=textWalker.nextNode())){
-     var raw=(textNode.nodeValue||"").replace(/\s+/g," ").trim();
-     if(raw.indexOf(hintStart)<0)continue;
-     var leaf=textNode.parentElement;
-     if(!leaf||leaf.closest(".efb-chest-reward,.efb-event-log"))continue;
-     var candidate=leaf;
-     var desired=txt(leaf);
-     // Move up while the wrapper contains the identical message, stopping
-     // before broad scene/layout containers or unrelated game elements.
-     for(var up=0;up<5&&candidate.parentElement;up++){
-       var parent=candidate.parentElement;
+   // Remove the obsolete boss mechanics tip wherever the base game draws it.
+   // Match the actual wording variants, not a single fragile exact sentence.
+   var bossTip=/^Bosses?\s+(?:(?:use|uses|strike|strikes|attack|attacks)\b|have\b).*?(?:special\s+(?:attack|hit)|every\s+(?:fourth|4th)\s+hit)|^Boss\s+tip\s*[:-]/i;
+   var tipWalker=doc.createTreeWalker(doc.body,doc.defaultView.NodeFilter.SHOW_TEXT);
+   var tipNode;
+   while((tipNode=tipWalker.nextNode())){
+     var message=(tipNode.nodeValue||"").replace(/\s+/g," ").trim();
+     if(!message||message.length>260||!bossTip.test(message))continue;
+     var tipLeaf=tipNode.parentElement;
+     if(!tipLeaf||tipLeaf.closest(".efb-chest-reward,.efb-event-log"))continue;
+     var tipContainer=tipLeaf;
+     for(var depth=0;depth<4&&tipContainer.parentElement;depth++){
+       var parent=tipContainer.parentElement;
        if(parent===battle||parent===shell||parent===sceneHost||parent===scene||
-          parent===root||parent===doc.body||parent.contains(shell))break;
-       if(txt(parent)!==desired||parent.querySelector("button,input"))break;
+          parent===root||parent===doc.body||parent.contains(shell)||
+          parent.querySelector("button,input,canvas"))break;
+       if(txt(parent)!==message)break;
        var bounds=parent.getBoundingClientRect();
-       if(bounds.height>180||bounds.width>1700)break;
-       candidate=parent;
+       if(bounds.height>155||bounds.width>700)break;
+       tipContainer=parent;
      }
-     candidate.classList.add("efb-boss-tip-hidden");
-     candidate.style.setProperty("display","none","important");
+     tipContainer.classList.add("efb-boss-tip-hidden");
+     tipContainer.style.setProperty("display","none","important");
+     tipNode.nodeValue="";
    }
    elements(sceneHost,"span,small,div").forEach(function(el){
      if(el.closest(".efb-stage-top,.efb-bottom,.efb-arrow"))return;
