@@ -101,3 +101,14 @@ test('automatic damage uses engine power and renders hit feedback', () => {
   assert.match(engine, /let hit=autoPower\(\);damage\(hit\);spawnPop\(/);
   assert.match(engine, /requestAnimationFrame\(tick\)/);
 });
+
+test('battle HUD uses authoritative engine health and encounter values', () => {
+  const engine = read('core/loop.js');
+  const battle = read('emberforge-battle.js');
+  assert.match(engine, /enemyMaxHP:enemy\(\)\.hp/);
+  assert.match(engine, /enemyName:enemy\(\)\.name/);
+  assert.match(engine, /fighting:activeFight\(\)/);
+  assert.match(battle, /state\?\.enemyName/);
+  assert.match(battle, /state\.enemyHP\/state\.enemyMaxHP/);
+  assert.match(battle, /state\.down\?"Recovering"/);
+});
