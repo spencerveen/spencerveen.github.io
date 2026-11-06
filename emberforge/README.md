@@ -37,12 +37,14 @@ is calculated by the game iframe. Its surrounding site and visual skins should
 
 ## Artwork follow-up
 
-The large `data/*backgrounds.js` and illustration scripts currently contain
-inline image data. Converting those to individually cacheable WebP assets with
-realm-aware lazy loading is the next substantial performance opportunity,
-but requires coordinated asset migration and real browser load testing.
-Do not change script order or lazily load these constants until engine
-initialization and each scene's asset dependencies are accounted for.
+Realm, boss, and forge background sheets now live in `art/*.webp`,
+referenced by small `data/*backgrounds.js` files. These eight WebP assets
+can be cached independently of JavaScript and fetched when a scene uses them.
+
+Monster portraits and kingdom vistas still contain larger inline image datasets.
+Converting those safely requires handling the large source files, preserving
+their indexed asset contracts, and verifying browser rendering. Keep their
+script order and existing scene dependencies unchanged until then.
 
 ## Checks
 
