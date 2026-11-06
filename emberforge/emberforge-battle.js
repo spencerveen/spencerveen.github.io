@@ -8,7 +8,7 @@ function mount(frame){
  if(!battle||battle.dataset.efBattleSkin==="1")return;
  var master=doc.getElementById("ef4-mastercontent");
  if(!master)return;
- var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=8";doc.head.appendChild(s);
+ var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=9";doc.head.appendChild(s);
  var norm=function(t){return (t||"").replace(/\s+/g," ").trim()};
  var txt=function(el){return norm(el&&el.textContent)};
  var elements=function(base,selector){return Array.from(base.querySelectorAll(selector))};
@@ -71,39 +71,52 @@ function mount(frame){
  shell.appendChild(chestReward);
  var lastChestText="",chestShownAt=0;
  function updateBossChest(){
-   // Only inspect actual boss-chest banners in the original illustrated
-   // scene. Never hide an inventory card, combat control, or the whole scene.
-   var headings=elements(sceneHost,"div,span,strong,b,h1,h2,h3,h4,p").filter(function(el){
-     return !el.closest(".efb-chest-reward")&&
-       /^BOSS CHEST OPENED$/i.test(txt(el));
+   // The engine occasionally recreates its boss chest inside a different
+   // scene/card node. Detect the exact reward heading throughout Battle.
+   var headingPattern=/^BOSS CHEST OPENED\s*$/i;
+   var candidates=elements(battle,"div,span,strong,b,h1,h2,h3,h4,p,section,aside");
+   var headings=candidates.filter(function(el){
+     if(el.closest(".efb-chest-reward,.efb-event-log,.efb-stage-top,.efb-bottom"))return false;
+     if(!headingPattern.test(txt(el)))return false;
+     return !Array.from(el.children).some(function(child){return headingPattern.test(txt(child))});
    });
-   var found=false;
    headings.forEach(function(heading){
+     // The reward panel may have sibling item/stat elements; choose the
+     // smallest enclosing card that contains them, never the entire arena.
      var source=heading;
-     for(var k=0;k<3&&source.parentElement;k++){
-       var parent=source.parentElement;
-       if(parent===sceneHost||parent===shell||parent.contains(shell))break;
-       var text=txt(parent);
-       if(!/^BOSS CHEST OPENED\b/i.test(text)||text.length>200)break;
+     var node=heading;
+     for(var k=0;k<5&&node.parentElement;k++){
+       var parent=node.parentElement;
+       if(parent===battle||parent===shell||parent===sceneHost||
+          parent===scene||parent.contains(shell)||parent.contains(enemy)||
+          parent.contains(board))break;
+       var box=parent.getBoundingClientRect();
+       var content=txt(parent);
+       if(box.height>320||box.width>720||content.length>280||
+          !/BOSS CHEST OPENED/i.test(content))break;
        source=parent;
+       node=parent;
+       if(/(?:RARE|EPIC|LEGENDARY|COMMON|UNCOMMON)\b/i.test(content)&&
+          /(?:\+\s*\d|Longsword|Breastplate|Sword|Armor|Shield|Staff)/i.test(content))break;
      }
      var rewardText=txt(source);
-     if(rewardText==="BOSS CHEST OPENED"&&heading.parentElement)
-       rewardText=txt(heading.parentElement);
-     if(!/^BOSS CHEST OPENED\b/i.test(rewardText))return;
-     found=true;
-     source.classList.add("efb-old-chest-hidden");
-     if(rewardText!==lastChestText){
+     // Prefer item details from the card; preserve the last displayed reward
+     // if the game rerenders/clears its old card afterward.
+     if(rewardText!==lastChestText &&
+        rewardText.length>18 &&
+        /BOSS CHEST OPENED/i.test(rewardText)){
        lastChestText=rewardText;
        chestShownAt=Date.now();
        var details=rewardText.replace(/^BOSS CHEST OPENED\s*/i,"").trim();
-       var bonus=details.match(/(?:\+\s*[\d,.]+\s*[A-Za-z][\w\s%+-]{0,40})$/);
+       var bonus=details.match(/(\+\s*[\d,.]+\s*[A-Za-z][\w\s%+-]{0,40})$/);
        var item=bonus?details.slice(0,bonus.index).trim():details;
        chestReward.querySelector(".efb-chest-item").textContent=item||"Reward received";
        chestReward.querySelector(".efb-chest-bonus").textContent=bonus?bonus[0]:"";
      }
+     source.classList.add("efb-old-chest-hidden");
+     source.style.setProperty("display","none","important");
    });
-   chestReward.hidden=!chestShownAt || Date.now()-chestShownAt>6200;
+   chestReward.hidden=!chestShownAt||Date.now()-chestShownAt>6200;
  }
  var actionArea=shell.querySelector(".efb-actions");
  var prev=shell.querySelector(".efb-prev"),next=shell.querySelector(".efb-next");
@@ -135,28 +148,27 @@ function mount(frame){
  // Stage-change notices from the old art layer are redundant with the new
  // realm/stage badge. Hide only the old scene labels; do not silence game logs.
  function hideSceneLabels(){
-   // The original boss hint may be generated in the enemy UI instead of
-   // inside the illustrated scene. Search the whole Battle view, and match
-   // only the smallest element containing the exact instructional sentence.
    var bossHint=/Bosses strike hard with a special every fourth hit/i;
    elements(battle,"div,p,span,small,strong,b,aside,section").forEach(function(el){
      if(el.closest(".efb-chest-reward,.efb-stage-top,.efb-bottom,.efb-event-log"))return;
      var value=txt(el);
-     if(!bossHint.test(value)||value.length>240)return;
+     if(!bossHint.test(value)||value.length>260)return;
+     // Search from the smallest exact-message element, not an ancestor
+     // containing the entire Battle screen.
      if(Array.from(el.children).some(function(child){return bossHint.test(txt(child))}))return;
-     // Hide the full bordered tip when its closest same-text parent is small,
-     // but never hide the enemy card, scene, controls, or battle wrapper.
      var tip=el;
-     for(var j=0;j<3&&tip.parentElement;j++){
+     for(var j=0;j<5&&tip.parentElement;j++){
        var parent=tip.parentElement;
-       if(parent===battle||parent===shell||parent===sceneHost||parent===scene||
-          parent.contains(shell)||parent.contains(board)||parent.contains(enemy))break;
+       if(parent===battle||parent===shell||parent===sceneHost||
+          parent===scene||parent.contains(shell)||parent.contains(board)||
+          parent.contains(enemy))break;
        if(txt(parent)!==value)break;
-       var rect=parent.getBoundingClientRect();
-       if(rect.height>180)break;
+       var bounds=parent.getBoundingClientRect();
+       if(bounds.height>220||bounds.width>1500)break;
        tip=parent;
      }
      tip.classList.add("efb-boss-tip-hidden");
+     tip.style.setProperty("display","none","important");
    });
    elements(sceneHost,"span,small,div").forEach(function(el){
      if(el.closest(".efb-stage-top,.efb-bottom,.efb-arrow"))return;
@@ -423,7 +435,7 @@ function mount(frame){
    if(records.some(function(record){
      var target=record.target.nodeType===1?record.target:record.target.parentElement;
      return target&&!target.closest(".efb-shell");
-   })){updateBossChest();routeBattleToasts();}
+   })){updateBossChest();hideSceneLabels();routeBattleToasts();}
  });
  toastObserver.observe(root,{subtree:true,childList:true,characterData:true});
  tab("original");refresh();
