@@ -28,7 +28,7 @@ function renderAdventurerPaperDoll(){
    <svg class="efg-paperdoll-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 430" role="img" aria-label="Dark fantasy ${gender} adventurer starting in worn peasant clothing">
      <defs><radialGradient id="efg-portrait-vignette"><stop offset="0" stop-color="#654238" stop-opacity=".15"/><stop offset="1" stop-color="#0b1424" stop-opacity="0"/></radialGradient></defs>
      <g class="efg-rune-stage"><rect x="0" y="0" width="300" height="430" fill="url(#efg-portrait-vignette)"/></g>
-     <image class="efg-character-base" href="./art/adventurer-${gender}.webp" x="0" y="15" width="300" height="400" preserveAspectRatio="xMidYMid meet"/>
+     <image class="efg-character-base" href="./art/adventurer-${gender}.webp?v=2" x="0" y="15" width="300" height="400" preserveAspectRatio="xMidYMid meet"/>
      <g class="efg-equipment-overlays" aria-hidden="true">${layers}</g>
    </svg>
  </div>`;
