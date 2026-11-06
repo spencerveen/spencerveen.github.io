@@ -495,14 +495,14 @@ test('legacy weapon armor and charm mapping preserves stats and valid equipment 
   equipmentSlotFor:g=>({weapon:'mainHand',armor:'chest',charm:'charm'}[g.slot]||g.slot)
  };
  vm.createContext(context);
- vm.runInContext(block,context);
+ vm.runInContext('{'+block+'}',context);
  assert.equal(context.x.equipped.mainHand,'blade');
  assert.equal(context.x.equipped.chest,'plate');
  assert.equal(context.x.equipped.charm,'amulet');
  assert.equal(context.x.equipped.helmet,null);
  assert.equal(context.x.avatarBody,'neutral');
  context.obj.equipped={mainHand:'nonexistent',chest:'blade',charm:'amulet'};
- vm.runInContext(block,context);
+ vm.runInContext('{'+block+'}',context);
  assert.equal(context.x.equipped.mainHand,null);
  assert.equal(context.x.equipped.chest,null);
  assert.equal(context.x.equipped.charm,'amulet');
