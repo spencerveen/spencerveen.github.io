@@ -78,13 +78,7 @@ function renderWorkers(){
      </div>
    </article>`;
  }).join('');
- const next=workers.filter(w=>!workerUnlocked(w)).slice(0,2);
- if(next.length)$('workerlist').innerHTML+=`<div class="efw-locked">
-   <span class="efw-lock" aria-hidden="true">♜</span>
-   <div class="efw-locked-heading">More workers await</div>
-   <div class="efw-locked-subtitle">Expand your workforce to unlock greater production.</div>
-   <div class="efw-upcoming">${next.map(w=>`<div class="efw-upcoming-tier"><strong>${esc(w[1])}</strong><span>Asc ${workerReq(w)[1]} · Forge ${workerReq(w)[2]}</span></div>`).join('')}</div>
- </div>`;
+
 }
 function renderUpgrades(){
  let view=s.upgradeView||'unlocked',showOwned=!!s.showOwned;
