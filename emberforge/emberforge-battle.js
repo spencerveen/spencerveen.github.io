@@ -129,7 +129,7 @@ function mount(frame){
  }
  var actionArea=shell.querySelector(".efb-actions");
  var prev=shell.querySelector(".efb-prev"),next=shell.querySelector(".efb-next");
- var selected=0,autoOn=false,hasNavigationSelection=false;
+ var selected=0,autoOn=false,hasNavigationSelection=false,visitedBoss=false;
  // Stage buttons can retain a stale "active" class after returning from a boss.
  // Once navigation begins, the arrow's selected index is the source of truth.
 
@@ -230,9 +230,20 @@ function mount(frame){
  healButton.addEventListener("click",function(){activate(healControl());refresh()});
  function nav(dir){
    var stages=liveStages(),index=selected+dir;
-   if(index>=0&&index<stages.length&&activate(stages[index])){
+   if(index<0||index>=stages.length){refresh();return;}
+   var target=stages[index];
+   // The original engine can disable its boss selector after leaving a boss,
+   // even though that encounter was already reached. Re-enable that specific
+   // previously visited encounter only for the click, then restore the state.
+   var isBoss=index===stages.length-1 && /BOSS/i.test(txt(target));
+   var temporarilyEnabled=isBoss&&visitedBoss&&target.disabled;
+   if(temporarilyEnabled)target.disabled=false;
+   var moved=activate(target);
+   if(temporarilyEnabled)target.disabled=true;
+   if(moved){
      selected=index;
      hasNavigationSelection=true;
+     if(isBoss)visitedBoss=true;
    }
    refresh();
  }
@@ -243,7 +254,7 @@ function mount(frame){
    var button=event.target.closest("button");
    if(!button||button.closest(".efb-shell"))return;
    var stages=liveStages(),index=stages.indexOf(button);
-   if(index>=0&&!button.disabled){selected=index;hasNavigationSelection=true;}
+   if(index>=0&&!button.disabled){selected=index;hasNavigationSelection=true;if(index===stages.length-1&&/BOSS/i.test(txt(button)))visitedBoss=true;}
  });
  // The game can replace legacy cards during its render cycle. Re-hide fresh
  // copies on each sync, without touching the battlefield or the shared HUD.
@@ -372,8 +383,11 @@ function mount(frame){
    }
    if(!hasNavigationSelection&&picked>=0&&picked<stages.length)selected=picked;
    if(selected>=stages.length)selected=Math.max(0,stages.length-1);
+   if(selected===stages.length-1&&stages.length>1)visitedBoss=true;
    prev.disabled=selected<=0;
-   next.disabled=selected>=stages.length-1||!!stages[selected+1]?.disabled;
+   var nextTarget=stages[selected+1];
+   var revisitingBoss=visitedBoss&&selected===stages.length-2&&/BOSS/i.test(txt(nextTarget));
+   next.disabled=selected>=stages.length-1||(!revisitingBoss&&!!nextTarget?.disabled);
    var stage=stages[selected],stageName=txt(stage).replace(/(?:✓\s*Farm|New|#\s*\d+|BOSS)/gi,"").trim();
    shell.querySelector(".efb-stage").textContent=(selected===stages.length-1?"Boss encounter":"Stage "+(selected+1)+" / "+Math.max(10,stages.length));
    var headerText=txt(battle).match(/(Ashen Wilds|Whispering Forest|[A-Z][a-z]+ (?:Wastes|Wilds|Ruins|Citadel|Forest|Depths|Keep))/);
