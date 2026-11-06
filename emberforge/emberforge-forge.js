@@ -72,7 +72,7 @@
 
     var sheet = doc.createElement("link");
     sheet.rel = "stylesheet";
-    sheet.href = "./emberforge-forge.css?v=3";
+    sheet.href = "./emberforge-forge.css?v=5";
     doc.head.appendChild(sheet);
 
     var hero = doc.createElement("section");
