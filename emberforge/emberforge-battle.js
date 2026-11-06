@@ -208,20 +208,17 @@ function mount(frame){
  }
  function beginAuto(){
    if(autoOn)return;
-   // Farming may already be active; selecting a target alone is not an On/Off
-   // switch. Keep the Strike fallback active even if Farm Target is disabled.
-   var farm=farmControl();
-   if(farm&&!farm.disabled)activate(farm);
+   // Auto Attack controls ONLY repeated strikes. Clicking Farm Target here
+   // retargets/resets the boss encounter and can refill its health.
    autoOn=true;
    if(autoTimer)doc.defaultView.clearInterval(autoTimer);
    attackTick();
    autoTimer=doc.defaultView.setInterval(attackTick,700);
  }
  function endAuto(){
+   // Never click the legacy Retreat control just to toggle Auto Attack off.
    autoOn=false;
    if(autoTimer){doc.defaultView.clearInterval(autoTimer);autoTimer=null}
-   // Stop engine-managed autofarming when an explicit stop exists.
-   var stop=stopControl();if(stop&&!stop.disabled)activate(stop);
  }
  var autoButton=doc.createElement("button");autoButton.type="button";autoButton.className="efb-action efb-attack";
  var healButton=doc.createElement("button");healButton.type="button";healButton.className="efb-action efb-heal";
