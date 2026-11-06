@@ -71,34 +71,10 @@ function mount(frame){
  shell.appendChild(chestReward);
  var lastChestText="",chestShownAt=0;
  function updateBossChest(){
-   // The engine occasionally recreates its boss chest inside a different
-   // scene/card node. Detect the exact reward heading throughout Battle.
-   var headingPattern=/^BOSS CHEST OPENED\s*$/i;
-   var candidates=elements(battle,"div,span,strong,b,h1,h2,h3,h4,p,section,aside");
-   var headings=candidates.filter(function(el){
-     if(el.closest(".efb-chest-reward,.efb-event-log,.efb-stage-top,.efb-bottom"))return false;
-     if(!headingPattern.test(txt(el)))return false;
-     return !Array.from(el.children).some(function(child){return headingPattern.test(txt(child))});
-   });
-   headings.forEach(function(heading){
-     // The reward panel may have sibling item/stat elements; choose the
-     // smallest enclosing card that contains them, never the entire arena.
-     var source=heading;
-     var node=heading;
-     for(var k=0;k<5&&node.parentElement;k++){
-       var parent=node.parentElement;
-       if(parent===battle||parent===shell||parent===sceneHost||
-          parent===scene||parent.contains(shell)||parent.contains(enemy)||
-          parent.contains(board))break;
-       var box=parent.getBoundingClientRect();
-       var content=txt(parent);
-       if(box.height>320||box.width>720||content.length>280||
-          !/BOSS CHEST OPENED/i.test(content))break;
-       source=parent;
-       node=parent;
-       if(/(?:RARE|EPIC|LEGENDARY|COMMON|UNCOMMON)\b/i.test(content)&&
-          /(?:\+\s*\d|Longsword|Breastplate|Sword|Armor|Shield|Staff)/i.test(content))break;
-     }
+   // Engine rewards always use .chestflash in the battle scene.
+   // Avoid scanning all text nodes on every refresh.
+   elements(battle,".chestflash").forEach(function(source){
+     if(source.closest(".efb-chest-reward"))return;
      var rewardText=txt(source);
      // Prefer item details from the card; preserve the last displayed reward
      // if the game rerenders/clears its old card afterward.
@@ -270,10 +246,17 @@ function mount(frame){
    renderEvents();
  }
  function routeBattleToasts(){
-   routeCombatMessage();
-   // Preserve engine notifications in the arena without restoring the
-   // unwanted boss introduction or routine auto/farming status messages.
+   if(battle.classList.contains("active"))routeCombatMessage();
+   // Present combat notices in the arena; do not suppress other pages.
    var nativeToast=doc.getElementById("ef4-toast");
+   if(!battle.classList.contains("active")){
+     if(nativeToast){
+       nativeToast.classList.remove("efb-native-toast-hidden");
+       lastToastMessage.delete(nativeToast);
+     }
+     return;
+   }
+   if(nativeToast&&nativeToast.style.display==="none")lastToastMessage.delete(nativeToast);
    if(nativeToast&&nativeToast.style.display!=="none"){
      var notification=txt(nativeToast);
      if(notification&&lastToastMessage.get(nativeToast)!==notification){
@@ -291,7 +274,6 @@ function mount(frame){
  }
  function refresh(){
    updateBossChest();
-   suppressLegacyPanels();
    routeBattleToasts();
    var stages=liveStages();
    hideSceneLabels();
@@ -398,6 +380,7 @@ function mount(frame){
    var node=doc.getElementById(id);
    if(node)toastObserver.observe(node,{childList:true,characterData:true,subtree:true});
  });
+ suppressLegacyPanels();
  tab("original");refresh();
  var timer=doc.defaultView.setInterval(function(){
    if(!shell.isConnected){doc.defaultView.clearInterval(timer);toastObserver.disconnect();return}
