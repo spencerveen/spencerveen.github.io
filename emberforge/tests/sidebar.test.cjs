@@ -112,5 +112,17 @@ test('sidebar keeps six original clickable page buttons and hides only their vis
  assert.match(css,/#ef4 \.layout \.sidebar \.nav-label\{display:none!important\}/);
  assert.match(css,/display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
  assert.match(hud,/setupSidebar\(doc,root\);/);
- assert.match(hud,/sideSheet\.href="\.\/emberforge-sidebar\.css\?v=2"/);
+ assert.match(hud,/sideSheet\.href="\.\/emberforge-sidebar\.css\?v=3"/);
+});
+
+test('compact sidebar has subtle toggle header and no oversized decorative heading',()=>{
+ const html=read('game.html'),css=read('emberforge-sidebar.css');
+ const nav=html.slice(html.indexOf('<nav class="sidebar"'),html.indexOf('</nav>')+6);
+ assert.match(nav,/<div class="nav-header"><span class="nav-heading" aria-hidden="true">MENU<\/span>/);
+ assert.match(nav,/class="nav-toggle" id="ef4-navtoggle"/);
+ assert.match(css,/#ef4 \.nav-toggle\{[\s\S]*?width:31px;height:30px/);
+ assert.match(css,/#ef4 \.sidebar \.nav-btn\{[\s\S]*?min-height:45px/);
+ assert.match(css,/#ef4 \.layout\.nav-collapsed \.sidebar \.nav-btn\{[\s\S]*?width:51px;min-height:49px/);
+ assert.match(css,/#ef4 \.layout \.sidebar \.nav-header,[\s\S]*?\.nav-label\{display:none!important\}/);
+ assert.doesNotMatch(css,/THE REALM|On narrow screens the original game uses/);
 });
