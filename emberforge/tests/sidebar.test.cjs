@@ -110,7 +110,7 @@ test('sidebar keeps six original clickable page buttons and hides only their vis
  assert.match(css,/#ef4 \.layout\.nav-collapsed\{grid-template-columns:68px minmax\(0,1fr\)/);
  assert.match(css,/grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
  assert.match(css,/#ef4 \.layout \.sidebar \.nav-label\{display:none!important\}/);
- assert.match(css,/#ef4 \.layout \.sidebar\{[^\n]*display:grid;/);
+ assert.match(css,/display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
  assert.match(hud,/setupSidebar\(doc,root\);/);
  assert.match(hud,/sideSheet\.href="\.\/emberforge-sidebar\.css\?v=2"/);
 });
