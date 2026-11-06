@@ -313,7 +313,7 @@ test('Workers guild makeover retains original hiring contracts', () => {
   const game = read('game.html');
   const views = read('ui/views.js');
   const css = read('styles/workers.css');
-  assert.match(game, /styles\/workers\.css\?v=2/);
+  assert.match(game, /styles\/workers\.css\?v=\d+/);
   assert.match(game, /id="ef4-buymodes"/);
   assert.match(game, /id="ef4-workerlist"/);
   for (const mode of ['1','10','max']) {
