@@ -8,7 +8,7 @@ function mount(frame){
  if(!battle||battle.dataset.efBattleSkin==="1")return;
  var master=doc.getElementById("ef4-mastercontent");
  if(!master)return;
- var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=7";doc.head.appendChild(s);
+ var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=8";doc.head.appendChild(s);
  var norm=function(t){return (t||"").replace(/\s+/g," ").trim()};
  var txt=function(el){return norm(el&&el.textContent)};
  var elements=function(base,selector){return Array.from(base.querySelectorAll(selector))};
@@ -135,21 +135,33 @@ function mount(frame){
  // Stage-change notices from the old art layer are redundant with the new
  // realm/stage badge. Hide only the old scene labels; do not silence game logs.
  function hideSceneLabels(){
+   // The original boss hint may be generated in the enemy UI instead of
+   // inside the illustrated scene. Search the whole Battle view, and match
+   // only the smallest element containing the exact instructional sentence.
+   var bossHint=/Bosses strike hard with a special every fourth hit/i;
+   elements(battle,"div,p,span,small,strong,b,aside,section").forEach(function(el){
+     if(el.closest(".efb-chest-reward,.efb-stage-top,.efb-bottom,.efb-event-log"))return;
+     var value=txt(el);
+     if(!bossHint.test(value)||value.length>240)return;
+     if(Array.from(el.children).some(function(child){return bossHint.test(txt(child))}))return;
+     // Hide the full bordered tip when its closest same-text parent is small,
+     // but never hide the enemy card, scene, controls, or battle wrapper.
+     var tip=el;
+     for(var j=0;j<3&&tip.parentElement;j++){
+       var parent=tip.parentElement;
+       if(parent===battle||parent===shell||parent===sceneHost||parent===scene||
+          parent.contains(shell)||parent.contains(board)||parent.contains(enemy))break;
+       if(txt(parent)!==value)break;
+       var rect=parent.getBoundingClientRect();
+       if(rect.height>180)break;
+       tip=parent;
+     }
+     tip.classList.add("efb-boss-tip-hidden");
+   });
    elements(sceneHost,"span,small,div").forEach(function(el){
      if(el.closest(".efb-stage-top,.efb-bottom,.efb-arrow"))return;
      if(el.children.length>1)return;
      var label=txt(el);
-     // Hide only the obsolete boss-mechanics banner, keeping combat feedback.
-     if(/^Bosses strike hard with a special every fourth hit\b/i.test(label)){
-       var tip=el;
-       for(var j=0;j<3&&tip.parentElement;j++){
-         var parent=tip.parentElement;
-         if(parent===sceneHost||parent===scene||parent===shell||parent.contains(shell)||txt(parent)!==label)break;
-         tip=parent;
-       }
-       tip.classList.add("efb-source-label-hidden");
-       return;
-     }
      if(/^(?:BOSS BATTLE|STAGE\s+\d+(?:\s*\/\s*\d+)?|(?:BOSS BATTLE|ASHEN WILDS)\s*[·•-]\s*(?:ASHEN WILDS|BOSS BATTLE))$/i.test(label)){
        el.classList.add("efb-source-label-hidden");
      }
