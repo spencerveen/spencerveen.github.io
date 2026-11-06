@@ -571,3 +571,20 @@ test('character identity and selected portrait persist and render correctly',()=
  assert.match(formatting,/\['male','female'\]\.includes\(obj\.avatarBody\)/);
  assert.match(html,/ui\/adventurer\.js\?v=/);
 });
+
+test('Armory slot cards keep generic icons, readable labels and functional unequip buttons',()=>{
+ const view=read('ui/views.js'),css=read('styles/armory.css');
+ const block=view.slice(view.indexOf('function renderGear(){'),view.indexOf(' const equippedSlots=',view.indexOf('function renderGear(){')));
+ assert.match(block,/class="efg-slot-badge"/);
+ assert.match(block,/class="efg-slot-copy"/);
+ assert.match(block,/class="efg-slot-label"/);
+ assert.match(block,/class="efg-slot-main/);
+ assert.match(block,/class="efg-slot-sub"/);
+ assert.match(block,/class="efg-slot-empty-pill"/);
+ assert.match(block,/data-unequip=/);
+ assert.match(block,/iconHTML\(def\[2\],'lg'\)/);
+ assert.match(css,/#ef4 \.efg-slot-column\{display:flex;flex-direction:column/);
+ assert.match(css,/#ef4 \.efg-slot-column \.efg-slot\{display:flex;flex-direction:row/);
+ assert.match(css,/#ef4 \.efg-character-center\{position:relative/);
+ assert.doesNotMatch(css,/#ef4 \.efg-slot-column,\/\*/);
+});
