@@ -75,6 +75,13 @@
         return t.includes('Bosses strike hard with a special every fourth hit.') &&
                t.includes('Legendary drops start at Obsidian Wastes.');
       })) continue;
+      // The combat engine updates this element every frame. Hide it, never remove it.
+      // Removing it makes stats() throw and permanently stops combat timers.
+      if (el.id === 'ef4-combattip' || el.closest('#ef4-combattip')) {
+        const tip = el.id === 'ef4-combattip' ? el : el.closest('#ef4-combattip');
+        tip.style.setProperty('display', 'none', 'important');
+        continue;
+      }
       let banner = el;
       // If a wrapper supplies the border/padding, remove that wrapper too,
       // but never remove a gameplay view or any ancestor with controls.
