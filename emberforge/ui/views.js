@@ -139,9 +139,13 @@ function renderGear(){
    if(!def)return '';
    const g=equippedItem(key),label=def[1],type=equipmentPowerType(key);
    return `<div class="efg-slot ${g?'filled '+g.rarity+'-gear':'empty'}" data-slot="${key}" aria-label="${esc(label)} equipment slot">
-     <div class="efg-slot-art">${g?lootVisual(g.icon,'lg'):iconHTML(def[2],'lg')}</div>
-     <div class="efg-slot-details"><span class="efg-slot-name">${esc(label)}</span><strong class="rarity-${g?g.rarity:'common'}">${g?esc(g.name):'Empty slot'}</strong>${g?`<small>+${fmt(g.power)} ${type}</small>`:''}${g?.ability?`<small>${lootAbilityText(g)}</small>`:''}</div>
-     ${g?`<button class="efg-remove btn btn-quiet" data-unequip="${key}" aria-label="Unequip ${esc(label)}">Remove</button>`:''}
+     <div class="efg-slot-badge" aria-hidden="true">${g?lootVisual(g.icon,'lg'):iconHTML(def[2],'lg')}</div>
+     <div class="efg-slot-copy">
+       <span class="efg-slot-label">${esc(label)}</span>
+       <strong class="efg-slot-main ${g?'filled rarity-'+g.rarity:'empty'}">${g?esc(g.name):'Empty slot'}</strong>
+       <span class="efg-slot-sub">${g?`+${fmt(g.power)} ${type}${g.ability?' · '+lootAbilityText(g):''}`:'No gear equipped'}</span>
+     </div>
+     ${g?`<button class="efg-remove btn btn-quiet" data-unequip="${key}" aria-label="Unequip ${esc(label)}">Remove</button>`:`<span class="efg-slot-empty-pill" aria-hidden="true">Open</span>`}
    </div>`;
  };
  const equippedSlots=['helmet','chest','gloves','legs','boots','mainHand','offHand','back'];
