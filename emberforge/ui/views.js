@@ -97,13 +97,39 @@ function renderWorkers(){
  renderWorkerSummary();
 }
 function renderUpgrades(){
- let view=s.upgradeView||'unlocked',showOwned=!!s.showOwned;
- $('upgradeview').value=view;$('showowned').checked=showOwned;
- let unlocked=upgrades.filter(upgradeUnlocked),unowned=unlocked.filter(u=>!s.ups[u[0]]),affordable=unowned.filter(u=>u[3]<=s.ember);
- let visible=upgrades.filter(u=>(view==='all'||upgradeUnlocked(u))&&(showOwned||!s.ups[u[0]])&&(view!=='affordable'||!s.ups[u[0]]&&s.ember>=u[3]));
- $('upgradeinfo').innerHTML=`<strong>${unowned.length}</strong> unlocked upgrades left · <strong>${affordable.length}</strong> affordable · <strong>${s.ascensions}</strong> Ascensions. ${view==='all'?'Future powers are previews, and cannot be purchased before their requirements.':'Higher-tier powers reveal themselves at milestone levels.'}`;
- $('upgradelist').innerHTML=visible.map(u=>{let owned=!!s.ups[u[0]],unlocked=upgradeUnlocked(u),enabled=unlocked&&!owned&&s.ember>=u[3];return `<div class="shopitem ${unlocked?'':'locked-card'}"><div class="space"><span class="small-icon">${iconHTML(u[2],'lg')}</span><span class="pill">${owned?'Owned':unlocked?'Unlocked':'Locked'}</span></div><strong>${u[1]}</strong><div class="hint">${u[6]}</div><div class="upgrade-require">${owned&& !unlocked?'Dormant · '+requirementFor(u):unlocked?'Unlocked · '+requirementFor(u):'Requires '+requirementFor(u)}</div><div class="shopbottom"><span class="price">${owned?'Purchased':short(u[3])}</span>${shopButton('upgrade',u[0],u[3],!enabled,owned?'Owned':!unlocked?'Locked':'Unlock')}</div></div>`}).join('');
- if(!visible.length){let upcoming=upgrades.filter(u=>!s.ups[u[0]]&&!upgradeUnlocked(u)).slice(0,2);$('upgradelist').innerHTML=`<div class="upgrade-empty"><strong>${view==='affordable'?'No affordable upgrades right now.':'All currently visible upgrades are purchased.'}</strong><div class="hint" style="margin-top:8px">${upcoming.length?'Next: '+upcoming.map(u=>u[1]+' ('+requirementFor(u)+')').join(' · '):'All upgrade tiers revealed. Ascend to reset purchased powers.'}</div></div>`}
+ const view=['unlocked','affordable','all'].includes(s.upgradeView)?s.upgradeView:'unlocked',showOwned=!!s.showOwned;
+ $$('[data-upgrade-filter]').forEach(button=>{
+   const active=button.dataset.upgradeFilter===view;
+   button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));
+ });
+ $('showowned').checked=showOwned;
+ const unlocked=upgrades.filter(upgradeUnlocked);
+ const unowned=unlocked.filter(u=>!s.ups[u[0]]);
+ const affordable=unowned.filter(u=>u[3]<=s.ember);
+ const visible=upgrades.filter(u=>(view==='all'||upgradeUnlocked(u))&&(showOwned||!s.ups[u[0]])&&(view!=='affordable'||!s.ups[u[0]]&&s.ember>=u[3]));
+ $('upgradeinfo').innerHTML=`<div class="efa-metric"><span>Available powers</span><strong>${unowned.length}</strong></div>
+ <div class="efa-metric"><span>Affordable now</span><strong>${affordable.length}</strong></div>
+ <div class="efa-metric"><span>Ascension tier</span><strong>${s.ascensions}</strong></div>`;
+ $('upgradehint').textContent=view==='all'?'Future powers are previews; unlock their requirements before purchasing.':'Higher-tier powers reveal themselves as your Forge, Combat level and Ascensions grow.';
+ $('upgradelist').innerHTML=visible.map(u=>{
+   const owned=!!s.ups[u[0]],unlocked=upgradeUnlocked(u),enabled=unlocked&&!owned&&s.ember>=u[3];
+   const state=owned?'owned':!unlocked?'locked':enabled?'affordable':'available';
+   const category=u[4]==='prodMult'?'Workers':u[4]==='attackMult'?'Combat':'Forge';
+   const requirement=requirementFor(u);
+   return `<article class="efa-card shopitem ${state}">
+     <div class="efa-art" aria-hidden="true">${iconHTML(u[2],'xl')}</div>
+     <div class="efa-content">
+       <div class="efa-card-head"><div class="efa-card-heading"><span class="efa-category">${category} power</span><strong>${esc(u[1])}</strong></div><span class="efa-status ${state}">${owned?'Owned':!unlocked?'Locked':enabled?'Affordable':'Available'}</span></div>
+       <div class="efa-effect"><span class="efa-effect-glyph" aria-hidden="true">✦</span><div><span class="efa-effect-caption">Arcane effect</span><strong>${esc(u[6])}</strong></div></div>
+       <div class="efa-requirements"><span aria-hidden="true">◇</span> ${owned&&!unlocked?'Dormant until ':unlocked?'Requires ':'Locked · Requires '}${esc(requirement)}</div>
+       <div class="efa-purchase"><div class="efa-price"><span class="efa-price-label">${owned?'Already acquired':'Cost to unlock'}</span><strong>${owned?'Purchased':short(u[3])+' Ember'}</strong></div>${shopButton('upgrade',u[0],u[3],!enabled,owned?'Owned':!unlocked?'Locked':'Unlock')}</div>
+     </div>
+   </article>`;
+ }).join('');
+ if(!visible.length){
+   const upcoming=upgrades.filter(u=>!s.ups[u[0]]&&!upgradeUnlocked(u)).slice(0,2);
+   $('upgradelist').innerHTML=`<div class="efa-empty"><strong>${view==='affordable'?'No affordable upgrades right now.':'No upgrades match this view.'}</strong><div>${upcoming.length?'Coming next: '+upcoming.map(u=>esc(u[1])+' ('+esc(requirementFor(u))+')').join(' · '):'All upgrade tiers revealed. Ascend to restore temporary upgrades.'}</div></div>`;
+ }
 }
 function renderKingdom(){let cap=buildingCap();updateIllustratedScenes();$('kingdominfo').innerHTML=`Current building capacity: <strong>level ${cap}/12</strong> per structure · Ascend to raise it. Buildings now preview humble, growing, and grand visual tiers as they level.`;
 $('buildlist').innerHTML=buildings.filter(b=>buildingUnlocked(b)||s.build[b[0]]>0).map(b=>{let lv=s.build[b[0]],p=costBuild(b),available=buildingUnlocked(b),maxed=lv>=cap,t=buildTier(lv),next=t<3?(t===0?1:t===1?4:8):null;return `<div class="shopitem ${available?'':'locked-card'}"><div class="space"><span class="small-icon">${iconHTML(b[2],'lg')}</span><span class="pill">Level ${lv} / ${cap}</span></div><strong>${b[1]}</strong><div class="hint">${b[5]}</div><div class="progress"><div style="width:${100*Math.min(12,lv)/12}%;background:#80d9bf"></div></div><div class="build-tier-note"><strong>${BUILD_TIER_NAMES[t]}</strong> · ${BUILD_TIER_NOTES[b[0]][t]}</div><div class="hint kingdom-need">${available?maxed&&cap<12?'More levels unlock after Ascension':'Unlocked':'Dormant until Asc '+buildingReq(b)[1]+', Combat '+buildingReq(b)[2]}</div><div class="tier-next">${next!==null?'Next visual jump at level '+next:'Visual line complete for this era.'}</div><div class="shopbottom"><span class="price">${maxed?'Era cap':short(p)}</span>${shopButton('build',b[0],p,maxed||!available||s.ember<p,maxed?'Era cap':!available?'Locked':'Construct')}</div></div>`}).join('');let future=buildings.filter(b=>!buildingUnlocked(b)&&!s.build[b[0]]).slice(0,2);if(future.length)$('buildlist').innerHTML+=`<div class="upgrade-empty"><strong>Coming in later eras</strong><div class="hint" style="margin-top:7px">${future.map(b=>b[1]+' · Asc '+buildingReq(b)[1]+' / Combat '+buildingReq(b)[2]).join(' · ')}</div></div>`}
@@ -164,7 +190,7 @@ function exportSave(){let code=saveCode();modal('Export your save','Copy this co
 function importSave(){modal('Import save code','Paste a save code from Emberforge III, Reborn v2, or original Emberforge. This replaces the current save.',v=>{try{let o=JSON.parse(decodeURIComponent(escape(atob(v.trim()))));if(!o||!o.gens||!Number.isFinite(Number(o.ember)))throw Error('Bad save');s=clean(o);if(s.hp===0)s.hp=Math.ceil(maxHealth()*.5);if(s.hp===null)s.hp=maxHealth();if(!(s.enemyHP>0))s.enemyHP=enemy().hp;note('Save imported successfully');save();renderPage();toast('Save imported!');return true}catch(e){toast('Invalid or unsupported save code');return false}},'Import',true)}
 function ascend(){let reward=soulReward();if(reward<1){toast('Earn 100K this run first');return}modal('Ascend and Reforge?','Receive +'+reward+' permanent Soulfire. The new era raises building, skill and training caps and unlocks additional powers and regions. Ember, workers, temporary upgrades and buildings reset; permanent progress stays.',()=>{let old=s;s=fresh();for(let k of ['lifetime','clicks','souls','ascensions','ach','skills','skillPoints','level','unlocked','kills','bosses','lootFound','items','equipped','claimed','bounty','bountyStart','codex','lastBossLoot','combatLevel','combatXP','training','stageUnlocked','bossCleared','firstClears','pendingRelics','kingdomVistaMax'])s[k]=old[k];s.souls+=reward;s.ascensions++;s.hp=maxHealth();s.combatMessage='A new Ascension era begins! Permanent stats grow stronger.';s.enemyHP=enemy().hp;note('Ascended for +'+reward+' Soulfire');honorCheck();save();renderPage();toast('Ascension complete! +'+reward+' Soulfire');return true},'Ascend Now')}
 root.addEventListener('click',e=>{let b=e.target.closest('button');if(!b||!root.contains(b)||b.disabled)return;
-if(b.dataset.vista){let choice=b.dataset.vista;if(choice==='auto')kingdomVistaPreview=null;else{let idx=activeKingdomVista();kingdomVistaPreview=(idx+(choice==='next'?1:-1)+KINGDOM_VISTAS.length)%KINGDOM_VISTAS.length;}updateIllustratedScenes();return}if(b.dataset.page){go(b.dataset.page);return}if(b.dataset.go){go(b.dataset.go);return}if(b.dataset.sub){sub=b.dataset.sub;renderMastery();return}if(b.dataset.buy){buyMode=b.dataset.buy;$$('[data-buy]').forEach(x=>x.classList.toggle('on',x.dataset.buy===buyMode));renderWorkers();return}
+if(b.dataset.vista){let choice=b.dataset.vista;if(choice==='auto')kingdomVistaPreview=null;else{let idx=activeKingdomVista();kingdomVistaPreview=(idx+(choice==='next'?1:-1)+KINGDOM_VISTAS.length)%KINGDOM_VISTAS.length;}updateIllustratedScenes();return}if(b.dataset.page){go(b.dataset.page);return}if(b.dataset.go){go(b.dataset.go);return}if(b.dataset.sub){sub=b.dataset.sub;renderMastery();return}if(b.dataset.upgradeFilter){s.upgradeView=b.dataset.upgradeFilter;renderUpgrades();save();return}if(b.dataset.buy){buyMode=b.dataset.buy;$$('[data-buy]').forEach(x=>x.classList.toggle('on',x.dataset.buy===buyMode));renderWorkers();return}
 if(b.id==='ef4-crystal'){mine();return}
 if(b.id==='ef4-strike'){manualAttack();return}
 if(b.dataset.target){let stage=+b.dataset.target;if(stage<=maxSelectable(s.zone)){let wasSmart=s.autoMode==='smart';if(wasSmart){s.autoMode='selected';s.auto=true;}setTarget(stage,{keepAuto:true});if(wasSmart)toast('Switched to farming stage '+stage);save();}return}
@@ -188,6 +214,6 @@ if(b.dataset.action){let a=b.dataset.action;if(a==='save'){save();toast('Saved')
 if(a==='salvage-common'){inventorySell(g=>g.rarity==='common');return}if(a==='salvage-rare'){inventorySell(g=>rarityValue[g.rarity]<=1);return}if(a==='salvage-epic'){inventorySell(g=>rarityValue[g.rarity]<=2);return}if(a==='salvage-all'){modal('Salvage unequipped gear?','Sell every unlocked unequipped item up through Epic rarity. Legendary gear is always protected.',()=>{inventorySell(()=>true);return true},'Salvage All');return}if(a==='reset'){modal('Start a new game?','This clears your current Emberforge III progress. Export a save code first if you might want to restore it.',()=>{s=fresh();kingdomVistaPreview=null;rollBattleBackground();s.enemyHP=enemy().hp;save();go('forge');toast('New adventure started');return true},'Reset Game');return}}
 });
 $('salvagefilter').addEventListener('change',v=>{s.salvage=v.target.value;save();toast('Auto-salvage: '+$('salvagefilter').selectedOptions[0].textContent)});
-$('upgradeview').addEventListener('change',e=>{s.upgradeView=e.target.value;renderUpgrades();save()});
+
 $('showowned').addEventListener('change',e=>{s.showOwned=e.target.checked;renderUpgrades();save()});
 function refreshShopAfford(){if(page==='workers'||page==='upgrades'||page==='kingdom'||page==='battle'){root.querySelectorAll('[data-price]').forEach(b=>{let p=+b.dataset.price;if(b.dataset.worker&&buyMode==='max'){let w=workers.find(x=>x[0]===b.dataset.worker),c=costWorker(w,'max');if(!c||c.count===0){b.disabled=true}else{b.disabled=false;b.dataset.price=c.price;b.textContent='Hire ×'+fmt(c.count)}return}if(b.dataset.train&&s.training[b.dataset.train]>=trainingCap())return;if(b.dataset.upgrade){let u=upgrades.find(v=>v[0]===b.dataset.upgrade);if(!u||s.ups[b.dataset.upgrade]||!upgradeUnlocked(u))return;}if(b.dataset.build){let build=buildings.find(v=>v[0]===b.dataset.build);if(!build||!buildingUnlocked(build)||s.build[b.dataset.build]>=buildingCap())return;}b.disabled=s.ember<p})}if(page==='upgrades'&&s.upgradeView==='affordable')renderUpgrades()}
