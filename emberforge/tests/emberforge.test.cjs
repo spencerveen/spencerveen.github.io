@@ -112,3 +112,42 @@ test('battle HUD uses authoritative engine health and encounter values', () => {
   assert.match(battle, /state\.enemyHP\/state\.enemyMaxHP/);
   assert.match(battle, /state\.down\?"Recovering"/);
 });
+
+test('unreadable saves are backed up before a new session can overwrite them', () => {
+  const values = new Map([['emberforge-test-save', '{broken-json']]);
+  const storage = {
+    getItem(key) { return values.get(key) ?? null; },
+    setItem(key, value) { values.set(key, value); }
+  };
+  const context = {
+    localStorage:storage, KEY:'emberforge-test-save',
+    s:{version:7, updated:0}, clean:obj => obj,
+    console:{warn() {}},
+    $:() => ({textContent:''}),
+    Date
+  };
+  vm.createContext(context);
+  vm.runInContext(read('core/storage.js'), context);
+  vm.runInContext('load();save()', context);
+  assert.equal(values.get('emberforge-test-save-corrupt-backup'), '{broken-json');
+  assert.equal(JSON.parse(values.get('emberforge-test-save')).version, 7);
+});
+
+test('legacy save backup is retained during version migration', () => {
+  const raw = JSON.stringify({version:6, lifetime:450, journal:[]});
+  const values = new Map([['emberforge-test-save', raw]]);
+  const context = {
+    localStorage:{
+      getItem:key => values.get(key) ?? null,
+      setItem:(key,value) => values.set(key,value)
+    },
+    KEY:'emberforge-test-save', s:{},
+    clean:obj => ({...obj, version:7}), console:{warn() {}},
+    $:() => ({textContent:''}), Date
+  };
+  vm.createContext(context);
+  vm.runInContext(read('core/storage.js'), context);
+  vm.runInContext('load()', context);
+  assert.equal(values.get('emberforge-test-save-pre-v7-backup'), raw);
+  assert.equal(context.s.version, 7);
+});
