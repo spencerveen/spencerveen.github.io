@@ -512,7 +512,7 @@ test('legacy weapon armor and charm mapping preserves stats and valid equipment 
 
 test('Armory slots are organized into Equipped and Jewelry columns', () => {
  const render=read('ui/views.js');
- const section=render.slice(render.indexOf('function renderGear()'),render.indexOf(" $('salvagefilter').value=s.salvage;"));
+ const section=render.slice(render.indexOf('function renderGear()'),render.indexOf(" const capacity=inventoryCapacity()",render.indexOf('function renderGear()')));
  assert.ok(section.includes('efg-group-heading">Equipped'));
  assert.ok(section.includes('efg-group-heading">Jewelry'));
  assert.ok(section.includes("'mainHand','offHand','back'"));
@@ -628,4 +628,40 @@ test('Equipped slot sprites have inset space to prevent clipped frames',()=>{
  assert.match(css,/background-size:800% 100%/);
  assert.match(css,/@media\(max-width:600px\)\{#ef4 \.efg-equipped-placeholder\{width:35px;height:35px/);
  assert.match(css,/align-items:center;justify-items:center/);
+});
+
+test('backpack capacity is 30 and preserves existing inventories above the new limit',()=>{
+ const defs=read('data/definitions.js'),combat=read('systems/combat.js'),views=read('ui/views.js'),html=read('game.html');
+ assert.match(defs,/const INVENTORY_CAPACITY=30;/);
+ assert.match(combat,/if\(s\.items\.length>=inventoryCapacity\(\)\)/);
+ assert.match(views,/const capacity=inventoryCapacity\(\),count=s\.items\.length;/);
+ assert.match(views,/Math\.max\(capacity,sorted\.length\)/);
+ assert.match(views,/if\(s\.items\.length>=inventoryCapacity\(\)\)/);
+ assert.match(html,/Backpack \(0 \/ 30\)/);
+ assert.doesNotMatch(views,/Backpack \('\+s\.items\.length\+' \/ 60\)/);
+});
+
+test('Armory inventory only equips and locks, Kingdom owns selling and salvaging',()=>{
+ const html=read('game.html'),views=read('ui/views.js'),css=read('styles/inventory.css');
+ const gear=html.slice(html.indexOf('<section class="page" data-view="gear">'),html.indexOf('<section class="page" data-view="kingdom">'));
+ const kingdom=html.slice(html.indexOf('<section class="page" data-view="kingdom">'),html.indexOf('<section class="page" data-view="world">'));
+ assert.match(gear,/ef4-bagtitle/);
+ assert.match(gear,/ef4-bagprogress/);
+ assert.match(gear,/ef4-baglist/);
+ assert.doesNotMatch(gear,/data-action="salvage-|id="ef4-salvagefilter"|data-sell=/);
+ assert.match(kingdom,/id="ef4-salvagefilter"/);
+ assert.match(kingdom,/id="ef4-merchantlist"/);
+ assert.match(kingdom,/data-action="salvage-common"/);
+ assert.match(kingdom,/data-action="salvage-all"/);
+ const bag=views.slice(views.indexOf('function renderGear(){'),views.indexOf('function renderWorld(){'));
+ assert.match(bag,/class="efg-bag-empty"/);
+ assert.match(bag,/data-equip=/);
+ assert.match(bag,/data-lock=/);
+ assert.doesNotMatch(bag,/data-sell=/);
+ assert.match(views,/function renderKingdomMerchant\(\)/);
+ assert.match(views,/if\(b\.dataset\.sell\)\{if\(page!=='kingdom'\)return;/);
+ assert.match(views,/if\(a\.startsWith\('salvage-'\)&&page!=='kingdom'\)return;/);
+ assert.match(css,/\.efg-bag-grid/);
+ assert.match(css,/\.efk-merchant-item/);
+ assert.match(html,/styles\/inventory\.css\?v=1/);
 });
