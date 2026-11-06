@@ -94,3 +94,6 @@
  #ef4 .efb-chest-title {font-size:10px}
  #ef4 .efb-chest-item {font-size:15px}
 }
+
+/* Hide only the obsolete special-attack/loot boss mechanics tip card. */
+#ef4 [data-view="battle"] .efb-boss-tip-hidden {display:none!important}
