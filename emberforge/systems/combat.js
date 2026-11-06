@@ -68,7 +68,7 @@ function defeat(){
  s.enemyTimer=0;s.enemyHits=0;
  if(firstClear){s.firstClears[s.zone]=Math.max(s.stage,s.firstClears[s.zone]);if(s.stage<10){s.stageUnlocked[s.zone]=Math.max(s.stageUnlocked[s.zone],s.stage+1);note('New stage unlocked: '+(s.stage+1));}else{s.bossCleared[s.zone]=true;}}
  if(e.boss){s.bosses++;s.bossCleared[s.zone]=true;note('Boss defeated: '+e.name);if(s.zone===s.unlocked&&s.unlocked<5){s.unlocked++;s.stageUnlocked[s.unlocked]=Math.max(1,s.stageUnlocked[s.unlocked]);toast(realms[s.unlocked][0]+' discovered!')}}
- let drop=createLoot(e.boss);if(e.boss){if(drop?.salvaged)toast('Boss chest: '+drop.name+' salvaged');else if(drop)toast('Boss chest: '+drop.rarity.toUpperCase()+' '+drop.name+'!');}
+ let drop=createLoot(e.boss);if(e.boss&&drop&&!drop.salvaged)toast('Boss chest: '+drop.rarity.toUpperCase()+' '+drop.name+'!');
  rollBattleBackground();
  s.enemyHP=e.hp;if(s.autoMode==='off')s.engagedUntil=0;
  s.combatMessage=(firstClear?'First victory! ':'')+e.name+' defeated. +'+fmt(Math.ceil(e.xp*(firstClear?1.45:.72)))+' combat XP.';
