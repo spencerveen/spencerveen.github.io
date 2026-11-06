@@ -193,8 +193,9 @@ function renderGear(){
      <div class="efg-bag-actions"><button class="item-lock ${g.locked?'locked':''}" data-lock="${esc(g.id)}" aria-label="${g.locked?'Unlock':'Lock'} ${esc(g.name)}" title="${g.locked?'Unlock item':'Protect item'}">${g.locked?'🔒':'🔓'}</button><button class="btn" data-equip="${esc(g.id)}" ${equipped?'disabled':''}>${equipped?'Equipped':'Equip'}</button></div>
    </article>`;
  }).join('');
+ root.querySelector('#ef4-relic-vault')?.remove();
  if(s.pendingRelics.length)$('baglist').insertAdjacentHTML('afterend',`<div class="efg-relic-vault" id="ef4-relic-vault"><strong>Legendary Relic Vault · ${s.pendingRelics.length} waiting</strong><div class="hint">These legendary drops were preserved while your inventory was full.</div>${s.pendingRelics.map(g=>`<div class="rowitem legendary-gear"><span class="r-ico">${lootVisual(g.icon,'lg')}</span><div class="r-body"><strong class="rarity-legendary">${esc(g.name)}</strong><span class="hint">+${fmt(g.power)} rating · ${lootAbilityText(g)}</span></div><button class="btn btn-gold" data-claimrelic="${esc(g.id)}" ${count>=capacity?'disabled':''}>Claim</button></div>`).join('')}</div>`);
- else root.querySelector('#ef4-relic-vault')?.remove();
+
 }
 function renderWorld(){
  let next=realms.findIndex((r,i)=>!realmAccessible(i));if(next<0)next=5;
