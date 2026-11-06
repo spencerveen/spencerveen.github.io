@@ -160,3 +160,61 @@ test('Battle lives under World, without separate navigation or duplicate combat 
  assert.match(css,/\.caladryn-battle-interior\{/);
  assert.match(skin,/\[data-view="battle"\]/);
 });
+
+test('World uses the art map alone; combat and Kingdom render directly beneath it',()=>{
+ const html=read('game.html'),view=read('ui/views.js'),css=read('styles/world.css');
+ const start=html.indexOf('<section class="page" data-view="world">');
+ const world=html.slice(start,html.indexOf('<section class="page" data-view="mastery">',start));
+ assert.ok(start>=0);
+ for(const obsolete of ['ef4-worldinfo','ef4-maplist','ef4-worldactions']){
+  assert.doesNotMatch(world,new RegExp('id="'+obsolete+'"'));
+  assert.doesNotMatch(view,new RegExp("\\$('"+obsolete.replace('ef4-','')+"'\\)"));
+ }
+ assert.doesNotMatch(view,/caladryn-destination|caladryn-away-message/);
+ assert.doesNotMatch(css,/\.caladryn-destinations|\.caladryn-progress/);
+ assert.match(world,/id="ef4-mapregion"/);
+ assert.match(world,/id="ef4-mapmarkers"/);
+ assert.match(world,/data-return-home/);
+ assert.match(world,/id="ef4-maptoggle" data-map-toggle/);
+ assert.ok(world.indexOf('id="ef4-mapregion"')<world.indexOf('id="ef4-worldbattle"'));
+ assert.ok(world.indexOf('id="ef4-worldbattle"')<world.indexOf('id="ef4-kingdominterior"'));
+ assert.match(view,/if\(home\)renderKingdom\(\);else renderTraining\(\)/);
+});
+
+test('Map collapse restores preference, keeps return-home control and never hides combat',()=>{
+ const view=read('ui/views.js'),html=read('game.html');
+ const start=view.indexOf("const CALADRYN_MAP_PREFERENCE=");
+ const end=view.indexOf('const CALADRYN_STOPS=[',start);
+ assert.ok(start>=0&&end>start,'Map visibility helper exists');
+ const source=view.slice(start,end);
+ const handlerStart=view.indexOf("if(Object.prototype.hasOwnProperty.call(b.dataset,'mapToggle'))");
+ const handlerEnd=view.indexOf("if(Object.prototype.hasOwnProperty.call(b.dataset,'mapZoom'))",handlerStart);
+ assert.ok(handlerStart>=0&&handlerEnd>handlerStart);
+ const handler=view.slice(handlerStart,handlerEnd);
+ const saved={'emberforge-caladryn-map-collapsed':'1'};
+ const region={hidden:false},attributes={},classes=new Set(),header={classList:{toggle:(name,on)=>on?classes.add(name):classes.delete(name)}};
+ const button={textContent:'',setAttribute:(name,value)=>attributes[name]=value,closest:()=>header};
+ const ctx={window:{localStorage:{
+  getItem:key=>saved[key]||null,
+  setItem:(key,value)=>{saved[key]=value}
+ }},$:id=>id==='mapregion'?region:id==='maptoggle'?button:null};
+ vm.createContext(ctx);
+ vm.runInContext(source+'updateCaladrynMapVisibility();',ctx);
+ assert.equal(region.hidden,true);
+ assert.equal(button.textContent,'Show Map');
+ assert.equal(attributes['aria-expanded'],'false');
+ assert.ok(classes.has('map-collapsed'));
+ assert.match(html,/id="ef4-returnhome" data-return-home/);
+ const click='(function(){const b={dataset:{mapToggle:""}};'+handler+'})();';
+ vm.runInContext(click,ctx);
+ assert.equal(region.hidden,false);
+ assert.equal(button.textContent,'Minimize Map');
+ assert.equal(saved['emberforge-caladryn-map-collapsed'],'0');
+ assert.equal(attributes['aria-expanded'],'true');
+ assert.equal(classes.has('map-collapsed'),false);
+ vm.runInContext(click,ctx);
+ assert.equal(region.hidden,true);
+ assert.equal(saved['emberforge-caladryn-map-collapsed'],'1');
+ assert.doesNotMatch(source,/worldbattle/,'The toggle must not touch the combat panel');
+ assert.doesNotMatch(handler,/worldbattle/);
+});
