@@ -150,8 +150,8 @@ function renderGear(){
    <div class="efg-slot-column efg-armor"><div class="efg-group-heading">Equipped</div>${equippedSlots.map(makeSlot).join('')}</div>
    <div class="efg-character-center">
      <div class="efg-figure-title">Your Adventurer</div>
-     <div class="efg-figure" role="img" aria-label="Neutral character silhouette showing head, torso, arms and legs"><span class="efg-head"></span><span class="efg-torso"></span><span class="efg-arm left"></span><span class="efg-arm right"></span><span class="efg-leg left"></span><span class="efg-leg right"></span></div>
-     <div class="efg-placeholder">Character appearance and fighting styles coming later</div>
+     ${renderAdventurerPaperDoll()}
+     <div class="efg-placeholder">An adventurer in the making · equipment appearances coming soon</div>
    </div>
    <div class="efg-slot-column efg-jewelry"><div class="efg-group-heading">Jewelry</div>${jewels.map(makeSlot).join('')}</div>
  </div>`;
