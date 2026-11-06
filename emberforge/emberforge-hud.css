@@ -3,7 +3,7 @@
 #ef4 .ef-head.ef-hud::before{content:"";pointer-events:none;position:absolute;z-index:-2;inset:0 0 auto;height:min(205px,88%);background:linear-gradient(180deg,#070a1015 0%,#070a1020 30%,#070a10bf 83%,#070a10 100%),url("./emberforge-scene.webp") center 35%/cover no-repeat}
 #ef4 .ef-head.ef-hud::after{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 0%,transparent 5%,#070a1070 110%),linear-gradient(0deg,#080c14df,transparent 48%)}
 #ef4 .ef-hud-top{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-height:clamp(82px,7.2vw,110px)}
-#ef4 .ef-hud-logo{display:block;width:clamp(230px,36vw,490px);height:clamp(80px,7.5vw,110px);max-width:calc(100% - 148px);min-width:0;flex:0 1 auto;object-fit:contain;object-position:left top;filter:drop-shadow(0 7px 12px #000d)}
+#ef4 .ef-hud-logo{display:block;width:clamp(230px,36vw,490px);height:clamp(80px,7.5vw,110px);max-width:calc(100% - 148px);min-width:0;flex:0 1 auto;object-fit:contain;object-position:left top;filter:drop-shadow(0 7px 12px #000d);mix-blend-mode:screen}
 #ef4 .ef-hud-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto;padding-top:8px}
 #ef4 .ef-hud-savebadge{min-height:33px;display:inline-flex;align-items:center;padding:7px 12px;white-space:nowrap;font-weight:800;font-size:11px;color:#d3f3dd;border:1px solid #597968;border-radius:12px;background:linear-gradient(#22322e,#141d22);box-shadow:inset 0 1px #c8f1db2b,0 4px 12px #0007}
 #ef4 .ef-hud-save{min-height:36px;padding:7px 18px!important;font-weight:850;color:#ffe3bf;border:1px solid #ce834c;border-radius:11px;background:linear-gradient(180deg,#75432d,#2b1918);box-shadow:inset 0 1px #ffddab7f,0 0 16px #bc5d3242,0 4px 10px #0009}
