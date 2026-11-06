@@ -54,7 +54,7 @@
   border-color:#92d6ac;color:#efffe8;
 }
 #ef4 .efb-status:not(:empty) {
-  display:table;margin:0 auto 12px;padding:7px 18px;
+  display:table;margin:5px 0 0;padding:5px 12px;
   border:1px solid #b78559;border-radius:30px;
   background:#10141de0;color:#ffe2b9;font-size:14px;
   font-weight:700;text-shadow:0 2px 5px #000;
@@ -106,3 +106,7 @@
 /* Exact legacy engine elements: the tip is regenerated on boss renders. */
 #ef4 [data-view="battle"] #ef4-combattip,
 #ef4 [data-view="battle"] #ef4-bosslootnote {display:none!important}
+
+/* Compact indicator inside the realm card, safely away from battle controls. */
+#ef4 .efb-location .efb-status {max-width:100%;font-size:clamp(11px,1vw,14px);white-space:nowrap}
+@media(max-width:760px){#ef4 .efb-location .efb-status{padding:4px 9px;font-size:11px}}
