@@ -56,6 +56,8 @@ function mount(frame){
  shell.innerHTML='<div class="efb-stage-top"><div class="efb-location"><span class="efb-eyebrow">THE BATTLEGROUND</span><strong class="efb-realm">Ashen Wilds</strong><span class="efb-stage">Stage</span></div><div class="efb-foe"><strong class="efb-name">Current enemy</strong><span class="efb-reward"></span><div class="efb-health" role="progressbar" aria-label="Enemy health" aria-valuemin="0" aria-valuemax="100"><div class="efb-health-fill"></div></div><small class="efb-hp-text"></small></div></div><button type="button" class="efb-arrow efb-prev" aria-label="Previous monster">‹</button><button type="button" class="efb-arrow efb-next" aria-label="Next monster">›</button><div class="efb-bottom"><div class="efb-status" aria-live="polite"></div><div class="efb-actions"></div></div>';
  sceneHost.parentNode.insertBefore(shell,sceneHost);
  shell.insertBefore(sceneHost,shell.firstChild);
+ // Escape the original two-column layout so the artwork fills Battle width.
+ battle.insertBefore(shell,battle.firstChild);
  var attacks=findButton(enemy,/^Strike$/i),autofarm=findButton(enemy,/Farm Target|Auto.?Farm|Auto Attack/i),heal=findButton(enemy,/^Heal\b/i),retreat=findButton(enemy,/^Retreat$/i);
  var actionArea=shell.querySelector(".efb-actions");
  if(autofarm)actionArea.appendChild(proxied(autofarm,"Auto Attack","efb-action efb-attack"));
@@ -108,6 +110,11 @@ function mount(frame){
  if(training)training.classList.add("efb-source-hidden");
  if(report)report.classList.add("efb-source-hidden");
  battle.classList.add("efb-redesigned");battle.dataset.efBattleSkin="1";
+ // Only hide the redundant title/subtitle, not other gameplay labels.
+ elements(battle,"h1,h2,h3").forEach(function(h){
+   if(/^The Battleground$/i.test(txt(h)))h.classList.add("efb-source-hidden");
+ });
+
  // Hide old title and redundant attack chip without affecting live nodes.
  var battleMetric=battle.querySelector(".ef-hud-context");if(battleMetric)battleMetric.classList.add("efb-source-hidden");
  var top=battle.querySelector(".space");if(top)top.classList.add("efb-source-hidden");
