@@ -203,7 +203,8 @@
     // Existing game engine owns all values; HUD only displays those values.
     var poll = doc.defaultView.setInterval(function () {
       if (!hero.isConnected) { doc.defaultView.clearInterval(poll); return; }
-      sync();
+      // Forge values are engine-owned; refresh the skin only while visible.
+      if (!doc.hidden && forge.classList.contains("active")) sync();
     }, 650);
   }
 
