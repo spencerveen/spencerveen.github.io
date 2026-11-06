@@ -129,7 +129,10 @@ function mount(frame){
  }
  var actionArea=shell.querySelector(".efb-actions");
  var prev=shell.querySelector(".efb-prev"),next=shell.querySelector(".efb-next");
- var selected=0,autoOn=false;
+ var selected=0,autoOn=false,hasNavigationSelection=false;
+ // Stage buttons can retain a stale "active" class after returning from a boss.
+ // Once navigation begins, the arrow's selected index is the source of truth.
+
  // The title includes a nested combat level (e.g. "YOUR ADVENTURER · COMBAT LV 46").
  // Find its smallest dedicated panel, not a leaf text node or the Battle container.
  function locateAdventurerCard(){
@@ -227,11 +230,21 @@ function mount(frame){
  healButton.addEventListener("click",function(){activate(healControl());refresh()});
  function nav(dir){
    var stages=liveStages(),index=selected+dir;
-   if(index>=0&&index<stages.length&&activate(stages[index]))selected=index;
+   if(index>=0&&index<stages.length&&activate(stages[index])){
+     selected=index;
+     hasNavigationSelection=true;
+   }
    refresh();
  }
  prev.addEventListener("click",function(){nav(-1)});
  next.addEventListener("click",function(){nav(1)});
+ // Also track direct selections made on the original Hunt Board, if used.
+ battle.addEventListener("click",function(event){
+   var button=event.target.closest("button");
+   if(!button||button.closest(".efb-shell"))return;
+   var stages=liveStages(),index=stages.indexOf(button);
+   if(index>=0&&!button.disabled){selected=index;hasNavigationSelection=true;}
+ });
  // The game can replace legacy cards during its render cycle. Re-hide fresh
  // copies on each sync, without touching the battlefield or the shared HUD.
  function suppressLegacyPanels(){
@@ -357,7 +370,8 @@ function mount(frame){
      var stageText=txt(battle.querySelector(".space")?.parentElement||battle).match(/Stage\s*(\d+)\s*\/\s*(\d+)/i);
      if(stageText)picked=Number(stageText[1])-1;
    }
-   if(picked>=0&&picked<stages.length)selected=picked;
+   if(!hasNavigationSelection&&picked>=0&&picked<stages.length)selected=picked;
+   if(selected>=stages.length)selected=Math.max(0,stages.length-1);
    prev.disabled=selected<=0;
    next.disabled=selected>=stages.length-1||!!stages[selected+1]?.disabled;
    var stage=stages[selected],stageName=txt(stage).replace(/(?:✓\s*Farm|New|#\s*\d+|BOSS)/gi,"").trim();
