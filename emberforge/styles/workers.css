@@ -18,7 +18,7 @@
 #ef4 .efw-portrait{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0;background:radial-gradient(ellipse at 50% 76%,#f5833026,transparent 50%),linear-gradient(120deg,#202334,#141928 75%);border-right:1px solid #a26c485c}
 #ef4 .efw-portrait::after{content:"";position:absolute;bottom:9px;left:17%;right:17%;height:9px;background:#0a111d;border-radius:50%;filter:blur(6px)}
 #ef4 .efw-portrait-glow{position:absolute;inset:23% 8% 12%;background:radial-gradient(ellipse,#ed762f31,transparent 70%);pointer-events:none}
-#ef4 .efw-portrait .ico{width:clamp(70px,9.5vw,105px);height:clamp(70px,9.5vw,105px);position:relative;z-index:1;object-fit:contain;filter:drop-shadow(0 6px 10px #0009) drop-shadow(0 0 10px #f18a3b34)}
+#ef4 .efw-portrait .ico{width:clamp(70px,9.5vw,105px);height:clamp(70px,9.5vw,105px);position:relative;z-index:1;object-fit:contain;filter:drop-shadow(0 6px 10px #0009) drop-shadow(0 0 10px #f18a3b34);-webkit-mask-image:radial-gradient(ellipse 48% 43% at 50% 53%,#000 55%,transparent 88%);mask-image:radial-gradient(ellipse 48% 43% at 50% 53%,#000 55%,transparent 88%)}
 #ef4 .efw-worker-info{display:flex;flex-direction:column;min-width:0;gap:11px;padding:17px 17px 15px}
 #ef4 .efw-title-row{display:flex;align-items:start;justify-content:space-between;gap:9px;min-width:0}
 #ef4 .efw-worker-title{min-width:0}
