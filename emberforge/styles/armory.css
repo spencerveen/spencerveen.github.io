@@ -25,7 +25,5 @@
 #ef4 .efg-leg.left{left:calc(50% - 36px);transform:rotate(3deg)}
 #ef4 .efg-leg.right{right:calc(50% - 36px);transform:rotate(-3deg)}
 #ef4 .efg-placeholder{font-size:11px;font-style:italic;color:#b0b7c7;line-height:1.5;max-width:230px;margin:0 auto 7px}
-#ef4 .efg-hand-slots{display:flex;flex-direction:column;gap:8px;text-align:left}
-#ef4 .efg-hand-slots .efg-slot{min-height:55px}
 @media(max-width:1110px){#ef4 .efg-character-layout{grid-template-columns:repeat(2,minmax(0,1fr))}#ef4 .efg-character-center{grid-column:1/-1;grid-row:1;max-width:520px;width:100%;margin:0 auto}#ef4 .efg-figure{height:220px;transform:scale(.82);transform-origin:top center;margin-bottom:-28px}}
 @media(max-width:600px){#ef4 .efg-character-layout{grid-template-columns:1fr;gap:12px}#ef4 .efg-character-center{grid-column:auto;grid-row:auto}#ef4 .efg-slot-column{gap:7px}#ef4 .efg-slot{min-height:56px}#ef4 .efg-character-center{padding:12px}}
