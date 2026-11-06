@@ -178,8 +178,9 @@ function mount(frame){
  var recentEvents=new Map();
  var dismissed=new Set();
  var eventRenderUntil=0;
- var routineNotice=/^(?:Hunting\s+\S.{0,95}|Farming\s+stage\s+\d+(?:\s*\/\s*\d+)?|Retreated to safety|Auto(?:[- ]?Farm| Attack)?\s*(?:ON|OFF|enabled|disabled)|Battle ready)\.?$/i;
- var importantNotice=/^(?:Boss chest:|Loot(?: found| drop|:)|(?:Boss|Enemy) defeated\b|(?:RARE|EPIC|LEGENDARY)\b|(?:Found|Obtained|Received|Equipped|Reward|Victory|Chest)\b)/i;
+ var routineNotice=/^(?:Hunting\s+\S.{0,95}|Farming\s+(?:(?:stage|hunt|target|boss)\s*)?(?:#?\d+|[A-Za-z][A-Za-z '\-]{1,65})(?:\s*\/\s*\d+)?|Smart\s*Hunt(?:\s+(?:enabled|disabled|on|off|activated|deactivated))?|Retreated to safety|Auto(?:[- ]?Farm| Attack)?\s*(?:ON|OFF|enabled|disabled)|Battle ready)\.?$/i;
+ var importantNotice=/^(?:Boss chest:|Loot(?: found| drop|:)|(?:Boss|Enemy) defeated\b|(?:RARE|EPIC|LEGENDARY)\b|(?:Found|Obtained|Received|Equipped|Reward|Victory|Chest)\b)|\b(?:boss\s+special|special\s+(?:attack|hit|damage|strike|ability)|(?:warden|boss).{0,65}(?:special|devastating\s+attack))\b/i;
+ var lastToastMessage=new WeakMap();
  function purgeEventLog(now){
    var keep=eventHistory.filter(function(entry){return now-entry.at<6500});
    if(keep.length===eventHistory.length)return;
@@ -211,7 +212,18 @@ function mount(frame){
    // The overlay can be reused to show new text. Do not permanently hide
    // non-battle content when that happens.
    elements(root,".efb-native-toast-hidden").forEach(function(el){
-     if(!isToastText(txt(el)))el.classList.remove("efb-native-toast-hidden");
+     var message=txt(el);
+     if(!isToastText(message)){
+       el.classList.remove("efb-native-toast-hidden");
+       lastToastMessage.delete(el);
+       return;
+     }
+     // Base game reuses its toast capsule; record each new reward/special
+     // message, even while that capsule remains visually suppressed.
+     if(lastToastMessage.get(el)!==message){
+       if(importantNotice.test(message))queueEvent(message);
+       lastToastMessage.set(el,message);
+     }
    });
    // Prefer actual toast containers; include short text leaves only for
    // the base game's HUD notification that has no semantic toast selector.
@@ -234,7 +246,10 @@ function mount(frame){
      }
      var rect=target.getBoundingClientRect();
      if(rect.width>580||rect.height>135)return;
-     if(importantNotice.test(message))queueEvent(message);
+     if(lastToastMessage.get(target)!==message){
+       if(importantNotice.test(message))queueEvent(message);
+       lastToastMessage.set(target,message);
+     }
      target.classList.add("efb-native-toast-hidden");
    });
    purgeEventLog(Date.now());
