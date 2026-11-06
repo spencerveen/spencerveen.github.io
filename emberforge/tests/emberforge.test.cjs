@@ -160,8 +160,8 @@ test('background sheets are real, independently cacheable WebP files', () => {
   ];
   for (const [source, constant, count, name] of groups) {
     const script = read('data/' + source);
-    assert.doesNotMatch(script, /data:image\\/webp;base64,/);
-    assert.match(script, new RegExp('\\\\b' + constant + '\\\\b'));
+    assert.doesNotMatch(script, /data:image\/webp;base64,/);
+    assert.match(script, new RegExp('\\b' + constant + '\\b'));
     for (let i = 0; i < count; i++) {
       const asset = 'art/' + name + '-' + i + '.webp';
       assert.ok(script.includes('./' + asset), asset + ' reference missing');
