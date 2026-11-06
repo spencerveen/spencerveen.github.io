@@ -267,6 +267,20 @@ function mount(frame){
  var routineNotice=/^(?:Hunting\s+\S.{0,95}|Farming\s+(?:(?:stage|hunt|target|boss)\s*)?(?:#?\d+|[A-Za-z][A-Za-z '\-]{1,65})(?:\s*\/\s*\d+)?|Smart\s*Hunt(?:\s+(?:enabled|disabled|on|off|activated|deactivated))?|Retreated to safety|Auto(?:[- ]?Farm| Attack)?\s*(?:ON|OFF|enabled|disabled)|Battle ready)\.?$/i;
  var importantNotice=/^(?:Boss chest:|Loot(?: found| drop|:)|(?:Boss|Enemy) defeated\b|(?:RARE|EPIC|LEGENDARY)\b|(?:Found|Obtained|Received|Equipped|Reward|Victory|Chest)\b)|\b(?:boss\s+special|special\s+(?:attack|hit|damage|strike|ability)|(?:warden|boss).{0,65}(?:special|devastating\s+attack))\b/i;
  var lastToastMessage=new WeakMap();
+ var lastCombatMessage="";
+ function routeCombatMessage(){
+   var nativeMessage=doc.getElementById("ef4-combatmessage");
+   var message=txt(nativeMessage);
+   if(!message||message===lastCombatMessage)return;
+   lastCombatMessage=message;
+   // Stage selection includes the unwanted boss introduction. Combat
+   // updates, hits, damage, victories and recovery remain visible.
+   if(/^(?:Target selected:|Ready for battle|Rest between fights)/i.test(message))return;
+   if(/^(?:You strike|BOSS SPECIAL ATTACK|You were knocked out|Recovered|Combat level|Healing potion|First victory!)/i.test(message)||
+      /(?:hits for|defeated\.|damage\.|combat XP\.)/i.test(message)){
+     queueEvent(message);
+   }
+ }
  function purgeEventLog(now){
    var keep=eventHistory.filter(function(entry){return now-entry.at<6500});
    if(keep.length===eventHistory.length)return;
@@ -295,6 +309,7 @@ function mount(frame){
    return routineNotice.test(t)||importantNotice.test(t);
  }
  function routeBattleToasts(){
+   routeCombatMessage();
    // Preserve engine notifications in the arena without restoring the
    // unwanted boss introduction or routine auto/farming status messages.
    var nativeToast=doc.getElementById("ef4-toast");
@@ -325,33 +340,8 @@ function mount(frame){
        lastToastMessage.set(el,message);
      }
    });
-   // Prefer actual toast containers; include short text leaves only for
-   // the base game's HUD notification that has no semantic toast selector.
-   elements(root,'[id*="toast" i],[class*="toast" i],[role="status"],[role="alert"],div,span,strong,p,b').forEach(function(el){
-     if(el.closest(".efb-shell")||el.closest(".efb-native-toast-hidden"))return;
-     if(el.children.length&&Array.from(el.children).some(function(child){return txt(child).length>0}))return;
-     var message=txt(el);
-     if(!message||message.length>135||!isToastText(message))return;
-     var target=el;
-     for(var i=0;i<4;i++){
-       var parent=target.parentElement;
-       if(!parent||parent===root||parent===doc.body||parent.closest(".efb-shell")||
-          parent.classList.contains("ef-head")||
-          parent.classList.contains("ef-hud-vitals")||
-          parent.classList.contains("ef-hud-health"))break;
-       if(txt(parent)!==message)break;
-       var rectangle=parent.getBoundingClientRect();
-       if(rectangle.width>580||rectangle.height>135)break;
-       target=parent;
-     }
-     var rect=target.getBoundingClientRect();
-     if(rect.width>580||rect.height>135)return;
-     if(lastToastMessage.get(target)!==message){
-       if(importantNotice.test(message))queueEvent(message);
-       lastToastMessage.set(target,message);
-     }
-     target.classList.add("efb-native-toast-hidden");
-   });
+   // Do not recursively hide arbitrary div/span nodes: it can suppress
+   // damage floaters and real battle messages from the scene.
    purgeEventLog(Date.now());
  }
  function refresh(){
