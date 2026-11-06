@@ -65,14 +65,14 @@
       });
       return best;
     }
-    var scene = chooseScene();
+    var scene = forge.querySelector("#ef4-forgescene") || chooseScene();
     // Fail closed: if the original interactive scene can't be identified,
     // leave the entire gameplay screen exactly as it was.
     if (!scene || scene.contains(stats) || scene.contains(forge.querySelector("#ef4-eps"))) return;
 
     var sheet = doc.createElement("link");
     sheet.rel = "stylesheet";
-    sheet.href = "./emberforge-forge.css?v=1";
+    sheet.href = "./emberforge-forge.css?v=2";
     doc.head.appendChild(sheet);
 
     var hero = doc.createElement("section");
@@ -150,31 +150,28 @@
       return null;
     }
     function sync() {
-      var card = sourceCard();
-      if (card) {
-        var t = leafText(card);
-        var currentMatch = t.match(/([\d,.]+[KMB]?)\s*Lifetime Ember harvested/i);
-        var targetMatch = t.match(/Next level at\s*([\d,.]+[KMB]?)/i);
-        var current = readNumber(currentMatch && currentMatch[1]);
-        var target = readNumber(targetMatch && targetMatch[1]);
-        if (Number.isFinite(current) && Number.isFinite(target) && target > 0) {
-          var pct = Math.max(0, Math.min(100, current / target * 100));
-          progressText.textContent = format(current) + " / " + format(target);
-          fill.style.width = pct + "%";
-          track.setAttribute("aria-valuenow", String(Math.round(pct)));
-          track.setAttribute("aria-valuetext", format(current) + " of " + format(target) + " lifetime Embers");
-        }
+      // Read the original game DOM rather than independently estimating
+      // progression. The engine already computes the level and bar value.
+      var levelSource = doc.getElementById("ef4-level");
+      if (levelSource) {
+        var m = (levelSource.textContent || "").match(/Level\s*(\d+)/i);
+        if (m) level.textContent = m[1];
       }
-      // Read the level already displayed by the game, not a duplicate counter.
-      var all = forge.querySelectorAll("span,small,strong,div");
-      for (var i = 0; i < all.length; i++) {
-        var el = all[i];
-        if (el.closest(".ef-forge-v2") || el.children.length > 1) continue;
-        var s = leafText(el);
-        var m = s.match(/^(?:Forge\s+)?Level\s*(\d+)$/i) ||
-                s.match(/^FORGE\s+LV\s*(\d+)$/i);
-        if (m) { level.textContent = m[1]; break; }
-      }
+      var lifetimeSource = doc.getElementById("ef4-lifetime");
+      var nextLevelSource = doc.getElementById("ef4-levelinfo");
+      var originalBar = doc.getElementById("ef4-levelbar");
+      if (!lifetimeSource || !nextLevelSource) return;
+      var targetMatch = (nextLevelSource.textContent || "").match(/Next level at\s*([\d,.]+[KMB]?)/i);
+      var current = readNumber(lifetimeSource.textContent);
+      var target = readNumber(targetMatch && targetMatch[1]);
+      if (!Number.isFinite(current) || !Number.isFinite(target) || target <= 0) return;
+      var engineProgress = originalBar ? parseFloat(originalBar.style.width) : NaN;
+      var pct = Number.isFinite(engineProgress) ? engineProgress : current / target * 100;
+      pct = Math.max(0, Math.min(100, pct));
+      progressText.textContent = format(current) + " / " + format(target);
+      fill.style.width = pct + "%";
+      track.setAttribute("aria-valuenow", String(Math.round(pct)));
+      track.setAttribute("aria-valuetext", format(current) + " of " + format(target) + " lifetime Embers toward the next Forge level");
     }
     sync();
     // Existing game engine owns all values; HUD only displays those values.
