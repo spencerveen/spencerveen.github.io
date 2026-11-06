@@ -95,7 +95,14 @@
  #ef4 .efb-chest-item {font-size:15px}
 }
 
-/* The engine continues updating both nodes. Hide only those exact legacy
-   instruction elements; never suppress floating damage or other notices. */
-#ef4 #ef4-combattip,
-#ef4 #ef4-bosslootnote {display:none!important}
+/* Hide only the obsolete special-attack/loot boss mechanics tip card. */
+#ef4 [data-view="battle"] .efb-boss-tip-hidden {display:none!important}
+
+/* Engine-created overlays are hidden at their source, not merely behind the HUD. */
+#ef4 [data-view="battle"] .efb-old-chest-hidden,
+#ef4 [data-view="battle"] .efb-boss-tip-hidden {display:none!important}
+#ef4 .efb-shell > .efb-chest-reward {z-index:20!important}
+
+/* Exact legacy engine elements: the tip is regenerated on boss renders. */
+#ef4 [data-view="battle"] #ef4-combattip,
+#ef4 [data-view="battle"] #ef4-bosslootnote {display:none!important}
