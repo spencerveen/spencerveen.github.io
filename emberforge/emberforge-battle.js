@@ -208,6 +208,7 @@ function mount(frame){
  var routineNotice=/^(?:Hunting\s+\S.{0,95}|Farming\s+(?:(?:stage|hunt|target|boss)\s*)?(?:#?\d+|[A-Za-z][A-Za-z '\-]{1,65})(?:\s*\/\s*\d+)?|Smart\s*Hunt(?:\s+(?:enabled|disabled|on|off|activated|deactivated))?|Retreated to safety|Auto(?:[- ]?Farm| Attack)?\s*(?:ON|OFF|enabled|disabled)|Battle ready)\.?$/i;
  var lastToastMessage=new WeakMap();
  var lastCombatMessage="";
+ var lastEncounterKey=null;
  function routeCombatMessage(){
    var nativeMessage=doc.getElementById("ef4-combatmessage");
    var message=txt(nativeMessage);
@@ -286,6 +287,18 @@ function mount(frame){
      if(stageText)picked=Number(stageText[1])-1;
    }
    var state=engine()?.getCombatState();
+   if(state){
+     var encounterKey=state.zone+":"+state.stage;
+     if(lastEncounterKey!==null&&lastEncounterKey!==encounterKey){
+       eventHistory=[];
+       recentEvents.clear();
+       renderEvents();
+       var oldToast=doc.getElementById("ef4-toast");
+       if(oldToast)lastToastMessage.set(oldToast,txt(oldToast));
+       lastCombatMessage=txt(doc.getElementById("ef4-combatmessage"));
+     }
+     lastEncounterKey=encounterKey;
+   }
    if(state){selected=state.stage-1;autoOn=!!state.auto;}
    else if(!hasNavigationSelection&&picked>=0&&picked<stages.length)selected=picked;
    if(selected>=stages.length)selected=Math.max(0,stages.length-1);
