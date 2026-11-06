@@ -62,3 +62,6 @@
 
 /* Superseded game-stage banners, formerly shown on stage changes. */
 #ef4 .efb-shell .efb-source-label-hidden {display:none!important}
+
+/* Hide only the redundant compact Hunting [enemy] toast above the battle. */
+#ef4 .efb-hunting-toast-suppressed {visibility:hidden!important;pointer-events:none!important}
