@@ -74,3 +74,23 @@
 #ef4 .efw-achievement-worker .efw-milestone-track{margin:8px 0 7px}
 @media(max-width:760px){#ef4 .efw-achievement-grid{grid-template-columns:1fr}}
 @media(max-width:430px){#ef4 .efw-achievements-heading h3{font-size:19px}#ef4 .efw-achievement-worker{padding:12px}#ef4 .efw-achievement-worker-heading{gap:6px}#ef4 .efw-achievement-worker-heading strong{font-size:12px}}
+
+/* Polished worker stat readout: compact game HUD panels instead of flat text */
+#ef4 .efw-output{display:flex;align-items:center;align-self:flex-start;gap:9px;flex-wrap:wrap;background:linear-gradient(100deg,#302a36,#1a2435);border-color:#a7784b6b;color:#cdd5e2}
+#ef4 .efw-output strong{color:#ffe1b6;font-weight:800}
+#ef4 .efw-output-divider{height:17px;width:1px;background:linear-gradient(transparent,#cb8850,transparent);flex:0 0 1px}
+#ef4 .efw-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#ef4 .efw-metric{display:flex;flex-direction:column;gap:6px;min-width:0;padding:10px 11px;border:1px solid #8863448c;border-radius:9px;background:linear-gradient(145deg,#263044,#151d2c);box-shadow:inset 0 1px #d29b6340,0 3px 9px #0003}
+#ef4 .efw-metric-label{color:#a9bbd0;text-transform:uppercase;letter-spacing:.5px;font-size:9px;font-weight:800;line-height:1.3}
+#ef4 .efw-metric-label span{color:#e39a52;margin-right:4px;font-size:11px}
+#ef4 .efw-metric-value{color:#ffd392;font-size:clamp(16px,1.7vw,22px);font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+#ef4 .efw-metric-value small{font-size:10px;color:#b8c2d1;font-weight:600;white-space:nowrap}
+#ef4 .efw-share-track{height:4px;border-radius:50px;overflow:hidden;background:#0e1724;box-shadow:inset 0 1px 3px #0008}
+#ef4 .efw-share-track>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#c46b30,#ffc576);box-shadow:0 0 8px #f7aa50aa}
+#ef4 .efw-efficiency{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#141d2c9a;border:1px solid #8d664664;border-radius:8px;padding:8px 11px;color:#b8c4d5}
+#ef4 .efw-efficiency-label{font-size:10px;font-weight:800;letter-spacing:.3px;color:#c4bbba}
+#ef4 .efw-efficiency-label span{color:#f5a55c;margin-right:5px}
+#ef4 .efw-efficiency-amount{font-size:10.5px;white-space:normal}
+#ef4 .efw-efficiency-amount strong{color:#ffcb7e;font-size:13px;font-weight:900}
+@media(max-width:640px){#ef4 .efw-metrics{gap:6px}#ef4 .efw-metric{padding:8px}#ef4 .efw-metric-label{font-size:8px;letter-spacing:0}#ef4 .efw-metric-value{font-size:16px}#ef4 .efw-metric-value small{font-size:9px}#ef4 .efw-efficiency{padding:7px 9px}#ef4 .efw-efficiency-label{font-size:9px}#ef4 .efw-efficiency-amount{font-size:9px}}
+@media(max-width:390px){#ef4 .efw-metrics{grid-template-columns:1fr}}
