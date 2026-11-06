@@ -85,14 +85,52 @@ function mount(frame){
  function farmControl(){return liveControl(/Farm Target|Auto.?Farm|Auto Attack/i,liveBoard())||liveControl(/Farm Target|Auto.?Farm|Auto Attack/i)}
  function stopControl(){return liveControl(/^Retreat$|^Stop\b/i)}
  function healControl(){return liveControl(/^Heal\b/i)}
+ function strikeControl(){return liveControl(/^Strike(?:\s|$)/i)}
+ // Stage-change notices from the old art layer are redundant with the new
+ // realm/stage badge. Hide only the old scene labels; do not silence game logs.
+ function hideSceneLabels(){
+   elements(sceneHost,"span,small,div").forEach(function(el){
+     if(el.closest(".efb-stage-top,.efb-bottom,.efb-arrow"))return;
+     if(el.children.length>1)return;
+     var label=txt(el);
+     if(/^(?:BOSS BATTLE|STAGE\s+\d+(?:\s*\/\s*\d+)?|(?:BOSS BATTLE|ASHEN WILDS)\s*[·•-]\s*(?:ASHEN WILDS|BOSS BATTLE))$/i.test(label)){
+       el.classList.add("efb-source-label-hidden");
+     }
+   });
+ }
+ var lastStrike=0,autoTimer=null;
+ function attackTick(){
+   if(!autoOn||!shell.isConnected){
+     if(autoTimer){doc.defaultView.clearInterval(autoTimer);autoTimer=null}
+     return;
+   }
+   var strike=strikeControl();
+   // Let the original combat engine enforce hit damage and cooldown.
+   if(strike&&!strike.disabled&&Date.now()-lastStrike>=650){
+     if(activate(strike))lastStrike=Date.now();
+   }
+ }
+ function beginAuto(){
+   if(autoOn)return;
+   // Farming may already be active; selecting a target alone is not an On/Off
+   // switch. Keep the Strike fallback active even if Farm Target is disabled.
+   var farm=farmControl();
+   if(farm&&!farm.disabled)activate(farm);
+   autoOn=true;
+   if(autoTimer)doc.defaultView.clearInterval(autoTimer);
+   attackTick();
+   autoTimer=doc.defaultView.setInterval(attackTick,700);
+ }
+ function endAuto(){
+   autoOn=false;
+   if(autoTimer){doc.defaultView.clearInterval(autoTimer);autoTimer=null}
+   // Stop engine-managed autofarming when an explicit stop exists.
+   var stop=stopControl();if(stop&&!stop.disabled)activate(stop);
+ }
  var autoButton=doc.createElement("button");autoButton.type="button";autoButton.className="efb-action efb-attack";
  var healButton=doc.createElement("button");healButton.type="button";healButton.className="efb-action efb-heal";
  actionArea.append(autoButton,healButton);
- autoButton.addEventListener("click",function(){
-   if(autoOn){if(activate(stopControl()))autoOn=false}
-   else if(activate(farmControl()))autoOn=true;
-   refresh();
- });
+ autoButton.addEventListener("click",function(){if(autoOn)endAuto();else beginAuto();refresh()});
  healButton.addEventListener("click",function(){activate(healControl());refresh()});
  function nav(dir){
    var stages=liveStages(),index=selected+dir;
@@ -103,6 +141,7 @@ function mount(frame){
  next.addEventListener("click",function(){nav(1)});
  function refresh(){
    var stages=liveStages();
+   hideSceneLabels();
    var picked=stages.findIndex(function(el){return el.matches('[aria-pressed=true],[aria-selected=true],.active,.selected')||/current/i.test(el.className)});
    if(picked<0){
      var stageText=txt(battle.querySelector(".space")?.parentElement||battle).match(/Stage\s*(\d+)\s*\/\s*(\d+)/i);
@@ -131,7 +170,7 @@ function mount(frame){
    if(Number.isFinite(percent)){percent=Math.min(100,Math.max(0,percent));shell.querySelector(".efb-health-fill").style.width=percent+"%";shell.querySelector(".efb-health").setAttribute("aria-valuenow",String(Math.round(percent)))}
    var reward=enText.match(/\+\s*[\d,.]+[KMB]?\s*Ember/i);shell.querySelector(".efb-reward").textContent=reward?reward[0]:"";
    var h=healControl(),f=farmControl();
-   autoButton.disabled=!autoOn&&(!f||f.disabled);
+   autoButton.disabled=false;
    autoButton.textContent="Auto Attack: "+(autoOn?"On":"Off");
    autoButton.setAttribute("aria-pressed",String(autoOn));
    healButton.disabled=!h||h.disabled;
@@ -194,7 +233,7 @@ function mount(frame){
  menu.addEventListener("click",function(){refreshMaster()});
  tab("original");refresh();
  var timer=doc.defaultView.setInterval(function(){
-   if(!shell.isConnected){doc.defaultView.clearInterval(timer);return}
+   if(!shell.isConnected){doc.defaultView.clearInterval(timer);endAuto();return}
    refresh();
    if(root.querySelector('[data-view="mastery"].active,[data-view="master"].active'))refreshMaster();
  },750);
