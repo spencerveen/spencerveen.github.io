@@ -194,52 +194,16 @@ function mount(frame){
      }
    });
  }
- // Use the game's actual Strike control, which calls manualAttack().
- // A native Strike activates the encounter, starts enemy retaliation,
- // and applies damage/cooldown through the original engine.
- function nativeAutoMode(){
-   var control=doc.getElementById("ef4-auto");
-   if(!control)return "unknown";
-   var label=txt(control);
-   if(/Smart Hunt/i.test(label))return "smart";
-   if(/Farm Target/i.test(label))return "selected";
-   if(/Auto OFF/i.test(label))return "off";
-   return "unknown";
- }
- function stopNativeAuto(){
-   var control=doc.getElementById("ef4-auto"),mode=nativeAutoMode();
-   if(!control||control.disabled)return mode==="off";
-   for(var i=0;i<3&&mode!=="off"&&mode!=="unknown";i++){
-     if(!activate(control))break;
-     var updated=nativeAutoMode();
-     if(updated===mode)break;
-     mode=updated;
-   }
-   return mode==="off";
- }
- var autoTimer=null,lastStrike=0;
- function attackTick(){
-   if(!autoOn||!shell.isConnected){
-     if(autoTimer){doc.defaultView.clearInterval(autoTimer);autoTimer=null;}
-     return;
-   }
-   var strike=strikeControl();
-   if(strike&&strike.isConnected&&!strike.disabled&&Date.now()-lastStrike>=650){
-     if(activate(strike))lastStrike=Date.now();
-   }
-   // The native engine handles enemy attacks as soon as Strike engages combat.
- }
+ // Combat runs inside the game engine. The UI never simulates Strike,
+ // Farm Target or Retreat clicks, and it owns no parallel combat timers.
+ function engine(){try{return frame.contentWindow.EmberforgeGame||null}catch(_){return null}}
  function beginAuto(){
-   // Disarm legacy farming first. Do not click a target or Retreat.
-   if(!stopNativeAuto())return;
-   autoOn=true;
-   if(autoTimer)doc.defaultView.clearInterval(autoTimer);
-   attackTick();
-   autoTimer=doc.defaultView.setInterval(attackTick,700);
+   var api=engine();
+   if(api&&api.setAutoAttack(true))autoOn=true;
  }
  function endAuto(){
-   autoOn=false;
-   if(autoTimer){doc.defaultView.clearInterval(autoTimer);autoTimer=null;}
+   var api=engine();
+   if(api&&api.setAutoAttack(false))autoOn=false;
  }
  var autoButton=doc.createElement("button");autoButton.type="button";autoButton.className="efb-action efb-attack";
  var healButton=doc.createElement("button");healButton.type="button";healButton.className="efb-action efb-heal";
@@ -247,22 +211,10 @@ function mount(frame){
  autoButton.addEventListener("click",function(){if(autoOn)endAuto();else beginAuto();routeBattleToasts();refresh()});
  healButton.addEventListener("click",function(){activate(healControl());refresh()});
  function nav(dir){
-   var stages=liveStages(),index=selected+dir;
-   if(index<0||index>=stages.length){refresh();return;}
-   var target=stages[index];
-   // The original engine can disable its boss selector after leaving a boss,
-   // even though that encounter was already reached. Re-enable that specific
-   // previously visited encounter only for the click, then restore the state.
-   var isBoss=index===stages.length-1 && /BOSS/i.test(txt(target));
-   var temporarilyEnabled=isBoss&&visitedBoss&&target.disabled;
-   if(temporarilyEnabled)target.disabled=false;
-   var moved=activate(target);
-   if(temporarilyEnabled)target.disabled=true;
-   if(moved){
-     selected=index;
-     hasNavigationSelection=true;
-     if(isBoss)visitedBoss=true;
-   }
+   var api=engine(),state=api?.getCombatState();
+   var target=(state?state.stage:selected+1)+dir;
+   if(!api||!state||target<1||target>state.maxStage)return;
+   if(api.selectStage(target)){selected=target-1;hasNavigationSelection=true;}
    refresh();
  }
  prev.addEventListener("click",function(){nav(-1)});
@@ -399,13 +351,12 @@ function mount(frame){
      var stageText=txt(battle.querySelector(".space")?.parentElement||battle).match(/Stage\s*(\d+)\s*\/\s*(\d+)/i);
      if(stageText)picked=Number(stageText[1])-1;
    }
-   if(!hasNavigationSelection&&picked>=0&&picked<stages.length)selected=picked;
+   var state=engine()?.getCombatState();
+   if(state){selected=state.stage-1;autoOn=!!state.auto;}
+   else if(!hasNavigationSelection&&picked>=0&&picked<stages.length)selected=picked;
    if(selected>=stages.length)selected=Math.max(0,stages.length-1);
-   if(selected===stages.length-1&&stages.length>1)visitedBoss=true;
    prev.disabled=selected<=0;
-   var nextTarget=stages[selected+1];
-   var revisitingBoss=visitedBoss&&selected===stages.length-2&&/BOSS/i.test(txt(nextTarget));
-   next.disabled=selected>=stages.length-1||(!revisitingBoss&&!!nextTarget?.disabled);
+   next.disabled=selected>=stages.length-1||(state?selected+2>state.maxStage:!!stages[selected+1]?.disabled);
    var stage=stages[selected],stageName=txt(stage).replace(/(?:✓\s*Farm|New|#\s*\d+|BOSS)/gi,"").trim();
    shell.querySelector(".efb-stage").textContent=(selected===stages.length-1?"Boss encounter":"Stage "+(selected+1)+" / "+Math.max(10,stages.length));
    var headerText=txt(battle).match(/(Ashen Wilds|Whispering Forest|[A-Z][a-z]+ (?:Wastes|Wilds|Ruins|Citadel|Forest|Depths|Keep))/);
