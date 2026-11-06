@@ -654,7 +654,7 @@ test('Armory inventory only equips and locks, Kingdom owns selling and salvaging
  assert.match(kingdom,/data-action="salvage-common"/);
  assert.match(kingdom,/data-action="salvage-all"/);
  const bag=views.slice(views.indexOf('function renderGear(){'),views.indexOf('function renderWorld(){'));
- assert.match(bag,/class="efg-bag-empty"/);
+ assert.match(bag,/class="efg-bag-slot efg-bag-empty"/);
  assert.match(bag,/data-equip=/);
  assert.match(bag,/data-lock=/);
  assert.doesNotMatch(bag,/data-sell=/);
