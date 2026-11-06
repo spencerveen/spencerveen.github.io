@@ -4,6 +4,15 @@
 function mount(frame){
  var doc;try{doc=frame.contentDocument}catch(_){return}
  if(!doc)return;
+ // These two IDs are the original game's boss-tip elements. Suppress them
+ // by ID rather than trying to recognize their changing text on each frame.
+ // Keep the nodes present: the legacy engine still writes to both by ID.
+ if(!doc.getElementById("efb-remove-boss-tips")){
+   var noBossTips=doc.createElement("style");
+   noBossTips.id="efb-remove-boss-tips";
+   noBossTips.textContent="#ef4-combattip, #ef4-bosslootnote { display:none !important; visibility:hidden !important; }";
+   doc.head.appendChild(noBossTips);
+ }
  var root=doc.getElementById("ef4"),battle=root&&root.querySelector('[data-view="battle"]');
  if(!battle||battle.dataset.efBattleSkin==="1")return;
  var master=doc.getElementById("ef4-mastercontent");
