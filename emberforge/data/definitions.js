@@ -59,6 +59,13 @@ const nextCombatXP=level=>Math.ceil(55*Math.pow(1.125,Math.max(0,level-1)));
 const bases=[['Rusty Blade','weapon','sword',3],['Runic Sword','weapon','swords',6],['Dragonfang','weapon','dragon',10],['Ember Plate','armor','guardian',2],['Frostplate','armor','barracks',5],['Celestial Mail','armor','castle',9],['Spark Ring','charm','gem',2],['Void Sigil','charm','soulfire',5],['Sunstone Band','charm','medal',9]];
 const rarities=['common','rare','epic','legendary'], rarityScale=[1,2.2,4.8,12];
 const honors=[['first','First Spark','Harvest Ember',x=>x.clicks>0],['work','First Hire','Own one worker',x=>Object.values(x.gens).some(v=>v>0)],['coin','Warm Hands','Earn 1K lifetime Ember',x=>x.lifetime>=1000],['rich','Ember Magnate','Earn 1M lifetime Ember',x=>x.lifetime>=1e6],['battle','First Blood','Defeat an enemy',x=>x.kills>0],['boss','Crown Breaker','Defeat a boss',x=>x.bosses>0],['builder','Foundations','Construct a building',x=>Object.values(x.build).some(v=>v>0)],['explorer','Wayfarer','Unlock a second region',x=>x.unlocked>=1],['loot','Lucky Find','Discover rare loot',x=>x.lootFound>0],['skilled','Wise Artisan','Unlock a skill',x=>Object.values(x.skills).some(v=>v>0)],['master','Forged Again','Ascend once',x=>x.ascensions>0],['legend','Realm Conqueror','Unlock every region',x=>x.unlocked>=5]];
+// Workforce achievements live in the existing permanent honors ledger.
+honors.push(
+ ['crew25','Established Crew','Own 25 of one worker type in a single run',x=>workers.some(w=>(x.gens[w[0]]||0)>=25)],
+ ['workforce100','Century of Hands','Own 100 workers across all types in one run',x=>workers.reduce((n,w)=>n+(x.gens[w[0]]||0),0)>=100],
+ ['veterancrew','Master of the Guild','Own 100 of one worker type in a single run',x=>workers.some(w=>(x.gens[w[0]]||0)>=100)],
+ ['allworkers','Full Muster','Own at least one of every worker type in one run',x=>workers.every(w=>(x.gens[w[0]]||0)>0)]
+);
 const encounterBook=()=>realms.flatMap((r,z)=>[
  ...MONSTER_LADDERS[z].map((m,i)=>({id:'mob-'+z+'-'+(i+1),realm:z,stage:i+1,name:m[0],icon:m[1],boss:false,desc:'Stage '+(i+1)+' · '+currentTrait(i+1).name+' encounter. Farm for '+(i<=2?'starter':i<=5?'intermediate':'advanced')+' equipment.'})),
  {id:r[5],realm:z,stage:10,name:r[4],icon:r[5],boss:true,desc:'Stage 10 Guardian. Guaranteed Rare+ chest, epic chance; Legendary exclusive to later realms.'}
