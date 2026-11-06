@@ -210,6 +210,7 @@ function updateCaladrynMapVisibility(){
  const toggle=$('maptoggle');
  toggle.setAttribute('aria-expanded',String(!caladrynMapCollapsed));
  toggle.textContent=caladrynMapCollapsed?'Show Map':'Minimize Map';
+ toggle.closest('.caladryn-header')?.classList.toggle('map-collapsed',caladrynMapCollapsed);
 }
 const CALADRYN_STOPS=[
  {name:'Kingdom',x:9.5,y:68.3,symbol:'⌂'},
