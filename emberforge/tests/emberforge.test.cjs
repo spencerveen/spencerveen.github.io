@@ -665,3 +665,61 @@ test('Armory inventory only equips and locks, Kingdom owns selling and salvaging
  assert.match(css,/\.efk-merchant-item/);
  assert.match(html,/styles\/inventory\.css\?v=1/);
 });
+
+test('shared gear protection honors equipped and locked items',()=>{
+ const defs=read('data/definitions.js');
+ const part=defs.slice(defs.indexOf('const equippedGearIds='),defs.indexOf('const lootAbilityText='));
+ const context={s:{equipped:{mainHand:'blade',chest:null,charm:'amulet'}}};
+ vm.createContext(context);vm.runInContext(part,context);
+ const tests=[
+  {item:{id:'blade',locked:false},protected:true},
+  {item:{id:'amulet',locked:false},protected:true},
+  {item:{id:'locked',locked:true},protected:true},
+  {item:{id:'free',locked:false},protected:false}
+ ];
+ for(const row of tests){context.item=row.item;assert.equal(vm.runInContext('isGearTradeProtected(item)',context),row.protected,row.item.id)}
+ context.s.equipped.mainHand=null;context.item={id:'blade',locked:false};
+ assert.equal(vm.runInContext('isGearTradeProtected(item)',context),false);
+});
+
+test('Kingdom salvage uses one equipment lookup and saves after item removal',()=>{
+ const view=read('ui/views.js');
+ const combat=read('systems/combat.js');
+ const block=view.slice(view.indexOf('function inventorySell('),view.indexOf('function saveCode('));
+ assert.match(block,/const equippedIds=equippedGearIds\(\)/);
+ assert.match(block,/!isGearTradeProtected\(g,equippedIds\)/);
+ assert.match(block,/removed=new Set\(chosen\)/);
+ assert.match(block,/s\.items=s\.items\.filter\(g=>!removed\.has\(g\)\)/);
+ assert.match(block,/gain\(total\);save\(\);/);
+ assert.match(view,/const protectedGear=isGearTradeProtected\(g,equippedIds\)/);
+ assert.match(view,/const equipped=isGearEquipped\(g,equippedIds\)/);
+ assert.match(combat,/!isGearTradeProtected\(g,equippedIds\)/);
+ assert.doesNotMatch(block,/Object\.values\(s\.equipped\)\.includes/);
+});
+
+test('bulk salvage preserves same-ID items that are protected or equipped',()=>{
+ const view=read('ui/views.js');
+ const block=view.slice(view.indexOf('function inventorySell('),view.indexOf('function saveCode('));
+ const items=[
+  {id:'same',rarity:'common',locked:true,power:20},
+  {id:'same',rarity:'common',locked:false,power:10},
+  {id:'equipped',rarity:'common',locked:false,power:30},
+  {id:'legend',rarity:'legendary',locked:false,power:200}
+ ];
+ let saved=0,rendered=0,earned=0;
+ const context={
+  s:{items,equipped:{mainHand:'equipped'}},toast:()=>{},fmt:n=>String(n),
+  equippedGearIds:()=>new Set(['equipped']),
+  isGearTradeProtected:(g,ids)=>g.locked||ids.has(g.id),
+  sellValue:g=>g.power, gain:n=>{earned+=n},save:()=>{saved++},renderPage:()=>{rendered++}
+ };
+ vm.createContext(context);
+ vm.runInContext(block,context);vm.runInContext('inventorySell(()=>true)',context);
+ assert.equal(earned,10);
+ assert.equal(saved,1);
+ assert.equal(rendered,1);
+ assert.equal(context.s.items.length,3);
+ assert.ok(context.s.items.includes(items[0]));
+ assert.ok(context.s.items.includes(items[2]));
+ assert.ok(context.s.items.includes(items[3]));
+});
