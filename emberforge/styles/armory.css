@@ -8,6 +8,7 @@
 #ef4 .efg-slot-column .efg-slot.filled{border-color:#b17a50;background:linear-gradient(110deg,#322c3b,#182335 76%)}
 #ef4 .efg-slot-badge{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border:1px solid #a2764e56;border-radius:10px;background:radial-gradient(circle at 50% 35%,#be824044,#11192a 75%);box-shadow:inset 0 1px #ffdfa029}
 #ef4 .efg-slot-badge .ico{display:block;width:33px;height:33px;object-fit:contain}
+#ef4 .efg-slot-badge .efg-slot-placeholder-art{display:block;width:39px;height:39px;max-width:100%;object-fit:contain;filter:drop-shadow(0 0 5px #ef964a42)}
 #ef4 .efg-slot.empty .efg-slot-badge{opacity:.72;filter:grayscale(.2)}
 #ef4 .efg-slot-copy{display:flex;flex:1 1 auto;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;text-align:left}
 #ef4 .efg-slot-label{display:block;color:#e4a869;font:850 10px system-ui,sans-serif;text-transform:uppercase;letter-spacing:1px;line-height:1.2}
