@@ -588,3 +588,20 @@ test('Armory slot cards keep generic icons, readable labels and functional unequ
  assert.match(css,/#ef4 \.efg-character-center\{position:relative/);
  assert.doesNotMatch(css,/#ef4 \.efg-slot-column,\/\*/);
 });
+
+test('empty Jewelry placeholders load optimized assets and reuse one ring image',()=>{
+ const views=read('ui/views.js'),css=read('styles/armory.css');
+ const gear=views.slice(views.indexOf('function renderGear(){'),views.indexOf(' const equippedSlots=',views.indexOf('function renderGear(){')));
+ for(const kind of ['necklace','ring','charm']){
+   const asset=fs.readFileSync(path.join(gameDir,'art','armory-slot-'+kind+'.webp'));
+   assert.equal(asset.toString('ascii',0,4),'RIFF',kind);
+   assert.equal(asset.toString('ascii',8,12),'WEBP',kind);
+   assert.equal(asset.readUInt32LE(4)+8,asset.length,kind+' file integrity');
+ }
+ assert.match(gear,/ring1:'ring',ring2:'ring',ring3:'ring',ring4:'ring'/);
+ assert.match(gear,/jewelryEmptyArt\[key\]/);
+ assert.match(gear,/class="efg-slot-placeholder-art"/);
+ assert.match(gear,/g\?lootVisual\(g\.icon,'lg'\)/);
+ assert.match(gear,/iconHTML\(def\[2\],'lg'\)/);
+ assert.match(css,/\.efg-slot-badge \.efg-slot-placeholder-art/);
+});
