@@ -1,0 +1,24 @@
+name: Emberforge checks
+
+on:
+  push:
+    paths:
+      - 'emberforge/**'
+      - '.github/workflows/emberforge-checks.yml'
+  pull_request:
+    paths:
+      - 'emberforge/**'
+      - '.github/workflows/emberforge-checks.yml'
+
+jobs:
+  regression-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and regression contract checks
+        run: node --test emberforge/tests/*.test.cjs
