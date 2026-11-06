@@ -202,6 +202,15 @@ function renderGear(){
 // Overlay positions follow the illustrated route from home to the Eternal Citadel.
 // All buttons are real DOM controls: no interaction is painted into the image.
 let caladrynMapSignature='';
+const CALADRYN_MAP_PREFERENCE='emberforge-caladryn-map-collapsed';
+let caladrynMapCollapsed=false;
+try{caladrynMapCollapsed=window.localStorage.getItem(CALADRYN_MAP_PREFERENCE)==='1'}catch(_){}
+function updateCaladrynMapVisibility(){
+ $('mapregion').hidden=caladrynMapCollapsed;
+ const toggle=$('maptoggle');
+ toggle.setAttribute('aria-expanded',String(!caladrynMapCollapsed));
+ toggle.textContent=caladrynMapCollapsed?'Show Map':'Minimize Map';
+}
 const CALADRYN_STOPS=[
  {name:'Kingdom',x:9.5,y:68.3,symbol:'⌂'},
  {name:'Ashen Wilds',x:22.5,y:58.7,symbol:'✦'},
@@ -218,7 +227,7 @@ function renderWorld(){
  $('kingdominterior').hidden=!home;
  $('worldbattle').hidden=home;
  $('worldbattle').classList.toggle('active',!home&&page==='world');
- $('worldinfo').innerHTML=`<strong>Current location: ${esc(location)}</strong> · Ascension era ${s.ascensions} · Combat Lv ${s.combatLevel}. Six realms open in order as you defeat their guardians and meet era requirements. Return to Kingdom whenever you need to trade or build.`;
+ updateCaladrynMapVisibility();
  const mapSignature=[s.location,s.zone,s.unlocked,s.ascensions,s.combatLevel].join('|');
  if(mapSignature!==caladrynMapSignature){
  const stops=CALADRYN_STOPS.map((stop,i)=>{
@@ -229,11 +238,8 @@ function renderWorld(){
   return { ...stop,kingdom,z,available,current,requirement,status,attr};
  });
  $('mapmarkers').innerHTML=stops.map(p=>`<button class="caladryn-map-pin ${p.current?'current':''} ${p.available?'open':'locked'}" style="--mx:${p.x}%;--my:${p.y}%" type="button" ${p.attr} ${!p.available?'disabled':''} title="${esc(p.name)} · ${esc(p.requirement)}" aria-label="${esc(p.name)}: ${p.status}"><span class="caladryn-pin-glyph" aria-hidden="true">${p.available?p.symbol:'×'}</span></button>`).join('');
- $('maplist').innerHTML=stops.map(p=>`<button class="caladryn-destination ${p.current?'current':''} ${p.available?'available':'locked'}" ${p.attr} ${!p.available?'disabled':''} type="button"><span class="caladryn-destination-symbol" aria-hidden="true">${p.available?p.symbol:'◆'}</span><span class="caladryn-destination-body"><strong>${esc(p.name)}</strong><small>${p.requirement}</small></span><span class="caladryn-destination-state">${p.current?'Here':p.available?'Travel':'Locked'}</span></button>`).join('');
   caladrynMapSignature=mapSignature;
  }
- $('worldactions').innerHTML=home?'<div class="caladryn-home-message"><strong>Welcome home, adventurer.</strong> Build your Kingdom, trade loot with the merchant, and choose your next expedition above. Your backpack and equipment travel with you.</div>':
-  `<div class="caladryn-away-message"><div><strong>Currently in ${esc(location)}</strong><span>Return to Kingdom to construct buildings and visit the merchant. Your inventory remains with you.</span></div><div class="caladryn-away-buttons"><button class="btn btn-gold" data-jump-battle>Go to Combat</button><button class="btn" data-return-home>Return Home</button></div></div>`;
  if(home)renderKingdom();else renderTraining();
 }
 const quests=()=>[
@@ -286,8 +292,8 @@ function importSave(){modal('Import save code','Paste a save code from Emberforg
 function ascend(){let reward=soulReward();if(reward<1){toast('Earn 100K this run first');return}modal('Ascend and Reforge?','Receive +'+reward+' permanent Soulfire. The new era raises building, skill and training caps and unlocks additional powers and regions. Ember, workers, temporary upgrades and buildings reset; permanent progress stays.',()=>{let old=s;s=fresh();for(let k of ['lifetime','clicks','souls','ascensions','ach','skills','skillPoints','level','unlocked','kills','bosses','lootFound','items','equipped','claimed','bounty','bountyStart','codex','lastBossLoot','combatLevel','combatXP','training','stageUnlocked','bossCleared','firstClears','pendingRelics','kingdomVistaMax','avatarBody','avatarName'])s[k]=old[k];s.souls+=reward;s.ascensions++;s.hp=maxHealth();s.combatMessage='A new Ascension era begins! Permanent stats grow stronger.';s.enemyHP=enemy().hp;note('Ascended for +'+reward+' Soulfire');honorCheck();save();renderPage();toast('Ascension complete! +'+reward+' Soulfire');return true},'Ascend Now')}
 root.addEventListener('click',e=>{let b=e.target.closest('button');if(!b||!root.contains(b)||b.disabled)return;
 if(Object.prototype.hasOwnProperty.call(b.dataset,'returnHome')){travelToKingdom();go('world');toast('Returned safely to the Kingdom');return}
+if(Object.prototype.hasOwnProperty.call(b.dataset,'mapToggle')){caladrynMapCollapsed=!caladrynMapCollapsed;try{window.localStorage.setItem(CALADRYN_MAP_PREFERENCE,caladrynMapCollapsed?'1':'0')}catch(_){}updateCaladrynMapVisibility();return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapZoom')){const viewport=$('mapviewport'),zoom=viewport.classList.toggle('zoomed');b.setAttribute('aria-pressed',String(zoom));b.textContent=zoom?'Fit map to window':'Enlarge map';if(!zoom)viewport.scrollLeft=0;return}
-if(Object.prototype.hasOwnProperty.call(b.dataset,'jumpBattle')){if(inExpedition())$('worldbattle').scrollIntoView?.({behavior:'smooth',block:'start'});return}
 if(b.dataset.avatarGender){const gender=b.dataset.avatarGender;if(gender!=='male'&&gender!=='female')return;s.avatarBody=gender;renderGear();save();return}if(b.dataset.vista){let choice=b.dataset.vista;if(choice==='auto')kingdomVistaPreview=null;else{let idx=activeKingdomVista();kingdomVistaPreview=(idx+(choice==='next'?1:-1)+KINGDOM_VISTAS.length)%KINGDOM_VISTAS.length;}updateIllustratedScenes();return}if(b.dataset.page){go(b.dataset.page);return}if(b.dataset.go){go(b.dataset.go);return}if(b.dataset.sub){sub=b.dataset.sub;renderMastery();return}if(b.dataset.upgradeFilter){s.upgradeView=b.dataset.upgradeFilter;renderUpgrades();save();return}if(b.dataset.buy){buyMode=b.dataset.buy;$$('[data-buy]').forEach(x=>x.classList.toggle('on',x.dataset.buy===buyMode));renderWorkers();return}
 if(b.id==='ef4-crystal'){mine();return}
 if(b.id==='ef4-strike'){manualAttack();return}
