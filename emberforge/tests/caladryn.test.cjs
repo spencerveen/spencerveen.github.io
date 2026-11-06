@@ -89,3 +89,37 @@ test('legacy users resume their expedition and new users start in Kingdom',()=>{
  assert.match(formatting,/if\(x\.location==='kingdom'\)\{x\.autoMode='off';x\.auto=false;/);
  assert.match(formatting,/x\.version=8;/);
 });
+
+test('all navigation tabs remain clickable after Caladryn initialization',()=>{
+ const views=read('ui/views.js');
+ const start=views.indexOf('function go(p){');
+ const end=views.indexOf('function modal(',start);
+ assert.ok(start>=0&&end>start,'navigation function must exist');
+ const nav=views.slice(start,end);
+ const pages=['forge','battle','workers','upgrades','gear','world','mastery'];
+ const allViews=pages.map(p=>({dataset:{view:p},classList:{active:false,toggle(name,on){this.active=on}}}));
+ const allButtons=pages.map(p=>({dataset:{page:p},classList:{active:false,toggle(name,on){this.active=on}}}));
+ let renderCount=0,toastCount=0;
+ const context={
+  page:'forge',atKingdom:()=>false,
+  $$:selector=>selector==='[data-view]'?allViews:selector==='[data-page]'?allButtons:[],
+  $:()=>{throw new Error('Navigation must use the querySelectorAll helper')},
+  renderPage:()=>renderCount++,toast:()=>toastCount++
+ };
+ vm.createContext(context);
+ vm.runInContext(nav,context);
+ for(const p of pages){
+  vm.runInContext('go('+JSON.stringify(p)+')',context);
+  assert.equal(context.page,p,p+' navigation changes page');
+  assert.deepEqual(allViews.filter(x=>x.classList.active).map(x=>x.dataset.view),[p]);
+  assert.deepEqual(allButtons.filter(x=>x.classList.active).map(x=>x.dataset.page),[p]);
+ }
+ assert.equal(renderCount,pages.length);
+ assert.equal(toastCount,0);
+ context.atKingdom=()=>true;
+ vm.runInContext("go('battle')",context);
+ assert.equal(context.page,'world','safe home must redirect Battle to World');
+ assert.equal(toastCount,1);
+ vm.runInContext("go('kingdom')",context);
+ assert.equal(context.page,'world','legacy Kingdom link must redirect to World');
+});
