@@ -68,6 +68,9 @@ const activeTraining=id=>Math.min(s.training[id]||0,trainingCap());
 const ascendTarget=()=>Math.ceil(100000*Math.pow(2.3,s.ascensions));
 const soulReward=()=>Math.min(5,Math.floor(Math.sqrt(s.runEarned/ascendTarget())));
 const realmAccessible=i=>i<=s.unlocked&&s.combatLevel>=REALM_LEVELS[i]&&s.ascensions>=REALM_ASCENSIONS[i];
+// Kingdom is a safe world-map destination, not a combat realm.
+const atKingdom=()=>s.location==='kingdom';
+const inExpedition=()=>s.location==='realm';
 const reqText=(a,f,c)=>[a?'Asc '+a:'',f?'Forge '+f:'',c?'Combat '+c:''].filter(Boolean).join(' · ');
 const requirementFor=u=>{let g=upgradeReq(u);return reqText(g[1],g[2],g[3])};
 const TRAINING=[
@@ -92,5 +95,5 @@ const encounterBook=()=>realms.flatMap((r,z)=>[
  ...MONSTER_LADDERS[z].map((m,i)=>({id:'mob-'+z+'-'+(i+1),realm:z,stage:i+1,name:m[0],icon:m[1],boss:false,desc:'Stage '+(i+1)+' · '+currentTrait(i+1).name+' encounter. Farm for '+(i<=2?'starter':i<=5?'intermediate':'advanced')+' equipment.'})),
  {id:r[5],realm:z,stage:10,name:r[4],icon:r[5],boss:true,desc:'Stage 10 Guardian. Guaranteed Rare+ chest, epic chance; Legendary exclusive to later realms.'}
 ]);
-const fresh=()=>({version:7,kingdomVistaMax:0,pendingRelics:[],stageUnlocked:[1,0,0,0,0,0],bossCleared:[false,false,false,false,false,false],firstClears:[0,0,0,0,0,0],autoMode:'off',smartResting:false,upgradeView:'unlocked',showOwned:false,ember:0,lifetime:0,runEarned:0,clicks:0,gens:Object.fromEntries(workers.map(w=>[w[0],0])),ups:{},build:Object.fromEntries(buildings.map(b=>[b[0],0])),skills:{},skillPoints:0,level:1,souls:0,ascensions:0,zone:0,unlocked:0,stage:1,enemyHP:0,kills:0,bosses:0,lootFound:0,items:[],equipped:Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(k=>[k,null])),avatarBody:'male',avatarName:'',auto:false,salvage:'common',autoProgress:0,claimed:[],ach:[],bounty:0,bountyStart:0,updated:Date.now(),journal:[],codex:{},lastBossLoot:null,combatLevel:1,combatXP:0,hp:null,training:{vitality:0,guard:0,blade:0,regen:0},enemyTimer:0,enemyHits:0,manualAt:0,engagedUntil:0,downUntil:0,potionReady:0,combatMessage:"Ready for battle"});
+const fresh=()=>({version:8,location:'kingdom',kingdomVistaMax:0,pendingRelics:[],stageUnlocked:[1,0,0,0,0,0],bossCleared:[false,false,false,false,false,false],firstClears:[0,0,0,0,0,0],autoMode:'off',smartResting:false,upgradeView:'unlocked',showOwned:false,ember:0,lifetime:0,runEarned:0,clicks:0,gens:Object.fromEntries(workers.map(w=>[w[0],0])),ups:{},build:Object.fromEntries(buildings.map(b=>[b[0],0])),skills:{},skillPoints:0,level:1,souls:0,ascensions:0,zone:0,unlocked:0,stage:1,enemyHP:0,kills:0,bosses:0,lootFound:0,items:[],equipped:Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(k=>[k,null])),avatarBody:'male',avatarName:'',auto:false,salvage:'common',autoProgress:0,claimed:[],ach:[],bounty:0,bountyStart:0,updated:Date.now(),journal:[],codex:{},lastBossLoot:null,combatLevel:1,combatXP:0,hp:null,training:{vitality:0,guard:0,blade:0,regen:0},enemyTimer:0,enemyHits:0,manualAt:0,engagedUntil:0,downUntil:0,potionReady:0,combatMessage:"Ready for battle"});
 
