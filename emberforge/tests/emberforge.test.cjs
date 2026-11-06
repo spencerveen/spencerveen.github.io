@@ -16,7 +16,7 @@ test('all game and UI JavaScript parses', () => {
   const paths = [
     'emberforge-battle.js', 'emberforge-forge.js', 'emberforge-hud.js',
     'core/formatting.js', 'core/storage.js', 'core/loop.js',
-    'systems/combat.js', 'ui/views.js',
+    'systems/combat.js', 'ui/adventurer.js', 'ui/views.js',
     'data/catalogs.js', 'data/definitions.js'
   ];
   for (const file of paths) {
@@ -469,12 +469,12 @@ test('Armory creates 14 empty equipment slots around a neutral character', () =>
  const expected=['helmet','chest','legs','gloves','boots','mainHand','offHand','ring1','ring2','ring3','ring4','necklace','charm','back'];
  assert.deepEqual([...slots].sort(),expected.sort());
  assert.match(gear,/efg-character-layout/);
- assert.match(gear,/efg-figure/);
+ assert.match(gear,/renderAdventurerPaperDoll\(\)/);
  assert.match(gear,/data-unequip/);
  assert.match(html,/id="ef4-equipped"/);
  assert.match(html,/styles\/armory\.css\?v=/);
- assert.match(css,/\.efg-head/);
- assert.match(css,/\.efg-leg/);
+ assert.match(css,/\.efg-paperdoll-svg/);
+ assert.match(css,/\.efg-visual-layer\.has-gear/);
 });
 
 test('legacy weapon armor and charm mapping preserves stats and valid equipment IDs',()=>{
@@ -518,4 +518,27 @@ test('Armory slots are organized into Equipped and Jewelry columns', () => {
  assert.ok(section.includes("'mainHand','offHand','back'"));
  assert.ok(section.includes("'ring4','charm'"));
  assert.ok(!section.includes('efg-hand-slots'));
+});
+test('Adventurer paper doll exposes independent equipment overlays for every slot', () => {
+ const asset=read('ui/adventurer.js');
+ const view=read('ui/views.js');
+ const html=read('game.html');
+ const slots=['helmet','chest','legs','gloves','boots','mainHand','offHand','ring1','ring2','ring3','ring4','necklace','charm','back'];
+ const equipped=Object.fromEntries(slots.map(x=>[x,null]));
+ equipped.mainHand='blade';
+ equipped.chest='plate';
+ const context={s:{equipped},EQUIPMENT_SLOT_KEYS:slots};
+ vm.createContext(context);
+ vm.runInContext(asset,context);
+ const svg=vm.runInContext('renderAdventurerPaperDoll()',context);
+ for(const slot of slots)assert.ok(svg.includes('data-visual-slot="'+slot+'"'),'Missing visual anchor '+slot);
+ assert.equal((svg.match(/data-visual-slot=/g)||[]).length,slots.length);
+ assert.match(svg,/class="efg-character-base"/);
+ assert.match(svg,/class="efg-rune-stage"/);
+ assert.match(svg,/data-visual-slot="mainHand"/);
+ assert.match(svg,/class="efg-visual-layer has-gear"/);
+ assert.match(svg,/viewBox="0 0 300 430"/);
+ assert.ok(html.indexOf('ui/adventurer.js')<html.indexOf('ui/views.js'),'Load paper doll before dependent view');
+ assert.match(view,/renderAdventurerPaperDoll\(\)/);
+ assert.doesNotMatch(view,/efg-torso/);
 });
