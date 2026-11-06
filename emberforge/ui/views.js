@@ -144,18 +144,16 @@ function renderGear(){
      ${g?`<button class="efg-remove btn btn-quiet" data-unequip="${key}" aria-label="Unequip ${esc(label)}">Remove</button>`:''}
    </div>`;
  };
- const body=['helmet','chest','gloves','legs','boots'];
- const hands=['mainHand','offHand'];
- const jewels=['necklace','ring1','ring2','ring3','ring4','charm','back'];
+ const equippedSlots=['helmet','chest','gloves','legs','boots','mainHand','offHand','back'];
+ const jewels=['necklace','ring1','ring2','ring3','ring4','charm'];
  $('equipped').innerHTML=`<div class="efg-character-layout">
-   <div class="efg-slot-column efg-armor"><div class="efg-group-heading">Armor</div>${body.map(makeSlot).join('')}</div>
+   <div class="efg-slot-column efg-armor"><div class="efg-group-heading">Equipped</div>${equippedSlots.map(makeSlot).join('')}</div>
    <div class="efg-character-center">
      <div class="efg-figure-title">Your Adventurer</div>
      <div class="efg-figure" role="img" aria-label="Neutral character silhouette showing head, torso, arms and legs"><span class="efg-head"></span><span class="efg-torso"></span><span class="efg-arm left"></span><span class="efg-arm right"></span><span class="efg-leg left"></span><span class="efg-leg right"></span></div>
      <div class="efg-placeholder">Character appearance and fighting styles coming later</div>
-     <div class="efg-hand-slots"><div class="efg-group-heading">Hands</div>${hands.map(makeSlot).join('')}</div>
    </div>
-   <div class="efg-slot-column efg-jewelry"><div class="efg-group-heading">Jewelry &amp; Back</div>${jewels.map(makeSlot).join('')}</div>
+   <div class="efg-slot-column efg-jewelry"><div class="efg-group-heading">Jewelry</div>${jewels.map(makeSlot).join('')}</div>
  </div>`;
  $('salvagefilter').value=s.salvage;$('bagtitle').textContent='Backpack ('+s.items.length+' / 60)';let sorted=[...s.items].sort((a,b)=>rarityValue[b.rarity]-rarityValue[a.rarity]||b.power-a.power);
  $('baglist').innerHTML=sorted.length?sorted.map(g=>{let equipped=Object.values(s.equipped).includes(g.id);return `<div class="rowitem ${g.rarity}-gear"><span class="r-ico">${lootVisual(g.icon,'lg')}</span><div class="r-body"><strong class="rarity-${g.rarity}">${g.rarity.toUpperCase()} · ${esc(g.name)}</strong><span class="hint">+${fmt(g.power)} ${equipmentPowerType(equipmentSlotFor(g))} · ${realms[g.origin||0][0]} · sell ${fmt(sellValue(g))} Ember</span>${g.ability?`<span class="hint loot-ability">${lootAbilityText(g)}</span>`:''}</div><button class="item-lock ${g.locked?'locked':''}" data-lock="${esc(g.id)}" title="${g.locked?'Unlock item':'Protect item'}">${g.locked?'🔒':'🔓'}</button><button class="btn" data-equip="${esc(g.id)}" ${equipped?'disabled':''}>${equipped?'Equipped':'Equip'}</button><button class="btn btn-quiet" data-sell="${esc(g.id)}" ${equipped||g.locked?'disabled':''}>Sell</button></div>`}).join(''):'<div class="card hint" style="text-align:center;padding:24px">No equipment yet. Farm early stages for rusty daggers and swords. Bosses guarantee a gear chest.</div>';if(s.pendingRelics.length){$('baglist').insertAdjacentHTML('beforeend','<div class="card"><div class="section">Legendary Relic Vault · '+s.pendingRelics.length+' waiting</div><div class="hint" style="margin-bottom:10px">Your bag was full, so these Legendary drops were preserved instead of sold.</div>'+s.pendingRelics.map(g=>'<div class="rowitem legendary-gear"><span class="r-ico">'+lootVisual(g.icon,'lg')+'</span><div class="r-body"><strong class="rarity-legendary">'+esc(g.name)+'</strong><span class="hint">+'+fmt(g.power)+' rating · '+lootAbilityText(g)+'</span></div><button class="btn btn-gold" data-claimrelic="'+esc(g.id)+'" '+(s.items.length>=60?'disabled':'')+'>Claim</button></div>').join('')+'</div>');}
