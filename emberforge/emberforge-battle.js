@@ -17,7 +17,7 @@ function mount(frame){
  if(!battle||battle.dataset.efBattleSkin==="1")return;
  var master=doc.getElementById("ef4-mastercontent");
  if(!master)return;
- var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=14";doc.head.appendChild(s);
+ var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=15";doc.head.appendChild(s);
  var norm=function(t){return (t||"").replace(/\s+/g," ").trim()};
  var txt=function(el){return norm(el&&el.textContent)};
  var elements=function(base,selector){return Array.from(base.querySelectorAll(selector))};
@@ -63,7 +63,7 @@ function mount(frame){
  var sceneHost=scene.closest(".card,.panel")||scene;
  if(sceneHost===battle||sceneHost.contains(enemy)||sceneHost.contains(board)){console.warn("[Emberforge Battle] Invalid scene container");return;}
  var shell=doc.createElement("section");shell.className="efb-shell";
- shell.innerHTML='<div class="efb-stage-top"><div class="efb-location"><span class="efb-eyebrow">THE BATTLEGROUND</span><strong class="efb-realm">Ashen Wilds</strong><span class="efb-stage">Stage</span></div><div class="efb-foe"><strong class="efb-name">Current enemy</strong><span class="efb-reward"></span><div class="efb-health" role="progressbar" aria-label="Enemy health" aria-valuemin="0" aria-valuemax="100"><div class="efb-health-fill"></div></div><small class="efb-hp-text"></small></div></div><button type="button" class="efb-arrow efb-prev" aria-label="Previous monster">‹</button><button type="button" class="efb-arrow efb-next" aria-label="Next monster">›</button><div class="efb-bottom"><div class="efb-status" aria-live="polite"></div><div class="efb-event-log" aria-live="polite" aria-label="Battle rewards"></div><div class="efb-actions"></div></div>';
+ shell.innerHTML='<div class="efb-stage-top"><div class="efb-location"><span class="efb-eyebrow">THE BATTLEGROUND</span><strong class="efb-realm">Ashen Wilds</strong><span class="efb-stage">Stage</span><div class="efb-status" aria-live="polite"></div></div><div class="efb-foe"><strong class="efb-name">Current enemy</strong><span class="efb-reward"></span><div class="efb-health" role="progressbar" aria-label="Enemy health" aria-valuemin="0" aria-valuemax="100"><div class="efb-health-fill"></div></div><small class="efb-hp-text"></small></div></div><button type="button" class="efb-arrow efb-prev" aria-label="Previous monster">‹</button><button type="button" class="efb-arrow efb-next" aria-label="Next monster">›</button><div class="efb-bottom"><div class="efb-event-log" aria-live="polite" aria-label="Battle rewards"></div><div class="efb-actions"></div></div>';
  sceneHost.parentNode.insertBefore(shell,sceneHost);
  shell.insertBefore(sceneHost,shell.firstChild);
  // Escape the original two-column layout so the artwork fills Battle width.
