@@ -148,28 +148,33 @@ function mount(frame){
  // Stage-change notices from the old art layer are redundant with the new
  // realm/stage badge. Hide only the old scene labels; do not silence game logs.
  function hideSceneLabels(){
-   var bossHint=/Bosses strike hard with a special every fourth hit/i;
-   elements(battle,"div,p,span,small,strong,b,aside,section").forEach(function(el){
-     if(el.closest(".efb-chest-reward,.efb-stage-top,.efb-bottom,.efb-event-log"))return;
-     var value=txt(el);
-     if(!bossHint.test(value)||value.length>260)return;
-     // Search from the smallest exact-message element, not an ancestor
-     // containing the entire Battle screen.
-     if(Array.from(el.children).some(function(child){return bossHint.test(txt(child))}))return;
-     var tip=el;
-     for(var j=0;j<5&&tip.parentElement;j++){
-       var parent=tip.parentElement;
-       if(parent===battle||parent===shell||parent===sceneHost||
-          parent===scene||parent.contains(shell)||parent.contains(board)||
-          parent.contains(enemy))break;
-       if(txt(parent)!==value)break;
+   // Match the actual rendered text node, even if the engine inserts the tip
+   // outside the Battle section or nests its lettering in multiple elements.
+   // Restrict suppression to the exact obsolete boss-mechanics sentence.
+   var hintStart="Bosses strike hard with a special every fourth hit";
+   var textWalker=doc.createTreeWalker(doc.body,doc.defaultView.NodeFilter.SHOW_TEXT);
+   var textNode;
+   while((textNode=textWalker.nextNode())){
+     var raw=(textNode.nodeValue||"").replace(/\s+/g," ").trim();
+     if(raw.indexOf(hintStart)<0)continue;
+     var leaf=textNode.parentElement;
+     if(!leaf||leaf.closest(".efb-chest-reward,.efb-event-log"))continue;
+     var candidate=leaf;
+     var desired=txt(leaf);
+     // Move up while the wrapper contains the identical message, stopping
+     // before broad scene/layout containers or unrelated game elements.
+     for(var up=0;up<5&&candidate.parentElement;up++){
+       var parent=candidate.parentElement;
+       if(parent===battle||parent===shell||parent===sceneHost||parent===scene||
+          parent===root||parent===doc.body||parent.contains(shell))break;
+       if(txt(parent)!==desired||parent.querySelector("button,input"))break;
        var bounds=parent.getBoundingClientRect();
-       if(bounds.height>220||bounds.width>1500)break;
-       tip=parent;
+       if(bounds.height>180||bounds.width>1700)break;
+       candidate=parent;
      }
-     tip.classList.add("efb-boss-tip-hidden");
-     tip.style.setProperty("display","none","important");
-   });
+     candidate.classList.add("efb-boss-tip-hidden");
+     candidate.style.setProperty("display","none","important");
+   }
    elements(sceneHost,"span,small,div").forEach(function(el){
      if(el.closest(".efb-stage-top,.efb-bottom,.efb-arrow"))return;
      if(el.children.length>1)return;
