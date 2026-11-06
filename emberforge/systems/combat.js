@@ -15,9 +15,9 @@ const workerBaseOutput=(w,count=s.gens[w[0]]||0)=>count*w[4]*(1+workerMilestoneB
 const workerProduction=w=>workerUnlocked(w)?workerBaseOutput(w)*workerSharedFactor():0;
 const workerMarginalProduction=(w,count=1)=>{let owned=s.gens[w[0]]||0;return (workerBaseOutput(w,owned+count)-workerBaseOutput(w,owned))*workerSharedFactor();};
 const income=()=>workers.reduce((v,w)=>v+workerProduction(w),0);
-const equippedItem=slot=>s.items.find(g=>g.id===s.equipped[slot]);
+const equippedItem=slot=>s.items.find(g=>g.id===s.equipped[LEGACY_EQUIPMENT_SLOTS[slot]||slot]);
 const gearPower=slot=>equippedItem(slot)?.power||0;
-const gearAbility=type=>['weapon','armor','charm'].reduce((n,slot)=>{let g=equippedItem(slot);return n+(g&&g.ability===type?(g.abilityValue||0):0)},0);
+const gearAbility=type=>EQUIPMENT_SLOT_KEYS.reduce((n,slot)=>{let g=equippedItem(slot);return n+(g&&g.ability===type?(g.abilityValue||0):0)},0);
 const maxHealth=()=>Math.ceil(Math.min(1e15,(105*Math.pow(1.14,Math.max(0,s.combatLevel-1))+gearPower('armor')*5)*(1+.17*activeTraining('vitality'))*(1+gearAbility('health'))));
 const defense=()=>6+s.combatLevel*1.6+activeTraining('guard')*10+gearPower('armor')*1.65;
 const recovery=(fighting)=>maxHealth()*((fighting?.0035:.047)+activeTraining('regen')*.0025)+gearPower('charm')*.22;
