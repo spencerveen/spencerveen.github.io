@@ -84,12 +84,12 @@ function renderWorkers(){
      <div class="efw-portrait" aria-hidden="true"><span class="efw-portrait-glow"></span>${iconHTML(w[2],'xl')}</div>
      <div class="efw-worker-info">
        <div class="efw-title-row"><div class="efw-worker-title"><strong>${esc(w[1])}</strong><p>${esc(w[5])}</p></div><span class="efw-owned pill">Owned <b>${fmt(owned)}</b></span></div>
-       <div class="efw-output"><span class="efw-flame" aria-hidden="true">✦</span><span>+${unit} / sec each</span><span class="efw-output-divider">·</span><span>+${batch} base / sec</span></div>
-       <div class="efw-worker-stats">
-         <span><b>${fmt(output)}</b> Ember/sec total</span>
-         <span><b>${share.toFixed(1)}%</b> of workforce output</span>
-         <span class="efw-efficiency" title="Ember cost per additional 1 Ember/sec from buying the next single worker">Next hire efficiency: <b>${efficiency}</b> Ember per +1/sec</span>
+       <div class="efw-output"><span class="efw-flame" aria-hidden="true">✦</span><span><strong>+${unit}</strong> /sec each</span><span class="efw-output-divider" aria-hidden="true"></span><span><strong>+${batch}</strong> base /sec</span></div>
+       <div class="efw-metrics">
+         <div class="efw-metric"><span class="efw-metric-label"><span aria-hidden="true">✦</span> Total production</span><div class="efw-metric-value">${fmt(output)} <small>Ember/sec</small></div></div>
+         <div class="efw-metric"><span class="efw-metric-label"><span aria-hidden="true">◈</span> Workforce share</span><div class="efw-metric-value">${share.toFixed(1)}<small>%</small></div><div class="efw-share-track" aria-hidden="true"><span style="width:${share}%"></span></div></div>
        </div>
+       <div class="efw-efficiency" title="Ember cost per additional 1 Ember/sec from buying the next single worker"><span class="efw-efficiency-label"><span aria-hidden="true">◆</span> Next hire efficiency</span><span class="efw-efficiency-amount"><strong>${efficiency}</strong> Ember / +1 per sec</span></div>
        <div class="efw-bottom shopbottom"><span class="efw-price price"><span aria-hidden="true">◆</span> ${c.count?short(c.price):'MAXED'}</span>${shopButton('worker',w[0],c.price,c.count===0||s.ember<c.price,label)}</div>
      </div>
    </article>`;
