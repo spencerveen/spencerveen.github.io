@@ -308,3 +308,22 @@ test('retreat stops combat and resets encounter health and timers', () => {
   assert.equal(game.s.enemyHits,0);
   assert.equal(game.s.enemyHP,game.run('enemy().hp'));
 });
+
+test('Workers guild makeover retains original hiring contracts', () => {
+  const game = read('game.html');
+  const views = read('ui/views.js');
+  const css = read('styles/workers.css');
+  assert.match(game, /styles\/workers\.css\?v=1/);
+  assert.match(game, /id="ef4-buymodes"/);
+  assert.match(game, /id="ef4-workerlist"/);
+  for (const mode of ['1','10','max']) {
+    assert.ok(game.includes('data-buy="' + mode + '"'));
+  }
+  assert.match(views, /function renderWorkers\(\)/);
+  assert.match(views, /shopButton\('worker',w\[0\]/);
+  assert.match(views, /if\(b\.dataset\.worker\)/);
+  assert.match(views, /if\(b\.dataset\.buy\)/);
+  assert.match(views, /workerReq\(w\)/);
+  assert.match(css, /\.efw-worker/);
+  assert.match(css, /@media\(max-width:640px\)/);
+});
