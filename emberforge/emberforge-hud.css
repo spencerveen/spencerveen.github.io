@@ -135,3 +135,9 @@
   #ef4 #ef4-topcombat,#ef4 #ef4-ember {font-size:18px;}
 }
 @media(prefers-reduced-motion:reduce) {#ef4 .ef-hud-fill {transition:none;}}
+
+/* Compact combat XP directly below global combat-level figure */
+#ef4 .ef-hud-combat {display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:5px}
+#ef4 .ef-hud-combat-line {display:flex;align-items:center;gap:9px;min-width:0}
+#ef4 .ef-hud-xp-track {height:5px;width:100%;overflow:hidden;border-radius:4px;background:#283347;box-shadow:inset 0 1px 3px #000a}
+#ef4 .ef-hud-xp-fill {display:block;height:100%;width:0%;background:linear-gradient(90deg,#e78642,#ffe19b);box-shadow:0 0 5px #ed9b55;transition:width .2s ease}
