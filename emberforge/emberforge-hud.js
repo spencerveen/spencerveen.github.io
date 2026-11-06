@@ -55,7 +55,7 @@ function mount(frame){
   // Apply the in-game navigation theme without touching gameplay or save logic.
   var sideSheet=doc.createElement("link");
   sideSheet.rel="stylesheet";
-  sideSheet.href="./emberforge-sidebar.css?v=2";
+  sideSheet.href="./emberforge-sidebar.css?v=3";
   doc.head.append(sideSheet);
   var nav=root.querySelector("#ef4-nav");
   if(nav)nav.setAttribute("aria-label","Emberforge game sections");
