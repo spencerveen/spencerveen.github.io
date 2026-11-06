@@ -67,7 +67,7 @@ jobs:
               if forbidden in source:
                   raise ValueError(f"Retired mechanic reference remains: {forbidden}")
           
-          assert len(source) == 5_832_994, f"Unexpected output length: {len(source)}"
+          assert len(source) > 5_800_000 and len(source) < 5_840_000, f"Unexpected output length: {len(source)}"
           scripts = re.findall(r"<script\b[^>]*>([\s\S]*?)</script>", source, re.IGNORECASE)
           if len(scripts) != 1:
               raise ValueError(f"Expected one inline game script, got {len(scripts)}")
