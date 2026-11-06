@@ -65,8 +65,9 @@ test('boss intro suppression is exact; live notifications are preserved', () => 
   const index = read('index.html');
   const battle = read('emberforge-battle.js');
   const css = read('emberforge-battle.css');
-  assert.match(index, /watchLegacyBossTip/);
+  assert.doesNotMatch(index, /watchLegacyBossTip|removeLegacyBossTip/);
   assert.match(battle, /routeBattleToasts/);
+  assert.doesNotMatch(battle, /createTreeWalker|toastObserver\.observe\(root/);
   assert.match(css, /#ef4(?:\s+\[data-view="battle"\])?\s+#ef4-combattip/);
   assert.match(css, /#ef4(?:\s+\[data-view="battle"\])?\s+#ef4-bosslootnote/);
   assert.match(battle, /routeCombatMessage\(\)/);
