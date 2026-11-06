@@ -1,0 +1,85 @@
+name: Remove retired Emberforge realm events (one-time)
+on:
+  push:
+    branches:
+      - emberforge/remove-realm-events
+    paths:
+      - .github/workflows/remove-realm-events.yml
+permissions:
+  contents: write
+jobs:
+  remove-events:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: emberforge/remove-realm-events
+      - name: Verify existing game blob
+        run: test "$(git hash-object emberforge/game.html)" = "544d8d7c47928b14353fe7d3819de84d71a37a1d"
+      - name: Patch and syntax-check game
+        run: |
+          from pathlib import Path
+          import re
+          import subprocess
+          import tempfile
+          
+          path = Path("emberforge/game.html")
+          source = path.read_text(encoding="utf-8")
+          expected_marker = '<div id="ef4-eventstrip" class="eventstrip"'
+          if expected_marker not in source:
+              raise SystemExit("Expected unmodified event markup not found. Refusing to patch.")
+          
+          def replace_once(old, new, label):
+              global source
+              if source.count(old) != 1:
+                  raise ValueError(f"Expected exactly one {label}; found {source.count(old)}")
+              source = source.replace(old, new, 1)
+              print("Removed:", label)
+          
+          replace_once("#ef4 .eventstrip span{display:inline-flex;align-items:center;gap:6px}#ef4 .eventstrip{padding:9px 12px;background:#352d40;border:1px solid #644f6e;border-radius:9px;font-size:11px;color:#e5c9f5;display:flex;justify-content:space-between;gap:9px}", "", "event banner styles")
+          replace_once('<div id="ef4-eventstrip" class="eventstrip" style="margin-bottom:12px"><span>The realm is quiet.</span><span>Event soon</span></div>\n', "", "event banner markup")
+          replace_once(",event:'',eventEnd:0,nextEvent:Date.now()+70000", "", "new-game event state")
+          replace_once("x.updated=Number.isFinite(+x.updated)?+x.updated:Date.now();return x;}", "x.updated=Number.isFinite(+x.updated)?+x.updated:Date.now();delete x.event;delete x.eventEnd;delete x.nextEvent;return x;}", "clean old save/import event keys")
+          replace_once("*(s.event==='comet'&&Date.now()<s.eventEnd?2:1)", "", "Ember-production event modifier")
+          replace_once("*(s.event==='frenzy'&&Date.now()<s.eventEnd?2:1)", "", "attack event modifier")
+          replace_once("if(s.event==='fortune'&&Date.now()<s.eventEnd)chance*=1.6;", "", "loot-chance event modifier")
+          
+          start = source.index("function eventInfo(){")
+          end = source.index("let lastHuntSignature='';", start)
+          part = source[start:end]
+          if len(part) > 1500 or "eventstrip" not in part or "The realm is calm" not in part:
+              raise ValueError("Event countdown renderer did not match expected shape")
+          source = source[:start] + source[end:]
+          replace_once("currencyStats();eventInfo();", "currencyStats();", "event countdown update call")
+          
+          start = source.index("let t=Date.now();if(s.event&&t>=s.eventEnd)s.event='';")
+          end = source.index("elapsedUI+=dt;", start)
+          part = source[start:end]
+          if len(part) > 800 or "s.nextEvent=s.eventEnd+90000" not in part or "A world event has begun!" not in part:
+              raise ValueError("Event scheduling code did not match expected shape")
+          source = source[:start] + source[end:]
+          
+          for forbidden in ("s.event", "s.eventEnd", "s.nextEvent", "eventInfo(", "eventstrip",
+                            "World event:", "A world event has begun!", "The realm is calm",
+                            "The realm is quiet.", "nextEvent:", "eventEnd:"):
+              if forbidden in source:
+                  raise ValueError(f"Retired mechanic reference remains: {forbidden}")
+          
+          assert len(source) == 5_832_994, f"Unexpected output length: {len(source)}"
+          scripts = re.findall(r"<script\b[^>]*>([\s\S]*?)</script>", source, re.IGNORECASE)
+          if len(scripts) != 1:
+              raise ValueError(f"Expected one inline game script, got {len(scripts)}")
+          with tempfile.TemporaryDirectory() as tmp:
+              js = Path(tmp) / "game-script.js"
+              js.write_text(scripts[0], encoding="utf-8")
+              subprocess.run(["node", "--check", str(js)], check=True)
+          
+          path.write_text(source, encoding="utf-8")
+          print("World-event system removed; validated JavaScript and existing game source.")
+      - name: Commit updated game source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add emberforge/game.html
+          git diff --cached --quiet || (git commit -m "Remove Emberforge timed world events" && git push)
