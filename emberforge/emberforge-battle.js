@@ -160,31 +160,8 @@ function mount(frame){
  // Stage-change notices from the old art layer are redundant with the new
  // realm/stage badge. Hide only the old scene labels; do not silence game logs.
  function hideSceneLabels(){
-   // Remove the obsolete boss mechanics tip wherever the base game draws it.
-   // Match the actual wording variants, not a single fragile exact sentence.
-   var bossTip=/^Bosses?\s+(?:(?:use|uses|strike|strikes|attack|attacks)\b|have\b).*?(?:special\s+(?:attack|hit)|every\s+(?:fourth|4th)\s+hit)|^Boss\s+tip\s*[:-]/i;
-   var tipWalker=doc.createTreeWalker(doc.body,doc.defaultView.NodeFilter.SHOW_TEXT);
-   var tipNode;
-   while((tipNode=tipWalker.nextNode())){
-     var message=(tipNode.nodeValue||"").replace(/\s+/g," ").trim();
-     if(!message||message.length>260||!bossTip.test(message))continue;
-     var tipLeaf=tipNode.parentElement;
-     if(!tipLeaf||tipLeaf.closest(".efb-chest-reward,.efb-event-log"))continue;
-     var tipContainer=tipLeaf;
-     for(var depth=0;depth<4&&tipContainer.parentElement;depth++){
-       var parent=tipContainer.parentElement;
-       if(parent===battle||parent===shell||parent===sceneHost||parent===scene||
-          parent===root||parent===doc.body||parent.contains(shell)||
-          parent.querySelector("button,input,canvas"))break;
-       if(txt(parent)!==message)break;
-       var bounds=parent.getBoundingClientRect();
-       if(bounds.height>155||bounds.width>700)break;
-       tipContainer=parent;
-     }
-     tipContainer.classList.add("efb-boss-tip-hidden");
-     tipContainer.style.setProperty("display","none","important");
-     tipNode.nodeValue="";
-   }
+   // The boss tip is suppressed by exact ID in the parent stylesheet.
+   // Do not walk game text: combat messages change every frame.
    elements(sceneHost,"span,small,div").forEach(function(el){
      if(el.closest(".efb-stage-top,.efb-bottom,.efb-arrow"))return;
      if(el.children.length>1)return;
@@ -446,18 +423,11 @@ function mount(frame){
    if(activeTab==="statistics")clonePanel(report,sections.statistics);
  }
  menu.addEventListener("click",function(){refreshMaster()});
- // Watch only text/child changes. Ignore changes made by our own scene log,
- // so event rendering cannot recursively trigger more rendering.
- var toastObserver=new doc.defaultView.MutationObserver(function(records){
-   if(records.some(function(record){
-     var target=record.target.nodeType===1?record.target:record.target.parentElement;
-     return target&&!target.closest(".efb-shell");
-   })){updateBossChest();hideSceneLabels();routeBattleToasts();}
- });
- toastObserver.observe(root,{subtree:true,childList:true,characterData:true});
+ // The existing 750ms refresh owns presentation updates. Do not attach
+ // a full-root mutation observer: engine stats change every 200ms.
  tab("original");refresh();
  var timer=doc.defaultView.setInterval(function(){
-   if(!shell.isConnected){doc.defaultView.clearInterval(timer);toastObserver.disconnect();return}
+   if(!shell.isConnected){doc.defaultView.clearInterval(timer);return}
    refresh();
    if(root.querySelector('[data-view="mastery"].active,[data-view="master"].active'))refreshMaster();
  },750);
