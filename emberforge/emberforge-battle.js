@@ -8,7 +8,7 @@ function mount(frame){
  if(!battle||battle.dataset.efBattleSkin==="1")return;
  var master=doc.getElementById("ef4-mastercontent");
  if(!master)return;
- var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=9";doc.head.appendChild(s);
+ var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=10";doc.head.appendChild(s);
  var norm=function(t){return (t||"").replace(/\s+/g," ").trim()};
  var txt=function(el){return norm(el&&el.textContent)};
  var elements=function(base,selector){return Array.from(base.querySelectorAll(selector))};
