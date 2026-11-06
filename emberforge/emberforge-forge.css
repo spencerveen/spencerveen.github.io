@@ -254,3 +254,21 @@
   #ef4 .ef-forge-v2 .ef-forge-stats {flex-direction:column}
   #ef4 .ef-forge-v2 .ef-forge-stats .ef-hud-metric {min-height:38px}
 }
+
+
+/* Desktop Forge artwork, sourced separately from the low-resolution tier spritesheet.
+   The browser only loads these files for a sufficiently wide tier-I Forge.
+   Other Forge tiers and narrow/mobile layouts keep their original backgrounds. */
+@media (min-width: 820px) {
+  #ef4 .ef-forge-v2[data-ef-forge-tier="0"][data-ef-forge-wide="1"] .ef-forge-v2-scene #ef4-forgebg {
+    background-image: url("./forge-tier0-desktop.webp") !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+  }
+}
+@media (min-width: 1600px), (min-width: 960px) and (min-resolution: 1.5dppx) {
+  #ef4 .ef-forge-v2[data-ef-forge-tier="0"][data-ef-forge-wide="1"] .ef-forge-v2-scene #ef4-forgebg {
+    background-image: url("./forge-tier0-ultra.webp") !important;
+  }
+}

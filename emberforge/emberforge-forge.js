@@ -72,7 +72,7 @@
 
     var sheet = doc.createElement("link");
     sheet.rel = "stylesheet";
-    sheet.href = "./emberforge-forge.css?v=2";
+    sheet.href = "./emberforge-forge.css?v=3";
     doc.head.appendChild(sheet);
 
     var hero = doc.createElement("section");
@@ -150,12 +150,22 @@
       return null;
     }
     function sync() {
+      // Keep square sprites on mobile and narrow panels, while wide desktop
+      // panels display landscape artwork without stretching.
+      var sceneRect = hero.getBoundingClientRect();
+      hero.dataset.efForgeWide = sceneRect.width >= 760 &&
+        sceneRect.width / Math.max(1, sceneRect.height) >= 1.85 ? "1" : "0";
       // Read the original game DOM rather than independently estimating
       // progression. The engine already computes the level and bar value.
       var levelSource = doc.getElementById("ef4-level");
       if (levelSource) {
         var m = (levelSource.textContent || "").match(/Level\s*(\d+)/i);
-        if (m) level.textContent = m[1];
+        if (m) {
+          level.textContent = m[1];
+          // Match the engine's 50-level-per-tier progression.
+          var forgeLevel = Number(m[1]);
+          hero.dataset.efForgeTier = String(Math.min(3, Math.floor(Math.max(0, forgeLevel - 1) / 50)));
+        }
       }
       var lifetimeSource = doc.getElementById("ef4-lifetime");
       var nextLevelSource = doc.getElementById("ef4-levelinfo");
