@@ -400,3 +400,19 @@ test('Workers overview and efficiency use the authoritative production helpers',
   assert.match(css,/\.efw-achievement-worker/);
   assert.doesNotMatch(views.slice(views.indexOf('function renderWorkers()'),views.indexOf('function renderUpgrades()')),/efw-locked/);
 });
+
+test('Workers production readout uses compact metrics and preserves costs', () => {
+  const views=read('ui/views.js');
+  const css=read('styles/workers.css');
+  const block=views.slice(views.indexOf('function renderWorkers()'),views.indexOf('function renderUpgrades()'));
+  assert.match(block,/class="efw-metrics"/);
+  assert.match(block,/class="efw-metric-value"/);
+  assert.match(block,/class="efw-share-track"/);
+  assert.match(block,/class="efw-efficiency-amount"/);
+  assert.match(block,/workerProduction\(w\)/);
+  assert.match(block,/costWorker\(w,1\)\.price/);
+  assert.match(block,/shopButton\('worker',w\[0\]/);
+  assert.doesNotMatch(block,/efw-milestone/);
+  assert.match(css,/\.efw-metrics/);
+  assert.match(css,/\.efw-share-track/);
+});
