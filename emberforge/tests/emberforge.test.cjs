@@ -621,3 +621,11 @@ test('Equipped placeholders have distinct art tiles and preserve live loot artwo
  assert.match(css,/armory-equipped-placeholders\.webp/);
  assert.match(gear,/jewelryEmptyArt\[key\]/);
 });
+
+test('Equipped slot sprites have inset space to prevent clipped frames',()=>{
+ const css=read('styles/armory.css');
+ assert.match(css,/\.efg-equipped-placeholder\{display:block;width:40px;height:40px/);
+ assert.match(css,/background-size:800% 100%/);
+ assert.match(css,/@media\(max-width:600px\)\{#ef4 \.efg-equipped-placeholder\{width:35px;height:35px/);
+ assert.match(css,/align-items:center;justify-items:center/);
+});
