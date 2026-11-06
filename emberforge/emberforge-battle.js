@@ -103,7 +103,7 @@ function mount(frame){
        chestReward.querySelector(".efb-chest-bonus").textContent=bonus?bonus[0]:"";
      }
    });
-   chestReward.hidden=!found && Date.now()-chestShownAt>6200;
+   chestReward.hidden=!chestShownAt || Date.now()-chestShownAt>6200;
  }
  var actionArea=shell.querySelector(".efb-actions");
  var prev=shell.querySelector(".efb-prev"),next=shell.querySelector(".efb-next");
