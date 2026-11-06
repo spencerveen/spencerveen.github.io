@@ -62,8 +62,21 @@ function mount(frame){
  var actionArea=shell.querySelector(".efb-actions");
  var prev=shell.querySelector(".efb-prev"),next=shell.querySelector(".efb-next");
  var selected=0,autoOn=false;
- var originalStatus=elements(battle,"*").find(function(el){return el.children.length===0&&/YOUR ADVENTURER/i.test(txt(el))});
- var statusCard=originalStatus&&originalStatus.closest(".card,.panel");
+ // The title includes a nested combat level (e.g. "YOUR ADVENTURER · COMBAT LV 46").
+ // Find its smallest dedicated panel, not a leaf text node or the Battle container.
+ function locateAdventurerCard(){
+   var heading=elements(battle,"h1,h2,h3,h4,h5,h6,.title,.card-title,strong,span,div").find(function(el){
+     if(el.closest(".efb-shell")||el.closest(".efb-source-hidden"))return false;
+     var text=txt(el);
+     return /YOUR ADVENTURER/i.test(text)&&text.length<110 &&
+       el.querySelectorAll(".card,.panel").length===0;
+   });
+   if(!heading)return null;
+   var panel=heading.closest(".card,.panel,article,section");
+   if(panel&&panel!==battle&&!panel.contains(shell)&&!panel.contains(board)&&!panel.contains(enemy))return panel;
+   return null;
+ }
+ var statusCard=locateAdventurerCard();
  function liveBoard(){return board.isConnected?board:smallCard("HUNT BOARD",battle)}
  function liveEnemy(){return enemy.isConnected?enemy:smallCard("CURRENT ENEMY",battle)}
  function liveStages(){var b=liveBoard();return b?elements(b,"button,[role=button]").filter(function(el){return /#\s*\d+|BOSS|Cinder|Soot|Skeleton|Magma|Revenant|Hound|Imp|Scarab|Marauder/i.test(txt(el))}):[]}
@@ -123,6 +136,8 @@ function mount(frame){
    autoButton.setAttribute("aria-pressed",String(autoOn));
    healButton.disabled=!h||h.disabled;
    healButton.textContent=h?txt(h):"Heal";
+   if(!statusCard||!statusCard.isConnected)statusCard=locateAdventurerCard();
+   if(statusCard)statusCard.classList.add("efb-source-hidden");
    var status=statusCard&&txt(statusCard).match(/\b(Resting|In combat|Recovering|Defeated)\b/i);
    shell.querySelector(".efb-status").textContent=status?status[1]:"";
 
