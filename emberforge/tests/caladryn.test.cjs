@@ -98,24 +98,20 @@ test('legacy users resume their expedition and new users start in Kingdom',()=>{
  assert.match(formatting,/x\.version=8;/);
 });
 
-test('all navigation tabs remain clickable after Caladryn initialization',()=>{
+test('all six navigation tabs and nested combat switch safely',()=>{
  const views=read('ui/views.js');
- const start=views.indexOf('function go(p){');
- const end=views.indexOf('function modal(',start);
+ const start=views.indexOf('function go(p){'),end=views.indexOf('function modal(',start);
  assert.ok(start>=0&&end>start,'navigation function must exist');
  const nav=views.slice(start,end);
- const pages=['forge','battle','workers','upgrades','gear','world','mastery'];
- const allViews=pages.map(p=>({dataset:{view:p},classList:{active:false,toggle(name,on){this.active=on}}}));
+ const pages=['forge','workers','upgrades','gear','world','mastery'];
+ const allViews=[...pages,'battle'].map(p=>({dataset:{view:p},classList:{active:false,toggle(name,on){this.active=on}}}));
  const allButtons=pages.map(p=>({dataset:{page:p},classList:{active:false,toggle(name,on){this.active=on}}}));
- let renderCount=0,toastCount=0;
- const context={
-  page:'forge',atKingdom:()=>false,
+ let renderCount=0,scrollCount=0,expedition=false;
+ const context={page:'forge',inExpedition:()=>expedition,
   $$:selector=>selector==='[data-view]'?allViews:selector==='[data-page]'?allButtons:[],
-  $:()=>{throw new Error('Navigation must use the querySelectorAll helper')},
-  renderPage:()=>renderCount++,toast:()=>toastCount++
- };
- vm.createContext(context);
- vm.runInContext(nav,context);
+  $:id=>{assert.equal(id,'worldbattle');return {scrollIntoView(){scrollCount++}}},
+  renderPage:()=>renderCount++};
+ vm.createContext(context);vm.runInContext(nav,context);
  for(const p of pages){
   vm.runInContext('go('+JSON.stringify(p)+')',context);
   assert.equal(context.page,p,p+' navigation changes page');
@@ -123,11 +119,44 @@ test('all navigation tabs remain clickable after Caladryn initialization',()=>{
   assert.deepEqual(allButtons.filter(x=>x.classList.active).map(x=>x.dataset.page),[p]);
  }
  assert.equal(renderCount,pages.length);
- assert.equal(toastCount,0);
- context.atKingdom=()=>true;
+ expedition=true;
+ vm.runInContext("go('world')",context);
+ assert.equal(context.page,'world');
+ assert.deepEqual(allViews.filter(x=>x.classList.active).map(x=>x.dataset.view),['world','battle']);
  vm.runInContext("go('battle')",context);
- assert.equal(context.page,'world','safe home must redirect Battle to World');
- assert.equal(toastCount,1);
+ assert.equal(context.page,'world','old combat links must resolve to World');
+ assert.equal(scrollCount,1,'legacy Battle shortcut scrolls to embedded combat');
  vm.runInContext("go('kingdom')",context);
- assert.equal(context.page,'world','legacy Kingdom link must redirect to World');
+ assert.equal(context.page,'world','legacy Kingdom link resolves to World');
+ expedition=false;
+ vm.runInContext("go('world')",context);
+ assert.deepEqual(allViews.filter(x=>x.classList.active).map(x=>x.dataset.view),['world']);
+});
+
+test('Caladryn map resizes with window and only pans after zoom opt-in',()=>{
+ const css=read('styles/world.css'),html=read('game.html'),view=read('ui/views.js');
+ assert.match(css,/#ef4 \.caladryn-map-canvas\{[^\n]*width:100%;min-width:0;aspect-ratio:1672\/941/);
+ assert.match(css,/#ef4 \.caladryn-map-viewport\{[^\n]*width:min\(100%,1120px\)/);
+ assert.match(css,/#ef4 \.caladryn-map-viewport\.zoomed\{overflow-x:auto/);
+ assert.doesNotMatch(css,/min-width:(?:950|1050|920|860)px/);
+ assert.match(html,/id="ef4-mapviewport"/);
+ assert.match(html,/data-map-zoom aria-pressed="false"/);
+ assert.match(view,/Object\.prototype\.hasOwnProperty\.call\(b\.dataset,'mapZoom'\)/);
+});
+
+test('Battle lives under World, without separate navigation or duplicate combat IDs',()=>{
+ const html=read('game.html'),view=read('ui/views.js'),css=read('styles/world.css'),skin=read('emberforge-battle.js');
+ const start=html.indexOf('<section class="page" data-view="world">');
+ const world=html.slice(start,html.indexOf('<section class="page" data-view="mastery">',start));
+ assert.ok(start>=0);
+ assert.doesNotMatch(html,/data-page="battle"/);
+ assert.doesNotMatch(html,/<section class="page" data-view="battle">/);
+ assert.match(world,/id="ef4-worldbattle" data-view="battle" hidden/);
+ assert.ok(world.indexOf('id="ef4-mapmarkers"')<world.indexOf('id="ef4-worldbattle"'));
+ assert.ok(world.indexOf('id="ef4-worldbattle"')<world.indexOf('id="ef4-kingdominterior"'));
+ for(const id of ['ef4-battlescene','ef4-strike','ef4-auto','ef4-huntsteps','ef4-traininglist','ef4-combatmessage'])assert.equal(html.split('id="'+id+'"').length-1,1,id+' must not duplicate');
+ assert.match(view,/\$\('worldbattle'\)\.hidden=home/);
+ assert.match(view,/if\(home\)renderKingdom\(\);else renderTraining\(\)/);
+ assert.match(css,/\.caladryn-battle-interior\{/);
+ assert.match(skin,/\[data-view="battle"\]/);
 });
