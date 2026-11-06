@@ -405,25 +405,29 @@ function mount(frame){
    Object.keys(sections).forEach(function(k){sections[k].style.display=k===which?"block":"none"});
  }
  menu.addEventListener("click",function(e){var b=e.target.closest("button[data-efb-tab]");if(b)tab(b.dataset.efbTab)});
- function clonePanel(source,target){
+ var portalSnapshot={training:null,statistics:null};
+ function clonePanel(source,target,key){
    if(!source||!target)return;
-   // Preserve local form state by mapping clone clicks to the real source controls.
-   var active=doc.activeElement;var clone=source.cloneNode(true);
+   // Do not discard cloned controls unless the original content changed.
+   var signature=source.innerHTML;
+   if(portalSnapshot[key]===signature)return;
+   portalSnapshot[key]=signature;
+   var clone=source.cloneNode(true);
    clone.classList.remove("efb-source-hidden");
    clone.removeAttribute("id");
    elements(clone,"[id]").forEach(function(n){n.removeAttribute("id")});
    var real=elements(source,"button");
    elements(clone,"button").forEach(function(btn,i){
      var orig=real[i];btn.disabled=orig?orig.disabled:true;
-     btn.addEventListener("click",function(){if(orig&&!orig.disabled){orig.click();setTimeout(refreshMaster,50)}});
+     btn.addEventListener("click",function(){if(orig&&!orig.disabled){orig.click();portalSnapshot[key]=null;setTimeout(refreshMaster,50)}});
    });
    target.replaceChildren(clone);
  }
  function refreshMaster(){
    // Refresh only when Mastery is visible, not every combat tick.
    var activeTab=menu.querySelector(".active")?.dataset.efbTab;
-   if(activeTab==="training")clonePanel(training,sections.training);
-   if(activeTab==="statistics")clonePanel(report,sections.statistics);
+   if(activeTab==="training")clonePanel(training,sections.training,"training");
+   if(activeTab==="statistics")clonePanel(report,sections.statistics,"statistics");
  }
  menu.addEventListener("click",function(){refreshMaster()});
  // The existing 750ms refresh owns presentation updates. Do not attach
@@ -431,7 +435,9 @@ function mount(frame){
  tab("original");refresh();
  var timer=doc.defaultView.setInterval(function(){
    if(!shell.isConnected){doc.defaultView.clearInterval(timer);return}
-   refresh();
+   // Scope presentation polling to visible game views.
+   if(doc.hidden)return;
+   if(battle.classList.contains("active"))refresh();
    if(root.querySelector('[data-view="mastery"].active,[data-view="master"].active'))refreshMaster();
  },750);
 }
