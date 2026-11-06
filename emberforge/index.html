@@ -47,7 +47,7 @@
 <iframe id="game" src="./game.html" title="Emberforge game" allow="fullscreen; clipboard-write"></iframe>
 <script src="./emberforge-hud.js?v=5"></script>
 <script src="./emberforge-forge.js?v=7"></script>
-<script src="./emberforge-battle.js?v=8"></script>
+<script src="./emberforge-battle.js?v=9"></script>
 <script>
   const menuButton = document.querySelector('.site-menu-button');
   const menuLinks = document.querySelector('.site-links');
@@ -76,6 +76,19 @@
     } catch (_) {}
   });
   if (gameFrame.contentDocument?.querySelector('#ef4')) attachHud();
+  // Battle is populated lazily by the game. Retry only while the redesigned
+  // view has not mounted, then stop trying; no repeated DOM transformations.
+  const battleMountRetry = setInterval(() => {
+    try {
+      const d = gameFrame.contentDocument;
+      const view = d?.querySelector('#ef4 [data-view="battle"]');
+      if (!view) return;
+      if (view.dataset.efBattleSkin === '1') return;
+      window.EmberforgeBattle?.mount(gameFrame);
+    } catch (error) {
+      console.warn('[Emberforge Battle] mount retry:', error);
+    }
+  }, 1500);
 </script>
 </body>
 </html>
