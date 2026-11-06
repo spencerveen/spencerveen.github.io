@@ -28,15 +28,15 @@ function mount(frame){
  }
  var board=smallCard("HUNT BOARD",battle);
  if(!board)board=elements(battle,"*").find(function(x){return x.children.length===0 && /HUNT BOARD/.test(txt(x))})?.closest(".card,.panel")||null;
- if(!board)return; // fail closed rather than hiding any game UI without navigation
+ if(!board){console.warn("[Emberforge Battle] Awaiting Hunt Board");return;}
  var stageButtons=elements(board,"button,[role=button]").filter(function(x){return /#\s*\d+|BOSS|Cinder|Soot|Skeleton|Magma|Revenant|Hound|Imp|Scarab|Marauder/i.test(txt(x))});
- if(stageButtons.length<2)return;
+ if(stageButtons.length<2){console.warn("[Emberforge Battle] Awaiting stage controls:",stageButtons.length);return;}
  // The stage items are identified once; leave engine-managed listeners intact.
  var training=smallCard("Combat training",battle);
  var report=smallCard("Battle report",battle);
  var enemy=smallCard("CURRENT ENEMY",battle);
  if(!enemy)enemy=elements(battle,"*").find(function(x){return x.children.length===0 && /CURRENT ENEMY/i.test(txt(x))})?.closest(".card,.panel")||null;
- if(!enemy)return;
+ if(!enemy){console.warn("[Emberforge Battle] Awaiting Current Enemy panel");return;}
  var scene=doc.getElementById("ef4-battlescene")||null;
  if(!scene){
    var candidates=elements(battle,"img,div").filter(function(el){
@@ -49,9 +49,9 @@ function mount(frame){
    candidates.sort(function(a,b){return b.getBoundingClientRect().width*b.getBoundingClientRect().height-a.getBoundingClientRect().width*a.getBoundingClientRect().height});
    scene=candidates[0]?.closest(".card,.panel")||candidates[0]||null;
  }
- if(!scene)return;
+ if(!scene){console.warn("[Emberforge Battle] Awaiting battle scene");return;}
  var sceneHost=scene.closest(".card,.panel")||scene;
- if(sceneHost===battle||sceneHost.contains(enemy)||sceneHost.contains(board))return;
+ if(sceneHost===battle||sceneHost.contains(enemy)||sceneHost.contains(board)){console.warn("[Emberforge Battle] Invalid scene container");return;}
  var shell=doc.createElement("section");shell.className="efb-shell";
  shell.innerHTML='<div class="efb-stage-top"><div class="efb-location"><span class="efb-eyebrow">THE BATTLEGROUND</span><strong class="efb-realm">Ashen Wilds</strong><span class="efb-stage">Stage</span></div><div class="efb-foe"><strong class="efb-name">Current enemy</strong><span class="efb-reward"></span><div class="efb-health" role="progressbar" aria-label="Enemy health" aria-valuemin="0" aria-valuemax="100"><div class="efb-health-fill"></div></div><small class="efb-hp-text"></small></div></div><button type="button" class="efb-arrow efb-prev" aria-label="Previous monster">‹</button><button type="button" class="efb-arrow efb-next" aria-label="Next monster">›</button><div class="efb-bottom"><div class="efb-status" aria-live="polite"></div><div class="efb-actions"></div></div>';
  sceneHost.parentNode.insertBefore(shell,sceneHost);
