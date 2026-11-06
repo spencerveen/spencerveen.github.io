@@ -739,3 +739,20 @@ test('Armory fantasy header keeps Equip Best functional and mobile layout scoped
  assert.match(css,/#ef4 \.efg-armory-best:focus-visible/);
  assert.match(css,/@media\(max-width:450px\)/);
 });
+
+test('adventurer portraits ship as crisp high-resolution optimized WebP images',()=>{
+ const avatar=read('ui/adventurer.js');
+ assert.match(avatar,/adventurer-\$\{gender\}\.webp\?v=2/);
+ for(const gender of ['male','female']){
+  const asset=fs.readFileSync(path.join(gameDir,'art','adventurer-'+gender+'.webp'));
+  assert.ok(asset.length>30000,'Portrait should contain the regenerated high resolution art');
+  assert.ok(asset.length<150000,'Portrait should remain web-optimized');
+  const p=asset.indexOf(Buffer.from([0x9d,0x01,0x2a]));
+  assert.ok(p>0,'Expected VP8 WebP frame header');
+  const width=asset.readUInt16LE(p+3)&0x3fff;
+  const height=asset.readUInt16LE(p+5)&0x3fff;
+  assert.equal(width,720);
+  assert.equal(height,960);
+ }
+ assert.match(avatar,/class="efg-equipment-overlays"/);
+});
