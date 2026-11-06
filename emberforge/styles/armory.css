@@ -43,10 +43,10 @@
 #ef4 .efg-paperdoll{position:relative;width:min(100%,305px);margin:5px auto 0;overflow:visible}
 #ef4 .efg-paperdoll-svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 9px 13px #02071099)}
 #ef4 .efg-rune-stage,#ef4 .efg-equipment-overlays{pointer-events:none}
-#ef4 .efg-anchor-aura{fill:#ffb25c;opacity:0;filter:drop-shadow(0 0 7px #ff995f)}
-#ef4 .efg-anchor-mark{fill:#e1a36a;stroke:#ffe2a5;stroke-width:.5;opacity:0}
-#ef4 .efg-visual-layer.has-gear .efg-anchor-aura{opacity:.14}
-#ef4 .efg-visual-layer.has-gear .efg-anchor-mark{opacity:.75}
+
+
+
+
 #ef4 .efg-placeholder{max-width:290px;margin:1px auto 7px;font-size:11px;letter-spacing:.15px;font-style:italic;line-height:1.55;color:#b5c0cf}
 @media(max-width:1110px){#ef4 .efg-character-layout{grid-template-columns:repeat(2,minmax(0,1fr))}#ef4 .efg-character-center{grid-column:1/-1;grid-row:1;max-width:520px;width:100%;margin:0 auto}#ef4 .efg-paperdoll{max-width:280px}}
 @media(max-width:600px){#ef4 .efg-character-layout{grid-template-columns:minmax(0,1fr);gap:12px}#ef4 .efg-character-center{grid-column:auto;grid-row:auto;padding:12px}#ef4 .efg-slot-column{gap:7px}#ef4 .efg-slot-column .efg-slot{min-height:66px;padding:8px 10px}#ef4 .efg-slot-badge{flex-basis:43px;width:43px;height:43px}#ef4 .efg-slot-empty-pill{padding:4px 6px}#ef4 .efg-paperdoll{max-width:290px}}
