@@ -474,7 +474,7 @@ test('Armory creates 14 empty equipment slots around a neutral character', () =>
  assert.match(html,/id="ef4-equipped"/);
  assert.match(html,/styles\/armory\.css\?v=/);
  assert.match(css,/\.efg-paperdoll-svg/);
- assert.match(css,/\.efg-visual-layer\.has-gear/);
+ assert.doesNotMatch(css,/efg-anchor-aura|efg-anchor-mark/);
 });
 
 test('legacy weapon armor and charm mapping preserves stats and valid equipment IDs',()=>{
