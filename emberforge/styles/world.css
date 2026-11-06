@@ -10,16 +10,16 @@
 #ef4 [hidden]{display:none!important}
 #ef4 .caladryn-map-viewport{position:relative;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#a57745 #152036;border:1px solid #b48556;border-radius:15px;background:#101727;box-shadow:inset 0 1px #ffcd8d5e,0 11px 28px #0007;overscroll-behavior-x:contain}
 #ef4 .caladryn-map-canvas{position:relative;width:100%;min-width:950px;aspect-ratio:1672/941;overflow:hidden;background:radial-gradient(ellipse at 70% 35%,#482c56 0%,transparent 40%),linear-gradient(105deg,#2e2425 0%,#314837 27%,#20364a 48%,#45202e 70%,#342c4b 88%,#251c32)}
-#ef4 .caladryn-map-canvas::after{content:"";position:absolute;pointer-events:none;inset:0;background:linear-gradient(180deg,#080b174d,transparent 20%,transparent 76%,#080b1866),linear-gradient(90deg,#070e1a30,transparent 13%,transparent 87%,#070e1a55)}
+#ef4 .caladryn-map-canvas::after{content:"";position:absolute;pointer-events:none;inset:0;background:linear-gradient(180deg,#080b1714,transparent 20%,transparent 78%,#080b1822),linear-gradient(90deg,#070e1a1c,transparent 14%,transparent 88%,#070e1a1c)}
 #ef4 .caladryn-map-art{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:fill;user-select:none;pointer-events:none}
 #ef4 .caladryn-map-markers{position:absolute;inset:0;z-index:2;pointer-events:none}
-#ef4 .caladryn-map-pin{position:absolute;left:var(--mx);top:var(--my);transform:translate(-50%,-50%);display:grid;place-items:center;width:38px;height:38px;padding:0;border:2px solid #ffe4a0;border-radius:50%;background:radial-gradient(circle,#f7b76a 0%,#b05f31 32%,#3a2831 69%,#141725 100%);color:#fff1c2;box-shadow:0 0 0 4px #4b302eb0,0 0 14px #f5a354a8,inset 0 1px #fff5bd;pointer-events:auto;cursor:pointer;transition:transform .15s,box-shadow .15s}
-#ef4 .caladryn-map-pin:hover:not(:disabled){transform:translate(-50%,-50%) scale(1.18);box-shadow:0 0 0 5px #a46a3fa6,0 0 28px #ffb65bcc}
-#ef4 .caladryn-map-pin.current{border-color:#fff5d6;box-shadow:0 0 0 6px #d9a45e55,0 0 24px #fdb66ce5,inset 0 1px #fff3cb;animation:caladryn-location-glow 2.2s ease-in-out infinite}
-#ef4 .caladryn-map-pin.locked{opacity:.55;border-color:#8d8b9e;background:#222437;box-shadow:0 0 0 3px #161422aa;cursor:not-allowed}
+#ef4 .caladryn-map-pin{position:absolute;left:var(--mx);top:var(--my);transform:translate(-50%,-50%);display:grid;place-items:center;width:48px;height:48px;padding:0;border:2px solid transparent;border-radius:50%;background:transparent;color:transparent;box-shadow:none;pointer-events:auto;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s}
+#ef4 .caladryn-map-pin:hover:not(:disabled){transform:translate(-50%,-50%) scale(1.05);border-color:#ffdea4;box-shadow:0 0 0 4px #f0ae613d,0 0 25px #ffc977c9;background:#e0a65b1b}
+#ef4 .caladryn-map-pin.current{border-color:#ffe4ad;box-shadow:0 0 0 4px #dba95b42,0 0 20px #fdb66c99;animation:caladryn-location-glow 2.6s ease-in-out infinite}
+#ef4 .caladryn-map-pin.locked{opacity:.45;border-color:transparent;box-shadow:none;cursor:not-allowed}
 #ef4 .caladryn-map-pin:focus-visible{outline:3px solid #fff4d4;outline-offset:8px}
-#ef4 .caladryn-pin-glyph{font-family:Georgia,serif;font-size:22px;line-height:1;text-shadow:0 1px 3px #281a25}
-@keyframes caladryn-location-glow{50%{box-shadow:0 0 0 9px #e8b06348,0 0 32px #ffb85af2,inset 0 1px #fff3cb}}
+#ef4 .caladryn-pin-glyph{opacity:0;font-family:Georgia,serif;font-size:22px;line-height:1}
+@keyframes caladryn-location-glow{50%{box-shadow:0 0 0 7px #f0b56a40,0 0 28px #ffbc7cbb}}
 #ef4 .caladryn-map-caption{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:7px 2px 15px;color:#a8b9ce;font-size:11px}
 #ef4 .caladryn-map-caption span:first-child{color:#ebbd80;font-weight:800;letter-spacing:1px}
 #ef4 .caladryn-progress{margin:12px 0 17px;padding:11px 16px;border:1px solid #7d6248;background:#1c2a3f;border-radius:10px;font-size:12px;color:#c0ccdb;line-height:1.55}
