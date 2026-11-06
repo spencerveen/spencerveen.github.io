@@ -16,14 +16,13 @@ const ADVENTURER_VISUAL_SLOTS=[
  ['charm',150,220,'jewelry'],
  ['helmet',150,90,'head']
 ];
-// This is deliberately one illustration with independent overlay mounting points.
-// Empty layers render nothing. Equipped slots receive a subdued glimmer as a
-// temporary visual cue; later item silhouettes/sprites can replace that cue.
+// Each equipment slot keeps a hidden SVG mounting group for future gear artwork.
+// No placeholder symbols are drawn over the adventurer, even when gear is equipped.
 function renderAdventurerPaperDoll(){
  const gender=s.avatarBody==='female'?'female':'male';
  const occupied=new Set(EQUIPMENT_SLOT_KEYS.filter(k=>!!s.equipped[k]));
  const layers=ADVENTURER_VISUAL_SLOTS.map(([slot,x,y,group])=>
-   `<g class="efg-visual-layer ${occupied.has(slot)?'has-gear':''}" data-visual-slot="${slot}" data-layer-group="${group}" transform="translate(${x} ${y})"><circle class="efg-anchor-aura" r="13"/><path class="efg-anchor-mark" d="M0 -7 L7 0 L0 7 L-7 0 Z"/></g>`).join('');
+   `<g class="efg-visual-layer ${occupied.has(slot)?'has-gear':''}" data-visual-slot="${slot}" data-layer-group="${group}" transform="translate(${x} ${y})"></g>`).join('');
  return `<div class="efg-paperdoll" aria-label="${gender==='female'?'Female':'Male'} adventurer preview">
    <svg class="efg-paperdoll-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 430" role="img" aria-label="Dark fantasy ${gender} adventurer starting in worn peasant clothing">
      <defs><radialGradient id="efg-portrait-vignette"><stop offset="0" stop-color="#654238" stop-opacity=".15"/><stop offset="1" stop-color="#0b1424" stop-opacity="0"/></radialGradient></defs>
