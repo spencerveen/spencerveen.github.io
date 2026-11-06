@@ -1,0 +1,57 @@
+/* Arcane Upgrades visual skin. State, prices and purchases stay in the game engine. */
+#ef4 [data-view="upgrades"].active{position:relative;isolation:isolate;padding:3px 2px 20px}
+#ef4 [data-view="upgrades"]::before{content:"";position:absolute;inset:-15px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 94% 10%,#8743222b,transparent 47%),radial-gradient(ellipse at 2% 82%,#53345626,transparent 46%),linear-gradient(130deg,#0b1324,#101726 70%,#0b1120)}
+#ef4 .efa-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;padding:15px 18px 19px;margin-bottom:12px;border:1px solid #895d45;border-radius:13px;background:linear-gradient(115deg,#1b2233,#141b2c 62%,#281e2b);box-shadow:inset 0 1px #f5b56b4c,0 9px 23px #0005}
+#ef4 .efa-heading{display:flex;align-items:center;gap:15px;min-width:0}
+#ef4 .efa-crest{display:grid;place-items:center;flex:0 0 65px;width:65px;height:68px;border:1px solid #b87f50;border-radius:12px;background:radial-gradient(circle,#663c41,#28243c 62%,#1b2235);color:#ffba6c;font-family:Georgia,serif;font-size:36px;text-shadow:0 0 18px #ff9e55}
+#ef4 .efa-header .page-title{margin:0;color:#ffdebb;font-family:Georgia,serif;font-size:clamp(25px,3.1vw,39px);font-weight:760;letter-spacing:-.5px;text-shadow:0 0 17px #e8873b35}
+#ef4 .efa-header .hint{font-size:12px;color:#bdc7d7;line-height:1.5;max-width:550px;margin-top:6px}
+#ef4 .efa-controls{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+#ef4 .efa-filters{display:flex;align-items:center;gap:0;padding:3px;border:1px solid #a27552;border-radius:10px;background:#101b2e;box-shadow:inset 0 2px 7px #0007}
+#ef4 .efa-filters button{border:0;background:transparent;color:#b9bfd0;padding:10px 14px;border-radius:7px;font-size:12px;font-weight:800;white-space:nowrap}
+#ef4 .efa-filters button.on{background:linear-gradient(115deg,#ca713d,#ffb46a);color:#281819;box-shadow:inset 0 1px #ffe1a0,0 0 13px #e786423c}
+#ef4 .efa-filters button:hover:not(.on){background:#28344a;color:#fff3df}
+#ef4 .efa-showowned{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #7f6853;border-radius:9px;background:#19243a;color:#ddd2c8;font-weight:700;font-size:11px;cursor:pointer}
+#ef4 .efa-showowned input{width:16px;height:16px;accent-color:#e99b52;cursor:pointer}
+#ef4 #ef4-upgradeinfo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:0 9px 7px;background:none;border:0;padding:0}
+#ef4 .efa-metric{display:flex;flex-direction:column;gap:5px;min-width:0;padding:11px 17px;background:linear-gradient(145deg,#242a3e,#151f30);border:1px solid #805d45;border-radius:10px;box-shadow:inset 0 1px #f3ba7e2c}
+#ef4 .efa-metric span{color:#aab9ce;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px}
+#ef4 .efa-metric strong{color:#ffd69e;font-size:23px;font-weight:900;line-height:1.2;font-variant-numeric:tabular-nums}
+#ef4 .efa-hint{margin:0 13px 5px;color:#99a9c1;font-size:11px}
+#ef4 #ef4-upgradelist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:15px 9px 0}
+#ef4 #ef4-upgradelist .efa-card{position:relative;display:grid;grid-template-columns:105px minmax(0,1fr);gap:0;padding:0;min-height:211px;overflow:hidden;background:linear-gradient(125deg,#1d2335,#141d2e 60%,#161a29);border:1px solid #806149;border-radius:13px;box-shadow:inset 0 1px #f2b57338,0 9px 19px #0006}
+#ef4 #ef4-upgradelist .efa-card::after{content:"";position:absolute;inset:4px;border:1px solid #deaa6540;border-radius:9px;pointer-events:none}
+#ef4 #ef4-upgradelist .efa-card:hover{border-color:#e2a166;box-shadow:inset 0 1px #ffd4a967,0 0 17px #dd83422e,0 11px 25px #0007}
+#ef4 #ef4-upgradelist .efa-card.locked{opacity:.73}
+#ef4 #ef4-upgradelist .efa-card.owned{border-color:#607b71}
+#ef4 .efa-art{position:relative;min-width:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 51% 48%,#f4a44f1e,transparent 65%),linear-gradient(165deg,#28263b,#171e2b);border-right:1px solid #ab76524a}
+#ef4 .efa-art::after{content:"✧";position:absolute;top:16px;color:#d79d6369;font-size:22px;pointer-events:none}
+#ef4 .efa-art .ico{position:relative;z-index:1;width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 7px 9px #000a) drop-shadow(0 0 10px #e995534d)}
+#ef4 .efa-content{min-width:0;display:flex;flex-direction:column;gap:9px;padding:14px 15px 13px}
+#ef4 .efa-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}
+#ef4 .efa-card-heading{min-width:0}
+#ef4 .efa-category{display:block;color:#b3a6ba;font-size:9px;letter-spacing:1.1px;font-weight:850;text-transform:uppercase;margin-bottom:5px}
+#ef4 .efa-card-heading strong{display:block;font-family:Georgia,serif;font-weight:750;letter-spacing:-.2px;color:#fff0da;font-size:clamp(16px,1.65vw,22px);line-height:1.2}
+#ef4 .efa-status{flex:0 0 auto;border:1px solid #7e6957;border-radius:100px;background:#28344b;color:#d7ddeb;padding:4px 8px;font-size:10px;font-weight:800}
+#ef4 .efa-status.affordable{color:#fff0c9;border-color:#dc964d;background:#70442c;box-shadow:0 0 9px #e7863a3d}
+#ef4 .efa-status.owned{color:#b7e3c8;border-color:#62917d;background:#203b3b}
+#ef4 .efa-status.locked{color:#9ca9c2;border-color:#535c76;background:#20283b}
+#ef4 .efa-effect{display:flex;align-items:center;gap:11px;padding:9px 11px;background:linear-gradient(95deg,#3a2a38c7,#1b2637b5);border:1px solid #a7764e6b;border-radius:8px}
+#ef4 .efa-effect-glyph{flex:0 0 auto;color:#f5ad61;font-size:20px;text-shadow:0 0 12px #ee9658}
+#ef4 .efa-effect-caption{display:block;color:#acb6c8;letter-spacing:.9px;font-size:9px;text-transform:uppercase;font-weight:800}
+#ef4 .efa-effect strong{display:block;color:#ffda9d;font-size:12px;font-weight:800;line-height:1.4;margin-top:3px}
+#ef4 .efa-requirements{color:#b0c0d3;font-size:11px}
+#ef4 .efa-requirements span{color:#ed9f5c;font-size:15px}
+#ef4 .efa-purchase{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto;padding-top:9px;border-top:1px solid #9166485b}
+#ef4 .efa-price{min-width:0;display:flex;flex-direction:column;gap:1px}
+#ef4 .efa-price-label{color:#9caec7;font-size:9px;letter-spacing:.55px;text-transform:uppercase;font-weight:800}
+#ef4 .efa-price strong{color:#ffd18e;font-size:clamp(13px,1.4vw,17px);font-weight:900}
+#ef4 .efa-purchase .btn{padding:9px 15px;font-size:12px;font-weight:900;border:1px solid #ffcf8c;border-radius:7px;flex:0 0 auto;color:#281a1b;background:linear-gradient(115deg,#dd8041,#ffbb73);box-shadow:inset 0 1px #fff1b8,0 0 12px #e986393a}
+#ef4 .efa-purchase .btn:disabled{opacity:.43;box-shadow:none}
+#ef4 .efa-purchase .btn:hover:not(:disabled){background:linear-gradient(110deg,#f3a15d,#ffce8a)}
+#ef4 #ef4-upgradelist .efa-empty{grid-column:1/-1;padding:32px;text-align:center;background:#182238;border:1px dashed #98704e;border-radius:12px;color:#aebbcc}
+#ef4 .efa-empty strong{display:block;font-family:Georgia,serif;color:#ffe0bb;font-size:20px;margin-bottom:7px}
+@media(max-width:1080px){#ef4 #ef4-upgradelist{grid-template-columns:1fr}#ef4 #ef4-upgradelist .efa-card{grid-template-columns:115px minmax(0,1fr)}}
+@media(max-width:720px){#ef4 .efa-header{padding:13px 11px;gap:13px}#ef4 .efa-crest{width:48px;height:51px;flex-basis:48px;font-size:27px}#ef4 .efa-heading{gap:10px}#ef4 .efa-header .page-title{font-size:26px}#ef4 .efa-controls{width:100%;gap:9px}#ef4 .efa-filters{flex:1}#ef4 .efa-filters button{padding:8px 9px;flex:1;font-size:11px}#ef4 #ef4-upgradeinfo{gap:7px;margin:0 0 7px}#ef4 .efa-metric{padding:9px}#ef4 .efa-metric span{font-size:9px;letter-spacing:.2px}#ef4 .efa-metric strong{font-size:20px}#ef4 .efa-hint{margin:0 3px}#ef4 #ef4-upgradelist{margin:12px 0 0}#ef4 #ef4-upgradelist .efa-card{grid-template-columns:83px minmax(0,1fr)}#ef4 .efa-art .ico{width:64px;height:64px}#ef4 .efa-content{padding:12px 10px;gap:8px}#ef4 .efa-card-heading strong{font-size:17px}#ef4 .efa-effect{padding:8px}#ef4 .efa-effect strong{font-size:11px}#ef4 .efa-purchase .btn{padding:8px 11px}}
+@media(max-width:390px){#ef4 .efa-showowned{flex:1}#ef4 #ef4-upgradelist .efa-card{grid-template-columns:65px minmax(0,1fr)}#ef4 .efa-art .ico{width:52px;height:52px}#ef4 .efa-status{font-size:9px;padding:3px 6px}#ef4 #ef4-upgradeinfo{grid-template-columns:repeat(3,minmax(0,1fr))}#ef4 .efa-price strong{font-size:12px}}
+@media(prefers-reduced-motion:reduce){#ef4 #ef4-upgradelist .efa-card{transition:none}}
