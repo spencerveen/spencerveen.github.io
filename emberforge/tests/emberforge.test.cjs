@@ -416,3 +416,27 @@ test('Workers production readout uses compact metrics and preserves costs', () =
   assert.match(css,/\.efw-metrics/);
   assert.match(css,/\.efw-share-track/);
 });
+
+test('Arcane Upgrades retains purchase gating while using the new fantasy card layout', () => {
+  const html=read('game.html');
+  const views=read('ui/views.js');
+  const css=read('styles/upgrades.css');
+  const render=views.slice(views.indexOf('function renderUpgrades()'),views.indexOf('function renderKingdom()'));
+  assert.match(html,/styles\/upgrades\.css\?v=1/);
+  assert.match(html,/id="ef4-upgradeinfo"/);
+  assert.match(html,/id="ef4-upgradehint"/);
+  assert.match(html,/id="ef4-showowned"/);
+  assert.doesNotMatch(html,/id="ef4-upgradeview"/);
+  for(const type of ['unlocked','affordable','all']) assert.ok(html.includes('data-upgrade-filter="'+type+'"'));
+  assert.match(render,/upgradeUnlocked\(u\)/);
+  assert.match(render,/s\.ups\[u\[0\]\]/);
+  assert.match(render,/s\.ember>=u\[3\]/);
+  assert.match(render,/shopButton\('upgrade',u\[0\],u\[3\],!enabled/);
+  assert.match(render,/class="efa-card/);
+  assert.match(render,/class="efa-effect"/);
+  assert.match(render,/class="efa-status/);
+  assert.match(views,/if\(b\.dataset\.upgradeFilter\)/);
+  assert.match(views,/\$\('showowned'\)\.addEventListener\('change'/);
+  assert.match(css,/\.efa-purchase/);
+  assert.match(css,/@media\(max-width:720px\)/);
+});
