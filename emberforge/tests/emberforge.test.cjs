@@ -440,3 +440,18 @@ test('Arcane Upgrades retains purchase gating while using the new fantasy card l
   assert.match(css,/\.efa-purchase/);
   assert.match(css,/@media\(max-width:720px\)/);
 });
+
+test('Upgrades header contains generated banner with valid WebP size and concise labels', () => {
+  const html=read('game.html');
+  const css=read('styles/upgrades.css');
+  const views=read('ui/views.js');
+  const asset=fs.readFileSync(path.join(__dirname,'..','art','upgrades-banner.webp'));
+  assert.equal(asset.toString('ascii',0,4),'RIFF');
+  assert.equal(asset.toString('ascii',8,12),'WEBP');
+  assert.equal(asset.readUInt32LE(4)+8,asset.length,'WebP asset must not be truncated');
+  assert.match(html,/<h2 class="page-title">Upgrades<\/h2>/);
+  assert.doesNotMatch(html,/<h2 class="page-title">Arcane Upgrades<\/h2>/);
+  assert.match(css,/\.\.\/art\/upgrades-banner\.webp/);
+  assert.match(views,/efa-effect-caption">Upgrade Effect/);
+  assert.doesNotMatch(views,/efa-effect-caption">Arcane effect/);
+});
