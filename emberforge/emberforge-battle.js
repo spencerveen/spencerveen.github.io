@@ -273,6 +273,9 @@ function mount(frame){
    purgeEventLog(Date.now());
  }
  function refresh(){
+   // The gameplay engine continues independently when another tab is open.
+   // Do not run expensive battle layout measurements offscreen.
+   if(!battle.classList.contains("active")){routeBattleToasts();return;}
    updateBossChest();
    routeBattleToasts();
    var stages=liveStages();
