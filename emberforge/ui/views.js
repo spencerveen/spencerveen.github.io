@@ -202,13 +202,13 @@ function renderGear(){
 // Overlay positions follow the illustrated route from home to the Eternal Citadel.
 // All buttons are real DOM controls: no interaction is painted into the image.
 const CALADRYN_STOPS=[
- {name:'Kingdom',x:9.5,y:68.5,symbol:'⌂'},
- {name:'Ashen Wilds',x:22.8,y:63.5,symbol:'✦'},
- {name:'Whispering Forest',x:36.6,y:53.1,symbol:'❧'},
- {name:'Frostspire Peaks',x:49.7,y:43.6,symbol:'❄'},
- {name:'Obsidian Wastes',x:64.1,y:43.0,symbol:'◆'},
- {name:'Celestial Rift',x:77.1,y:33.6,symbol:'✧'},
- {name:'Eternal Citadel',x:90.7,y:25.5,symbol:'✴'}
+ {name:'Kingdom',x:9.5,y:68.3,symbol:'⌂'},
+ {name:'Ashen Wilds',x:22.5,y:58.7,symbol:'✦'},
+ {name:'Whispering Forest',x:36.3,y:52.0,symbol:'❧'},
+ {name:'Frostspire Peaks',x:49.1,y:43.9,symbol:'❄'},
+ {name:'Obsidian Wastes',x:64.1,y:42.1,symbol:'◆'},
+ {name:'Celestial Rift',x:77.0,y:33.8,symbol:'✧'},
+ {name:'Eternal Citadel',x:90.8,y:26.3,symbol:'✴'}
 ];
 function renderWorld(){
  const home=atKingdom(),location=home?'The Kingdom':realms[s.zone][0];
