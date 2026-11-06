@@ -15,3 +15,17 @@
 #ef4 .efg-placeholder{max-width:290px;margin:1px auto 7px;font-size:11px;letter-spacing:.15px;font-style:italic;line-height:1.55;color:#b5c0cf}
 @media(max-width:1110px){#ef4 .efg-character-layout{grid-template-columns:repeat(2,minmax(0,1fr))}#ef4 .efg-character-center{grid-column:1/-1;grid-row:1;max-width:520px;width:100%;margin:0 auto}#ef4 .efg-paperdoll{max-width:280px}}
 @media(max-width:600px){#ef4 .efg-character-layout{grid-template-columns:1fr;gap:12px}#ef4 .efg-character-center{grid-column:auto;grid-row:auto}#ef4 .efg-slot-column{gap:7px}#ef4 .efg-slot{min-height:56px}#ef4 .efg-character-center{padding:12px}#ef4 .efg-paperdoll{max-width:290px}}
+
+/* Editable character identity and portrait selection */
+#ef4 .efg-visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#ef4 .efg-name-input{display:block;width:min(100%,310px);margin:0 auto 10px;padding:6px 10px;text-align:center;border:1px solid transparent;border-bottom:1px solid #a87a4a68;border-radius:7px 7px 2px 2px;background:#11192b75;font-family:Georgia,serif;font-size:clamp(20px,2.3vw,27px);font-weight:750;color:#ffe0b3;text-shadow:0 2px 13px #b773454b;outline:none;transition:background .16s,border-color .16s}
+#ef4 .efg-name-input::placeholder{color:#ffddb3;opacity:1}
+#ef4 .efg-name-input:hover{background:#27304983;border-color:#a87a4a71}
+#ef4 .efg-name-input:focus{background:#182137;border-color:#f0b578;box-shadow:0 0 0 2px #f0b57823}
+#ef4 .efg-gender-switch{display:flex;align-items:center;justify-content:center;gap:3px;margin:0 auto 4px;padding:3px;max-width:220px;background:#121c2dbc;border:1px solid #8f674b;border-radius:9px;box-shadow:inset 0 1px #e9b87e26}
+#ef4 .efg-gender-switch button{flex:1;min-height:33px;padding:6px 12px;border:0;border-radius:6px;background:transparent;color:#bac3d2;font-weight:800;font-size:11px;cursor:pointer}
+#ef4 .efg-gender-switch button.on{color:#2f1b18;background:linear-gradient(130deg,#dd874b,#ffbf79);box-shadow:inset 0 1px #ffe3a7,0 0 11px #ef955741}
+#ef4 .efg-gender-switch button:not(.on):hover{background:#354157;color:#fff0dc}
+#ef4 .efg-paperdoll-svg{filter:drop-shadow(0 8px 14px #020710ac)}
+#ef4 .efg-character-center .efg-placeholder{font-size:11px}
+@media(max-width:600px){#ef4 .efg-name-input{font-size:22px}#ef4 .efg-gender-switch{max-width:210px}}
