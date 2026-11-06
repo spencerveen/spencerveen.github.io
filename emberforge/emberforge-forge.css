@@ -268,3 +268,25 @@
   background-repeat:no-repeat !important;
 }
 }
+
+/* Independent tier-I painting: an actual image, not a CSS background.
+   Intentionally valid at every viewport and aspect ratio, including compact
+   desktop windows and true mobile. Engine media queries cannot downgrade it.
+   Ready-state allows the engine painting to show if the HD file fails. */
+#ef4 .ef-forge-v2-scene #ef4-forgescene > .ef-forge-hires-art {
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  object-fit:cover!important;
+  object-position:center center!important;
+  z-index:3!important;
+  display:block!important;
+  opacity:0;
+  pointer-events:none!important;
+  user-select:none;
+}
+#ef4 .ef-forge-v2[data-ef-forge-tier="0"] .ef-forge-v2-scene #ef4-forgescene > .ef-forge-hires-art.ef-forge-art-ready {
+  opacity:1;
+}
