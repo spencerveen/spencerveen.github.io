@@ -72,7 +72,7 @@
 
     var sheet = doc.createElement("link");
     sheet.rel = "stylesheet";
-    sheet.href = "./emberforge-forge.css?v=5";
+    sheet.href = "./emberforge-forge.css?v=6";
     doc.head.appendChild(sheet);
 
     var hero = doc.createElement("section");
@@ -166,6 +166,21 @@
           var forgeLevel = Number(m[1]);
           hero.dataset.efForgeTier = String(Math.min(3, Math.floor(Math.max(0, forgeLevel - 1) / 50)));
         }
+      }
+      // The legacy game swaps Forge backdrops based on its own responsive
+      // rules. Apply the ultra-resolution art to the real painted background
+      // layer, not merely the surrounding responsive CSS wrapper. This runs
+      // after the engine's updates, including after browser resizing.
+      var paintedBg = doc.getElementById("ef4-forgebg");
+      if (paintedBg && hero.dataset.efForgeTier === "0") {
+        var ultraUrl = 'url("' + new URL("./forge-tier0-ultra.webp", doc.baseURI).href + '")';
+        if (paintedBg.style.getPropertyValue("background-image") !== ultraUrl ||
+            paintedBg.style.getPropertyPriority("background-image") !== "important") {
+          paintedBg.style.setProperty("background-image", ultraUrl, "important");
+        }
+        paintedBg.style.setProperty("background-size", "cover", "important");
+        paintedBg.style.setProperty("background-position", "center center", "important");
+        paintedBg.style.setProperty("background-repeat", "no-repeat", "important");
       }
       var lifetimeSource = doc.getElementById("ef4-lifetime");
       var nextLevelSource = doc.getElementById("ef4-levelinfo");
