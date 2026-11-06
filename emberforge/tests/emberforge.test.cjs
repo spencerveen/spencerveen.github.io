@@ -85,3 +85,13 @@ test('save migration and battle automation remain engine-owned', () => {
   assert.match(engine, /setAutoAttack:/);
   assert.match(read('emberforge-battle.js'), /api\.setAutoAttack\(/);
 });
+
+test('automatic boss salvage does not emit repeated popup notices', () => {
+  const combat = read('systems/combat.js');
+  assert.doesNotMatch(combat, /toast\(['"]Boss chest: ['"]\s*\+\s*drop\.name\s*\+\s*['"] salvaged['"]\)/);
+  assert.match(combat, /if\(e\.boss&&drop&&!drop\.salvaged\)toast\(/);
+  assert.match(combat, /if\(boss\)note\(['"]Boss chest:/);
+  const battle = read('emberforge-battle.js');
+  assert.match(battle, /lastEncounterKey/);
+  assert.match(battle, /recentEvents\.clear\(\)/);
+});
