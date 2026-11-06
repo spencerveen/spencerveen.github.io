@@ -63,22 +63,45 @@ function stats(){
 }
 function renderTraining(){let box=$('traininglist'),cap=trainingCap();box.innerHTML=TRAINING.map(t=>{let lv=s.training[t[0]]||0,c=trainCost(t),maxed=lv>=cap;return `<div class="train-item"><div class="smalltop"><strong>${t[1]}</strong><span class="pill">Lv ${lv}/${cap}</span></div><div class="hint">${t[3]}${lv>cap?' · extra ranks dormant until Ascension':''}</div><div class="space" style="margin-top:auto"><span class="price">${maxed?(cap>=30?'MAX':'Next cap: Ascension') :fmt(c)+' Ember'}</span><button class="btn" data-train="${t[0]}" data-price="${c}" ${maxed||s.ember<c?'disabled':''}>Train</button></div></div>`}).join('')}
 function shopButton(action,id,price,disabled,text='Buy'){return `<button class="btn btn-gold" data-${action}="${esc(id)}" data-price="${price}" ${disabled?'disabled':''}>${text}</button>`}
+function renderWorkerSummary(){
+ const summary=$('worker-summary');if(!summary)return;
+ const owned=totalWorkers(),production=income();
+ const top=workers.filter(workerUnlocked).map(w=>({name:w[1],output:workerProduction(w)})).sort((a,b)=>b.output-a.output)[0];
+ summary.innerHTML=`<div class="efw-summary-item"><span>Workforce production</span><strong>${fmt(production)} <small>Ember/sec</small></strong></div>
+ <div class="efw-summary-item"><span>Workers employed</span><strong>${fmt(owned)}</strong></div>
+ <div class="efw-summary-item"><span>Top producer</span><strong>${top&&top.output>0?esc(top.name):'None yet'}</strong></div>`;
+}
 function renderWorkers(){
- const visible=workers.filter(workerUnlocked);
+ const visible=workers.filter(workerUnlocked),total=income();
  $('workerlist').innerHTML=visible.map(w=>{
    const c=costWorker(w,buyMode),owned=s.gens[w[0]]||0;
    const unit=fmt(w[4]),batch=fmt(w[4]*c.count);
    const label=c.count?'Hire '+(buyMode==='max'?'×'+fmt(c.count):'×'+c.count):'Unavailable';
+   const output=workerProduction(w),share=total>0?Math.min(100,100*output/total):0;
+   const next=WORKER_MILESTONES.find(m=>owned<m[0]),bonus=Math.round(workerMilestoneBonus(owned)*100);
+   const progress=next?Math.min(100,100*owned/next[0]):100;
+   const marginal=workerMarginalProduction(w),price=costWorker(w,1).price;
+   const efficiency=marginal>0?fmt(price/marginal):'—';
    return `<article class="efw-worker shopitem">
      <div class="efw-portrait" aria-hidden="true"><span class="efw-portrait-glow"></span>${iconHTML(w[2],'xl')}</div>
      <div class="efw-worker-info">
        <div class="efw-title-row"><div class="efw-worker-title"><strong>${esc(w[1])}</strong><p>${esc(w[5])}</p></div><span class="efw-owned pill">Owned <b>${fmt(owned)}</b></span></div>
        <div class="efw-output"><span class="efw-flame" aria-hidden="true">✦</span><span>+${unit} / sec each</span><span class="efw-output-divider">·</span><span>+${batch} base / sec</span></div>
+       <div class="efw-worker-stats">
+         <span><b>${fmt(output)}</b> Ember/sec total</span>
+         <span><b>${share.toFixed(1)}%</b> of workforce output</span>
+         <span class="efw-efficiency" title="Ember cost per additional 1 Ember/sec from buying the next single worker">Next hire efficiency: <b>${efficiency}</b> Ember per +1/sec</span>
+       </div>
+       <div class="efw-milestone">
+         <div class="efw-milestone-line"><span>${next?'Next milestone: '+next[0]+' workers':'All milestones reached'}</span><span>${next?owned+'/'+next[0]:'+50% output'}</span></div>
+         <div class="efw-milestone-track" role="progressbar" aria-label="${esc(w[1])} milestone progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(progress)}"><span style="width:${progress}%"></span></div>
+         <div class="efw-milestone-note">${next?'Next bonus: +'+Math.round(next[1]*100)+'% output':'Maximum milestone bonus active'}${bonus?' · Active: +'+bonus+'%':''}</div>
+       </div>
        <div class="efw-bottom shopbottom"><span class="efw-price price"><span aria-hidden="true">◆</span> ${c.count?short(c.price):'MAXED'}</span>${shopButton('worker',w[0],c.price,c.count===0||s.ember<c.price,label)}</div>
      </div>
    </article>`;
  }).join('');
-
+ renderWorkerSummary();
 }
 function renderUpgrades(){
  let view=s.upgradeView||'unlocked',showOwned=!!s.showOwned;
@@ -141,7 +164,7 @@ if(b.id==='ef4-potion'){usePotion();return}
 if(b.id==='ef4-retreat'){retreat();return}
 if(b.dataset.train){let t=TRAINING.find(v=>v[0]===b.dataset.train);if(!t||s.training[t[0]]>=trainingCap())return;let cost=trainCost(t);if(s.ember<cost)return;let oldMax=maxHealth();s.ember-=cost;s.training[t[0]]++;if(t[0]==='vitality')s.hp=Math.min(maxHealth(),s.hp+(maxHealth()-oldMax));s.combatMessage=t[1]+' increased to level '+s.training[t[0]];renderTraining();stats();toast(t[1]+' trained');return}
 
-if(b.dataset.worker){let w=workers.find(w=>w[0]===b.dataset.worker);if(!w||!workerUnlocked(w))return;let c=costWorker(w,buyMode);if(c.count<1||s.ember<c.price)return;s.ember-=c.price;s.gens[w[0]]+=c.count;renderWorkers();currencyStats();honorCheck();return}
+if(b.dataset.worker){let w=workers.find(w=>w[0]===b.dataset.worker);if(!w||!workerUnlocked(w))return;let c=costWorker(w,buyMode);if(c.count<1||s.ember<c.price)return;s.ember-=c.price;s.gens[w[0]]+=c.count;honorCheck();renderWorkers();currencyStats();save();return}
 if(b.dataset.upgrade){let u=upgrades.find(u=>u[0]===b.dataset.upgrade);if(!u||!upgradeUnlocked(u)||s.ups[u[0]]||s.ember<u[3])return;s.ember-=u[3];s.ups[u[0]]=true;toast(u[1]+' unlocked!');renderUpgrades();currencyStats();return}
 if(b.dataset.build){let k=buildings.find(v=>v[0]===b.dataset.build);if(!k)return;let n=costBuild(k);if(!buildingUnlocked(k)||s.build[k[0]]>=buildingCap()||s.ember<n)return;s.ember-=n;s.build[k[0]]++;renderKingdom();currencyStats();honorCheck();return}
 if(b.dataset.zone){let z=+b.dataset.zone;if(!realmAccessible(z)){toast('Requires Asc '+REALM_ASCENSIONS[z]+', Combat Lv '+REALM_LEVELS[z]+' and previous boss');return}s.zone=z;s.stage=1;rollBattleBackground();s.stageUnlocked[z]=Math.max(1,s.stageUnlocked[z]||0);s.enemyHP=enemy().hp;s.enemyTimer=0;s.enemyHits=0;s.auto=false;s.autoMode='off';s.smartResting=false;s.engagedUntil=0;s.combatMessage='Entered '+realms[z][0]+'. Rested before engaging.';note('Traveled to '+realms[z][0]);go('battle');toast('Entered '+realms[z][0]);return}
