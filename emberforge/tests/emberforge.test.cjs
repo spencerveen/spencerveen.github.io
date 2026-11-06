@@ -756,3 +756,21 @@ test('adventurer portraits ship as crisp high-resolution optimized WebP images',
  }
  assert.match(avatar,/class="efg-equipment-overlays"/);
 });
+
+test('Adventurer portraits have no visible diamond markers over characters',()=>{
+ const avatar=read('ui/adventurer.js');
+ const css=read('styles/armory.css');
+ const slots=['helmet','chest','legs','gloves','boots','mainHand','offHand','ring1','ring2','ring3','ring4','necklace','charm','back'];
+ const context={s:{avatarBody:'female',equipped:Object.fromEntries(slots.map(k=>[k,null]))},EQUIPMENT_SLOT_KEYS:slots};
+ context.s.equipped.mainHand='weapon1';
+ vm.createContext(context);vm.runInContext(avatar,context);
+ for(const gender of ['female','male']){
+  context.s.avatarBody=gender;
+  const scene=vm.runInContext('renderAdventurerPaperDoll()',context);
+  assert.equal((scene.match(/data-visual-slot=/g)||[]).length,14);
+  assert.match(scene,/class="efg-visual-layer has-gear"/);
+  assert.doesNotMatch(scene,/efg-anchor-aura|efg-anchor-mark/);
+  assert.match(scene,/adventurer-\$?\{?gender\}?|adventurer-(?:male|female)/);
+ }
+ assert.doesNotMatch(css,/efg-anchor-aura|efg-anchor-mark/);
+});
