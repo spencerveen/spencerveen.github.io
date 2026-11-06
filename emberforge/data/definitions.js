@@ -20,6 +20,9 @@ const EQUIPMENT_SLOTS=[
  ['charm','Charm','crystal','jewelry'],['back','Back / Cape','backpack','body']
 ];
 const EQUIPMENT_SLOT_KEYS=EQUIPMENT_SLOTS.map(slot=>slot[0]);
+// Base storage capacity; a future equipped backpack can expand this without changing slot rendering.
+const INVENTORY_CAPACITY=30;
+const inventoryCapacity=()=>INVENTORY_CAPACITY;
 const LEGACY_EQUIPMENT_SLOTS={weapon:'mainHand',armor:'chest',charm:'charm'};
 const equipmentSlotFor=item=>LEGACY_EQUIPMENT_SLOTS[item?.slot]||item?.slot;
 const equipmentPowerType=slot=>slot==='mainHand'?'attack':slot==='chest'?'armor':slot==='charm'?'recovery':'bonus';
