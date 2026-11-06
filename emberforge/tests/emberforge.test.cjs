@@ -262,7 +262,7 @@ function combatHarness() {
     maxSelectable:()=>10,activeBuild:()=>0,activeSkill:()=>0,
     activeTraining:()=>0,upgradeUnlocked:()=>true,
     rollBattleBackground:()=>{},renderPage:()=>{},stats:()=>{},
-    $:()=>({style:{},textContent:''}),setTimeout:()=>0,clearTimeout:()=>{},
+    $:()=>({style:{},textContent:''}),toastTimer:0,setTimeout:()=>0,clearTimeout:()=>{},
     fmt:String,esc:String,needsMain:false
   };
   vm.createContext(context);
