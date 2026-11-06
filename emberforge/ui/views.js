@@ -120,7 +120,7 @@ function renderUpgrades(){
      <div class="efa-art" aria-hidden="true">${iconHTML(u[2],'xl')}</div>
      <div class="efa-content">
        <div class="efa-card-head"><div class="efa-card-heading"><span class="efa-category">${category} power</span><strong>${esc(u[1])}</strong></div><span class="efa-status ${state}">${owned?'Owned':!unlocked?'Locked':enabled?'Affordable':'Available'}</span></div>
-       <div class="efa-effect"><span class="efa-effect-glyph" aria-hidden="true">✦</span><div><span class="efa-effect-caption">Arcane effect</span><strong>${esc(u[6])}</strong></div></div>
+       <div class="efa-effect"><span class="efa-effect-glyph" aria-hidden="true">✦</span><div><span class="efa-effect-caption">Upgrade Effect</span><strong>${esc(u[6])}</strong></div></div>
        <div class="efa-requirements"><span aria-hidden="true">◇</span> ${owned&&!unlocked?'Dormant until ':unlocked?'Requires ':'Locked · Requires '}${esc(requirement)}</div>
        <div class="efa-purchase"><div class="efa-price"><span class="efa-price-label">${owned?'Already acquired':'Cost to unlock'}</span><strong>${owned?'Purchased':short(u[3])+' Ember'}</strong></div>${shopButton('upgrade',u[0],u[3],!enabled,owned?'Owned':!unlocked?'Locked':'Unlock')}</div>
      </div>
