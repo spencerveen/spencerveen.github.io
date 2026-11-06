@@ -1,5 +1,42 @@
 (function(){
 "use strict";
+// UI-only sidebar controller. Never changes game state or navigation handlers.
+function setupSidebar(doc,root){
+  var nav=root.querySelector("#ef4-nav"),layout=root.querySelector(".layout");
+  if(!nav||!layout||nav.dataset.responsiveReady==="1")return;
+  var toggle=nav.querySelector("#ef4-navtoggle"),win=doc.defaultView;
+  if(!toggle||!win)return;
+  nav.dataset.responsiveReady="1";
+  var key="emberforge-sidebar-mode-v1";
+  var preference=null;
+  try{
+    var stored=win.localStorage.getItem(key);
+    if(stored==="expanded"||stored==="collapsed")preference=stored;
+  }catch(_){/* Browsers may restrict local storage; navigation still works. */}
+  function apply(){
+    var width=win.innerWidth||root.clientWidth||1201;
+    var mobile=width<=760;
+    var mode=mobile?"mobile":(preference||(width<=1200?"collapsed":"expanded"));
+    layout.classList.toggle("nav-expanded",mode==="expanded");
+    layout.classList.toggle("nav-collapsed",mode==="collapsed");
+    layout.classList.toggle("nav-mobile",mode==="mobile");
+    var expanded=mode==="expanded";
+    toggle.setAttribute("aria-expanded",String(expanded));
+    toggle.setAttribute("aria-label",expanded?"Collapse navigation":"Expand navigation");
+    toggle.title=expanded?"Collapse navigation":"Expand navigation";
+    toggle.disabled=mobile;
+    toggle.querySelector(".nav-toggle-label").textContent=expanded?"Collapse menu":"Expand menu";
+  }
+  toggle.addEventListener("click",function(event){
+    event.preventDefault();event.stopPropagation();
+    if(win.innerWidth<=760)return;
+    preference=layout.classList.contains("nav-collapsed")?"expanded":"collapsed";
+    try{win.localStorage.setItem(key,preference)}catch(_){}
+    apply();
+  });
+  win.addEventListener("resize",apply,{passive:true});
+  apply();
+}
 function mount(frame){
   var doc;
   try{doc=frame.contentDocument}catch(e){return}
@@ -18,10 +55,11 @@ function mount(frame){
   // Apply the in-game navigation theme without touching gameplay or save logic.
   var sideSheet=doc.createElement("link");
   sideSheet.rel="stylesheet";
-  sideSheet.href="./emberforge-sidebar.css?v=1";
+  sideSheet.href="./emberforge-sidebar.css?v=2";
   doc.head.append(sideSheet);
   var nav=root.querySelector("#ef4-nav");
   if(nav)nav.setAttribute("aria-label","Emberforge game sections");
+  setupSidebar(doc,root);
   header.innerHTML=[
     '<div class="ef-hud-top">',
       '<img class="ef-hud-logo" src="./emberforge-logo-v3.webp" alt="Emberforge" width="400" height="117" draggable="false">',
