@@ -500,7 +500,7 @@ test('legacy weapon armor and charm mapping preserves stats and valid equipment 
  assert.equal(context.x.equipped.chest,'plate');
  assert.equal(context.x.equipped.charm,'amulet');
  assert.equal(context.x.equipped.helmet,null);
- assert.equal(context.x.avatarBody,'neutral');
+ assert.equal(context.x.avatarBody,'male');
  context.obj.equipped={mainHand:'nonexistent',chest:'blade',charm:'amulet'};
  vm.runInContext('{'+block+'}',context);
  assert.equal(context.x.equipped.mainHand,null);
@@ -541,4 +541,33 @@ test('Adventurer paper doll exposes independent equipment overlays for every slo
  assert.ok(html.indexOf('ui/adventurer.js')<html.indexOf('ui/views.js'),'Load paper doll before dependent view');
  assert.match(view,/renderAdventurerPaperDoll\(\)/);
  assert.doesNotMatch(view,/efg-torso/);
+});
+
+test('character identity and selected portrait persist and render correctly',()=>{
+ const html=read('game.html'),definitions=read('data/definitions.js'),formatting=read('core/formatting.js');
+ const views=read('ui/views.js'),avatar=read('ui/adventurer.js');
+ const equipment=['helmet','chest','legs','gloves','boots','mainHand','offHand','ring1','ring2','ring3','ring4','necklace','charm','back'];
+ const state={avatarBody:'male',equipped:Object.fromEntries(equipment.map(k=>[k,null]))};
+ const context={s:state,EQUIPMENT_SLOT_KEYS:equipment};
+ vm.createContext(context);
+ vm.runInContext(avatar,context);
+ assert.match(vm.runInContext('renderAdventurerPaperDoll()',context),/adventurer-male\.webp/);
+ state.avatarBody='female';
+ assert.match(vm.runInContext('renderAdventurerPaperDoll()',context),/adventurer-female\.webp/);
+ for (const gender of ['male','female']){
+  const asset=fs.readFileSync(path.join(gameDir,'art','adventurer-'+gender+'.webp'));
+  assert.equal(asset.toString('ascii',0,4),'RIFF');
+  assert.equal(asset.toString('ascii',8,12),'WEBP');
+  assert.equal(asset.readUInt32LE(4)+8,asset.length);
+ }
+ assert.match(views,/id="ef4-adventurer-name"/);
+ assert.match(views,/data-avatar-gender="male"/);
+ assert.match(views,/data-avatar-gender="female"/);
+ assert.match(views,/root\.addEventListener\('input'/);
+ assert.match(views,/if\(b\.dataset\.avatarGender\)/);
+ assert.match(views,/'avatarBody','avatarName'\]/);
+ assert.match(definitions,/avatarBody:'male',avatarName:''/);
+ assert.match(formatting,/x\.avatarName=typeof obj\.avatarName==='string'/);
+ assert.match(formatting,/\['male','female'\]\.includes\(obj\.avatarBody\)/);
+ assert.match(html,/ui\/adventurer\.js\?v=/);
 });
