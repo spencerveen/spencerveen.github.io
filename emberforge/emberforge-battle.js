@@ -139,7 +139,39 @@ function mount(frame){
  }
  prev.addEventListener("click",function(){nav(-1)});
  next.addEventListener("click",function(){nav(1)});
+ // The game can replace legacy cards during its render cycle. Re-hide fresh
+ // copies on each sync, without touching the battlefield or the shared HUD.
+ function suppressLegacyPanels(){
+   var labels=[
+     /^YOUR ADVENTURER\b/i,
+     /^CURRENT ENEMY\b/i,
+     /^REALM BOSS\b/i,
+     /^COMBAT TRAINING\b/i,
+     /^BATTLE REPORT\b/i,
+     /^HUNT BOARD\b/i
+   ];
+   elements(battle,".card,.panel").forEach(function(card){
+     if(card.closest(".efb-shell")||card.contains(shell)||card===battle)return;
+     // Only inspect compact headings directly belonging to this card.
+     var headings=elements(card,"h1,h2,h3,h4,h5,h6,strong,b");
+     var matched=headings.some(function(h){
+       if(h.closest(".card,.panel")!==card)return false;
+       var value=txt(h);
+       return value.length<100&&labels.some(function(re){return re.test(value)});
+     });
+     if(!matched){
+       // Some legacy cards have headings rendered in plain divs.
+       matched=elements(card,":scope > div, :scope > header, :scope > div > div").some(function(el){
+         if(el.querySelector(".card,.panel"))return false;
+         var value=txt(el);
+         return value.length<95&&labels.some(function(re){return re.test(value)});
+       });
+     }
+     if(matched)card.classList.add("efb-source-hidden");
+   });
+ }
  function refresh(){
+   suppressLegacyPanels();
    var stages=liveStages();
    hideSceneLabels();
    var picked=stages.findIndex(function(el){return el.matches('[aria-pressed=true],[aria-selected=true],.active,.selected')||/current/i.test(el.className)});
