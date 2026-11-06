@@ -151,3 +151,93 @@ test('legacy save backup is retained during version migration', () => {
   assert.equal(values.get('emberforge-test-save-pre-v7-backup'), raw);
   assert.equal(context.s.version, 7);
 });
+
+test('background sheets are real, independently cacheable WebP files', () => {
+  const groups = [
+    ['realm-backgrounds.js', 'REG_BG_SHEETS', 6, 'realm'],
+    ['boss-backgrounds.js', 'BOSS_BG_SHEET', 1, 'boss'],
+    ['forge-backgrounds.js', 'HUB_BG_SHEET', 1, 'forge']
+  ];
+  for (const [source, constant, count, name] of groups) {
+    const script = read('data/' + source);
+    assert.doesNotMatch(script, /data:image\\/webp;base64,/);
+    assert.match(script, new RegExp('\\\\b' + constant + '\\\\b'));
+    for (let i = 0; i < count; i++) {
+      const asset = 'art/' + name + '-' + i + '.webp';
+      assert.ok(script.includes('./' + asset), asset + ' reference missing');
+      const data = fs.readFileSync(path.join(gameDir, asset));
+      assert.equal(data.toString('ascii', 0, 4), 'RIFF');
+      assert.equal(data.toString('ascii', 8, 12), 'WEBP');
+      assert.ok(data.length > 1000);
+    }
+  }
+});
+
+function gameLoopHarness(overrides = {}) {
+  // Run the actual production tick function with deterministic engine fakes.
+  // No DOM or localStorage is needed to verify timer and state transitions.
+  const source = read('core/loop.js');
+  const tickSource = source.slice(source.indexOf('function tick(now)'), source.indexOf('// The browser UI'));
+  const calls = {damage:[],hits:0,render:0,saves:0};
+  const s = {
+    hp:90, downUntil:0, auto:true, smartResting:false,
+    autoMode:'selected', engagedUntil:0, autoProgress:0.7,
+    enemyTimer:0.7, enemyHP:60, combatMessage:''
+  };
+  Object.assign(s, overrides);
+  const context = {
+    s, last:0, elapsedUI:0, elapsedAutoSave:0, elapsedShop:0,
+    needsMain:false, page:'battle', Date:{now:()=>10000},
+    income:()=>0, gain:()=>{}, maxHealth:()=>100,
+    realRecovery:()=>0, activeFight:()=>s.auto&&!s.smartResting,
+    isDown:()=>s.downUntil>10000||s.hp<=0,
+    autoInterval:()=>0.5, foeAttackInterval:()=>0.5, autoPower:()=>12,
+    damage:n=>calls.damage.push(n), takeHit:()=>{calls.hits++;},
+    spawnPop:()=>{}, $:()=>({}), fmt:String,
+    enemy:()=>({hp:60}), toast:()=>{}, chooseSmartTarget:()=>{},
+    stats:()=>{}, renderPage:()=>{calls.render++;},
+    refreshShopAfford:()=>{}, save:()=>{calls.saves++;},
+    requestAnimationFrame:()=>{}, console
+  };
+  vm.createContext(context);
+  vm.runInContext(tickSource, context);
+  return {s,calls,tick:now=>vm.runInContext('tick(' + now + ')',context)};
+}
+
+test('auto combat applies engine damage and enemy attacks while fighting', () => {
+  const game = gameLoopHarness();
+  game.tick(500);
+  assert.deepEqual(game.calls.damage,[12,12]);
+  assert.equal(game.calls.hits,2);
+});
+
+test('turning auto attack off stops damage and enemy hits during rest', () => {
+  const game = gameLoopHarness({auto:false,autoMode:'off'});
+  game.tick(500);
+  assert.deepEqual(game.calls.damage,[]);
+  assert.equal(game.calls.hits,0);
+  assert.equal(game.s.enemyTimer,0);
+  assert.equal(game.s.enemyHP,60);
+});
+
+test('recovery state cannot continue auto attacking', () => {
+  const game = gameLoopHarness({downUntil:12000,hp:0});
+  game.tick(500);
+  assert.deepEqual(game.calls.damage,[]);
+  assert.equal(game.calls.hits,0);
+});
+
+test('game loop continues scheduling frames after an engine exception', () => {
+  const source = read('core/loop.js');
+  const tickSource = source.slice(source.indexOf('function tick(now)'),source.indexOf('// The browser UI'));
+  let frames=0;
+  const context={
+    last:0, income:()=>{throw Error('expected failure');},
+    requestAnimationFrame:()=>{frames++;},
+    console:{error:()=>{}}
+  };
+  vm.createContext(context);
+  vm.runInContext(tickSource,context);
+  vm.runInContext('tick(500)',context);
+  assert.equal(frames,1);
+});
