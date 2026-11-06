@@ -1,29 +1,17 @@
 /* Character equipment layout, slots are ready for future loot families. */
 #ef4 .efg-character-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,.8fr) minmax(0,1fr);gap:14px;align-items:start;margin:15px 0 20px}
-#ef4 .efg-slot-column,#ef4 .efg-character-center{min-width:0;display:flex;flex-direction:column;gap:9px}
-#ef4 .efg-group-heading{font:800 11px system-ui,sans-serif;text-transform:uppercase;letter-spacing:1.8px;color:#e3ae77;padding:5px 2px 8px;border-bottom:1px solid #b17a4a59}
-#ef4 .efg-slot{display:flex;align-items:center;gap:9px;min-height:62px;padding:8px 10px;background:linear-gradient(110deg,#24324a,#151f32);border:1px solid #826449;border-radius:10px;box-shadow:inset 0 1px #e9b78026;min-width:0}
-#ef4 .efg-slot.empty{background:linear-gradient(110deg,#1c293d,#121a2b);border-color:#4f5b70}
-#ef4 .efg-slot-art{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;background:radial-gradient(circle,#a36f3e35,#101728b0);border-radius:8px}
-#ef4 .efg-slot-art .ico{width:32px;height:32px;object-fit:contain;opacity:.8}
-#ef4 .efg-slot.empty .efg-slot-art{filter:grayscale(.6);opacity:.5}
-#ef4 .efg-slot-details{min-width:0;display:flex;flex-direction:column;gap:2px;flex:1}
-#ef4 .efg-slot-name{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#eab37d;font-weight:800}
-#ef4 .efg-slot-details strong{font-size:11px;line-height:1.3;overflow-wrap:anywhere}
-#ef4 .efg-slot-details small{font-size:10px;color:#b0c5d9}
-#ef4 .efg-remove{padding:5px 7px;font-size:10px}
-#ef4 .efg-character-center{border:1px solid #927047;background:radial-gradient(ellipse at 50% 42%,#44354a,#18263a 53%,#0d1727);border-radius:16px;padding:14px;box-shadow:inset 0 0 0 4px #ffd69908,0 10px 27px #0006;text-align:center}
-#ef4 .efg-figure-title{font-family:Georgia,serif;font-size:20px;color:#ffddb3;font-weight:700}
-#ef4 .efg-figure{position:relative;height:268px;width:min(100%,210px);margin:auto;filter:drop-shadow(0 0 14px #e18b423c)}
-#ef4 .efg-figure span{position:absolute;display:block;background:linear-gradient(110deg,#4e6381,#273e58);border:1px solid #c59a6560;box-shadow:inset 0 0 14px #0d1728}
-#ef4 .efg-head{top:15px;left:calc(50% - 24px);width:48px;height:55px;border-radius:46% 46% 43% 43%}
-#ef4 .efg-torso{top:76px;left:calc(50% - 44px);width:88px;height:97px;clip-path:polygon(15% 0,85% 0,100% 75%,75% 100%,25% 100%,0 75%)}
-#ef4 .efg-arm{top:84px;width:32px;height:108px;border-radius:17px 17px 12px 12px}
-#ef4 .efg-arm.left{left:calc(50% - 80px);transform:rotate(9deg)}
-#ef4 .efg-arm.right{right:calc(50% - 80px);transform:rotate(-9deg)}
-#ef4 .efg-leg{top:164px;width:35px;height:94px;border-radius:8px 8px 12px 12px}
-#ef4 .efg-leg.left{left:calc(50% - 36px);transform:rotate(3deg)}
-#ef4 .efg-leg.right{right:calc(50% - 36px);transform:rotate(-3deg)}
-#ef4 .efg-placeholder{font-size:11px;font-style:italic;color:#b0b7c7;line-height:1.5;max-width:230px;margin:0 auto 7px}
-@media(max-width:1110px){#ef4 .efg-character-layout{grid-template-columns:repeat(2,minmax(0,1fr))}#ef4 .efg-character-center{grid-column:1/-1;grid-row:1;max-width:520px;width:100%;margin:0 auto}#ef4 .efg-figure{height:220px;transform:scale(.82);transform-origin:top center;margin-bottom:-28px}}
-@media(max-width:600px){#ef4 .efg-character-layout{grid-template-columns:1fr;gap:12px}#ef4 .efg-character-center{grid-column:auto;grid-row:auto}#ef4 .efg-slot-column{gap:7px}#ef4 .efg-slot{min-height:56px}#ef4 .efg-character-center{padding:12px}}
+#ef4 .efg-slot-column,/* Character preview is one scalable illustration, not independent floating limbs. */
+#ef4 .efg-character-center{position:relative;isolation:isolate;overflow:hidden;border:1px solid #927047;background:radial-gradient(ellipse at 50% 36%,#3e3048,#18263a 59%,#0c1628);border-radius:16px;padding:18px 14px 15px;box-shadow:inset 0 0 0 4px #ffd69908,0 10px 27px #0006;text-align:center}
+#ef4 .efg-character-center::before{content:"";pointer-events:none;position:absolute;inset:-60px;background:radial-gradient(circle at 50% 45%,#d5884323,transparent 48%);z-index:-1}
+#ef4 .efg-figure-title{font-family:Georgia,serif;font-size:23px;color:#ffddb3;font-weight:750;letter-spacing:.3px;text-shadow:0 2px 13px #b773454b}
+#ef4 .efg-paperdoll{position:relative;width:min(100%,305px);margin:5px auto 0;overflow:visible}
+#ef4 .efg-paperdoll-svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 9px 13px #02071099)}
+#ef4 .efg-rune-stage{pointer-events:none}
+#ef4 .efg-equipment-overlays{pointer-events:none}
+#ef4 .efg-anchor-aura{fill:#ffb25c;opacity:0;filter:drop-shadow(0 0 7px #ff995f)}
+#ef4 .efg-anchor-mark{fill:#e1a36a;stroke:#ffe2a5;stroke-width:.5;opacity:0}
+#ef4 .efg-visual-layer.has-gear .efg-anchor-aura{opacity:.14}
+#ef4 .efg-visual-layer.has-gear .efg-anchor-mark{opacity:.75}
+#ef4 .efg-placeholder{max-width:290px;margin:1px auto 7px;font-size:11px;letter-spacing:.15px;font-style:italic;line-height:1.55;color:#b5c0cf}
+@media(max-width:1110px){#ef4 .efg-character-layout{grid-template-columns:repeat(2,minmax(0,1fr))}#ef4 .efg-character-center{grid-column:1/-1;grid-row:1;max-width:520px;width:100%;margin:0 auto}#ef4 .efg-paperdoll{max-width:280px}}
+@media(max-width:600px){#ef4 .efg-character-layout{grid-template-columns:1fr;gap:12px}#ef4 .efg-character-center{grid-column:auto;grid-row:auto}#ef4 .efg-slot-column{gap:7px}#ef4 .efg-slot{min-height:56px}#ef4 .efg-character-center{padding:12px}#ef4 .efg-paperdoll{max-width:290px}}
