@@ -26,6 +26,11 @@ const inventoryCapacity=()=>INVENTORY_CAPACITY;
 const LEGACY_EQUIPMENT_SLOTS={weapon:'mainHand',armor:'chest',charm:'charm'};
 const equipmentSlotFor=item=>LEGACY_EQUIPMENT_SLOTS[item?.slot]||item?.slot;
 const equipmentPowerType=slot=>slot==='mainHand'?'attack':slot==='chest'?'armor':slot==='charm'?'recovery':'bonus';
+// Shared protection rules keep combat drops, merchant sales and bulk salvage consistent.
+const equippedGearIds=()=>new Set(Object.values(s.equipped));
+const isGearEquipped=(item,ids=equippedGearIds())=>ids.has(item.id);
+const isGearTradeProtected=(item,ids=equippedGearIds())=>!!item.locked||isGearEquipped(item,ids);
+
 const lootAbilityText=g=>!g.ability?'':({bossDamage:'Boss damage',health:'Max health',regen:'HP recovery'}[g.ability]+' +'+Math.round((g.abilityValue||0)*100)+'%');
 const lootVisual=(id,size='lg')=>ICON_DATA[id]?iconHTML(id,size):`<span class="lootemoji ${size}" role="img" aria-label="Item">${esc(id||'🗡️')}</span>`;
 const bossClearedAt=i=>!!s.bossCleared?.[i]||i<s.unlocked;
