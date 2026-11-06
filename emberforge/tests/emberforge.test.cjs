@@ -509,3 +509,13 @@ test('legacy weapon armor and charm mapping preserves stats and valid equipment 
  assert.match(read('systems/combat.js'),/gearPower\('armor'\)/);
  assert.match(read('systems/combat.js'),/LEGACY_EQUIPMENT_SLOTS\[slot\]/);
 });
+
+test('Armory slots are organized into Equipped and Jewelry columns', () => {
+ const render=read('ui/views.js');
+ const section=render.slice(render.indexOf('function renderGear()'),render.indexOf(" $('salvagefilter').value=s.salvage;"));
+ assert.ok(section.includes('efg-group-heading">Equipped'));
+ assert.ok(section.includes('efg-group-heading">Jewelry'));
+ assert.ok(section.includes("'mainHand','offHand','back'"));
+ assert.ok(section.includes("'ring4','charm'"));
+ assert.ok(!section.includes('efg-hand-slots'));
+});
