@@ -241,3 +241,70 @@ test('game loop continues scheduling frames after an engine exception', () => {
   vm.runInContext('tick(500)',context);
   assert.equal(frames,1);
 });
+
+function combatHarness() {
+  // Evaluate the real combat functions with a small deterministic encounter.
+  const s={
+    zone:0,stage:9,ascensions:0,unlocked:0,stageUnlocked:[10],
+    firstClears:[9],bossCleared:[false],build:{},skills:{},souls:0,
+    items:[],equipped:{weapon:null,armor:null,charm:null},
+    combatLevel:1,hp:105,downUntil:0,autoMode:'selected',auto:true,
+    enemyHP:10,enemyTimer:2,enemyHits:2,autoProgress:0.5,
+    engagedUntil:15000,smartResting:false,journal:[],
+    ember:1000,potionReady:0
+  };
+  const context={
+    s, Date:{now:()=>10000}, Math, console,
+    realms:[['Ashen Wilds','','','','Cinder Warden','boss',20,8]],
+    MONSTER_LADDERS:[Array.from({length:9},(_,i)=>['Foe '+(i+1),'imp'])],
+    REALM_ASCENSIONS:[0],XP_GAIN:()=>15,
+    currentTrait:()=>({name:'Standard',hp:1,atk:1,speed:1}),
+    maxSelectable:()=>10,activeBuild:()=>0,activeSkill:()=>0,
+    activeTraining:()=>0,upgradeUnlocked:()=>true,
+    rollBattleBackground:()=>{},renderPage:()=>{},stats:()=>{},
+    $:()=>({style:{},textContent:''}),setTimeout:()=>0,clearTimeout:()=>{},
+    fmt:String,esc:String,needsMain:false
+  };
+  vm.createContext(context);
+  vm.runInContext(read('systems/combat.js'),context);
+  return {s,run:code=>vm.runInContext(code,context)};
+}
+
+test('boss navigation resets encounter correctly in both directions', () => {
+  const game=combatHarness();
+  assert.equal(game.run('setTarget(10)'),true);
+  assert.equal(game.s.stage,10);
+  assert.equal(game.run('enemy().boss'),true);
+  assert.equal(game.s.enemyHP,game.run('enemy().hp'));
+  assert.equal(game.run('setTarget(9)'),true);
+  assert.equal(game.run('enemy().boss'),false);
+  assert.equal(game.run('setTarget(10)'),true);
+  assert.equal(game.run('enemy().boss'),true);
+  assert.equal(game.s.enemyTimer,0);
+  assert.equal(game.s.autoProgress,0);
+  assert.equal(game.s.enemyHP,game.run('enemy().hp'));
+});
+
+test('heal spends Ember once, restores health and applies cooldown', () => {
+  const game=combatHarness();
+  game.s.hp=10;
+  game.run('usePotion()');
+  assert.ok(game.s.hp>10);
+  assert.ok(game.s.ember<1000);
+  assert.equal(game.s.potionReady,28000);
+  const hp=game.s.hp, ember=game.s.ember;
+  game.run('usePotion()');
+  assert.equal(game.s.hp,hp);
+  assert.equal(game.s.ember,ember);
+});
+
+test('retreat stops combat and resets encounter health and timers', () => {
+  const game=combatHarness();
+  game.run('retreat()');
+  assert.equal(game.s.auto,false);
+  assert.equal(game.s.autoMode,'off');
+  assert.equal(game.s.engagedUntil,0);
+  assert.equal(game.s.enemyTimer,0);
+  assert.equal(game.s.enemyHits,0);
+  assert.equal(game.s.enemyHP,game.run('enemy().hp'));
+});
