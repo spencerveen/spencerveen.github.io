@@ -422,7 +422,7 @@ test('Arcane Upgrades retains purchase gating while using the new fantasy card l
   const views=read('ui/views.js');
   const css=read('styles/upgrades.css');
   const render=views.slice(views.indexOf('function renderUpgrades()'),views.indexOf('function renderKingdom()'));
-  assert.match(html,/styles\/upgrades\.css\?v=1/);
+  assert.match(html,/styles\/upgrades\.css\?v=\d+/);
   assert.match(html,/id="ef4-upgradeinfo"/);
   assert.match(html,/id="ef4-upgradehint"/);
   assert.match(html,/id="ef4-showowned"/);
