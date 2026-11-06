@@ -323,7 +323,7 @@ test('Workers guild makeover retains original hiring contracts', () => {
   assert.match(views, /shopButton\('worker',w\[0\]/);
   assert.match(views, /if\(b\.dataset\.worker\)/);
   assert.match(views, /if\(b\.dataset\.buy\)/);
-  assert.match(views, /workerReq\(w\)/);
+  assert.doesNotMatch(views.slice(views.indexOf('function renderWorkers()'), views.indexOf('function renderUpgrades()')), /efw-locked|More workers await/);
   assert.match(css, /\.efw-worker/);
   assert.match(css, /mask-image:radial-gradient/);
   assert.match(css, /@media\(max-width:640px\)/);
