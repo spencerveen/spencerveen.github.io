@@ -17,7 +17,7 @@ function mount(frame){
   var sheet=doc.createElement("link");sheet.rel="stylesheet";sheet.href="./emberforge-hud.css";doc.head.append(sheet);
   header.innerHTML=[
     '<div class="ef-hud-top">',
-      '<img class="ef-hud-logo" src="./emberforge-wordmark.svg" alt="Emberforge" width="760" height="140" draggable="false">',
+      '<img class="ef-hud-logo" src="./emberforge-painted-logo.webp" alt="Emberforge" width="500" height="146" draggable="false">',
       '<div class="ef-hud-actions" data-hud="actions"></div>',
     '</div>',
     '<div class="ef-hud-vitals">',
