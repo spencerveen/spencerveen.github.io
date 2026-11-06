@@ -23,7 +23,8 @@ window.EmberforgeGame=Object.freeze({
   getCombatState:()=>({
     zone:s.zone,stage:s.stage,maxStage:maxSelectable(s.zone),
     auto:s.auto,autoMode:s.autoMode,enemyHP:s.enemyHP,
-    playerHP:s.hp,down:isDown()
+    enemyMaxHP:enemy().hp,enemyName:enemy().name,
+    playerHP:s.hp,down:isDown(),fighting:activeFight()
   }),
   selectStage:(stage)=>{
     if(!Number.isInteger(stage)||isDown())return false;
