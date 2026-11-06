@@ -168,7 +168,7 @@ test('World uses the art map alone; combat and Kingdom render directly beneath i
  assert.ok(start>=0);
  for(const obsolete of ['ef4-worldinfo','ef4-maplist','ef4-worldactions']){
   assert.doesNotMatch(world,new RegExp('id="'+obsolete+'"'));
-  assert.doesNotMatch(view,new RegExp("\\$('"+obsolete.replace('ef4-','')+"'\\)"));
+  assert.ok(!view.includes("$('"+obsolete.replace('ef4-','')+"')"),obsolete+' must not be referenced by the renderer');
  }
  assert.doesNotMatch(view,/caladryn-destination|caladryn-away-message/);
  assert.doesNotMatch(css,/\.caladryn-destinations|\.caladryn-progress/);
