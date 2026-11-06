@@ -4,11 +4,20 @@
 function mount(frame){
  var doc;try{doc=frame.contentDocument}catch(_){return}
  if(!doc)return;
+ // These two IDs are the original game's boss-tip elements. Suppress them
+ // by ID rather than trying to recognize their changing text on each frame.
+ // Keep the nodes present: the legacy engine still writes to both by ID.
+ if(!doc.getElementById("efb-remove-boss-tips")){
+   var noBossTips=doc.createElement("style");
+   noBossTips.id="efb-remove-boss-tips";
+   noBossTips.textContent="#ef4-combattip, #ef4-bosslootnote { display:none !important; visibility:hidden !important; }";
+   doc.head.appendChild(noBossTips);
+ }
  var root=doc.getElementById("ef4"),battle=root&&root.querySelector('[data-view="battle"]');
  if(!battle||battle.dataset.efBattleSkin==="1")return;
  var master=doc.getElementById("ef4-mastercontent");
  if(!master)return;
- var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=12";doc.head.appendChild(s);
+ var s=doc.createElement("link");s.rel="stylesheet";s.href="./emberforge-battle.css?v=14";doc.head.appendChild(s);
  var norm=function(t){return (t||"").replace(/\s+/g," ").trim()};
  var txt=function(el){return norm(el&&el.textContent)};
  var elements=function(base,selector){return Array.from(base.querySelectorAll(selector))};
@@ -71,10 +80,34 @@ function mount(frame){
  shell.appendChild(chestReward);
  var lastChestText="",chestShownAt=0;
  function updateBossChest(){
-   // Engine rewards always use .chestflash in the battle scene.
-   // Avoid scanning all text nodes on every refresh.
-   elements(battle,".chestflash").forEach(function(source){
-     if(source.closest(".efb-chest-reward"))return;
+   // The engine occasionally recreates its boss chest inside a different
+   // scene/card node. Detect the exact reward heading throughout Battle.
+   var headingPattern=/^BOSS CHEST OPENED\s*$/i;
+   var candidates=elements(battle,"div,span,strong,b,h1,h2,h3,h4,p,section,aside");
+   var headings=candidates.filter(function(el){
+     if(el.closest(".efb-chest-reward,.efb-event-log,.efb-stage-top,.efb-bottom"))return false;
+     if(!headingPattern.test(txt(el)))return false;
+     return !Array.from(el.children).some(function(child){return headingPattern.test(txt(child))});
+   });
+   headings.forEach(function(heading){
+     // The reward panel may have sibling item/stat elements; choose the
+     // smallest enclosing card that contains them, never the entire arena.
+     var source=heading;
+     var node=heading;
+     for(var k=0;k<5&&node.parentElement;k++){
+       var parent=node.parentElement;
+       if(parent===battle||parent===shell||parent===sceneHost||
+          parent===scene||parent.contains(shell)||parent.contains(enemy)||
+          parent.contains(board))break;
+       var box=parent.getBoundingClientRect();
+       var content=txt(parent);
+       if(box.height>320||box.width>720||content.length>280||
+          !/BOSS CHEST OPENED/i.test(content))break;
+       source=parent;
+       node=parent;
+       if(/(?:RARE|EPIC|LEGENDARY|COMMON|UNCOMMON)\b/i.test(content)&&
+          /(?:\+\s*\d|Longsword|Breastplate|Sword|Armor|Shield|Staff)/i.test(content))break;
+     }
      var rewardText=txt(source);
      // Prefer item details from the card; preserve the last displayed reward
      // if the game rerenders/clears its old card afterward.
@@ -127,7 +160,31 @@ function mount(frame){
  // Stage-change notices from the old art layer are redundant with the new
  // realm/stage badge. Hide only the old scene labels; do not silence game logs.
  function hideSceneLabels(){
-   // Hide only the exact legacy tip IDs in CSS. Never change game text nodes.
+   // Remove the obsolete boss mechanics tip wherever the base game draws it.
+   // Match the actual wording variants, not a single fragile exact sentence.
+   var bossTip=/^Bosses?\s+(?:(?:use|uses|strike|strikes|attack|attacks)\b|have\b).*?(?:special\s+(?:attack|hit)|every\s+(?:fourth|4th)\s+hit)|^Boss\s+tip\s*[:-]/i;
+   var tipWalker=doc.createTreeWalker(doc.body,doc.defaultView.NodeFilter.SHOW_TEXT);
+   var tipNode;
+   while((tipNode=tipWalker.nextNode())){
+     var message=(tipNode.nodeValue||"").replace(/\s+/g," ").trim();
+     if(!message||message.length>260||!bossTip.test(message))continue;
+     var tipLeaf=tipNode.parentElement;
+     if(!tipLeaf||tipLeaf.closest(".efb-chest-reward,.efb-event-log"))continue;
+     var tipContainer=tipLeaf;
+     for(var depth=0;depth<4&&tipContainer.parentElement;depth++){
+       var parent=tipContainer.parentElement;
+       if(parent===battle||parent===shell||parent===sceneHost||parent===scene||
+          parent===root||parent===doc.body||parent.contains(shell)||
+          parent.querySelector("button,input,canvas"))break;
+       if(txt(parent)!==message)break;
+       var bounds=parent.getBoundingClientRect();
+       if(bounds.height>155||bounds.width>700)break;
+       tipContainer=parent;
+     }
+     tipContainer.classList.add("efb-boss-tip-hidden");
+     tipContainer.style.setProperty("display","none","important");
+     tipNode.nodeValue="";
+   }
    elements(sceneHost,"span,small,div").forEach(function(el){
      if(el.closest(".efb-stage-top,.efb-bottom,.efb-arrow"))return;
      if(el.children.length>1)return;
@@ -152,7 +209,7 @@ function mount(frame){
  var healButton=doc.createElement("button");healButton.type="button";healButton.className="efb-action efb-heal";
  actionArea.append(autoButton,healButton);
  autoButton.addEventListener("click",function(){if(autoOn)endAuto();else beginAuto();routeBattleToasts();refresh()});
- healButton.addEventListener("click",function(){var api=engine();if(api&&api.heal)api.heal();else activate(healControl());refresh()});
+ healButton.addEventListener("click",function(){activate(healControl());refresh()});
  function nav(dir){
    var api=engine(),state=api?.getCombatState();
    var target=(state?state.stage:selected+1)+dir;
@@ -205,10 +262,12 @@ function mount(frame){
  var eventLog=shell.querySelector(".efb-event-log");
  var eventHistory=[];
  var recentEvents=new Map();
+ var dismissed=new Set();
+ var eventRenderUntil=0;
  var routineNotice=/^(?:Hunting\s+\S.{0,95}|Farming\s+(?:(?:stage|hunt|target|boss)\s*)?(?:#?\d+|[A-Za-z][A-Za-z '\-]{1,65})(?:\s*\/\s*\d+)?|Smart\s*Hunt(?:\s+(?:enabled|disabled|on|off|activated|deactivated))?|Retreated to safety|Auto(?:[- ]?Farm| Attack)?\s*(?:ON|OFF|enabled|disabled)|Battle ready)\.?$/i;
+ var importantNotice=/^(?:Boss chest:|Loot(?: found| drop|:)|(?:Boss|Enemy) defeated\b|(?:RARE|EPIC|LEGENDARY)\b|(?:Found|Obtained|Received|Equipped|Reward|Victory|Chest)\b)|\b(?:boss\s+special|special\s+(?:attack|hit|damage|strike|ability)|(?:warden|boss).{0,65}(?:special|devastating\s+attack))\b/i;
  var lastToastMessage=new WeakMap();
  var lastCombatMessage="";
- var lastEncounterKey=null;
  function routeCombatMessage(){
    var nativeMessage=doc.getElementById("ef4-combatmessage");
    var message=txt(nativeMessage);
@@ -246,18 +305,14 @@ function mount(frame){
    eventHistory=eventHistory.slice(-2);
    renderEvents();
  }
+ function isToastText(t){
+   return routineNotice.test(t)||importantNotice.test(t);
+ }
  function routeBattleToasts(){
-   if(battle.classList.contains("active"))routeCombatMessage();
-   // Present combat notices in the arena; do not suppress other pages.
+   routeCombatMessage();
+   // Preserve engine notifications in the arena without restoring the
+   // unwanted boss introduction or routine auto/farming status messages.
    var nativeToast=doc.getElementById("ef4-toast");
-   if(!battle.classList.contains("active")){
-     if(nativeToast){
-       nativeToast.classList.remove("efb-native-toast-hidden");
-       lastToastMessage.delete(nativeToast);
-     }
-     return;
-   }
-   if(nativeToast&&nativeToast.style.display==="none")lastToastMessage.delete(nativeToast);
    if(nativeToast&&nativeToast.style.display!=="none"){
      var notification=txt(nativeToast);
      if(notification&&lastToastMessage.get(nativeToast)!==notification){
@@ -269,15 +324,29 @@ function mount(frame){
      }
      if(notification)nativeToast.classList.add("efb-native-toast-hidden");
    }
+   // The overlay can be reused to show new text. Do not permanently hide
+   // non-battle content when that happens.
+   elements(root,".efb-native-toast-hidden").forEach(function(el){
+     var message=txt(el);
+     if(!isToastText(message)&&el.id!=="ef4-toast"){
+       el.classList.remove("efb-native-toast-hidden");
+       lastToastMessage.delete(el);
+       return;
+     }
+     // Base game reuses its toast capsule; record each new reward/special
+     // message, even while that capsule remains visually suppressed.
+     if(lastToastMessage.get(el)!==message){
+       if(importantNotice.test(message))queueEvent(message);
+       lastToastMessage.set(el,message);
+     }
+   });
    // Do not recursively hide arbitrary div/span nodes: it can suppress
    // damage floaters and real battle messages from the scene.
    purgeEventLog(Date.now());
  }
  function refresh(){
-   // The gameplay engine continues independently when another tab is open.
-   // Do not run expensive battle layout measurements offscreen.
-   if(!battle.classList.contains("active")){routeBattleToasts();return;}
    updateBossChest();
+   suppressLegacyPanels();
    routeBattleToasts();
    var stages=liveStages();
    hideSceneLabels();
@@ -287,18 +356,6 @@ function mount(frame){
      if(stageText)picked=Number(stageText[1])-1;
    }
    var state=engine()?.getCombatState();
-   if(state){
-     var encounterKey=state.zone+":"+state.stage;
-     if(lastEncounterKey!==null&&lastEncounterKey!==encounterKey){
-       eventHistory=[];
-       recentEvents.clear();
-       renderEvents();
-       var oldToast=doc.getElementById("ef4-toast");
-       if(oldToast)lastToastMessage.set(oldToast,txt(oldToast));
-       lastCombatMessage=txt(doc.getElementById("ef4-combatmessage"));
-     }
-     lastEncounterKey=encounterKey;
-   }
    if(state){selected=state.stage-1;autoOn=!!state.auto;}
    else if(!hasNavigationSelection&&picked>=0&&picked<stages.length)selected=picked;
    if(selected>=stages.length)selected=Math.max(0,stages.length-1);
@@ -391,12 +448,13 @@ function mount(frame){
  menu.addEventListener("click",function(){refreshMaster()});
  // Watch only text/child changes. Ignore changes made by our own scene log,
  // so event rendering cannot recursively trigger more rendering.
- var toastObserver=new doc.defaultView.MutationObserver(function(){routeBattleToasts()});
- ["ef4-toast","ef4-combatmessage"].forEach(function(id){
-   var node=doc.getElementById(id);
-   if(node)toastObserver.observe(node,{childList:true,characterData:true,subtree:true});
+ var toastObserver=new doc.defaultView.MutationObserver(function(records){
+   if(records.some(function(record){
+     var target=record.target.nodeType===1?record.target:record.target.parentElement;
+     return target&&!target.closest(".efb-shell");
+   })){updateBossChest();hideSceneLabels();routeBattleToasts();}
  });
- suppressLegacyPanels();
+ toastObserver.observe(root,{subtree:true,childList:true,characterData:true});
  tab("original");refresh();
  var timer=doc.defaultView.setInterval(function(){
    if(!shell.isConnected){doc.defaultView.clearInterval(timer);toastObserver.disconnect();return}
