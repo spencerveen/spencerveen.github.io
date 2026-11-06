@@ -95,3 +95,9 @@ test('automatic boss salvage does not emit repeated popup notices', () => {
   const battle = read('emberforge-battle.js');
   assert.match(battle, /routeBattleToasts\(\)/);
 });
+
+test('automatic damage uses engine power and renders hit feedback', () => {
+  const engine = read('core/loop.js');
+  assert.match(engine, /let hit=autoPower\(\);damage\(hit\);spawnPop\(/);
+  assert.match(engine, /requestAnimationFrame\(tick\)/);
+});
