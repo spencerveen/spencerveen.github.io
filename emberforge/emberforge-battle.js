@@ -178,7 +178,7 @@ function mount(frame){
  var recentEvents=new Map();
  var dismissed=new Set();
  var eventRenderUntil=0;
- var routineNotice=/^(?:Hunting\s+\S.{0,95}|Retreated to safety|Auto(?:[- ]?Farm| Attack)?\s*(?:ON|OFF|enabled|disabled)|Battle ready)\.?$/i;
+ var routineNotice=/^(?:Hunting\s+\S.{0,95}|Farming\s+stage\s+\d+(?:\s*\/\s*\d+)?|Retreated to safety|Auto(?:[- ]?Farm| Attack)?\s*(?:ON|OFF|enabled|disabled)|Battle ready)\.?$/i;
  var importantNotice=/^(?:Boss chest:|Loot(?: found| drop|:)|(?:Boss|Enemy) defeated\b|(?:RARE|EPIC|LEGENDARY)\b|(?:Found|Obtained|Received|Equipped|Reward|Victory|Chest)\b)/i;
  function purgeEventLog(now){
    var keep=eventHistory.filter(function(entry){return now-entry.at<6500});
