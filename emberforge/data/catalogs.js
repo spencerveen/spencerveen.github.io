@@ -1,5 +1,7 @@
 'use strict';
-const root=document.getElementById('ef4');if(!root||root.dataset.ready)return;root.dataset.ready='1';
+const root=document.getElementById('ef4');
+if(!root)throw new Error('Emberforge game root #ef4 was not found');
+root.dataset.ready='1';
 const $=id=>root.querySelector('#ef4-'+id), $$=s=>root.querySelectorAll(s);
 const workers=[
 ['spark','Spark Sprites','sprite',15,.18,'Tiny gatherers of cinders'],
