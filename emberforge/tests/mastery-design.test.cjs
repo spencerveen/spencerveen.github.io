@@ -61,3 +61,9 @@ test('Mastery header displays cinematic dragon artwork without redundant subtitl
  assert.ok(asset.length>25000,'Mastery dragon image should contain the optimized artwork');
  assert.equal(asset.toString('ascii',4,12),'ftypavif');
 });
+
+test('Worker Mastery guidance matches infinitely repeating milestones',()=>{
+ assert.match(views,/Each worker type gains \+1% production at every milestone, continuing indefinitely/);
+ assert.match(views,/1,000 lifetime hires earns permanent Mastery/);
+ assert.doesNotMatch(views,/Hire 10, 25, 50 and 100 of each worker type/);
+});

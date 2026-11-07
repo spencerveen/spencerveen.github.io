@@ -471,7 +471,7 @@ if(sub==='achievements'){
    </div>`;
  }).join('');
  const earned=honors.filter(h=>s.ach.includes(h[0])).length;
- html=`<div class="efm-chamber-heading"><div><span class="efm-overline">RECORDS OF VALOR</span><h3>Triumphs &amp; Milestones</h3><p>Permanent honors and workforce accomplishments forged through play.</p></div><div class="efm-token"><span>HONORS EARNED</span><strong>${earned} / ${honors.length}</strong></div></div><div class="efw-achievements-heading"><div><h3>Worker Mastery</h3></div></div>
+ html=`<div class="efm-chamber-heading"><div><span class="efm-overline">RECORDS OF VALOR</span><h3>Triumphs &amp; Milestones</h3><p>Permanent honors and workforce accomplishments forged through play.</p></div><div class="efm-token"><span>HONORS EARNED</span><strong>${earned} / ${honors.length}</strong></div></div><div class="efw-achievements-heading"><div><h3>Worker Mastery</h3><div class="hint">Each worker type gains +1% production at every milestone, continuing indefinitely. Bonuses reset with Ascension, while 1,000 lifetime hires earns permanent Mastery.</div></div></div>
  <div class="efw-achievement-grid">${workerProgress||'<div class="hint">More workers become available as you progress.</div>'}</div>
  <div class="efw-achievements-heading"><div><h3>Achievements</h3><div class="hint">Completed achievements remain unlocked after Ascension.</div></div><span class="pill">${earned} / ${honors.length} earned</span></div>
  <div class="efm-trophy-grid">`+honors.map(h=>`<div class="rowitem efm-trophy ${s.ach.includes(h[0])?'earned':''}"><span class="r-ico">${iconHTML(s.ach.includes(h[0])?'medal':'vault','lg')}</span><div class="r-body"><strong>${h[1]}</strong><span class="hint">${h[2]}</span></div></div>`).join('')+'</div>';
