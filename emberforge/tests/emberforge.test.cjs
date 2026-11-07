@@ -395,7 +395,7 @@ test('Workers overview and efficiency use the authoritative production helpers',
   assert.match(masterySection,/WORKER_MILESTONES\.find/);
   assert.match(masterySection,/if\(sub==='achievements'\)/);
   assert.match(masterySection,/efw-achievement-grid/);
-  assert.match(html,/data-sub="achievements">Achievements/);
+  assert.match(html,/data-sub="achievements"[^>]*>.*?Triumphs/);
   assert.doesNotMatch(html,/data-sub="honors"/);
   assert.match(views,/costWorker\(w,1\)\.price/);
   assert.match(views,/renderWorkerSummary\(\)/);
