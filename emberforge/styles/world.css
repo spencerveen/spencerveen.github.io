@@ -140,3 +140,54 @@
  #ef4 .efk-hub-panel .efk-merchant-item{flex-wrap:wrap}
  #ef4 .efk-hub-panel .efk-merchant-trade{margin-left:auto}
 }
+
+
+/* Interactive Kingdom scene: the artwork is the primary interface. */
+#ef4 .efk-kingdom-interactive{position:relative;isolation:isolate}
+#ef4 .efk-kingdom-interactive .kingdomscene{position:relative;aspect-ratio:1672/941;height:auto!important;min-height:0!important}
+#ef4 .efk-kingdom-interactive .kingdom-scene-info,#ef4 .efk-kingdom-interactive .kingdom-overlay,#ef4 .efk-kingdom-interactive .ground-label{display:none!important}
+#ef4 .efk-kingdom-interactive .scene-vignette{pointer-events:none}
+#ef4 .efk-kingdom-interactive .kingdomscene.efk-frontier .scene-backdrop{background-image:url('../art/frontier-settlement.webp')!important;background-size:100% 100%!important;background-position:center!important}
+#ef4 .efk-map-hotspots{position:absolute;inset:0;z-index:8;pointer-events:none}
+#ef4 .efk-map-hotspot{position:absolute;display:block;pointer-events:auto;appearance:none;border:1px solid transparent!important;border-radius:12px;background:transparent!important;box-shadow:none!important;opacity:1!important;min-width:0;min-height:0;padding:0;transition:border-color .15s,background-color .15s,box-shadow .15s}
+#ef4 .efk-map-hotspot:hover,#ef4 .efk-map-hotspot:focus-visible,#ef4 .efk-map-hotspot[aria-pressed=true]{background:rgba(255,191,115,.11)!important;border-color:rgba(255,204,143,.68)!important;box-shadow:inset 0 0 22px #ffbd7955,0 0 26px #0009!important;outline:none}
+#ef4 .efk-map-hotspot span{position:absolute;left:50%;bottom:8%;transform:translateX(-50%) translateY(4px);white-space:nowrap;color:#ffdfab;background:#0d1723e8;padding:5px 9px;border:1px solid #dbad6b7d;border-radius:7px;font-size:clamp(10px,1vw,13px);font-weight:800;text-shadow:0 1px 3px #000;box-shadow:0 4px 15px #0009;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+#ef4 .efk-map-hotspot:hover span,#ef4 .efk-map-hotspot:focus-visible span,#ef4 .efk-map-hotspot[aria-pressed=true] span{opacity:1;transform:translateX(-50%) translateY(0)}
+#ef4 .efk-point-mine{left:0%;top:38%;width:24%;height:44%}
+#ef4 .efk-point-watchtower{left:5%;top:2%;width:17%;height:31%}
+#ef4 .efk-point-barracks{left:24%;top:35%;width:27%;height:28%}
+#ef4 .efk-point-vault{left:55%;top:30%;width:17%;height:26%}
+#ef4 .efk-point-merchant{left:43%;top:55%;width:25%;height:28%}
+#ef4 .efk-point-library{left:74%;top:31%;width:26%;height:34%}
+#ef4 .efk-point-roost{left:76%;top:1%;width:24%;height:28%}
+#ef4 .efk-scene-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 15px;background:#17263b;color:#b5c3d7;font-size:12px}
+#ef4 .efk-scene-footer span:last-child{font-size:11px;color:#f0c58d;font-weight:800}
+#ef4 .efk-kingdom-dialog{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:15;min-width:0;padding:clamp(10px,3vw,24px)}
+#ef4 .efk-kingdom-dialog[hidden]{display:none!important}
+#ef4 .efk-dialog-scrim{position:absolute;inset:0;background:#070e1acb;backdrop-filter:blur(3px)}
+#ef4 .efk-dialog-sheet{position:relative;width:min(680px,100%);max-height:100%;overflow-y:auto;border:1px solid #ad7850;border-radius:15px;background:linear-gradient(145deg,#202b3e,#111d31);box-shadow:0 24px 80px #000c,0 0 0 1px #f9c0801b;padding:16px;scrollbar-width:thin}
+#ef4 .efk-dialog-titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 13px}
+#ef4 .efk-dialog-titlebar h3{font:700 clamp(18px,2.4vw,25px)/1.2 Georgia,serif;margin:3px 0 0;color:#ffe0b4}
+#ef4 .efk-dialog-close{border:1px solid #665779;background:#223149;color:#e9e2dd;border-radius:9px;font-size:17px;font-weight:700;min-width:38px;min-height:36px}
+#ef4 .efk-dialog-close:hover{border-color:#e8b37b;background:#3b3843}
+#ef4 .efk-kingdom-dialog .efk-hub-panel{background:transparent;border:0;border-radius:0;padding:0}
+#ef4 .efk-kingdom-dialog .efk-section-heading{margin-bottom:10px}
+#ef4 .efk-kingdom-dialog .efk-section-heading h3{font-size:13px;color:#f7d6a7}
+#ef4 .efk-kingdom-dialog .efk-building-grid{display:block}
+#ef4 .efk-kingdom-dialog .efk-building{min-width:0}
+#ef4 .efk-kingdom-dialog .efk-merchant-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+#ef4 .efk-kingdom-dialog .efk-merchant-item{flex-wrap:wrap}
+#ef4 .efk-kingdom-dialog .efk-merchant-trade{margin-left:auto}
+@media(max-width:850px){
+ #ef4 .efk-kingdom-interactive .kingdomscene{aspect-ratio:1672/941!important}
+ #ef4 .efk-kingdom-dialog .efk-merchant-list{grid-template-columns:1fr}
+ #ef4 .efk-dialog-sheet{max-height:100%}
+}
+@media(max-width:560px){
+ #ef4 .efk-kingdom-interactive .kingdomscene{aspect-ratio:1672/941!important}
+ #ef4 .efk-kingdom-dialog{padding:7px}
+ #ef4 .efk-dialog-sheet{padding:11px;border-radius:11px}
+ #ef4 .efk-map-hotspot{border-radius:5px}
+ #ef4 .efk-map-hotspot span{padding:3px 5px;font-size:10px;bottom:0}
+ #ef4 .efk-scene-footer{font-size:11px;padding:8px 10px}
+}
