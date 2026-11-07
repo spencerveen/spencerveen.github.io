@@ -652,7 +652,8 @@ test('Armory manages equipment while Kingdom merchant owns buying and selling',(
  assert.doesNotMatch(gear,/data-action="salvage-|data-sell=/);
  assert.match(kingdom,/id="ef4-merchantstock"/);
  assert.match(kingdom,/id="ef4-merchantlist"/);
- assert.match(kingdom,/data-kingdom-tab="merchant"/);
+ assert.match(kingdom,/data-kingdom-point="merchant"/);
+ assert.match(kingdom,/id="ef4-kingdomdialog"/);
  assert.match(kingdom,/data-merchant-tab="sell"/);
  const bag=views.slice(views.indexOf('function renderGear(){'),views.indexOf('function renderWorld(){'));
  assert.match(bag,/class="efg-bag-slot efg-bag-empty"/);
