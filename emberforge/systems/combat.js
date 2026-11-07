@@ -19,36 +19,36 @@ const equippedItem=slot=>s.items.find(g=>g.id===s.equipped[LEGACY_EQUIPMENT_SLOT
 const gearPower=slot=>equippedItem(slot)?.power||0;
 const gearTotal=slots=>slots.reduce((sum,slot)=>sum+gearPower(slot),0);
 const gearAbility=type=>EQUIPMENT_SLOT_KEYS.reduce((n,slot)=>{let g=equippedItem(slot);return n+(g&&g.ability===type?(g.abilityValue||0):0)},0);
-const maxHealth=()=>Math.ceil(Math.min(1e15,(105*Math.pow(1.14,Math.max(0,s.combatLevel-1))+gearTotal(['helmet','chest','gloves','legs','boots','offHand'])*3)*(1+.17*activeTraining('vitality'))*(1+gearAbility('health'))));
-const defense=()=>6+s.combatLevel*1.6+activeTraining('guard')*10+gearTotal(['helmet','chest','gloves','legs','boots','offHand'])*1.65+gearAbility('protection');
-const recovery=(fighting)=>maxHealth()*((fighting?.0035:.047)+activeTraining('regen')*.0025+gearAbility('regen'));
+const maxHealth=()=>Math.ceil(Math.min(1e15,105*Math.pow(1.10,Math.max(0,s.combatLevel-1))*(1+.06*activeTraining('vitality'))*(1+gearAbility('health'))));
+const defense=()=>1+gearTotal(['helmet','chest','gloves','legs','boots','offHand'])*1.65+gearAbility('protection');
+const recovery=(fighting)=>maxHealth()*((fighting?.0015:.020)+gearAbility('regen'));
 const realRecovery=(fighting)=>recovery(fighting);
-const potionCost=()=>Math.ceil(70*Math.pow(4.2,s.zone)*(1+s.combatLevel*.12));
+const potionCost=()=>Math.ceil(70*Math.pow(4.2,s.zone));
 const isDown=()=>Date.now()<s.downUntil||s.hp<=0;
 const activeFight=()=>inExpedition()&&!isDown()&&((s.auto&&!s.smartResting)||Date.now()<s.engagedUntil);
 const foeAttackInterval=()=>foeAttackIntervalFor(enemy());
 const foeRawDamage=()=>foeRawDamageFor(enemy());
 const trainCost=t=>{let lv=s.training[t[0]]||0;return Math.ceil(t[4]*Math.pow(2.2,lv)*(1+.1*s.zone))};
-function earnCombatXP(amount){s.combatXP+=amount;let gained=0;while(s.combatXP>=nextCombatXP(s.combatLevel)&&s.combatLevel<140){s.combatXP-=nextCombatXP(s.combatLevel);s.combatLevel++;gained++}if(gained){let oldHP=s.hp;s.hp=Math.min(maxHealth(),oldHP+maxHealth()*.2);s.combatMessage='Combat level '+s.combatLevel+'! Health and attack increased.';note('Combat level '+s.combatLevel+' reached');toast('Combat level '+s.combatLevel+'!');needsMain=true}}
+function earnCombatXP(amount){amount=Math.ceil(amount*(1+.05*activeTraining('guard')+.06*activeSkill('blade')+.04*activeBuild('barracks')));s.combatXP+=amount;let gained=0;while(s.combatXP>=nextCombatXP(s.combatLevel)&&s.combatLevel<140){s.combatXP-=nextCombatXP(s.combatLevel);s.combatLevel++;gained++}if(gained){let oldHP=s.hp;s.hp=Math.min(maxHealth(),oldHP+maxHealth()*.2);s.combatMessage='Combat level '+s.combatLevel+'! Maximum health increased.';note('Combat level '+s.combatLevel+' reached');toast('Combat level '+s.combatLevel+'!');needsMain=true}}
 
-const power=()=>Math.max(1,((1+Math.sqrt(clicks())*.85) +gearPower('mainHand')+gearAbility('attack'))*(1+(s.combatLevel-1)*.14)*(1+activeTraining('blade')*.22)*(1+.08*activeBuild('barracks'))*(1+.14*activeSkill('blade'))*multiplier('attackMult')*(enemy().boss?1+gearAbility('bossDamage'):1)*soulfactor()*skillfactor());
-const autoInterval=()=>Math.max(.38,1.15/(1+.045*activeBuild('watchtower')));
-const autoPower=()=>power()*(1+.08*activeSkill('veteran'));
+const power=()=>Math.max(1,1.85+gearPower('mainHand')+gearAbility('attack'));
+const autoInterval=()=>Math.max(.55,1.15/(1+.025*activeBuild('watchtower')));
+const autoPower=()=>power();
 // Combat accuracy, evasion, critical hits and shields are shared by manual and auto combat.
 // All chances use [0, 1], with a minimum chance to hit to avoid endless fights.
 const combatClamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const playerHitChance=e=>{
  const weapon=equippedItem('mainHand');
  // An unarmed novice misses most swings. Levels, weapon skill and future equipment matter.
- const skill=.018*Math.max(0,s.combatLevel-1);
+ const skill=0; // Accuracy comes from equipment, not character levels.
  const weaponBonus=weapon?.slot==='mainHand'?.10+Math.min(.10,(weapon.power||0)*.005):0;
  return combatClamp(.30+skill+weaponBonus-.007*(e.stage-1)-.03*e.zone-(e.trait==='Swift'?.06:0)-(e.boss?.05:0),.20,.95);
 };
-const enemyHitChance=e=>combatClamp(.88+.006*(e.stage+e.zone*9-s.combatLevel)-(e.trait==='Swift'?.03:0),.68,.95);
-const playerCritChance=()=>combatClamp(.05+.0005*Math.max(0,s.combatLevel-1),.05,.12);
+const enemyHitChance=e=>combatClamp(.95+.004*(e.stage-1)+.005*e.zone-(e.trait==='Swift'?.03:0)-gearPower('boots')*.015,.55,.97);
+const playerCritChance=()=>combatClamp(.05+gearPower('mainHand')*.005,.05,.12);
 const enemyCritChance=e=>e.boss?.07:.04;
-const blockChance=()=>equippedItem('offHand')?.slot==='offHand'?.22:.06;
-const blockReduction=()=>equippedItem('offHand')?.slot==='offHand'?.55:.35;
+const blockChance=()=>equippedItem('offHand')?.slot==='offHand'?(gearPower('offHand')>=5?.22:.13):0;
+const blockReduction=()=>equippedItem('offHand')?.slot==='offHand'?(gearPower('offHand')>=5?.50:.35):0;
 const criticalMultiplier=1.6;
 function playerAttack(auto=false){
  if(!inExpedition()||isDown())return {kind:'invalid',damage:0};
@@ -65,12 +65,12 @@ function playerAttack(auto=false){
  spawnPop($('battlescene'),critical?'CRIT -'+fmt(value):'-'+fmt(value),'battle');
  return {kind:critical?'critical':'hit',damage:value};
 }
-const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.33,stage-1)*(boss?4.35:trait.hp)*(1+.12*Math.max(0,s.ascensions-REALM_ASCENSIONS[zone])));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost'))*(1+.08*activeSkill('fortune'))*soulfactor());return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
+const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.24,stage-1)*(boss?4.35:trait.hp)*(1+.12*Math.max(0,s.ascensions-REALM_ASCENSIONS[zone])));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost'))*(1+.08*activeSkill('fortune')));return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
 const enemy=()=>enemyAt(s.zone,s.stage);
 const foeAttackIntervalFor=e=>e.boss?1.55:2.1*e.traitData.speed;
-const foeRawDamageFor=e=>Math.ceil((8+e.stage*2.45)*Math.pow(4.95,e.zone)*(e.boss?2.25:e.traitData.atk));
+const foeRawDamageFor=e=>Math.ceil((4+e.stage*1.65)*Math.pow(4.95,e.zone)*(e.boss?2.25:e.traitData.atk));
 const expectedFoeHit=e=>{let raw=foeRawDamageFor(e);return Math.max(1,Math.ceil(raw*(1-defense()/(defense()+105+raw*.6))));};
-const predictedFight=e=>{let factor=1+gearAbility('bossDamage');let actualPower=autoPower()*(e.boss?factor:1)/(enemy().boss?factor:1);let dps=actualPower*playerHitChance(e)*(1+playerCritChance()*(criticalMultiplier-1))/Math.max(.38,autoInterval());let seconds=e.hp/Math.max(1,dps);let hits=Math.max(0,Math.ceil(seconds/foeAttackIntervalFor(e)));let loss=hits*expectedFoeHit(e)*enemyHitChance(e)*(1+enemyCritChance(e)*(criticalMultiplier-1))*(1-blockChance()*blockReduction())*(e.boss?1.18:1)-realRecovery(true)*seconds;return {seconds,loss:Math.max(0,loss),hits};};
+const predictedFight=e=>{let actualPower=autoPower();let dps=actualPower*playerHitChance(e)*(1+playerCritChance()*(criticalMultiplier-1))/Math.max(.38,autoInterval());let seconds=e.hp/Math.max(1,dps);let hits=Math.max(0,Math.ceil(seconds/foeAttackIntervalFor(e)));let loss=hits*expectedFoeHit(e)*enemyHitChance(e)*(1+enemyCritChance(e)*(criticalMultiplier-1))*(1-blockChance()*blockReduction())*(e.boss?1.18:1)-realRecovery(true)*seconds;return {seconds,loss:Math.max(0,loss),hits};};
 function canAutoFarm(stage){if(stage>maxSelectable(s.zone))return false;if(stage===10&&!bossClearedAt(s.zone))return false;let e=enemyAt(s.zone,stage),v=predictedFight(e);return v.seconds<=(e.boss?46:30)&&v.loss<Math.max(20,Math.min(maxHealth()*.74,s.hp*.79));}
 function bestFarmStage(){for(let stage=maxSelectable(s.zone);stage>=1;stage--)if(canAutoFarm(stage))return stage;return 0;}
 function setTarget(stage,{keepAuto=true,quiet=false}={}){if(!inExpedition())return false;stage=Math.floor(stage);if(stage<1||stage>maxSelectable(s.zone))return false;if(!keepAuto){s.autoMode='off';s.auto=false;}s.stage=stage;rollBattleBackground();s.enemyHP=enemy().hp;s.enemyTimer=0;s.enemyHits=0;s.autoProgress=0;s.engagedUntil=0;s.smartResting=false;s.combatMessage='Target selected: '+enemy().name+'. '+(stage===10?'Boss encounter. Prepare before attacking.':'Repeat this stage to farm XP and equipment.');if(!quiet){toast('Hunting '+enemy().name);renderPage()}return true;}
@@ -100,7 +100,7 @@ function createLoot(boss){
 function honorCheck(){for(let a of honors)if(!s.ach.includes(a[0])&&a[3](s)){s.ach.push(a[0]);note(a[1]+' achieved')}}
 function defeat(){
  let e=enemy(),firstClear=s.stage>s.firstClears[s.zone];s.kills++;let key=e.boss?e.icon:'mob-'+s.zone+'-'+s.stage;s.codex[key]=(s.codex[key]||0)+1;
- gain(e.reward*(firstClear?1.45:1));earnCombatXP(Math.ceil(e.xp*(firstClear?1.45:.72)));
+ gain(e.reward*(firstClear?1.45:1)*(1+.04*activeTraining('blade')+.05*activeSkill('veteran'))*multiplier('battleReward'));earnCombatXP(Math.ceil(e.xp*(firstClear?1.45:.72)));
  s.enemyTimer=0;s.enemyHits=0;
  if(firstClear){s.firstClears[s.zone]=Math.max(s.stage,s.firstClears[s.zone]);if(s.stage<10){s.stageUnlocked[s.zone]=Math.max(s.stageUnlocked[s.zone],s.stage+1);note('New stage unlocked: '+(s.stage+1));}else{s.bossCleared[s.zone]=true;}}
  if(e.boss){s.bosses++;s.bossCleared[s.zone]=true;note('Boss defeated: '+e.name);if(s.zone===s.unlocked&&s.unlocked<5){s.unlocked++;s.stageUnlocked[s.unlocked]=Math.max(1,s.stageUnlocked[s.unlocked]);toast(realms[s.unlocked][0]+' discovered!')}}
@@ -140,7 +140,7 @@ function takeHit(){
  }
 }
 function retreat(){s.auto=false;s.autoMode='off';s.smartResting=false;s.engagedUntil=0;s.enemyTimer=0;s.enemyHits=0;s.enemyHP=enemy().hp;s.combatMessage='Retreated safely. Enemy health reset; health will regenerate while resting.';toast('Retreated to safety');stats()}
-function usePotion(){let now=Date.now();if(isDown()||now<s.potionReady)return;let c=potionCost();if(s.ember<c){toast('Need '+fmt(c)+' Ember for a healing potion');return}if(s.hp>=maxHealth())return;s.ember-=c;s.hp=Math.min(maxHealth(),s.hp+maxHealth()*.45);s.potionReady=now+18000;s.combatMessage='Healing potion restored 45% HP. Next potion in 18 seconds.';toast('Restored health');stats()}
+function usePotion(){let now=Date.now();if(isDown()||now<s.potionReady)return;let c=potionCost();if(s.ember<c){toast('Need '+fmt(c)+' Ember for a healing potion');return}if(s.hp>=maxHealth())return;s.ember-=c;s.hp=Math.min(maxHealth(),s.hp+maxHealth()*(.45+.02*activeTraining('regen')));s.potionReady=now+18000;s.combatMessage='Healing potion restored 45% HP. Next potion in 18 seconds.';toast('Restored health');stats()}
 
 const costWorker=(w,n)=>{let owned=s.gens[w[0]]||0;if(n==='max'){let cnt=0,sum=0;while(cnt<10000){let price=Math.ceil(w[3]*1.23**(owned+cnt));if(!isFinite(price)||sum+price>s.ember+1e-8)break;sum+=price;cnt++}return {price:sum,count:cnt}}let q=Number(n),price=0;for(let i=0;i<q;i++)price+=Math.ceil(w[3]*1.23**(owned+i));return {price,count:q}};
 const costBuild=b=>Math.ceil(b[3]*2.72**s.build[b[0]]);
