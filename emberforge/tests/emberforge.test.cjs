@@ -265,7 +265,7 @@ function combatHarness() {
     inExpedition:()=>true,atKingdom:()=>false,
     activeTraining:()=>0,upgradeUnlocked:()=>true,
     potionDefinition:()=>({id:'minor',name:'Minor Healing Potion',heal:.10,maxStack:10}),
-    rollBattleBackground:()=>{},renderPage:()=>{},stats:()=>{},
+    rollBattleBackground:()=>{},renderPage:()=>{},stats:()=>{},save:()=>{},
     $:()=>({style:{},textContent:''}),toastTimer:0,setTimeout:()=>0,clearTimeout:()=>{},
     fmt:String,esc:String,needsMain:false
   };
