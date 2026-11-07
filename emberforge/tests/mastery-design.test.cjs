@@ -49,3 +49,15 @@ test('dark fantasy styling adapts to smaller screens',()=>{
  assert.match(css,/@media\(max-width:560px\)/);
  assert.doesNotMatch(css,/font:750 12px\/1\.3 inherit/);
 });
+
+
+test('Mastery header displays cinematic dragon artwork without redundant subtitle and star badge',()=>{
+ assert.match(html,/THE HALL OF LEGACIES/);
+ assert.match(html,/The Master&#39;s Chronicle|The Master's Chronicle/);
+ assert.doesNotMatch(html,/Every victory leaves its mark/);
+ assert.doesNotMatch(html,/efm-hero-ornament|efm-hero-emblem/);
+ assert.match(css,/url\('\.\.\/art\/mastery-dragon-banner\.avif'\)/);
+ const asset=fs.readFileSync(path.join(__dirname,'..','art','mastery-dragon-banner.avif'));
+ assert.ok(asset.length>25000,'Mastery dragon image should contain the optimized artwork');
+ assert.equal(asset.toString('ascii',4,12),'ftypavif');
+});
