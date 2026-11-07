@@ -300,15 +300,15 @@
 
 
 
-/* Widescreen Kingdom treatment: preserve complete clickable scene proportions
-   while extending the same artwork atmospherically into unused side space.
-   The mirrored ambient layer is decorative; only the central art is interactive. */
-@media(min-width:1100px){
+/* Wide desktop Kingdom: spend the available width on playable scenery rather
+   than limiting its width by viewport height. Keep the full 1672:941 art so
+   percentage-based building/merchant hotspots stay accurately aligned. */
+@media (min-width:1100px){
  #ef4 .caladryn-header,
  #ef4 .caladryn-header.map-collapsed,
  #ef4 .efk-hub{
-  width:min(100%,1640px);
-  max-width:1640px;
+  width:min(100%,1780px);
+  max-width:1780px;
  }
  #ef4 .efk-hub{position:relative}
  #ef4 .efk-vista-frame.efk-kingdom-interactive{
@@ -317,22 +317,24 @@
   flex-direction:column;
   width:100%;
   overflow:hidden;
-  border-color:#8e684b;
-  background:#111a29;
+  padding:0;
+  border-radius:17px;
+  border-color:#98714f;
+  background:#101927;
  }
  #ef4 .efk-vista-frame.efk-kingdom-interactive::before{
   content:"";
   position:absolute;
-  inset:-22px;
+  inset:-18px;
   z-index:0;
   pointer-events:none;
   background-image:
-   linear-gradient(90deg,rgba(6,11,19,.26),rgba(8,14,22,.55) 35%,rgba(8,14,22,.55) 65%,rgba(6,11,19,.26)),
+   linear-gradient(90deg,rgba(7,12,20,.35),rgba(7,12,20,.12) 22%,rgba(7,12,20,.12) 78%,rgba(7,12,20,.35)),
    url('../art/frontier-settlement.avif');
   background-size:cover;
-  background-position:center 46%;
-  filter:blur(17px) brightness(.77) saturate(.8);
-  transform:scale(1.065);
+  background-position:center;
+  filter:blur(12px) brightness(.90) saturate(.94);
+  transform:scale(1.045);
  }
  #ef4 .efk-vista-frame.efk-kingdom-interactive::after{
   content:"";
@@ -340,33 +342,34 @@
   inset:0;
   z-index:0;
   pointer-events:none;
-  background:linear-gradient(90deg,#080e19bb,transparent 21%,transparent 79%,#080e19bb);
+  background:linear-gradient(90deg,#080e19a6,transparent 12%,transparent 88%,#080e19a6);
  }
  #ef4 .efk-vista-frame.efk-kingdom-interactive>.kingdomscene{
   position:relative;
   z-index:1;
-  width:min(100%,calc((100dvh - 305px) * 1672 / 941));
+  width:min(calc(100% - 64px),1560px);
+  max-width:100%;
   min-width:0;
-  margin:0 auto;
+  height:auto!important;
   flex:0 0 auto;
+  margin:0 auto;
   aspect-ratio:1672 / 941!important;
   border-radius:0;
   border-left:1px solid #cc9b7444;
   border-right:1px solid #cc9b7444;
-  box-shadow:0 0 42px 20px #060d18bb;
+  box-shadow:0 0 28px 12px #060d1870;
  }
  #ef4 .efk-vista-frame.efk-kingdom-interactive>.efk-scene-footer{
   position:relative;
   z-index:1;
-  width:min(100%,calc((100dvh - 305px) * 1672 / 941));
+  width:min(calc(100% - 64px),1560px);
+  max-width:100%;
   margin-inline:auto;
   border-inline:1px solid #cc9b7444;
  }
  #ef4 .efk-vista-frame.efk-kingdom-interactive>.efk-kingdom-dialog{z-index:15}
 }
-@media(min-width:1100px) and (max-height:700px){
+@media (min-width:1100px) and (max-width:1350px){
  #ef4 .efk-vista-frame.efk-kingdom-interactive>.kingdomscene,
- #ef4 .efk-vista-frame.efk-kingdom-interactive>.efk-scene-footer{
-  width:min(100%,calc((100dvh - 275px) * 1672 / 941));
- }
+ #ef4 .efk-vista-frame.efk-kingdom-interactive>.efk-scene-footer{width:100%}
 }
