@@ -4,43 +4,54 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
-const views=read('ui/views.js'),defs=read('data/definitions.js'),html=read('game.html');
+const views=read('ui/views.js'),defs=read('data/definitions.js'),html=read('game.html'),combat=read('systems/combat.js');
 const rules=views.slice(views.indexOf('const KINGDOM_VISTA_MILESTONES='),views.indexOf('function renderKingdom(){'));
-const buildingCapLine=defs.split('\n').find(x=>x.startsWith('const buildingCap='));
 const buildings=Array.from({length:6},(_,i)=>['building'+i]);
-const eligible=(level,ascensions)=>new Function('s','buildings',rules+'return earnedKingdomVista();')(
- {ascensions,build:Object.fromEntries(buildings.map(b=>[b[0],level]))},buildings
-);
-test('Six Kingdom stages unlock only after every structure reaches its threshold',()=>{
- assert.equal(eligible(0,0),0);
- assert.equal(eligible(2,0),0);
- assert.equal(eligible(3,0),1);
- assert.equal(eligible(6,0),1);
- assert.equal(eligible(6,1),2);
- assert.equal(eligible(9,1),2);
- assert.equal(eligible(9,2),3);
- assert.equal(eligible(11,3),4);
- assert.equal(eligible(12,4),5);
- const fn=new Function('s','buildings',rules+'return earnedKingdomVista();');
- const partial={ascensions:4,build:Object.fromEntries(buildings.map(b=>[b[0],12]))};
- partial.build[buildings[0][0]]=11;
- assert.equal(fn(partial,buildings),4);
+const earn=new Function('s','buildings','bossClearedAt',rules+'return earnedKingdomVista();');
+const vista=(level,bosses=0,earned=0)=>{
+ const s={kingdomVistaMilestone:earned,build:Object.fromEntries(buildings.map(b=>[b[0],level]))};
+ return earn(s,buildings,i=>i<bosses);
+};
+test('landscapes require all six buildings at their old cap AND the area boss defeated',()=>{
+ assert.equal(vista(3,0),0);
+ assert.equal(vista(2,1),0);
+ assert.equal(vista(3,1),1);
+ assert.equal(vista(6,1),1);
+ assert.equal(vista(6,2),2);
+ assert.equal(vista(9,3),3);
+ assert.equal(vista(11,4),4);
+ assert.equal(vista(12,5),5);
+ const s={kingdomVistaMilestone:4,build:Object.fromEntries(buildings.map(b=>[b[0],12]))};
+ s.build[buildings[0][0]]=11;
+ assert.equal(earn(s,buildings,i=>i<5),4);
 });
-test('all six buildings unlock during the first era so the first vista is achievable',()=>{
+test('saved scenery remains after resetting buildings during Ascension',()=>{
+ assert.equal(vista(0,5,3),3);
+ assert.match(views,/'kingdomVistaMilestone'/);
+});
+test('building cap increases when bosses are cleared, never from Ascension',()=>{
+ const line=defs.split('\n').find(x=>x.startsWith('const buildingCap='));
+ const cap=new Function('KINGDOM_BUILDING_CAPS','kingdomBossTier',line+'return buildingCap();');
+ assert.deepEqual([0,1,2,3,4,5,6].map(n=>cap([3,6,9,11,12],()=>Math.min(5,n))),[3,6,9,11,12,12,12]);
+ assert.doesNotMatch(line,/ascensions/);
+});
+test('all six Kingdom structures are available without boss victories',()=>{
  const gates=defs.slice(defs.indexOf('const GATE_BUILDINGS=['),defs.indexOf('const upgradeReq'));
- for(const id of ['mine','barracks','library','roost','watchtower','vault']){
-  assert.match(gates,new RegExp("\\['"+id+"',0,\\d+\\]"));
- }
+ for(const id of ['mine','barracks','library','roost','watchtower','vault'])
+  assert.match(gates,new RegExp("\\['"+id+"',0,1\\]"));
 });
-test('Building level cap expands by three each ascension and stops at twelve',()=>{
- assert.ok(buildingCapLine);
- const cap=new Function('s',buildingCapLine+'return buildingCap();');
- assert.deepEqual([0,1,2,3,4,5].map(ascensions=>cap({ascensions})),[3,6,9,12,12,12]);
+test('world and workers gate their progression behind first-time boss clears',()=>{
+ assert.match(defs,/const realmAccessible=i=>/);
+ assert.match(defs,/i===0\|\|bossClearedAt\(i-1\)/);
+ assert.match(defs,/const workerUnlocked=w=>.*kingdomBossTier\(\)>=g\[1\]/);
+ assert.match(defs,/const upgradeUnlocked = u =>.*kingdomBossTier\(\)>=g\[1\]/);
+ assert.match(defs,/const trainingCap=.*kingdomBossTier\(\)/);
+ assert.match(defs,/const skillCap=.*kingdomBossTier\(\)/);
+ assert.match(combat,/firstBossVictory=e\.boss&&!bossClearedAt\(s\.zone\)/);
+ assert.match(combat,/if\(firstBossVictory&&s\.zone===s\.unlocked/);
 });
-test('Kingdom vista is automatic and manual previews are unavailable',()=>{
+test('Kingdom vistas are earned automatically without manual preview controls',()=>{
  assert.doesNotMatch(html,/data-vista="prev"|data-vista="next"|data-vista="auto"/);
  assert.match(views,/kingdomVistaPreview=Math\.min\(KINGDOM_VISTAS\.length-1,earned\)/);
  assert.doesNotMatch(views,/if\(b\.dataset\.vista\)/);
- assert.match(views,/if\(earned>\(s\.kingdomVistaMilestone\|\|0\)\)/);
- assert.match(views,/'kingdomVistaMilestone'/);
 });
