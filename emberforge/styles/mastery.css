@@ -190,3 +190,17 @@
  }
  @keyframes efmBannerReveal{from{filter:brightness(.75);opacity:.8}to{filter:brightness(1);opacity:1}}
 }
+
+
+/* Mastery chamber navigation: responsive forged-metal artifact tiles. */
+#ef4 .efm-nav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(5px,.7vw,12px);margin:14px 0 18px;padding:8px;border:1px solid #8b6045;border-radius:17px;background:linear-gradient(160deg,#10141e,#0a101b);box-shadow:inset 0 1px #e7b47b35,0 12px 28px #0006}
+#ef4 .efm-nav button{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:7px;min-width:0;min-height:116px;align-items:center;justify-content:center;padding:12px 5px 11px;border:1px solid #9b744e;border-radius:14px;background:radial-gradient(ellipse at 50% 0%,#28313d,#121b2a 76%);color:#e9d2b0;font:700 clamp(10px,1.1vw,15px)/1.15 Georgia,serif;text-align:center;text-shadow:0 1px 3px #000;box-shadow:inset 0 1px #f6d4a42b,0 4px 10px #0006;transition:transform .18s,border-color .18s,box-shadow .18s,background .18s}
+#ef4 .efm-nav button .efm-nav-symbol{display:grid;place-items:center;width:58px;height:58px;font:normal 39px/1 Georgia,serif;color:#eebc7c;filter:drop-shadow(0 3px 3px #000a);transition:transform .18s,filter .18s}
+#ef4 .efm-nav button:hover{transform:translateY(-2px);border-color:#efbc77;box-shadow:inset 0 1px #f6d4a460,0 0 15px #e7954533}
+#ef4 .efm-nav button:hover .efm-nav-symbol{transform:scale(1.07)}
+#ef4 .efm-nav button.on{border-color:#ffb75e;background:radial-gradient(ellipse at 50% 100%,#7c3419,#2e2023 67%,#251d25);color:#ffe5b7;box-shadow:inset 0 0 0 1px #ffcf7e75,0 0 17px #ff7c344f,0 4px 14px #0007}
+#ef4 .efm-nav button.on .efm-nav-symbol{filter:drop-shadow(0 0 9px #ff8c40)}
+#ef4 .efm-nav button:focus-visible{outline:2px solid #ffce84;outline-offset:3px}
+@media(max-width:850px){#ef4 .efm-nav{grid-template-columns:repeat(3,minmax(0,1fr))}#ef4 .efm-nav button{min-height:103px}#ef4 .efm-nav button .efm-nav-symbol{height:47px;font-size:34px}}
+@media(max-width:420px){#ef4 .efm-nav{gap:6px;padding:6px}#ef4 .efm-nav button{min-height:92px;padding:9px 3px;font-size:11px}#ef4 .efm-nav button .efm-nav-symbol{height:39px;font-size:30px}}
+@media(prefers-reduced-motion:reduce){#ef4 .efm-nav button,#ef4 .efm-nav button .efm-nav-symbol{transition:none}}
