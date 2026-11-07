@@ -29,7 +29,7 @@ if((Number(obj.version)||0)<9){
  x.items=[];x.pendingRelics=[];x.lastBossLoot=null;
  x.lootFound=0;x.salvage='off';
 }else{
- const catalog=new Map(ASHEN_LOOT.map(item=>[item.name,item]));
+ const catalog=new Map([...ASHEN_LOOT,...KINGDOM_STARTER_GEAR].map(item=>[item.name,item]));
  x.items=(Array.isArray(obj.items)?obj.items:[]).filter(g=>g&&catalog.has(g.name)&&g.slot===catalog.get(g.name).slot).slice(0,inventoryCapacity()).map((g,i)=>{
   const item=catalog.get(g.name);return {...item,id:String(g.id||('loot'+i)).slice(0,90),rarity:'common',locked:!!g.locked,origin:0,tier:Math.floor(clamp(g.tier,1,10))};
  });
