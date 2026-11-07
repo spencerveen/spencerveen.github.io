@@ -205,7 +205,7 @@ function renderKingdom(){
 function renderKingdomMerchant(){
  const merchantStock=$('merchantstock');
  const full=inventoryUsedSlots()>=inventoryCapacity();
- const gear=KINGDOM_STARTER_GEAR.filter(g=>(g.ascension||0)<=kingdomBossTier()).map(g=>{
+ const gear=KINGDOM_STARTER_GEAR.filter(g=>(g.bosses||0)<=kingdomBossTier()).map(g=>{
    const unavailable=full||s.ember<g.price;
    return `<div class="efk-merchant-item common-gear">
      <div class="efk-merchant-item-art">${lootVisual(g.icon,'lg')}</div>
@@ -235,14 +235,14 @@ function renderKingdomMerchant(){
    return `<div class="efk-merchant-item"><div class="efk-merchant-item-art">${lootVisual(p.icon,'lg')}</div><div class="efk-merchant-item-info"><strong>${esc(p.name)}</strong><span>${potionCount(p.id)} in backpack</span></div><div class="efk-merchant-trade"><span>+${price} Ember</span><button class="btn btn-quiet" data-merchant-sell-potion="${p.id}">Sell 1</button></div></div>`;
  }).join('');
  $('merchantlist').insertAdjacentHTML('beforeend',potionTrades);
- // A blacksmith arrives silently after the first Ascension. Crafting is a later feature.
+ // A blacksmith arrives silently after the first realm boss. Crafting is a later feature.
  $('craftsman').hidden=!bossClearedAt(0);
  $('craftsman').style.display=bossClearedAt(0)?'':'none';
 }
 function buyMerchantGear(name){
  if(!atKingdom())return false;
  const base=MERCHANT_GEAR_BY_NAME.get(name);
- if(!base||(base.ascension||0)>kingdomBossTier()||s.ember<base.price||inventoryUsedSlots()>=inventoryCapacity())return false;
+ if(!base||(base.bosses||0)>kingdomBossTier()||s.ember<base.price||inventoryUsedSlots()>=inventoryCapacity())return false;
  const item={...base,id:'m'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),
  rarity:'common',origin:0,tier:1,locked:false,ability:null,abilityValue:0};
  s.ember-=base.price;s.items.unshift(item);
@@ -399,7 +399,7 @@ const quests=()=>[
  ['q12','Into the Rift','Reach Celestial Rift',s.unlocked,4,90000],
  ['q13','Realm Sovereign','Complete five Ascensions',s.ascensions,5,150000]
 ];
-function renderMastery(){ $('legacy').textContent=s.ascensions+' Ascensions';$$('[data-sub]').forEach(b=>b.classList.toggle('on',b.dataset.sub===sub));let box=$('mastercontent'),html='';if(sub==='skills'){html=`<div class="space" style="margin-bottom:10px"><strong style="display:flex;align-items:center;gap:8px">${iconHTML('gem','sm')} ${fmt(s.skillPoints)} Skill Points Available</strong><span class="hint">1 point every 4 forge levels · Each Ascension raises your skill rank cap</span></div><div class="shopgrid">`+skills.map(sk=>{let rank=s.skills[sk[0]]||0,cap=skillCap();return `<div class="shopitem"><div class="space"><span class="small-icon">${iconHTML(sk[2],'lg')}</span><span class="pill">Rank ${rank}/${cap}</span></div><strong>${sk[1]}</strong><div class="hint">${sk[3]}</div><div class="shopbottom"><span class="price">1 SP</span>${shopButton('skill',sk[0],0,rank>=cap||!s.skillPoints||s.skillPoints<1+Math.floor(rank/2),rank>=cap?'Era cap':('Train · '+(1+Math.floor(rank/2))+' SP'))}</div></div>`}).join('')+'</div>'}
+function renderMastery(){ $('legacy').textContent=s.ascensions+' Ascensions';$$('[data-sub]').forEach(b=>b.classList.toggle('on',b.dataset.sub===sub));let box=$('mastercontent'),html='';if(sub==='skills'){html=`<div class="space" style="margin-bottom:10px"><strong style="display:flex;align-items:center;gap:8px">${iconHTML('gem','sm')} ${fmt(s.skillPoints)} Skill Points Available</strong><span class="hint">1 point every 4 forge levels · Each first-time boss victory raises your skill rank cap</span></div><div class="shopgrid">`+skills.map(sk=>{let rank=s.skills[sk[0]]||0,cap=skillCap();return `<div class="shopitem"><div class="space"><span class="small-icon">${iconHTML(sk[2],'lg')}</span><span class="pill">Rank ${rank}/${cap}</span></div><strong>${sk[1]}</strong><div class="hint">${sk[3]}</div><div class="shopbottom"><span class="price">1 SP</span>${shopButton('skill',sk[0],0,rank>=cap||!s.skillPoints||s.skillPoints<1+Math.floor(rank/2),rank>=cap?'Era cap':('Train · '+(1+Math.floor(rank/2))+' SP'))}</div></div>`}).join('')+'</div>'}
 if(sub==='quests'){html='<div class="stack">'+quests().map(q=>{let done=s.claimed.includes(q[0]);return `<div class="rowitem"><span class="r-ico">${iconHTML('scroll','lg')}</span><div class="r-body"><strong>${q[1]}</strong><span class="hint">${q[2]} · ${fmt(Math.min(q[4],q[3]))}/${fmt(q[4])}</span><div class="progress" style="height:5px;margin-top:5px"><div style="width:${Math.min(100,100*q[3]/q[4])}%;background:#7adcb4"></div></div></div>${shopButton('quest',q[0],0,done||q[3]<q[4],done?'Claimed':'Claim '+fmt(q[5])+' Ember')}</div>`}).join('');let remaining=Math.max(0,12-(s.kills-s.bountyStart)),reward=Math.ceil(250*(1+.35*s.bounty)*(1+s.zone));html+=`<div class="card"><strong>${iconHTML('scroll','sm')} Repeatable Contract · Hunt 12 enemies</strong><div class="hint" style="margin:5px 0 9px">${12-remaining} / 12 kills this contract · Reward ${fmt(reward)} Ember</div><button class="btn btn-gold" data-bounty="1" ${remaining?'disabled':''}>Claim Bounty</button></div></div>`}
 if(sub==='achievements'){
  const workerProgress=workers.filter(w=>workerUnlocked(w)||(s.gens[w[0]]||0)>0).map(w=>{
