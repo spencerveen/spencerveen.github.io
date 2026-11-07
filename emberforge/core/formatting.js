@@ -14,8 +14,7 @@ for(let k of Object.keys(x.gens))x.gens[k]=Math.floor(clamp(x.gens[k],0,100000))
 let oldZone=Math.floor(clamp(obj.zone??obj.realm??0,0,5));
 x.combatLevel=Math.floor(clamp(obj.combatLevel??Math.max(1,REALM_LEVELS[oldZone],Math.floor(Math.sqrt(x.kills/2))+1),1,140));
 x.combatXP=clamp(x.combatXP,0,1e15);
-// Preserve potion stacks across loads and older save migrations. Never treat consumables as gear.
-x.potions=Object.fromEntries(HEALING_POTIONS.map(p=>[p.id,Math.floor(clamp(obj.potions?.[p.id]??0,0,p.maxStack))]));
+// Potion amounts are validated after equipment, so shared backpack capacity is enforced.
 x.hp=Object.prototype.hasOwnProperty.call(obj,'hp')&&obj.version>=5?clamp(obj.hp,0,1e15):null;
 for(let k of Object.keys(f.training))x.training[k]=Math.floor(clamp(x.training[k],0,30));
 x.enemyTimer=0;x.enemyHits=0;x.manualAt=0;x.engagedUntil=0;x.downUntil=0;x.potionReady=0;x.combatMessage='Battle ready';x.zone=Math.floor(clamp(obj.zone??obj.realm??0,0,5));x.unlocked=Math.floor(clamp(x.unlocked,0,5));x.zone=Math.min(x.zone,x.unlocked);while(x.zone>0&&!(x.combatLevel>=REALM_LEVELS[x.zone]&&x.ascensions>=REALM_ASCENSIONS[x.zone])){x.zone--;obj={...obj,stage:1,enemyHP:0}}x.stage=Math.floor(clamp(obj.stage??obj.wave??1,1,10));x.enemyHP=clamp(obj.enemyHP??obj.hp??0,0,1e99);if(oldZone!==x.zone||Number(obj.stage??obj.wave??1)!==x.stage)x.enemyHP=0;x.level=Math.max(1,Math.floor(clamp(x.level,1,999999)));
@@ -35,6 +34,15 @@ if((Number(obj.version)||0)<9){
   const item=catalog.get(g.name);return {...item,id:String(g.id||('loot'+i)).slice(0,90),rarity:'common',locked:!!g.locked,origin:0,tier:Math.floor(clamp(g.tier,1,10))};
  });
  x.pendingRelics=[];x.salvage='off';
+}
+// Keep as many saved potions as available backpack slots allow; older ten-item stacks
+// migrate automatically. Equipment is preserved first when loading existing saves.
+let openSlots=Math.max(0,inventoryCapacity()-x.items.length);
+x.potions={};
+for(const p of HEALING_POTIONS){
+ const count=Math.floor(clamp(obj.potions?.[p.id]??0,0,openSlots*p.maxStack));
+ x.potions[p.id]=count;
+ openSlots-=Math.ceil(count/p.maxStack);
 }
 // Migrate existing equipped legacy slots to the new character equipment grid.
 const savedEquip=obj.equipped&&typeof obj.equipped==='object'?obj.equipped:{};
@@ -57,4 +65,4 @@ x.location=['kingdom','realm'].includes(obj.location)?obj.location:'realm';
 x.avatarBody=['male','female'].includes(obj.avatarBody)?obj.avatarBody:'male';x.avatarName=typeof obj.avatarName==='string'?obj.avatarName.trim().slice(0,32):'';
 x.claimed=Array.isArray(obj.claimed)?obj.claimed.filter(z=>typeof z==='string').slice(0,30):[];x.ach=Array.isArray(obj.ach)?obj.ach.filter(z=>typeof z==='string').slice(0,20):[];x.journal=Array.isArray(obj.journal)?obj.journal.filter(z=>typeof z==='string').slice(0,8):[];
 x.bounty=Math.max(0,Math.floor(clamp(x.bounty,0,1e5)));x.bountyStart=Math.max(0,Math.floor(clamp(x.bountyStart,0,1e12)));x.auto=!!x.auto;x.autoProgress=clamp(x.autoProgress,0,1);x.upgradeView=['unlocked','affordable','all'].includes(x.upgradeView)?x.upgradeView:'unlocked';x.showOwned=!!x.showOwned;x.kingdomVistaMax=Math.floor(clamp(x.kingdomVistaMax??0,0,5));if(x.location==='kingdom'){x.autoMode='off';x.auto=false;x.engagedUntil=0;x.enemyTimer=0;}
-x.version=10;x.updated=Number.isFinite(+x.updated)?+x.updated:Date.now();delete x.event;delete x.eventEnd;delete x.nextEvent;return x;}
+x.version=11;x.updated=Number.isFinite(+x.updated)?+x.updated:Date.now();delete x.event;delete x.eventEnd;delete x.nextEvent;return x;}
