@@ -453,3 +453,41 @@
  #ef4 .efk-hub .efk-merchant-list{grid-template-columns:1fr}
  #ef4 .kingdom-at-home .efk-hub-header .page-title{font-size:20px}
 }
+
+
+/* Desktop fill mode: intentionally stretch the whole clickable image to fit
+   both dimensions of the game window. The image and percentage-based hotspots
+   share one box, so none of the locations shift or get cropped. */
+@media(min-width:960px){
+ #ef4 .kingdom-at-home .efk-vista-frame.efk-kingdom-interactive{
+  width:100%!important;
+  max-width:none;
+  padding:0!important;
+ }
+ #ef4 .kingdom-at-home .efk-vista-frame.efk-kingdom-interactive::before,
+ #ef4 .kingdom-at-home .efk-vista-frame.efk-kingdom-interactive::after{
+  display:none!important;
+ }
+ #ef4 .kingdom-at-home .efk-vista-frame.efk-kingdom-interactive>.kingdomscene{
+  display:block;
+  width:100%!important;
+  max-width:none!important;
+  height:clamp(260px,calc(100dvh - 285px),860px)!important;
+  min-height:0!important;
+  aspect-ratio:auto!important;
+  margin:0!important;
+  border:0!important;
+  box-shadow:none!important;
+ }
+ #ef4 .kingdom-at-home .efk-vista-frame.efk-kingdom-interactive>.kingdomscene .scene-backdrop{
+  inset:0;
+  background-size:100% 100%!important;
+  background-position:center!important;
+ }
+ #ef4 .kingdom-at-home .efk-vista-frame.efk-kingdom-interactive>.efk-scene-footer{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  border-inline:0!important;
+ }
+}
