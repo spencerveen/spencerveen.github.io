@@ -41,3 +41,20 @@ test('widescreen uses playable scene width while preserving hotspot geometry',()
  assert.match(css,/width:min\(calc\(100% - 64px\),1560px\)/);
  assert.match(html,/data-kingdom-point="merchant"/);
 });
+
+
+test('home Kingdom fits the game viewport and avoids redundant atlas heading',()=>{
+ assert.match(views,/classList\.toggle\('kingdom-at-home',home\)/);
+ assert.match(css,/#ef4 \.kingdom-at-home \.caladryn-header\{display:none!important\}/);
+ assert.match(css,/calc\(\(100dvh - 290px\) \* 1672 \/ 941\)/);
+ assert.match(css,/aspect-ratio:1672 \/ 941!important/);
+ assert.match(html,/data-kingdom-point="mine"/);
+ assert.match(html,/data-kingdom-point="merchant"/);
+});
+test('merchant panel scrolls internally with a visible close control',()=>{
+ assert.match(css,/#ef4 \.efk-hub \.efk-kingdom-dialog\{\s*position:fixed!important/);
+ assert.match(css,/max-height:calc\(100dvh - 44px\)!important/);
+ assert.match(css,/overscroll-behavior:contain/);
+ assert.match(css,/\.efk-dialog-titlebar\{\s*position:sticky/);
+ assert.match(html,/data-kingdom-close/);
+});
