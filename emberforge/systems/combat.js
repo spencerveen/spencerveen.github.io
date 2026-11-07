@@ -21,9 +21,9 @@ const gearTotal=slots=>slots.reduce((sum,slot)=>sum+gearPower(slot),0);
 const gearAbility=type=>EQUIPMENT_SLOT_KEYS.reduce((n,slot)=>{let g=equippedItem(slot);return n+(g&&g.ability===type?(g.abilityValue||0):0)},0);
 const maxHealth=()=>Math.ceil(Math.min(1e15,105*Math.pow(1.10,Math.max(0,s.combatLevel-1))*(1+.06*activeTraining('vitality'))*(1+gearAbility('health'))));
 const defense=()=>1+gearTotal(['helmet','chest','gloves','legs','boots','offHand'])*1.65+gearAbility('protection');
-const recovery=(fighting)=>maxHealth()*((fighting?.0015:.020)+gearAbility('regen'));
+const recovery=(fighting)=>fighting?0:maxHealth()*(.005+gearAbility('regen'));
 const realRecovery=(fighting)=>recovery(fighting);
-const potionCost=()=>Math.ceil(70*Math.pow(4.2,s.zone));
+const potionCount=(id='minor')=>Math.max(0,Math.floor(s.potions?.[id]||0));
 const isDown=()=>Date.now()<s.downUntil||s.hp<=0;
 const activeFight=()=>inExpedition()&&!isDown()&&((s.auto&&!s.smartResting)||Date.now()<s.engagedUntil);
 const foeAttackInterval=()=>foeAttackIntervalFor(enemy());
@@ -97,6 +97,17 @@ function createLoot(boss){
  else note('Equipment found: '+obj.name);
  needsMain=true;return obj;
 }
+function rollPotionDrop(boss){
+ if(s.zone!==0)return null;
+ const potion=potionDefinition('minor');
+ if(!potion||Math.random()>=(boss?potion.bossDropChance:potion.dropChance))return null;
+ if(!s.potions||typeof s.potions!=='object')s.potions={minor:0};
+ s.potions[potion.id]=Math.min(9999,potionCount(potion.id)+1);
+ note('Found '+potion.name+' ('+potionCount(potion.id)+' stored)');
+ toast('Potion drop: '+potion.name+'!');
+ needsMain=true;
+ return potion;
+}
 function honorCheck(){for(let a of honors)if(!s.ach.includes(a[0])&&a[3](s)){s.ach.push(a[0]);note(a[1]+' achieved')}}
 function defeat(){
  let e=enemy(),firstClear=s.stage>s.firstClears[s.zone];s.kills++;let key=e.boss?e.icon:'mob-'+s.zone+'-'+s.stage;s.codex[key]=(s.codex[key]||0)+1;
@@ -105,6 +116,7 @@ function defeat(){
  if(firstClear){s.firstClears[s.zone]=Math.max(s.stage,s.firstClears[s.zone]);if(s.stage<10){s.stageUnlocked[s.zone]=Math.max(s.stageUnlocked[s.zone],s.stage+1);note('New stage unlocked: '+(s.stage+1));}else{s.bossCleared[s.zone]=true;}}
  if(e.boss){s.bosses++;s.bossCleared[s.zone]=true;note('Boss defeated: '+e.name);if(s.zone===s.unlocked&&s.unlocked<5){s.unlocked++;s.stageUnlocked[s.unlocked]=Math.max(1,s.stageUnlocked[s.unlocked]);toast(realms[s.unlocked][0]+' discovered!')}}
  let drop=createLoot(e.boss);if(e.boss&&drop&&!drop.lost)toast('Boss drop: '+drop.name+'!');
+ rollPotionDrop(e.boss);
  rollBattleBackground();
  s.enemyHP=e.hp;if(s.autoMode==='off')s.engagedUntil=0;
  s.combatMessage=(firstClear?'First victory! ':'')+e.name+' defeated. +'+fmt(Math.ceil(e.xp*(firstClear?1.45:.72)))+' combat XP.';
@@ -140,7 +152,19 @@ function takeHit(){
  }
 }
 function retreat(){s.auto=false;s.autoMode='off';s.smartResting=false;s.engagedUntil=0;s.enemyTimer=0;s.enemyHits=0;s.enemyHP=enemy().hp;s.combatMessage='Retreated safely. Enemy health reset; health will regenerate while resting.';toast('Retreated to safety');stats()}
-function usePotion(){let now=Date.now();if(isDown()||now<s.potionReady)return;let c=potionCost();if(s.ember<c){toast('Need '+fmt(c)+' Ember for a healing potion');return}if(s.hp>=maxHealth())return;s.ember-=c;s.hp=Math.min(maxHealth(),s.hp+maxHealth()*(.45+.02*activeTraining('regen')));s.potionReady=now+18000;s.combatMessage='Healing potion restored 45% HP. Next potion in 18 seconds.';toast('Restored health');stats()}
+function usePotion(id='minor'){
+ const potion=potionDefinition(id),now=Date.now();
+ if(!potion||isDown()||now<s.potionReady||s.hp>=maxHealth())return false;
+ if(!potionCount(id)){toast('No '+potion.name+' in your supplies');return false}
+ const restored=Math.min(maxHealth()-s.hp,maxHealth()*(potion.heal+.02*activeTraining('regen')));
+ s.potions[id]--;
+ s.hp=Math.min(maxHealth(),s.hp+restored);
+ s.potionReady=now+18000;
+ s.combatMessage='Used '+potion.name+'. Restored '+fmt(restored)+' HP.';
+ toast(potion.name+' used!');
+ stats();save();
+ return true;
+}
 
 const costWorker=(w,n)=>{let owned=s.gens[w[0]]||0;if(n==='max'){let cnt=0,sum=0;while(cnt<10000){let price=Math.ceil(w[3]*1.23**(owned+cnt));if(!isFinite(price)||sum+price>s.ember+1e-8)break;sum+=price;cnt++}return {price:sum,count:cnt}}let q=Number(n),price=0;for(let i=0;i<q;i++)price+=Math.ceil(w[3]*1.23**(owned+i));return {price,count:q}};
 const costBuild=b=>Math.ceil(b[3]*2.72**s.build[b[0]]);
