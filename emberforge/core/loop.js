@@ -10,7 +10,7 @@ if(s.autoMode==='smart'&&!isDown()){
 let fighting=activeFight();
 if(!isDown())s.hp=Math.min(maxHealth(),s.hp+realRecovery(fighting)*dt);
 if(fighting){
- if(s.auto&&!s.smartResting){s.autoProgress+=dt;let steps=0,interval=autoInterval();while(s.autoProgress>=interval&&steps<8&&!isDown()){s.autoProgress-=interval;let hit=autoPower();damage(hit);spawnPop($('battlescene'),'-'+fmt(hit),'battle');steps++;}}
+ if(s.auto&&!s.smartResting){s.autoProgress+=dt;let steps=0,interval=autoInterval();while(s.autoProgress>=interval&&steps<8&&!isDown()){s.autoProgress-=interval;playerAttack(true);steps++;}}
  if(activeFight()){s.enemyTimer+=dt;let steps=0,interval=foeAttackInterval();while(s.enemyTimer>=interval&&steps<4&&!isDown()){s.enemyTimer-=interval;takeHit();steps++;}}
 }else{
  s.enemyTimer=0;
