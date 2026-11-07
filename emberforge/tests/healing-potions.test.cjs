@@ -21,6 +21,7 @@ test('healing potions have separate drop rates and a future merchant price',()=>
  assert.match(definitions,/dropChance:0\.003/);
  assert.match(definitions,/bossDropChance:0\.008/);
  assert.match(definitions,/price:150/);
+ assert.match(definitions,/heal:0\.10,maxStack:10/);
  assert.match(combat,/rollPotionDrop\(e\.boss\)/);
  assert.match(combat,/if\(s\.zone!==0\)return null;/);
 });
@@ -31,11 +32,11 @@ test('consuming potions changes inventory, health and cooldown but never Ember',
  const s={potions:{minor:2},hp:20,potionReady:0,ember:888,combatMessage:''};
  const script=combat.slice(begin,end)+'\nreturn usePotion;';
  const usePotion=new Function('s','potionDefinition','Date','isDown','maxHealth','potionCount','activeTraining','toast','fmt','stats','save',script)(
-  s,()=>({id:'minor',name:'Minor Healing Potion',heal:.35}),{now:()=>10000},
+  s,()=>({id:'minor',name:'Minor Healing Potion',heal:.10}),{now:()=>10000},
   ()=>false,()=>100,()=>s.potions.minor,()=>0,()=>{},String,()=>{},()=>{}
  );
  assert.equal(usePotion(),true);
- assert.equal(s.hp,55);
+ assert.equal(s.hp,30);
  assert.equal(s.potions.minor,1);
  assert.equal(s.ember,888);
  assert.equal(s.potionReady,28000);
@@ -45,8 +46,13 @@ test('consuming potions changes inventory, health and cooldown but never Ember',
 test('inventory persists across save migration and ascension, without filling equipment slots',()=>{
  assert.match(definitions,/version:10,potions:\{minor:0\}/);
  assert.match(formatting,/x\.potions=Object\.fromEntries\(HEALING_POTIONS/);
- assert.match(views,/'potions','kingdomVistaMax'/);
+ assert.doesNotMatch(views.slice(views.indexOf('function ascend(){'),views.indexOf("root.addEventListener('click'")),/'items'|'equipped'|'potions'|'lastBossLoot'/);
  assert.doesNotMatch(combat.slice(combat.indexOf('function rollPotionDrop'),combat.indexOf('function honorCheck')),/s\.items/);
+});
+test('potion drops respect the hard limit of 10 and loading clamps old saves',()=>{
+ assert.match(combat,/potionCount\(potion\.id\)>=potion\.maxStack/);
+ assert.match(combat,/Math\.min\(potion\.maxStack,potionCount\(potion\.id\)\+1\)/);
+ assert.match(formatting,/clamp\(obj\.potions\?\.\[p\.id\]\?\?0,0,p\.maxStack\)/);
 });
 test('battle interface uses potions rather than paid healing',()=>{
  assert.match(html,/id="ef4-potion"[^>]*>Use Potion \(0\)/);
