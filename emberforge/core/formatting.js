@@ -23,8 +23,18 @@ x.bossCleared=Array.from({length:6},(_,i)=>!!(Array.isArray(obj.bossCleared)?obj
 for(let i=0;i<6;i++){if(x.bossCleared[i])x.stageUnlocked[i]=10;if(i<x.unlocked)x.stageUnlocked[i]=10;}
 x.stageUnlocked[x.zone]=Math.max(1,x.stageUnlocked[x.zone]);x.stage=Math.min(x.stage,x.stageUnlocked[x.zone]);
 x.autoMode=['off','selected','smart'].includes(obj.autoMode)?obj.autoMode:(obj.auto?'selected':'off');x.auto=x.autoMode!=='off';x.smartResting=false;
-x.salvage=['off','common','rare','epic'].includes(x.salvage)?x.salvage:'common';x.items=(Array.isArray(obj.items)?obj.items:[]).filter(g=>g&&typeof g==='object'&&(['weapon','armor','ring','charm'].includes(g.slot)||EQUIPMENT_SLOT_KEYS.includes(g.slot))).slice(0,60).map((g,i)=>({id:String(g.id||('legacy'+i)).slice(0,90),name:String(g.name||'Artifact').slice(0,45),icon:String(g.icon||'sword').slice(0,24),slot:g.slot==='ring'?'charm':g.slot,rarity:rarities.includes(g.rarity)?g.rarity:'common',power:clamp(g.power,1,1e12),ability:['bossDamage','health','regen'].includes(g.ability)?g.ability:null,abilityValue:clamp(g.abilityValue,0,.65),locked:!!g.locked,origin:Math.floor(clamp(g.origin,0,5)),tier:Math.floor(clamp(g.tier,1,10))}));
-x.pendingRelics=(Array.isArray(obj.pendingRelics)?obj.pendingRelics:[]).filter(g=>g&&g.rarity==='legendary'&&(['weapon','armor','charm'].includes(g.slot)||EQUIPMENT_SLOT_KEYS.includes(g.slot))).map((g,i)=>({id:String(g.id||('vault'+i)),name:String(g.name||'Legendary Relic'),slot:g.slot,icon:String(g.icon||'⚔️'),rarity:'legendary',power:clamp(g.power,1,1e12),origin:Math.floor(clamp(g.origin,0,5)),tier:Math.floor(clamp(g.tier,1,10)),ability:['bossDamage','health','regen'].includes(g.ability)?g.ability:null,abilityValue:clamp(g.abilityValue,0,.65),locked:true}));// Migrate existing equipped legacy slots to the new character equipment grid.
+// Equipment reset in v9: preserve player progression but retire every old drop.
+if((Number(obj.version)||0)<9){
+ x.items=[];x.pendingRelics=[];x.lastBossLoot=null;
+ x.lootFound=0;x.salvage='off';
+}else{
+ const catalog=new Map(ASHEN_LOOT.map(item=>[item.name,item]));
+ x.items=(Array.isArray(obj.items)?obj.items:[]).filter(g=>g&&catalog.has(g.name)&&g.slot===catalog.get(g.name).slot).slice(0,inventoryCapacity()).map((g,i)=>{
+  const item=catalog.get(g.name);return {...item,id:String(g.id||('loot'+i)).slice(0,90),rarity:'common',locked:!!g.locked,origin:0,tier:Math.floor(clamp(g.tier,1,10))};
+ });
+ x.pendingRelics=[];x.salvage='off';
+}
+// Migrate existing equipped legacy slots to the new character equipment grid.
 const savedEquip=obj.equipped&&typeof obj.equipped==='object'?obj.equipped:{};
 x.equipped={...f.equipped};
 for(const slot of EQUIPMENT_SLOT_KEYS){
@@ -45,4 +55,4 @@ x.location=['kingdom','realm'].includes(obj.location)?obj.location:'realm';
 x.avatarBody=['male','female'].includes(obj.avatarBody)?obj.avatarBody:'male';x.avatarName=typeof obj.avatarName==='string'?obj.avatarName.trim().slice(0,32):'';
 x.claimed=Array.isArray(obj.claimed)?obj.claimed.filter(z=>typeof z==='string').slice(0,30):[];x.ach=Array.isArray(obj.ach)?obj.ach.filter(z=>typeof z==='string').slice(0,20):[];x.journal=Array.isArray(obj.journal)?obj.journal.filter(z=>typeof z==='string').slice(0,8):[];
 x.bounty=Math.max(0,Math.floor(clamp(x.bounty,0,1e5)));x.bountyStart=Math.max(0,Math.floor(clamp(x.bountyStart,0,1e12)));x.auto=!!x.auto;x.autoProgress=clamp(x.autoProgress,0,1);x.upgradeView=['unlocked','affordable','all'].includes(x.upgradeView)?x.upgradeView:'unlocked';x.showOwned=!!x.showOwned;x.kingdomVistaMax=Math.floor(clamp(x.kingdomVistaMax??0,0,5));if(x.location==='kingdom'){x.autoMode='off';x.auto=false;x.engagedUntil=0;x.enemyTimer=0;}
-x.version=8;x.updated=Number.isFinite(+x.updated)?+x.updated:Date.now();delete x.event;delete x.eventEnd;delete x.nextEvent;return x;}
+x.version=9;x.updated=Number.isFinite(+x.updated)?+x.updated:Date.now();delete x.event;delete x.eventEnd;delete x.nextEvent;return x;}
