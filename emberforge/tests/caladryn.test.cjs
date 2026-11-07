@@ -59,7 +59,8 @@ test('World includes Kingdom and six realms, but keeps Kingdom services local',(
  assert.match(view,/if\(home\)renderKingdom\(\)/);
  assert.match(view,/if\(!atKingdom\(\)\)\{toast\('Return to the Kingdom to construct buildings/);
  assert.match(view,/if\(b\.dataset\.sell\)\{if\(!atKingdom\(\)\)return;/);
- assert.match(view,/function inventorySell\(predicate\)\{if\(!atKingdom\(\)\)return;/);
+ assert.match(view,/function buyMerchantGear\(name\)\{/);
+ assert.match(view,/function sellMerchantPotion\(id\)\{/);
  assert.match(view,/travelToRealm\(z\)/);
  assert.match(view,/travelToKingdom\(\)/);
  assert.match(def,/location:'kingdom'/);
@@ -92,10 +93,10 @@ test('Approved high-resolution Caladryn painting and its travel waypoints are wi
 });
 test('legacy users resume their expedition and new users start in Kingdom',()=>{
  const defs=read('data/definitions.js'),formatting=read('core/formatting.js');
- assert.match(defs,/version:8,location:'kingdom'/);
+ assert.match(defs,/version:11,potions:\{minor:0\},location:'kingdom'/);
  assert.match(formatting,/x\.location=\['kingdom','realm'\]\.includes\(obj\.location\)\?obj\.location:'realm'/);
  assert.match(formatting,/if\(x\.location==='kingdom'\)\{x\.autoMode='off';x\.auto=false;/);
- assert.match(formatting,/x\.version=8;/);
+ assert.match(formatting,/x\.version=11;/);
 });
 
 test('all six navigation tabs and nested combat switch safely',()=>{
