@@ -357,7 +357,7 @@ test('workforce production milestones apply per type and reset with worker owner
   assert.equal(calculate('income()'),0,'Ascension resetting workers removes milestone output');
 });
 
-test('four workforce achievements are registered in permanent Mastery honors', () => {
+test('four workforce honors plus per-type lifetime Mastery achievements persist', () => {
   const definitions=read('data/definitions.js');
   const source=definitions.slice(definitions.indexOf('honors.push('),definitions.indexOf('const encounterBook='));
   const workers=Array.from({length:12},(_,i)=>['worker'+i]);
@@ -366,9 +366,9 @@ test('four workforce achievements are registered in permanent Mastery honors', (
   };
   vm.createContext(context);
   vm.runInContext(source,context);
-  assert.equal(context.honors.length,4);
+  assert.equal(context.honors.length,4+workers.length);
   const conditions=Object.fromEntries(context.honors.map(h=>[h[0],h[3]]));
-  const state={gens:Object.fromEntries(workers.map(w=>[w[0],0]))};
+  const state={gens:Object.fromEntries(workers.map(w=>[w[0],0])),workerLifetimeHires:{}};
   state.gens.worker0=25;
   assert.equal(conditions.crew25(state),true);
   assert.equal(conditions.workforce100(state),false);
@@ -377,7 +377,11 @@ test('four workforce achievements are registered in permanent Mastery honors', (
   assert.equal(conditions.veterancrew(state),true);
   state.gens=Object.fromEntries(workers.map(w=>[w[0],1]));
   assert.equal(conditions.allworkers(state),true);
-  assert.match(read('ui/views.js'), /'ascensions','ach','skills'/);
+  state.workerLifetimeHires.worker0=999;
+  assert.equal(conditions['masterworker-worker0'](state),false);
+  state.workerLifetimeHires.worker0=1000;
+  assert.equal(conditions['masterworker-worker0'](state),true);
+  assert.match(read('ui/views.js'), /'ascensions','ach','workerLifetimeHires','skills'/);
   assert.match(read('ui/views.js'), /honorCheck\(\);renderWorkers\(\)/);
 });
 
@@ -392,7 +396,7 @@ test('Workers overview and efficiency use the authoritative production helpers',
   const workersSection=views.slice(views.indexOf('function renderWorkers()'),views.indexOf('function renderUpgrades()'));
   const masterySection=views.slice(views.indexOf('function renderMastery()'),views.indexOf('function renderPage()'));
   assert.doesNotMatch(workersSection, /efw-milestone|WORKER_MILESTONES/);
-  assert.match(masterySection,/WORKER_MILESTONES\.find/);
+  assert.match(masterySection,/nextWorkerMilestone\(owned\)/);
   assert.match(masterySection,/if\(sub==='achievements'\)/);
   assert.match(masterySection,/efw-achievement-grid/);
   assert.match(html,/data-sub="achievements"[^>]*>.*?Triumphs/);

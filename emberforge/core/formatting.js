@@ -10,6 +10,14 @@ function monsterSheetHTML(zone,stage,size='hero'){let src=MONSTER_PORTRAITS[zone
 function clean(obj){let f=fresh();if(!obj||typeof obj!=='object')return f;let x={...f,...obj,gens:{...f.gens,...(obj.gens||{})},ups:{...(obj.ups||{})},build:{...f.build,...(obj.build||{})},skills:{...(obj.skills||{})},codex:{...f.codex,...(obj.codex||{})},training:{...f.training,...(obj.training||{})}};
 for(let k of ['ember','lifetime','runEarned','clicks','souls','ascensions','kills','bosses','lootFound','skillPoints'])x[k]=Math.max(0,Number.isFinite(+x[k])?+x[k]:0);
 for(let k of Object.keys(x.gens))x.gens[k]=Math.floor(clamp(x.gens[k],0,100000));
+const savedLifetimeHires=obj.workerLifetimeHires&&typeof obj.workerLifetimeHires==='object'?obj.workerLifetimeHires:{};
+// Migrate current owned workers as the minimum known lifetime hires in older saves.
+// Counts cap at 1,000 because the corresponding Mastery is permanent thereafter.
+x.workerLifetimeHires=Object.fromEntries(workers.map(w=>{
+ const id=w[0],saved=Number(savedLifetimeHires[id]);
+ return [id,Math.min(1000,Math.max(x.gens[id]||0,Number.isFinite(saved)?Math.floor(saved):0))];
+}));
+
 // Persist only valid, partial progress toward owned batch workers' next payout.
 // Old saves have no timers and start new cycles without losing their workers.
 x.workerTimers={};
@@ -77,6 +85,6 @@ for(const slot of EQUIPMENT_SLOT_KEYS){
 // Legacy saves did not track location: preserve their last active expedition.
 x.location=['kingdom','realm'].includes(obj.location)?obj.location:'realm';
 x.avatarBody=['male','female'].includes(obj.avatarBody)?obj.avatarBody:'male';x.avatarName=typeof obj.avatarName==='string'?obj.avatarName.trim().slice(0,32):'';
-x.claimed=Array.isArray(obj.claimed)?obj.claimed.filter(z=>typeof z==='string').slice(0,30):[];x.ach=Array.isArray(obj.ach)?obj.ach.filter(z=>typeof z==='string').slice(0,20):[];x.journal=Array.isArray(obj.journal)?obj.journal.filter(z=>typeof z==='string').slice(0,8):[];
+x.claimed=Array.isArray(obj.claimed)?obj.claimed.filter(z=>typeof z==='string').slice(0,30):[];x.ach=Array.isArray(obj.ach)?obj.ach.filter(z=>typeof z==='string').slice(0,100):[];x.journal=Array.isArray(obj.journal)?obj.journal.filter(z=>typeof z==='string').slice(0,8):[];
 x.bounty=Math.max(0,Math.floor(clamp(x.bounty,0,1e5)));x.bountyStart=Math.max(0,Math.floor(clamp(x.bountyStart,0,1e12)));x.auto=!!x.auto;x.autoProgress=clamp(x.autoProgress,0,1);x.upgradeView=['unlocked','affordable','all'].includes(x.upgradeView)?x.upgradeView:'unlocked';x.showOwned=!!x.showOwned;x.kingdomVistaMax=Math.floor(clamp(x.kingdomVistaMax??0,0,5));x.kingdomVistaMilestone=Math.floor(clamp(x.kingdomVistaMilestone??0,0,5));if(x.location==='kingdom'){x.autoMode='off';x.auto=false;x.engagedUntil=0;x.enemyTimer=0;}
-x.version=12;x.updated=Number.isFinite(+x.updated)?+x.updated:Date.now();delete x.event;delete x.eventEnd;delete x.nextEvent;return x;}
+x.version=13;x.updated=Number.isFinite(+x.updated)?+x.updated:Date.now();delete x.event;delete x.eventEnd;delete x.nextEvent;return x;}

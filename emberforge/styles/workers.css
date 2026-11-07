@@ -109,3 +109,7 @@
  font-weight:750;
  white-space:nowrap;
 }
+
+/* Triumphs: a completed lifetime Mastery stays visible without a progress bar. */
+#ef4 .efw-achievement-worker.efw-mastered{border-color:#c99959;background:linear-gradient(130deg,#30291f,#192436);box-shadow:inset 0 1px #f5c77c44,0 0 12px #e9a25112}
+#ef4 .efw-achievement-worker.efw-mastered .pill{color:#ffe6b6;border-color:#dbab6a}

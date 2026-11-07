@@ -44,7 +44,7 @@ test('consuming potions changes inventory, health and cooldown but never Ember',
  assert.equal(s.potions.minor,11);
 });
 test('potions share backpack capacity and are lost on Ascension',()=>{
- assert.match(definitions,/version:12,workerTimers:\{\},potions:\{minor:0\}/);
+ assert.match(definitions,/version:13,workerTimers:\{\},workerLifetimeHires:Object\.fromEntries\(workers\.map\(w=>\[w\[0\],0\]\)\),potions:\{minor:0\}/);
  assert.match(definitions,/const inventoryUsedSlots=\(\)=>s\.items\.length\+potionSlotsUsed\(\)/);
  assert.doesNotMatch(views.slice(views.indexOf('function ascend(){'),views.indexOf("root.addEventListener('click'")),/'items'|'equipped'|'potions'|'lastBossLoot'/);
  assert.match(combat,/inventoryUsedSlots\(\)>=inventoryCapacity\(\)/);

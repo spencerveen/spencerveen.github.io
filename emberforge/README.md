@@ -55,13 +55,13 @@ grant discrete Ember batches after the timer completes. The Workforce screen
 shows both each payout and its average Ember/sec for comparison.
 
 The purchase growth constant (`WORKER_PRICE_GROWTH`, currently `1.33`),
-cumulative +1%-per-threshold milestones, and batch accounting all live in
+cumulative +1% milestones at 10, 25, 50, 100, then at every doubling\n(200, 400, 800, 1,600, ...), and batch accounting all live in
 `systems/combat.js`. `accrueWorkerEarnings` handles both active and
 half-rate offline earnings; never add `gain(income() * dt)` alongside it,
 or timed workers will earn twice. Timer progress is saved in
 `s.workerTimers` and resets on Ascension. New worker types can be appended
 to the catalog with their own payout intervals and unlock tiers in
-`GATE_WORKERS` in `data/definitions.js`.
+`GATE_WORKERS` in `data/definitions.js`.\n\nTriumphs tracks a separate permanent per-worker Mastery achievement at 1,000\nlifetime hires across Ascensions, using `s.workerLifetimeHires`. Once earned,\nits progress bar disappears, but the per-run output bonus keeps scaling.\nExisting saves migrate current worker ownership as the initial known lifetime\nhire count; earlier Ascension runs cannot be reconstructed retroactively.
 
 ## Checks
 

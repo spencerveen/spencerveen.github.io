@@ -10,7 +10,14 @@ const clicks=()=> (1+upgrades.reduce((v,u)=>v+(u[4]==='clickAdd'&&s.ups[u[0]]&&u
 // Workforce milestones are per worker type and reset with worker ownership at Ascension.
 const WORKER_MILESTONES=[[10,.01],[25,.01],[50,.01],[100,.01]];
 const WORKER_PRICE_GROWTH=1.33;
-const workerMilestoneBonus=count=>WORKER_MILESTONES.reduce((sum,m)=>sum+(count>=m[0]?m[1]:0),0);
+// Initial thresholds remain 10, 25, 50, 100; beyond 100, each doubling earns another +1%.
+// 200, 400, 800, 1,600, ... indefinitely (subject to finite game-number limits).
+const workerMilestoneCount=count=>WORKER_MILESTONES.reduce((sum,m)=>sum+(count>=m[0]?1:0),0)+(count>=200?Math.floor(Math.log2(count/100)):0);
+const workerMilestoneBonus=count=>workerMilestoneCount(count)*.01;
+const nextWorkerMilestone=count=>{
+ const first=WORKER_MILESTONES.find(m=>count<m[0]);
+ return first?first[0]:100*2**(Math.floor(Math.log2(Math.max(100,count)/100))+1);
+};
 // Entries define one worker's Ember payout and its duration. Omitting the duration
 // preserves continuous income for future workers.
 const workerInterval=w=>Math.max(1,Number(w[6])||1);

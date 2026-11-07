@@ -318,9 +318,17 @@ honors.push(
  ['veterancrew','Master of the Guild','Own 100 of one worker type in a single run',x=>workers.some(w=>(x.gens[w[0]]||0)>=100)],
  ['allworkers','Full Muster','Own at least one of every worker type in one run',x=>workers.every(w=>(x.gens[w[0]]||0)>0)]
 );
+// Persistent per-type Mastery: hire 1,000 total workers of that type over any number
+// of Ascensions. Production milestones themselves still depend on currently owned workers.
+honors.push(...workers.map(w=>[
+ 'masterworker-'+w[0],
+ w[1]+' Mastery',
+ 'Hire 1,000 '+w[1]+' across Ascensions',
+ x=>(x.workerLifetimeHires?.[w[0]]||0)>=1000
+]));
 const encounterBook=()=>realms.flatMap((r,z)=>[
  ...MONSTER_LADDERS[z].map((m,i)=>({id:'mob-'+z+'-'+(i+1),realm:z,stage:i+1,name:m[0],icon:m[1],boss:false,desc:'Stage '+(i+1)+' · '+currentTrait(i+1).name+' encounter. Each realm can drop stage-appropriate equipment.'})),
  {id:r[5],realm:z,stage:10,name:r[4],icon:r[5],boss:true,desc:'Stage 10 Guardian. First victory awards a weapon to help you enter the next region; repeat kills can drop regional equipment.'}
 ]);
-const fresh=()=>({version:12,workerTimers:{},potions:{minor:0},location:'kingdom',kingdomVistaMax:0,kingdomVistaMilestone:0,pendingRelics:[],stageUnlocked:[1,0,0,0,0,0],bossCleared:[false,false,false,false,false,false],firstClears:[0,0,0,0,0,0],autoMode:'off',smartResting:false,upgradeView:'unlocked',showOwned:false,ember:0,lifetime:0,runEarned:0,clicks:0,gens:Object.fromEntries(workers.map(w=>[w[0],0])),ups:{},build:Object.fromEntries(buildings.map(b=>[b[0],0])),skills:{},skillPoints:0,level:1,souls:0,ascensions:0,zone:0,unlocked:0,stage:1,enemyHP:0,kills:0,bosses:0,lootFound:0,items:[],equipped:Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(k=>[k,null])),avatarBody:'male',avatarName:'',auto:false,salvage:'off',autoProgress:0,claimed:[],ach:[],bounty:0,bountyStart:0,updated:Date.now(),journal:[],codex:{},lastBossLoot:null,combatLevel:1,combatXP:0,hp:null,training:{vitality:0,guard:0,blade:0,regen:0},enemyTimer:0,enemyHits:0,manualAt:0,engagedUntil:0,downUntil:0,potionReady:0,combatMessage:"Ready for battle"});
+const fresh=()=>({version:13,workerTimers:{},workerLifetimeHires:Object.fromEntries(workers.map(w=>[w[0],0])),potions:{minor:0},location:'kingdom',kingdomVistaMax:0,kingdomVistaMilestone:0,pendingRelics:[],stageUnlocked:[1,0,0,0,0,0],bossCleared:[false,false,false,false,false,false],firstClears:[0,0,0,0,0,0],autoMode:'off',smartResting:false,upgradeView:'unlocked',showOwned:false,ember:0,lifetime:0,runEarned:0,clicks:0,gens:Object.fromEntries(workers.map(w=>[w[0],0])),ups:{},build:Object.fromEntries(buildings.map(b=>[b[0],0])),skills:{},skillPoints:0,level:1,souls:0,ascensions:0,zone:0,unlocked:0,stage:1,enemyHP:0,kills:0,bosses:0,lootFound:0,items:[],equipped:Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(k=>[k,null])),avatarBody:'male',avatarName:'',auto:false,salvage:'off',autoProgress:0,claimed:[],ach:[],bounty:0,bountyStart:0,updated:Date.now(),journal:[],codex:{},lastBossLoot:null,combatLevel:1,combatXP:0,hp:null,training:{vitality:0,guard:0,blade:0,regen:0},enemyTimer:0,enemyHits:0,manualAt:0,engagedUntil:0,downUntil:0,potionReady:0,combatMessage:"Ready for battle"});
 

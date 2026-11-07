@@ -51,9 +51,15 @@ test('batch timers cannot accumulate on an unowned worker and restart on its nex
 });
 test('worker milestones are cumulative one-percent bonuses',()=>{
  const {s,calc}=makeEconomy();
- for(const [owned,mult] of [[9,1],[10,1.01],[25,1.02],[50,1.03],[100,1.04]]){
+ for(const [owned,mult] of [[9,1],[10,1.01],[25,1.02],[50,1.03],[100,1.04],[199,1.04],[200,1.05],[400,1.06],[800,1.07],[1000,1.07],[1600,1.08],[3200,1.09]]){
   s.gens.alchemist=owned;
   near(calc('workerProduction(workers[1])'),owned*200*mult);
+ }
+});
+test('the next threshold continues doubling after 100 workers',()=>{
+ const {calc}=makeEconomy();
+ for(const [count,next] of [[0,10],[10,25],[24,25],[25,50],[50,100],[99,100],[100,200],[199,200],[200,400],[999,1600],[1600,3200]]){
+  assert.equal(calc('nextWorkerMilestone('+count+')'),next);
  }
 });
 test('worker price growth is 33% and Max sums actual incremental prices',()=>{
@@ -76,7 +82,8 @@ test('offline, visibility, and save paths use the batch scheduler',()=>{
  assert.match(loop,/accrueWorkerEarnings\(secs,\.5\)/);
  assert.match(loop,/document\.hidden\)return/);
  assert.doesNotMatch(loop,/gain\(income\(\)\*dt\)/);
- assert.match(defs,/version:12,workerTimers:\{\}/);
+ assert.match(defs,/version:13,workerTimers:\{\},workerLifetimeHires:/);
  assert.match(formatting,/x\.workerTimers=\{\}/);
+ assert.match(formatting,/x\.workerLifetimeHires=Object\.fromEntries/);
  assert.match(views,/data-worker-countdown/);
 });
