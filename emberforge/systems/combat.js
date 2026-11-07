@@ -34,12 +34,37 @@ function earnCombatXP(amount){s.combatXP+=amount;let gained=0;while(s.combatXP>=
 const power=()=>Math.max(1,((1+Math.sqrt(clicks())*.85) +gearPower('mainHand')+gearAbility('attack'))*(1+(s.combatLevel-1)*.14)*(1+activeTraining('blade')*.22)*(1+.08*activeBuild('barracks'))*(1+.14*activeSkill('blade'))*multiplier('attackMult')*(enemy().boss?1+gearAbility('bossDamage'):1)*soulfactor()*skillfactor());
 const autoInterval=()=>Math.max(.38,1.15/(1+.045*activeBuild('watchtower')));
 const autoPower=()=>power()*(1+.08*activeSkill('veteran'));
+// Combat accuracy, evasion, critical hits and shields are shared by manual and auto combat.
+// All chances use [0, 1], with a minimum chance to hit to avoid endless fights.
+const combatClamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const playerHitChance=e=>combatClamp(.92+.006*(s.combatLevel-(e.stage+e.zone*9))-(e.trait==='Swift'?.06:0)-(e.boss?.04:0),.72,.97);
+const enemyHitChance=e=>combatClamp(.88+.006*(e.stage+e.zone*9-s.combatLevel)-(e.trait==='Swift'?.03:0),.68,.95);
+const playerCritChance=()=>combatClamp(.05+.0005*Math.max(0,s.combatLevel-1),.05,.12);
+const enemyCritChance=e=>e.boss?.07:.04;
+const blockChance=()=>equippedItem('offHand')?.slot==='offHand'?.22:.06;
+const blockReduction=()=>equippedItem('offHand')?.slot==='offHand'?.55:.35;
+const criticalMultiplier=1.6;
+function playerAttack(auto=false){
+ if(!inExpedition()||isDown())return {kind:'invalid',damage:0};
+ const e=enemy();
+ if(Math.random()>=playerHitChance(e)){
+   s.combatMessage='Miss! '+e.name+' evaded your '+(auto?'automatic attack.':'strike.');
+   spawnPop($('battlescene'),'MISS','battle');
+   return {kind:'miss',damage:0};
+ }
+ const critical=Math.random()<playerCritChance();
+ const value=(auto?autoPower():power())*(critical?criticalMultiplier:1);
+ s.combatMessage=critical?'CRITICAL HIT! '+fmt(value)+' damage to '+e.name+'.':'You strike '+e.name+' for '+fmt(value)+' damage.';
+ damage(value);
+ spawnPop($('battlescene'),critical?'CRIT -'+fmt(value):'-'+fmt(value),'battle');
+ return {kind:critical?'critical':'hit',damage:value};
+}
 const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.33,stage-1)*(boss?4.35:trait.hp)*(1+.12*Math.max(0,s.ascensions-REALM_ASCENSIONS[zone])));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost'))*(1+.08*activeSkill('fortune'))*soulfactor());return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
 const enemy=()=>enemyAt(s.zone,s.stage);
 const foeAttackIntervalFor=e=>e.boss?1.55:2.1*e.traitData.speed;
 const foeRawDamageFor=e=>Math.ceil((8+e.stage*2.45)*Math.pow(4.95,e.zone)*(e.boss?2.25:e.traitData.atk));
 const expectedFoeHit=e=>{let raw=foeRawDamageFor(e);return Math.max(1,Math.ceil(raw*(1-defense()/(defense()+105+raw*.6))));};
-const predictedFight=e=>{let factor=1+gearAbility('bossDamage');let actualPower=autoPower()*(e.boss?factor:1)/(enemy().boss?factor:1);let dps=actualPower/Math.max(.38,autoInterval());let seconds=e.hp/Math.max(1,dps);let hits=Math.max(0,Math.ceil(seconds/foeAttackIntervalFor(e)));let loss=hits*expectedFoeHit(e)*(e.boss?1.18:1)-realRecovery(true)*seconds;return {seconds,loss:Math.max(0,loss),hits};};
+const predictedFight=e=>{let factor=1+gearAbility('bossDamage');let actualPower=autoPower()*(e.boss?factor:1)/(enemy().boss?factor:1);let dps=actualPower*playerHitChance(e)*(1+playerCritChance()*(criticalMultiplier-1))/Math.max(.38,autoInterval());let seconds=e.hp/Math.max(1,dps);let hits=Math.max(0,Math.ceil(seconds/foeAttackIntervalFor(e)));let loss=hits*expectedFoeHit(e)*enemyHitChance(e)*(1+enemyCritChance(e)*(criticalMultiplier-1))*(1-blockChance()*blockReduction())*(e.boss?1.18:1)-realRecovery(true)*seconds;return {seconds,loss:Math.max(0,loss),hits};};
 function canAutoFarm(stage){if(stage>maxSelectable(s.zone))return false;if(stage===10&&!bossClearedAt(s.zone))return false;let e=enemyAt(s.zone,stage),v=predictedFight(e);return v.seconds<=(e.boss?46:30)&&v.loss<Math.max(20,Math.min(maxHealth()*.74,s.hp*.79));}
 function bestFarmStage(){for(let stage=maxSelectable(s.zone);stage>=1;stage--)if(canAutoFarm(stage))return stage;return 0;}
 function setTarget(stage,{keepAuto=true,quiet=false}={}){if(!inExpedition())return false;stage=Math.floor(stage);if(stage<1||stage>maxSelectable(s.zone))return false;if(!keepAuto){s.autoMode='off';s.auto=false;}s.stage=stage;rollBattleBackground();s.enemyHP=enemy().hp;s.enemyTimer=0;s.enemyHits=0;s.autoProgress=0;s.engagedUntil=0;s.smartResting=false;s.combatMessage='Target selected: '+enemy().name+'. '+(stage===10?'Boss encounter. Prepare before attacking.':'Repeat this stage to farm XP and equipment.');if(!quiet){toast('Hunting '+enemy().name);renderPage()}return true;}
@@ -83,8 +108,31 @@ function defeat(){
 function damage(v){if(!inExpedition()||!Number.isFinite(v)||v<=0||isDown())return;if(s.enemyHP>v){s.enemyHP-=v}else{defeat()}}
 function spawnPop(parent,text,kind){let p=document.createElement('span');p.className='floatpop';p.textContent=text;p.style.left=(32+Math.random()*36)+'%';p.style.top=(27+Math.random()*25)+'%';if(kind==='battle')p.style.color='#ffc5a0';if(kind==='enemy')p.style.color='#ff667e';parent.appendChild(p);setTimeout(()=>p.remove(),750)}
 function mine(){let v=clicks();gain(v);s.clicks++;spawnPop($('crystal').parentNode,'+'+fmt(v),'mine');honorCheck();stats();}
-function manualAttack(){if(!inExpedition())return;let now=Date.now();if(isDown()){toast('Defeated — recover before fighting');return}if(now<s.manualAt)return;s.manualAt=now+650;s.engagedUntil=now+5500;s.smartResting=false;let v=power();s.combatMessage='You strike for '+fmt(v)+' damage.';damage(v);spawnPop($('battlescene'),'-'+fmt(v),'battle');let art=$('enemyart');art.classList.remove('shake');void art.offsetWidth;art.classList.add('shake');stats();if(needsMain){renderPage();needsMain=false}}
-function takeHit(){if(!inExpedition()||isDown())return;let e=enemy(),raw=foeRawDamage();s.enemyHits++;let crit=e.boss&&s.enemyHits%4===0;let actual=Math.max(1,Math.ceil(raw*(crit?1.8:1)*(1-defense()/(defense()+105+raw*.6))));s.hp=Math.max(0,s.hp-actual);s.combatMessage=(crit?'BOSS SPECIAL ATTACK! ':'')+e.name+' ('+e.trait+') hits for '+fmt(actual)+' HP.';spawnPop($('battlescene'),'-'+fmt(actual)+' HP','enemy');if(s.hp<=0){let loss=Math.min(s.ember*.04,e.reward*1.5);s.ember-=loss;s.auto=false;s.autoMode='off';s.smartResting=false;s.engagedUntil=0;s.downUntil=Date.now()+7000;s.enemyHP=e.hp;s.enemyTimer=0;s.enemyHits=0;s.combatMessage='You were knocked out. Recover in 7s; enemy HP has reset. '+(loss?'Lost '+fmt(loss)+' Ember.':'');note('Knocked out by '+e.name);toast('You were defeated by '+e.name+'!')}else if(crit){toast('Boss special attack: -'+fmt(actual)+' HP')}}
+function manualAttack(){if(!inExpedition())return;let now=Date.now();if(isDown()){toast('Defeated — recover before fighting');return}if(now<s.manualAt)return;s.manualAt=now+650;s.engagedUntil=now+5500;s.smartResting=false;let result=playerAttack(false);if(result.kind!=='miss'){let art=$('enemyart');art.classList.remove('shake');void art.offsetWidth;art.classList.add('shake');}stats();if(needsMain){renderPage();needsMain=false}}
+function takeHit(){
+ if(!inExpedition()||isDown())return;
+ const e=enemy(),raw=foeRawDamage();
+ s.enemyHits++;
+ if(Math.random()>=enemyHitChance(e)){
+   s.combatMessage='DODGE! You evaded '+e.name+'\'s attack.';
+   spawnPop($('battlescene'),'DODGE','enemy');
+   return;
+ }
+ // The guardian's special swing is still every fourth attempted attack; it cannot bypass evasion.
+ const special=e.boss&&s.enemyHits%4===0;
+ const critical=!special&&Math.random()<enemyCritChance(e);
+ const blocked=Math.random()<blockChance();
+ const multiplier=special?1.8:critical?criticalMultiplier:1;
+ let actual=Math.max(1,Math.ceil(raw*multiplier*(1-defense()/(defense()+105+raw*.6))*(blocked?1-blockReduction():1)));
+ s.hp=Math.max(0,s.hp-actual);
+ s.combatMessage=(special?'BOSS SPECIAL! ':critical?'ENEMY CRITICAL! ':'')+(blocked?'BLOCKED! ':'')+e.name+' hits for '+fmt(actual)+' HP.';
+ spawnPop($('battlescene'),(blocked?'BLOCK ':'')+'-'+fmt(actual)+' HP','enemy');
+ if(s.hp<=0){
+   let loss=Math.min(s.ember*.04,e.reward*1.5);s.ember-=loss;s.auto=false;s.autoMode='off';s.smartResting=false;s.engagedUntil=0;s.downUntil=Date.now()+7000;s.enemyHP=e.hp;s.enemyTimer=0;s.enemyHits=0;
+   s.combatMessage='You were knocked out. Recover in 7s; enemy HP has reset. '+(loss?'Lost '+fmt(loss)+' Ember.':'');
+   note('Knocked out by '+e.name);toast('You were defeated by '+e.name+'!');
+ }
+}
 function retreat(){s.auto=false;s.autoMode='off';s.smartResting=false;s.engagedUntil=0;s.enemyTimer=0;s.enemyHits=0;s.enemyHP=enemy().hp;s.combatMessage='Retreated safely. Enemy health reset; health will regenerate while resting.';toast('Retreated to safety');stats()}
 function usePotion(){let now=Date.now();if(isDown()||now<s.potionReady)return;let c=potionCost();if(s.ember<c){toast('Need '+fmt(c)+' Ember for a healing potion');return}if(s.hp>=maxHealth())return;s.ember-=c;s.hp=Math.min(maxHealth(),s.hp+maxHealth()*.45);s.potionReady=now+18000;s.combatMessage='Healing potion restored 45% HP. Next potion in 18 seconds.';toast('Restored health');stats()}
 
