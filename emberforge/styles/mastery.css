@@ -242,3 +242,15 @@
  #ef4 .efm-nav button .efm-nav-symbol{width:51px;height:44px}
 }
 @media(prefers-reduced-motion:reduce){#ef4 .efm-nav button,#ef4 .efm-nav button .efm-nav-symbol{transition:none}}
+
+/* Correct atlas geometry: artwork is three columns by two rows, not six columns. */
+#ef4 .efm-nav button .efm-nav-symbol{
+ background-size:300% 200%;
+ background-position:0% 0%;
+}
+#ef4 .efm-nav button[data-sub="skills"] .efm-nav-symbol{background-position:0% 0%}
+#ef4 .efm-nav button[data-sub="quests"] .efm-nav-symbol{background-position:50% 0%}
+#ef4 .efm-nav button[data-sub="achievements"] .efm-nav-symbol{background-position:100% 0%}
+#ef4 .efm-nav button[data-sub="bestiary"] .efm-nav-symbol{background-position:0% 100%}
+#ef4 .efm-nav button[data-sub="ascend"] .efm-nav-symbol{background-position:50% 100%}
+#ef4 .efm-nav button[data-sub="stats"] .efm-nav-symbol{background-position:100% 100%}
