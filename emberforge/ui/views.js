@@ -154,8 +154,30 @@ function setMerchantTab(tab){
  });
  $$('[data-merchant-panel]').forEach(panel=>{panel.hidden=panel.dataset.merchantPanel!==tab});
 }
+// Every structure must reach the threshold before the Kingdom evolves.
+// The vista index persists across Ascension, even when buildings reset.
+const KINGDOM_VISTA_MILESTONES=[
+ {levels:0,ascensions:0},
+ {levels:3,ascensions:0},
+ {levels:6,ascensions:1},
+ {levels:9,ascensions:2},
+ {levels:11,ascensions:3},
+ {levels:12,ascensions:4}
+];
+function earnedKingdomVista(){
+ let unlocked=0;
+ for(let i=1;i<KINGDOM_VISTA_MILESTONES.length;i++){
+  const milestone=KINGDOM_VISTA_MILESTONES[i];
+  if(s.ascensions>=milestone.ascensions&&buildings.every(b=>(s.build[b[0]]||0)>=milestone.levels))unlocked=i;
+ }
+ return unlocked;
+}
 function renderKingdom(){
  const cap=buildingCap();
+ const earned=earnedKingdomVista();
+ if(earned>s.kingdomVistaMax){s.kingdomVistaMax=earned;save();}
+ // Scene presentation is progression-driven; there is no user-selectable preview.
+ kingdomVistaPreview=Math.min(5,Math.max(s.kingdomVistaMax||0,earned));
  updateIllustratedScenes();
  const owned=Object.values(s.build).reduce((n,x)=>n+x,0);
  $('kingdominfo').textContent='Era '+s.ascensions+'  ·  '+owned+' built levels';
@@ -396,7 +418,7 @@ if(sub==='bestiary'){html='<div class="space" style="margin-bottom:10px"><div cl
 if(sub==='ascend'){let reward=soulReward(),next=ascendTarget(),prog=Math.min(100,100*s.runEarned/next);let lastLoot=s.lastBossLoot?`<div class="hint" style="margin-top:10px">Last boss drop: ${esc(s.lastBossLoot.name)}</div>`:'';html=`<div class="card" style="background:radial-gradient(ellipse at 50% 5%,#3a3257,#16213a 80%);text-align:center;padding:28px 18px"><div style="display:flex;justify-content:center;margin:4px auto 14px">${iconHTML("altar","hero")}</div><div style="font-size:22px;font-weight:850">Ascension Altar</div><div class="hint" style="margin:8px auto 14px;max-width:380px">Sacrifice your current run to gain permanent Soulfire. Soulfire permanently empowers Forge production with diminishing returns; equipment determines combat stats. Each Ascension unlocks more upgrades, skills, and world regions.</div><div class="grid2" style="max-width:330px;margin:0 auto 14px"><div class="stat"><div class="label">This run</div><div class="big">${fmt(s.runEarned)}</div></div><div class="stat"><div class="label">Soulfire reward</div><div class="big" style="color:#e2bdff">+${fmt(reward)}</div></div></div><div class="progress" style="margin-bottom:10px"><div style="width:${prog}%;background:#ae80ee"></div></div><div class="hint" style="margin-bottom:14px">${reward?'Ascension is ready!':'Earn '+fmt(next-s.runEarned)+' more Ember to ascend. Next era unlocks higher caps.'}</div><button class="btn btn-gold" data-ascend="1" ${reward<1?'disabled':''}>Ascend ${reward?'for +'+reward+' Soulfire':'· Locked'}</button><div class="hint" style="margin-top:13px">Resets Ember, workers, temporary upgrades, buildings and the selected battle target. Keeps combat levels (health only), training, skills, Soulfire and discoveries. All equipment and potions are lost on Ascension. Training and skill caps rise after each Ascension.</div>${lastLoot}</div>`}
 box.innerHTML=html;if(sub==='ascend'){
 let row=REALM_ASCENSIONS.map((a,i)=>`<div class="rowitem" style="opacity:${s.ascensions>=a?1:.78}"><span class="r-ico">${iconHTML(realms[i][1],'lg')}</span><div class="r-body"><strong>${realms[i][0]}</strong><span class="hint">Ascension ${a} · Combat Lv ${REALM_LEVELS[i]} · previous guardian defeated</span></div><span class="pill">${s.ascensions>=a?'Era unlocked':'Future era'}</span></div>`).join('');
-box.insertAdjacentHTML('beforeend',`<div class="card" style="margin-top:12px"><div class="section">Realm unlock roadmap</div><div class="stack" style="gap:7px">${row}</div><div class="hint" style="margin-top:10px">Each new era also raises building capacity by 2 levels and training capacity by 3 levels.</div></div>`)
+box.insertAdjacentHTML('beforeend',`<div class="card" style="margin-top:12px"><div class="section">Realm unlock roadmap</div><div class="stack" style="gap:7px">${row}</div><div class="hint" style="margin-top:10px">Each Ascension increases the building level cap by 3 (up to 12) and training capacity by 3.</div></div>`)
 }}
 function renderPage(){currencyStats();if(page==='workers')renderWorkers();if(page==='upgrades')renderUpgrades();if(page==='gear')renderGear();if(page==='world')renderWorld();if(page==='mastery')renderMastery();stats()}
 function go(p){const jumpToCombat=p==='battle'&&inExpedition();if(p==='battle'||p==='kingdom')p='world';page=p;$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===p||(p==='world'&&inExpedition()&&x.dataset.view==='battle')));$$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===p));renderPage();if(jumpToCombat)$('worldbattle').scrollIntoView?.({behavior:'smooth',block:'start'});}
@@ -411,7 +433,7 @@ if(Object.prototype.hasOwnProperty.call(b.dataset,'mapToggle')){caladrynMapColla
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapZoom')){const viewport=$('mapviewport'),zoom=viewport.classList.toggle('zoomed');b.setAttribute('aria-pressed',String(zoom));b.textContent=zoom?'Fit map to window':'Enlarge map';if(!zoom)viewport.scrollLeft=0;return}
 if(b.dataset.kingdomTab){setKingdomTab(b.dataset.kingdomTab);return}
 if(b.dataset.merchantTab){setMerchantTab(b.dataset.merchantTab);return}
-if(b.dataset.avatarGender){const gender=b.dataset.avatarGender;if(gender!=='male'&&gender!=='female')return;s.avatarBody=gender;renderGear();save();return}if(b.dataset.vista){let choice=b.dataset.vista;if(choice==='auto')kingdomVistaPreview=null;else{let idx=activeKingdomVista();kingdomVistaPreview=(idx+(choice==='next'?1:-1)+KINGDOM_VISTAS.length)%KINGDOM_VISTAS.length;}updateIllustratedScenes();return}if(b.dataset.page){go(b.dataset.page);return}if(b.dataset.go){go(b.dataset.go);return}if(b.dataset.sub){sub=b.dataset.sub;renderMastery();return}if(b.dataset.upgradeFilter){s.upgradeView=b.dataset.upgradeFilter;renderUpgrades();save();return}if(b.dataset.buy){buyMode=b.dataset.buy;$$('[data-buy]').forEach(x=>x.classList.toggle('on',x.dataset.buy===buyMode));renderWorkers();return}
+if(b.dataset.avatarGender){const gender=b.dataset.avatarGender;if(gender!=='male'&&gender!=='female')return;s.avatarBody=gender;renderGear();save();return}if(b.dataset.page){go(b.dataset.page);return}if(b.dataset.go){go(b.dataset.go);return}if(b.dataset.sub){sub=b.dataset.sub;renderMastery();return}if(b.dataset.upgradeFilter){s.upgradeView=b.dataset.upgradeFilter;renderUpgrades();save();return}if(b.dataset.buy){buyMode=b.dataset.buy;$$('[data-buy]').forEach(x=>x.classList.toggle('on',x.dataset.buy===buyMode));renderWorkers();return}
 if(b.id==='ef4-crystal'){mine();return}
 if(b.id==='ef4-strike'){manualAttack();return}
 if(b.dataset.merchantGear){buyMerchantGear(b.dataset.merchantGear);return}
