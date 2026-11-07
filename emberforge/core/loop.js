@@ -2,7 +2,7 @@
 function tick(now){try{let dt=Math.max(0,Math.min(.5,(now-last)/1000));last=now;gain(income()*dt);
 let timestamp=Date.now();
 if(s.hp===null)s.hp=maxHealth();
-if(s.downUntil&&timestamp>=s.downUntil){s.downUntil=0;s.hp=Math.max(1,Math.floor(maxHealth()*.5));s.combatMessage='Recovered with 50% health. Rest or heal before another fight.';toast('Recovered from defeat');}
+if(s.downUntil&&timestamp>=s.downUntil){s.downUntil=0;s.hp=Math.max(1,Math.floor(maxHealth()*.5));s.combatMessage='Recovered with 50% health. Rest or use a healing potion before another fight.';toast('Recovered from defeat');}
 if(s.autoMode==='smart'&&!isDown()){
  if(!s.smartResting&&s.hp<maxHealth()*.30){s.smartResting=true;s.engagedUntil=0;s.autoProgress=0;s.combatMessage='Smart Hunt is recovering before continuing.';}
  if(s.smartResting&&s.hp>=maxHealth()*.82){s.smartResting=false;chooseSmartTarget();}
@@ -44,6 +44,6 @@ window.EmberforgeGame=Object.freeze({
     return true;
   },
   strike:()=>{if(!inExpedition()||isDown())return false;manualAttack();return true;},
-  heal:()=>{if(isDown())return false;usePotion();return true;}
+  usePotion:(id='minor')=>usePotion(id)
 });
 load();rollBattleBackground();if(s.hp===0&&!s.downUntil)s.hp=Math.ceil(maxHealth()*.5);if(s.hp===null||!Number.isFinite(s.hp))s.hp=maxHealth();s.hp=Math.min(maxHealth(),s.hp);if(s.enemyHP<=0)s.enemyHP=enemy().hp;let offline=Math.min(28800,Math.max(0,(Date.now()-s.updated)/1000));if(offline>10){let amount=income()*offline*.5;gain(amount);if(amount>0)note('Offline income +'+fmt(amount)+' Ember')}honorCheck();requestAnimationFrame(tick);try{stats();go('forge');save()}catch(error){console.error('[Emberforge] Initial render failed:',error)}window.addEventListener('pagehide',save);let hiddenAt=null;document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now();save()}else if(hiddenAt){let secs=Math.min(28800,Math.max(0,(Date.now()-hiddenAt)/1000));if(secs>5){let n=income()*secs*.5;gain(n);if(n>0)note('Away earnings: +'+fmt(n)+' Ember');}last=performance.now();hiddenAt=null;renderPage()}});
