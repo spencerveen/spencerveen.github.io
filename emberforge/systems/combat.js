@@ -1,7 +1,7 @@
 'use strict';
 function note(t){s.journal.unshift(t);s.journal=s.journal.slice(0,8)}
 function toast(t){let el=$('toast');el.textContent=t;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2100)}
-function showBossLoot(item){if(!item)return;let scene=$('battlescene');if(!scene)return;scene.querySelectorAll('.chestflash').forEach(n=>n.remove());let box=document.createElement('div');box.className='chestflash';box.innerHTML='<div style="font-size:10px;letter-spacing:1px;opacity:.9">BOSS CHEST OPENED</div><div style="margin-top:4px"><strong class="rarity-'+item.rarity+'">'+item.rarity.toUpperCase()+'</strong> · '+esc(item.name)+'</div><div style="margin-top:2px;color:#ffe1b9">+'+fmt(item.power)+' '+(item.slot==='weapon'?'attack':item.slot==='armor'?'armor':'recovery')+'</div>';scene.appendChild(box);setTimeout(()=>box.remove(),4200)}
+function showBossLoot(item){if(!item)return;let scene=$('battlescene');if(!scene)return;scene.querySelectorAll('.chestflash').forEach(n=>n.remove());let box=document.createElement('div');box.className='chestflash';box.innerHTML='<div style="font-size:10px;letter-spacing:1px;opacity:.9">BOSS CHEST OPENED</div><div style="margin-top:4px"><strong class="rarity-'+item.rarity+'">'+item.rarity.toUpperCase()+'</strong> · '+esc(item.name)+'</div><div style="margin-top:2px;color:#ffe1b9">+'+fmt(item.power)+' '+equipmentPowerType(equipmentSlotFor(item))+'</div>';scene.appendChild(box);setTimeout(()=>box.remove(),4200)}
 const soulfactor=()=>1+.24*Math.sqrt(s.souls);
 const skillfactor=()=>1+.03*activeSkill('aura');
 const totalWorkers=()=>workers.reduce((v,w)=>v+(s.gens[w[0]]||0),0);
@@ -17,11 +17,12 @@ const workerMarginalProduction=(w,count=1)=>{let owned=s.gens[w[0]]||0;return (w
 const income=()=>workers.reduce((v,w)=>v+workerProduction(w),0);
 const equippedItem=slot=>s.items.find(g=>g.id===s.equipped[LEGACY_EQUIPMENT_SLOTS[slot]||slot]);
 const gearPower=slot=>equippedItem(slot)?.power||0;
+const gearTotal=slots=>slots.reduce((sum,slot)=>sum+gearPower(slot),0);
 const gearAbility=type=>EQUIPMENT_SLOT_KEYS.reduce((n,slot)=>{let g=equippedItem(slot);return n+(g&&g.ability===type?(g.abilityValue||0):0)},0);
-const maxHealth=()=>Math.ceil(Math.min(1e15,(105*Math.pow(1.14,Math.max(0,s.combatLevel-1))+gearPower('armor')*5)*(1+.17*activeTraining('vitality'))*(1+gearAbility('health'))));
-const defense=()=>6+s.combatLevel*1.6+activeTraining('guard')*10+gearPower('armor')*1.65;
-const recovery=(fighting)=>maxHealth()*((fighting?.0035:.047)+activeTraining('regen')*.0025)+gearPower('charm')*.22;
-const realRecovery=(fighting)=>recovery(fighting)*(1+gearAbility('regen'));
+const maxHealth=()=>Math.ceil(Math.min(1e15,(105*Math.pow(1.14,Math.max(0,s.combatLevel-1))+gearTotal(['helmet','chest','gloves','legs','boots','offHand'])*3)*(1+.17*activeTraining('vitality'))*(1+gearAbility('health'))));
+const defense=()=>6+s.combatLevel*1.6+activeTraining('guard')*10+gearTotal(['helmet','chest','gloves','legs','boots','offHand'])*1.65+gearAbility('protection');
+const recovery=(fighting)=>maxHealth()*((fighting?.0035:.047)+activeTraining('regen')*.0025+gearAbility('regen'));
+const realRecovery=(fighting)=>recovery(fighting);
 const potionCost=()=>Math.ceil(70*Math.pow(4.2,s.zone)*(1+s.combatLevel*.12));
 const isDown=()=>Date.now()<s.downUntil||s.hp<=0;
 const activeFight=()=>inExpedition()&&!isDown()&&((s.auto&&!s.smartResting)||Date.now()<s.engagedUntil);
@@ -30,7 +31,7 @@ const foeRawDamage=()=>foeRawDamageFor(enemy());
 const trainCost=t=>{let lv=s.training[t[0]]||0;return Math.ceil(t[4]*Math.pow(2.2,lv)*(1+.1*s.zone))};
 function earnCombatXP(amount){s.combatXP+=amount;let gained=0;while(s.combatXP>=nextCombatXP(s.combatLevel)&&s.combatLevel<140){s.combatXP-=nextCombatXP(s.combatLevel);s.combatLevel++;gained++}if(gained){let oldHP=s.hp;s.hp=Math.min(maxHealth(),oldHP+maxHealth()*.2);s.combatMessage='Combat level '+s.combatLevel+'! Health and attack increased.';note('Combat level '+s.combatLevel+' reached');toast('Combat level '+s.combatLevel+'!');needsMain=true}}
 
-const power=()=>Math.max(1,((1+Math.sqrt(clicks())*.85)+gearPower('weapon'))*(1+(s.combatLevel-1)*.14)*(1+activeTraining('blade')*.22)*(1+.08*activeBuild('barracks'))*(1+.14*activeSkill('blade'))*multiplier('attackMult')*(enemy().boss?1+gearAbility('bossDamage'):1)*soulfactor()*skillfactor());
+const power=()=>Math.max(1,((1+Math.sqrt(clicks())*.85) +gearPower('mainHand')+gearAbility('attack'))*(1+(s.combatLevel-1)*.14)*(1+activeTraining('blade')*.22)*(1+.08*activeBuild('barracks'))*(1+.14*activeSkill('blade'))*multiplier('attackMult')*(enemy().boss?1+gearAbility('bossDamage'):1)*soulfactor()*skillfactor());
 const autoInterval=()=>Math.max(.38,1.15/(1+.045*activeBuild('watchtower')));
 const autoPower=()=>power()*(1+.08*activeSkill('veteran'));
 const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.33,stage-1)*(boss?4.35:trait.hp)*(1+.12*Math.max(0,s.ascensions-REALM_ASCENSIONS[zone])));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost'))*(1+.08*activeSkill('fortune'))*soulfactor());return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
@@ -47,25 +48,22 @@ function gain(n){if(!Number.isFinite(n)||n<=0)return;s.ember+=n;s.lifetime+=n;s.
 const rarityValue={common:0,rare:1,epic:2,legendary:3};
 const sellValue=g=>Math.max(6,Math.round(g.power*(5+activeBuild('vault')*.25)));
 function createLoot(boss){
- let chance=boss?1:(.07+.011*s.stage+.006*s.zone);
- 
- if(Math.random()>chance)return null;
- const table=LOOT_REGIONS[s.zone];let quality=Math.random(),rarity;
- if(boss){let legendaryRate=s.zone<3?0:[0,0,0,.003,.006,.012][s.zone];let epicRate=.055+.018*s.zone;rarity=quality<legendaryRate?'legendary':quality<legendaryRate+epicRate?'epic':'rare';}
- else rarity=quality<(.08+.008*s.zone+.006*Math.floor(s.stage/3))?'rare':'common';
- let group=rarity==='legendary'?table.legendary:rarity==='epic'?table.epic:(boss?table.late:s.stage<=3?table.early:s.stage<=6?table.mid:table.late);
- if(!group.length){rarity='epic';group=table.epic;}
- let base=group[Math.floor(Math.random()*group.length)],rank=rarityValue[rarity],mod=[1,1.8,3.5,8.5][rank];
- let scaling=Math.pow(4.0,s.zone)*(1+.12*Math.max(0,s.stage-1));
- let obj={id:'g'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),name:base[0],slot:base[1],icon:base[2],rarity,origin:s.zone,tier:s.stage,locked:false,power:Math.ceil(base[3]*mod*scaling*(.91+.18*Math.random())),ability:rarity==='legendary'?base[4]:null,abilityValue:rarity==='legendary'?base[5]:0};
+ if(s.zone!==0)return null; // No drops outside Ashen Wilds during rebuild.
+ const dropRate=boss?.055:s.stage<=3?.012:s.stage<=6?.016:.020;
+ if(Math.random()>=dropRate)return null;
+ const eligible=ASHEN_LOOT.filter(item=>boss||s.stage>=item.min);
+ const total=eligible.reduce((sum,item)=>sum+item.weight,0);
+ let roll=Math.random()*total;
+ const base=eligible.find(item=>(roll-=item.weight)<0)||eligible[eligible.length-1];
+ const obj={id:'g'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),name:base.name,slot:base.slot,icon:base.icon,rarity:'common',origin:0,tier:s.stage,locked:false,power:base.power,ability:base.ability||null,abilityValue:base.abilityValue||0};
  s.lootFound++;
- if(s.salvage!=='off'&&rarity!=='legendary'&&rank<=rarityValue[s.salvage]){let value=sellValue(obj);gain(value);if(boss)note('Boss chest: '+obj.name+' automatically salvaged for '+fmt(value)+' Ember');return {salvaged:true,rarity,name:obj.name,power:obj.power};}
- if(s.items.length>=inventoryCapacity()){const equippedIds=equippedGearIds();let candidates=s.items.filter(g=>!isGearTradeProtected(g,equippedIds)&&g.rarity!=='legendary').sort((a,b)=>rarityValue[a.rarity]-rarityValue[b.rarity]||a.power-b.power);let weakest=candidates[0];
-   if(weakest&& (rank>rarityValue[weakest.rarity]||rank===rarityValue[weakest.rarity]&&obj.power>weakest.power)){s.items=s.items.filter(g=>g.id!==weakest.id);gain(sellValue(weakest));}
-   else {if(obj.rarity==='legendary'){obj.locked=true;s.pendingRelics.push(obj);s.lastBossLoot={name:obj.name,rarity:obj.rarity,power:obj.power,time:Date.now()};note('Legendary '+obj.name+' saved to Relic Vault.');return {stored:true,rarity,name:obj.name,power:obj.power};}let payout=sellValue(obj);gain(payout);note('Backpack full: '+obj.name+' sold for '+fmt(payout)+' Ember');return {salvaged:true,rarity,name:obj.name,power:obj.power};}
+ if(s.items.length>=inventoryCapacity()){
+   note('Backpack full: '+obj.name+' could not be collected.');
+   return {lost:true,name:obj.name,rarity:'common'};
  }
  s.items.unshift(obj);
- if(boss){s.lastBossLoot={name:obj.name,rarity:obj.rarity,power:obj.power,time:Date.now()};showBossLoot(obj);note(rarity.toUpperCase()+' boss chest: '+obj.name);}
+ if(boss){s.lastBossLoot={name:obj.name,rarity:'common',power:obj.power,time:Date.now()};showBossLoot(obj);note('Boss dropped '+obj.name);}
+ else note('Equipment found: '+obj.name);
  needsMain=true;return obj;
 }
 function honorCheck(){for(let a of honors)if(!s.ach.includes(a[0])&&a[3](s)){s.ach.push(a[0]);note(a[1]+' achieved')}}
@@ -75,7 +73,7 @@ function defeat(){
  s.enemyTimer=0;s.enemyHits=0;
  if(firstClear){s.firstClears[s.zone]=Math.max(s.stage,s.firstClears[s.zone]);if(s.stage<10){s.stageUnlocked[s.zone]=Math.max(s.stageUnlocked[s.zone],s.stage+1);note('New stage unlocked: '+(s.stage+1));}else{s.bossCleared[s.zone]=true;}}
  if(e.boss){s.bosses++;s.bossCleared[s.zone]=true;note('Boss defeated: '+e.name);if(s.zone===s.unlocked&&s.unlocked<5){s.unlocked++;s.stageUnlocked[s.unlocked]=Math.max(1,s.stageUnlocked[s.unlocked]);toast(realms[s.unlocked][0]+' discovered!')}}
- let drop=createLoot(e.boss);if(e.boss&&drop&&!drop.salvaged)toast('Boss chest: '+drop.rarity.toUpperCase()+' '+drop.name+'!');
+ let drop=createLoot(e.boss);if(e.boss&&drop&&!drop.lost)toast('Boss drop: '+drop.name+'!');
  rollBattleBackground();
  s.enemyHP=e.hp;if(s.autoMode==='off')s.engagedUntil=0;
  s.combatMessage=(firstClear?'First victory! ':'')+e.name+' defeated. +'+fmt(Math.ceil(e.xp*(firstClear?1.45:.72)))+' combat XP.';
