@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Emberforge VI | Living Kingdoms</title><link rel="stylesheet" href="./styles/game.css?v=1"><link rel="stylesheet" href="./styles/workers.css?v=6"><link rel="stylesheet" href="./styles/upgrades.css?v=3"><link rel="stylesheet" href="./styles/armory.css?v=11"><link rel="stylesheet" href="./styles/inventory.css?v=1"><link rel="stylesheet" href="./styles/world.css?v=15"></head><body style="margin:0;height:100dvh;overflow:hidden;background:#07111c"><div id="ef4" class="ef4">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Emberforge VI | Living Kingdoms</title><link rel="stylesheet" href="./styles/game.css?v=1"><link rel="stylesheet" href="./styles/workers.css?v=6"><link rel="stylesheet" href="./styles/upgrades.css?v=3"><link rel="stylesheet" href="./styles/armory.css?v=11"><link rel="stylesheet" href="./styles/inventory.css?v=1"><link rel="stylesheet" href="./styles/world.css?v=15">
+<link rel="stylesheet" href="./styles/mastery.css?v=1"></head><body style="margin:0;height:100dvh;overflow:hidden;background:#07111c"><div id="ef4" class="ef4">
 
 <header class="ef-head"><div class="space"><div><div class="kicker">Idle RPG · Emberforge VI · Illustrated</div><div class="brand">Emberforge VI: Living Kingdoms</div><div class="hint">Ascend through six eras. Build power to conquer the endgame.</div></div><div class="two-actions"><span class="pill" id="ef4-savebadge">● Autosave</span><button class="btn btn-quiet" data-action="save">Save</button></div></div>
 <div class="currencies"><div class="currency"><span class="cur-ico" id="ef4-cur-ember"></span><b id="ef4-ember">0</b> Ember</div><div class="currency"><span class="cur-ico" id="ef4-cur-eps"></span><b id="ef4-eps">0</b>/s</div><div class="currency"><span class="cur-ico" id="ef4-cur-click"></span><b id="ef4-click">1</b>/tap</div><div class="currency"><span class="cur-ico" id="ef4-cur-power"></span><b id="ef4-power">1</b> damage</div><div class="currency"><span class="cur-ico" id="ef4-cur-souls"></span><b id="ef4-souls">0</b> Soulfire</div><div class="currency"><span class="cur-ico" id="ef4-cur-sp"></span><b id="ef4-sp">0</b> SP</div><div class="currency hpchip"><span class="cur-ico" id="ef4-cur-health"></span><b id="ef4-tophealth">105/105</b> HP</div><div class="currency"><span class="cur-ico" id="ef4-cur-combat"></span><b id="ef4-topcombat">1</b> Combat Lv</div></div>
@@ -103,7 +104,27 @@
  <div class="efk-legacy-data" aria-hidden="true"><span id="ef4-vistainfo"></span><span id="ef4-vistacount"></span><span id="ef4-vistaauto"></span><span id="ef4-forgetierstat"></span><span id="ef4-builtlevels"></span><span id="ef4-buildtiermax"></span><div id="ef4-kingdomsummary"></div><span id="ef4-kingdombuildcount"></span><span id="ef4-blacksmithtab"></span></div>
 </section>
 </section>
-<section class="page" data-view="mastery"><div class="space" style="flex-wrap:wrap;gap:8px"><div><h2 class="page-title">Your Legacy</h2><div class="hint">Permanent specializations, quests, achievements and Soulfire.</div></div><span class="pill" id="ef4-legacy">0 Ascensions</span></div><div class="seg" id="ef4-subnav" style="margin:12px 0"><button data-sub="skills" class="on">Specializations</button><button data-sub="quests">Quests</button><button data-sub="achievements">Achievements</button><button data-sub="bestiary">Bestiary</button><button data-sub="ascend">Ascend</button></div><div id="ef4-mastercontent"></div></section>
+<section class="page efm-mastery" data-view="mastery">
+ <header class="efm-hero">
+  <div class="efm-hero-ornament" aria-hidden="true">✦</div>
+  <div class="efm-hero-copy"><span class="efm-overline">THE HALL OF LEGACIES</span><h2 class="page-title">The Master's Chronicle</h2><p>Every victory leaves its mark. Shape your talents, claim your triumphs, and preserve your legend.</p></div>
+  <div class="efm-hero-emblem" aria-hidden="true"><span>✧</span></div>
+ </header>
+ <div class="efm-legacy-strip" aria-label="Your permanent progress">
+  <div class="efm-legacy-stat"><span>GUARDIANS VANQUISHED</span><strong id="ef4-masterybosses">0 / 6</strong></div>
+  <div class="efm-legacy-stat"><span>ASCENSIONS</span><strong id="ef4-legacy">0 Ascensions</strong></div>
+  <div class="efm-legacy-stat"><span>UNSPENT TALENT</span><strong id="ef4-masterysp">0 SP</strong></div>
+  <div class="efm-legacy-stat"><span>SOULFIRE</span><strong id="ef4-masterysouls">0</strong></div>
+ </div>
+ <nav class="efm-nav" id="ef4-subnav" aria-label="Mastery chambers">
+  <button type="button" data-sub="skills" class="on" aria-pressed="true"><span class="efm-nav-symbol" aria-hidden="true">✧</span><span>Specializations</span></button>
+  <button type="button" data-sub="quests" aria-pressed="false"><span class="efm-nav-symbol" aria-hidden="true">⚔</span><span>Contracts</span></button>
+  <button type="button" data-sub="achievements" aria-pressed="false"><span class="efm-nav-symbol" aria-hidden="true">✦</span><span>Triumphs</span></button>
+  <button type="button" data-sub="bestiary" aria-pressed="false"><span class="efm-nav-symbol" aria-hidden="true">☽</span><span>Bestiary</span></button>
+  <button type="button" data-sub="ascend" aria-pressed="false"><span class="efm-nav-symbol" aria-hidden="true">♜</span><span>Ascension</span></button>
+ </nav>
+ <div class="efm-chamber" id="ef4-mastercontent" aria-live="polite"></div>
+ </section>
 </main></div>
 <footer class="footer"><span id="ef4-saveinfo">Progress autosaves locally every 10 seconds when supported. Illustrations load from the game's art and data assets.</span><div class="two-actions"><button data-action="export" style="text-decoration:underline">Export save</button><button data-action="import" style="text-decoration:underline">Import save</button><button data-action="reset" style="text-decoration:underline">New game</button></div></footer>
 <div id="ef4-modal" style="display:none"></div><div id="ef4-toast" class="notice" style="display:none"></div>
