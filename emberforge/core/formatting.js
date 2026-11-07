@@ -15,7 +15,7 @@ let oldZone=Math.floor(clamp(obj.zone??obj.realm??0,0,5));
 x.combatLevel=Math.floor(clamp(obj.combatLevel??Math.max(1,REALM_LEVELS[oldZone],Math.floor(Math.sqrt(x.kills/2))+1),1,140));
 x.combatXP=clamp(x.combatXP,0,1e15);
 // Preserve potion stacks across loads and older save migrations. Never treat consumables as gear.
-x.potions=Object.fromEntries(HEALING_POTIONS.map(p=>[p.id,Math.floor(clamp(obj.potions?.[p.id]??0,0,9999))]));
+x.potions=Object.fromEntries(HEALING_POTIONS.map(p=>[p.id,Math.floor(clamp(obj.potions?.[p.id]??0,0,p.maxStack))]));
 x.hp=Object.prototype.hasOwnProperty.call(obj,'hp')&&obj.version>=5?clamp(obj.hp,0,1e15):null;
 for(let k of Object.keys(f.training))x.training[k]=Math.floor(clamp(x.training[k],0,30));
 x.enemyTimer=0;x.enemyHits=0;x.manualAt=0;x.engagedUntil=0;x.downUntil=0;x.potionReady=0;x.combatMessage='Battle ready';x.zone=Math.floor(clamp(obj.zone??obj.realm??0,0,5));x.unlocked=Math.floor(clamp(x.unlocked,0,5));x.zone=Math.min(x.zone,x.unlocked);while(x.zone>0&&!(x.combatLevel>=REALM_LEVELS[x.zone]&&x.ascensions>=REALM_ASCENSIONS[x.zone])){x.zone--;obj={...obj,stage:1,enemyHP:0}}x.stage=Math.floor(clamp(obj.stage??obj.wave??1,1,10));x.enemyHP=clamp(obj.enemyHP??obj.hp??0,0,1e99);if(oldZone!==x.zone||Number(obj.stage??obj.wave??1)!==x.stage)x.enemyHP=0;x.level=Math.max(1,Math.floor(clamp(x.level,1,999999)));
