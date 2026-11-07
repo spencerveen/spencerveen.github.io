@@ -116,12 +116,11 @@ function rollPotionDrop(boss){
 }
 function honorCheck(){for(let a of honors)if(!s.ach.includes(a[0])&&a[3](s)){s.ach.push(a[0]);note(a[1]+' achieved')}}
 function defeat(){
- let e=enemy(),firstClear=s.stage>s.firstClears[s.zone];s.kills++;let key=e.boss?e.icon:'mob-'+s.zone+'-'+s.stage;s.codex[key]=(s.codex[key]||0)+1;
+ let e=enemy(),firstClear=s.stage>s.firstClears[s.zone],firstBossVictory=e.boss&&!bossClearedAt(s.zone);s.kills++;let key=e.boss?e.icon:'mob-'+s.zone+'-'+s.stage;s.codex[key]=(s.codex[key]||0)+1;
  gain(e.reward*(firstClear?1.45:1)*(1+.04*activeTraining('blade')+.05*activeSkill('veteran'))*multiplier('battleReward'));earnCombatXP(Math.ceil(e.xp*(firstClear?1.45:.72)));
  s.enemyTimer=0;s.enemyHits=0;
  if(firstClear){s.firstClears[s.zone]=Math.max(s.stage,s.firstClears[s.zone]);if(s.stage<10){s.stageUnlocked[s.zone]=Math.max(s.stageUnlocked[s.zone],s.stage+1);note('New stage unlocked: '+(s.stage+1));}else{s.bossCleared[s.zone]=true;}}
  if(e.boss){
-  const firstBossVictory=!s.bossCleared[s.zone];
   s.bosses++;s.bossCleared[s.zone]=true;
   note('Boss defeated: '+e.name);
   // Region and Kingdom building tiers advance on the first clear only.
