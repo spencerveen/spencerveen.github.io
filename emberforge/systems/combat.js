@@ -65,7 +65,7 @@ function playerAttack(auto=false){
  spawnPop($('battlescene'),critical?'CRIT -'+fmt(value):'-'+fmt(value),'battle');
  return {kind:critical?'critical':'hit',damage:value};
 }
-const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.24,stage-1)*(boss?1.8:trait.hp));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost'))*(1+.08*activeSkill('fortune')));return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
+const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.24,stage-1)*(boss?1.8:trait.hp));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost')));return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
 const enemy=()=>enemyAt(s.zone,s.stage);
 const foeAttackIntervalFor=e=>e.boss?2.1:2.1*e.traitData.speed;
 const foeRawDamageFor=e=>Math.ceil((4+e.stage*1.65)*Math.pow(4.95,e.zone)*(e.boss?1.4:e.traitData.atk));
@@ -78,15 +78,18 @@ function chooseSmartTarget(){if(s.autoMode!=='smart')return;let best=bestFarmSta
 function gain(n){if(!Number.isFinite(n)||n<=0)return;s.ember+=n;s.lifetime+=n;s.runEarned+=n;let lv=1+Math.floor(Math.log10(s.lifetime/100+1)*4);if(lv>s.level){let earned=Math.floor((lv-1)/4)-Math.floor((s.level-1)/4);s.level=lv;if(earned>0){s.skillPoints+=earned;toast('Level up! +'+earned+' skill points')}}}
 const rarityValue={common:0,rare:1,epic:2,legendary:3};
 const sellValue=g=>Math.max(6,Math.round(g.power*(5+activeBuild('vault')*.25)));
-function createLoot(boss){
- if(s.zone!==0)return null; // No drops outside Ashen Wilds during rebuild.
- const dropRate=boss?.055:s.stage<=3?.012:s.stage<=6?.016:.020;
+function createLoot(boss,firstBossVictory=false){
+ // The first guardian clear grants a weapon from the newly unlocked realm.
+ // All other encounters drop their own region's scaled equipment.
+ const dropRate=(firstBossVictory?1:boss?.10:s.stage<=3?.035:s.stage<=6?.04:.05)*(1+.15*activeSkill('fortune'));
+ const lootZone=firstBossVictory?Math.min(realms.length-1,s.zone+1):s.zone;
+ const regionPower=Math.pow(10,lootZone);
  if(Math.random()>=dropRate)return null;
  const eligible=ASHEN_LOOT.filter(item=>boss||s.stage>=item.min);
  const total=eligible.reduce((sum,item)=>sum+item.weight,0);
  let roll=Math.random()*total;
- const base=eligible.find(item=>(roll-=item.weight)<0)||eligible[eligible.length-1];
- const obj={id:'g'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),name:base.name,slot:base.slot,icon:base.icon,rarity:'common',origin:0,tier:s.stage,locked:false,power:base.power,ability:base.ability||null,abilityValue:base.abilityValue||0};
+ const base=firstBossVictory?ASHEN_LOOT.find(item=>item.name==='Iron Sword'):(eligible.find(item=>(roll-=item.weight)<0)||eligible[eligible.length-1]);
+ const obj={id:'g'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),name:lootZone?realms[lootZone][0]+' '+base.name:base.name,slot:base.slot,icon:base.icon,rarity:'common',origin:lootZone,tier:s.stage,locked:false,power:Math.round(base.power*regionPower),ability:base.ability||null,abilityValue:base.abilityValue*(base.ability==='attack'||base.ability==='protection'?regionPower:1)||0};
  s.lootFound++;
  if(inventoryUsedSlots()>=inventoryCapacity()){
    note('Backpack full: '+obj.name+' could not be collected.');
@@ -98,7 +101,6 @@ function createLoot(boss){
  needsMain=true;return obj;
 }
 function rollPotionDrop(boss){
- if(s.zone!==0)return null;
  const potion=potionDefinition('minor');
  if(!potion||Math.random()>=(boss?potion.bossDropChance:potion.dropChance))return null;
  const stored=potionCount(potion.id);
@@ -117,7 +119,7 @@ function rollPotionDrop(boss){
 function honorCheck(){for(let a of honors)if(!s.ach.includes(a[0])&&a[3](s)){s.ach.push(a[0]);note(a[1]+' achieved')}}
 function defeat(){
  let e=enemy(),firstClear=s.stage>s.firstClears[s.zone],firstBossVictory=e.boss&&!bossClearedAt(s.zone);s.kills++;let key=e.boss?e.icon:'mob-'+s.zone+'-'+s.stage;s.codex[key]=(s.codex[key]||0)+1;
- gain(e.reward*(firstClear?1.45:1)*(1+.04*activeTraining('blade')+.05*activeSkill('veteran'))*multiplier('battleReward'));earnCombatXP(Math.ceil(e.xp*(firstClear?1.45:.72)));
+ gain(e.reward*(firstClear?1.45:1)*(1+.04*activeTraining('blade')+(e.boss?.08*activeSkill('veteran'):0))*multiplier('battleReward'));earnCombatXP(Math.ceil(e.xp*(firstClear?1.45:.72)));
  s.enemyTimer=0;s.enemyHits=0;
  if(firstClear){s.firstClears[s.zone]=Math.max(s.stage,s.firstClears[s.zone]);if(s.stage<10){s.stageUnlocked[s.zone]=Math.max(s.stageUnlocked[s.zone],s.stage+1);note('New stage unlocked: '+(s.stage+1));}else{s.bossCleared[s.zone]=true;}}
  if(e.boss){
@@ -130,7 +132,7 @@ function defeat(){
    toast(realms[s.unlocked][0]+' discovered!');
   }
  }
- let drop=createLoot(e.boss);if(e.boss&&drop&&!drop.lost)toast('Boss drop: '+drop.name+'!');
+ let drop=createLoot(e.boss,firstBossVictory);if(e.boss&&drop&&!drop.lost)toast('Boss drop: '+drop.name+'!');
  rollPotionDrop(e.boss);
  rollBattleBackground();
  s.enemyHP=e.hp;if(s.autoMode==='off')s.engagedUntil=0;
