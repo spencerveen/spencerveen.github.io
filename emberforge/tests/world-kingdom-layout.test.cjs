@@ -31,13 +31,13 @@ test('Kingdom offers direct world travel while retaining individual building hot
 });
 
 
-test('widescreen fills idle gutters with decorative vista while preserving hotspot geometry',()=>{
- assert.match(css,/Widescreen Kingdom treatment/);
+test('widescreen uses playable scene width while preserving hotspot geometry',()=>{
+ assert.match(css,/Wide desktop Kingdom/);
  assert.match(css,/#ef4 \.efk-vista-frame\.efk-kingdom-interactive::before\{/);
  assert.match(css,/url\('\.\.\/art\/frontier-settlement\.avif'\)/);
  assert.match(css,/pointer-events:none;/);
  assert.match(css,/\.efk-vista-frame\.efk-kingdom-interactive>\.kingdomscene\{/);
  assert.match(css,/aspect-ratio:1672 \/ 941!important/);
- assert.match(css,/calc\(\(100dvh - 305px\) \* 1672 \/ 941\)/);
+ assert.match(css,/width:min\(calc\(100% - 64px\),1560px\)/);
  assert.match(html,/data-kingdom-point="merchant"/);
 });
