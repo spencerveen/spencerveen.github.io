@@ -35,7 +35,7 @@
 <div class="stack battle-side">
 <div class="card combat-card">
  <div class="space"><div class="label" style="color:#a3e5c3">Your Adventurer <span id="ef4-playerlevel" style="font-weight:800;color:#fff3cf">· Combat Lv 1</span></div><span id="ef4-combatstate" class="pill">Resting</span></div>
- <div class="space" style="margin:7px 0 4px"><strong id="ef4-hpplayer">105 / 105 HP</strong><span class="hint" id="ef4-regen">Regeneration: +5 HP/s</span></div>
+ <div class="space" style="margin:7px 0 4px"><strong id="ef4-hpplayer">105 / 105 HP</strong><span class="hint" id="ef4-regen">Resting regen: +0.5% max HP/s</span></div>
  <div class="progress hp-track"><div id="ef4-playerhpbar" class="health-fill" style="width:100%"></div></div>
  <div class="space hint" style="margin-top:6px"><span id="ef4-xplabel">Combat XP: 0 / 48</span><span id="ef4-defense">Defense 8</span></div>
  <div class="progress xp-track"><div id="ef4-combatxpbar" style="width:0%;background:linear-gradient(90deg,#5a9ed2,#a6c6ff)"></div></div>
@@ -47,10 +47,10 @@
  <div class="space hint" style="margin:8px 0 0"><span id="ef4-enemyattack">Enemy damage 11 · Attacks every 2.1s</span><span id="ef4-xpreward">+18 XP</span></div>
  <div class="progress" style="height:5px;margin-top:7px"><div id="ef4-enemytimerbar" style="width:0%;background:linear-gradient(90deg,#e26c79,#ffac90)"></div></div>
  <div id="ef4-bosslootnote" class="bossnote" style="display:none">Ashen Wilds bosses have a 5.5% chance to drop equipment. Other realms do not currently drop gear.</div>
- <div class="combat-buttons" style="margin-top:12px"><button class="btn btn-gold" id="ef4-strike">Strike</button><button class="btn" id="ef4-auto">Auto OFF</button><button class="btn" id="ef4-potion">Heal</button><button class="btn btn-quiet" id="ef4-retreat">Retreat</button></div>
+ <div class="combat-buttons" style="margin-top:12px"><button class="btn btn-gold" id="ef4-strike">Strike</button><button class="btn" id="ef4-auto">Auto OFF</button><button class="btn" id="ef4-potion" title="Consumes a Minor Healing Potion from your supplies">Use Potion (0)</button><button class="btn btn-quiet" id="ef4-retreat">Retreat</button></div>
  <div class="progress" style="margin-top:9px;height:5px"><div id="ef4-manualbar" style="width:100%;background:#ffbd7b"></div></div>
- <div class="hint" id="ef4-combatodds" style="margin-top:8px">Hit 92% · Crit 5% · Evade 12% · Block 6%</div><div class="hint" id="ef4-autodesc" style="margin-top:6px">Auto modes: OFF → Farm target → Smart Hunt. Smart Hunt chooses a survivable target and rests when injured.</div>
- <div class="combat-message" id="ef4-combatmessage">Rest between fights, or use Ember to heal.</div>
+ <div class="hint" id="ef4-combatodds" style="margin-top:8px">Hit 30% · Crit 5% · Evade 5% · Block 0%</div><div class="hint" id="ef4-autodesc" style="margin-top:6px">Auto modes: OFF → Farm target → Smart Hunt. Smart Hunt chooses a survivable target and rests when injured.</div>
+ <div class="combat-message" id="ef4-combatmessage">Rest to regenerate, or use a healing potion from your supplies.</div>
 </div>
 </div></div>
 <div class="grid2" style="margin-top:12px"><div class="card"><div class="space" style="margin-bottom:10px"><strong>Combat training</strong><span class="pill">Permanent improvements</span></div><div class="hint">Train with Ember. Levels, stats and equipment determine your survival.</div><div id="ef4-traininglist" class="traininggrid"></div></div>
@@ -68,15 +68,15 @@
 <div id="ef4-modal" style="display:none"></div><div id="ef4-toast" class="notice" style="display:none"></div>
 <script src="./data/catalogs.js?v=3"></script>
 <script src="./data/monster-portraits.js?v=1"></script>
-<script src="./data/definitions.js?v=9"></script>
+<script src="./data/definitions.js?v=10"></script>
 <script src="./data/realm-backgrounds.js?v=2"></script>
 <script src="./data/boss-backgrounds.js?v=2"></script>
 <script src="./data/forge-backgrounds.js?v=2"></script>
 <script src="./data/kingdom-vistas.js?v=1"></script>
-<script src="./core/formatting.js?v=5"></script>
+<script src="./core/formatting.js?v=6"></script>
 <script src="./core/storage.js?v=2"></script>
-<script src="./systems/combat.js?v=13"></script><script src="./systems/travel.js?v=1"></script>
+<script src="./systems/combat.js?v=14"></script><script src="./systems/travel.js?v=1"></script>
 <script src="./ui/adventurer.js?v=4"></script>
-<script src="./ui/views.js?v=26"></script>
-<script src="./core/loop.js?v=6"></script>
+<script src="./ui/views.js?v=27"></script>
+<script src="./core/loop.js?v=7"></script>
 </div></body></html>
