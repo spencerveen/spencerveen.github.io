@@ -21,7 +21,7 @@ function stats(){
  $('levelbar').style.width=100*Math.min(1,Math.max(0,(s.lifetime-low)/(high-low)))+'%';$('levelinfo').textContent='Next level at '+fmt(high)+' lifetime Ember';
  $('homeenemy').textContent=e.name;$('homewave').textContent=realms[s.zone][0]+' · '+(e.boss?'BOSS':'Stage '+s.stage+'/10')+' · '+e.trait;
  $('homecombat').textContent='Combat Lv '+s.combatLevel+' · '+fmt(s.hp)+' / '+fmt(hpMax)+' HP';
- $('homebossnote').textContent=boss?'Boss encounter · Rare+ chest. Epic boss-only; Legendary in later realms.':'Choose and repeat any unlocked stage. New stages unlock after first victories.';
+ $('homebossnote').textContent=boss?'Boss encounter · extra damage and a low Ashen Wilds equipment drop chance.':'Choose and repeat any unlocked stage. New stages unlock after first victories.';
  $('homebattle').textContent=boss?'Enter Boss Battle →':'Enter Battle →';if(boss)setIcon('homeicon',e.icon,'xl');else{let art=$('homeicon'),k='homemob-'+s.zone+'-'+s.stage;if(art.dataset.icon!==k){art.dataset.icon=k;art.innerHTML=monsterSheetHTML(s.zone,s.stage,'home');}}
  let pct=100*s.enemyHP/e.hp;$('homehp').style.width=pct+'%';
  $('battleregion').textContent=realms[s.zone][0]+' · '+(boss?'BOSS · ':'')+'Stage '+s.stage+' / 10';
@@ -41,7 +41,7 @@ function stats(){
  $('combatstate').textContent=down?(now<s.downUntil?'Knocked out · '+Math.ceil((s.downUntil-now)/1000)+'s':'Knocked out'):active?'In combat':'Resting';
  $('combatstate').style.borderColor=down?'#ee657e':active?'#e1a46a':'#3d9475';
  $('regen').textContent='Regen +'+fmt(realRecovery(active))+' HP/s';
- $('enemyattack').textContent='Enemy hit '+fmt(foeRawDamage())+' · Every '+foeAttackInterval().toFixed(2)+'s';
+ $('enemyattack').textContent='Enemy hit '+fmt(foeRawDamage())+' · Every '+foeAttackInterval().toFixed(2)+'s';$('combatodds').textContent='Hit '+Math.round(playerHitChance(e)*100)+'% · Crit '+(playerCritChance()*100).toFixed(1)+'% · Evade '+Math.round((1-enemyHitChance(e))*100)+'% · Block '+Math.round(blockChance()*100)+'%';
  $('enemytimerbar').style.width=(active?Math.min(100,s.enemyTimer/foeAttackInterval()*100):0)+'%';
  $('strike').textContent=down?'Recovering...':boss?'Strike Boss':'Strike';$('strike').disabled=down||now<s.manualAt;
  $('manualbar').style.width=(down?0:Math.min(100,100*(1-Math.max(0,s.manualAt-now)/650)))+'%';
