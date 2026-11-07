@@ -260,7 +260,7 @@ const GATE_WORKERS=[
  ['oracle',3,28],['sun',4,32],['cosmic',5,37]
 ];
 const GATE_BUILDINGS=[
- ['mine',0,1],['barracks',0,1],['library',0,4],['roost',1,12],['watchtower',2,23],['vault',3,38]
+ ['mine',0,1],['barracks',0,1],['library',0,4],['roost',0,6],['watchtower',0,8],['vault',0,10]
 ];
 const upgradeReq = u => {let g=GATE_UPGRADES.find(x=>x[0]===u[0]);return g||[u[0],0,1,1]};
 const upgradeUnlocked = u => {let g=upgradeReq(u);return s.ascensions>=g[1]&&s.level>=g[2]&&s.combatLevel>=g[3]};
