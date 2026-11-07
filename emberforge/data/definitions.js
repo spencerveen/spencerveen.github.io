@@ -3,7 +3,7 @@ const MOB_TRAITS=[{name:'Standard',hp:1,atk:1,speed:1},{name:'Swift',hp:.92,atk:
 // Healing consumables are separate from the equipment backpack. The buy prices are
 // future merchant stock definitions only; purchasing is not enabled yet.
 const HEALING_POTIONS=[
- {id:'minor',name:'Minor Healing Potion',heal:0.35,price:150,dropChance:0.003, bossDropChance:0.008,icon:'gem'}
+ {id:'minor',name:'Minor Healing Potion',heal:0.10,maxStack:10,price:150,dropChance:0.003, bossDropChance:0.008,icon:'gem'}
 ];
 const potionDefinition=id=>HEALING_POTIONS.find(p=>p.id===id);
 // Starter gear is defined for a future Kingdom merchant, but is not sold or dropped yet.
