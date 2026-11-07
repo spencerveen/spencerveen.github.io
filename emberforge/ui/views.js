@@ -133,18 +133,8 @@ function renderUpgrades(){
  }
 }
 // Kingdom hub keeps its workspace selection while the player shops or builds.
-let kingdomTab='buildings';
+let kingdomPoint=null;
 let merchantTab='buy';
-function setKingdomTab(tab){
- if(!['buildings','merchant','blacksmith'].includes(tab))return;
- if(tab==='blacksmith'&&!bossClearedAt(0))return;
- kingdomTab=tab;
- $$('[data-kingdom-tab]').forEach(button=>{
-  const active=button.dataset.kingdomTab===tab;
-  button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));
- });
- $$('[data-kingdom-panel]').forEach(panel=>{panel.hidden=panel.dataset.kingdomPanel!==tab});
-}
 function setMerchantTab(tab){
  if(!['buy','sell'].includes(tab))return;
  merchantTab=tab;
@@ -153,6 +143,22 @@ function setMerchantTab(tab){
   button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));
  });
  $$('[data-merchant-panel]').forEach(panel=>{panel.hidden=panel.dataset.merchantPanel!==tab});
+}
+function closeKingdomLocation(){
+ kingdomPoint=null;
+ $('kingdomdialog').hidden=true;
+ $('kingdomscene').querySelectorAll('[data-kingdom-point]').forEach(button=>button.setAttribute('aria-pressed','false'));
+}
+function openKingdomLocation(point){
+ if(!atKingdom())return;
+ if(point==='blacksmith'&&!bossClearedAt(0))return;
+ if(point!=='merchant'&&point!=='blacksmith'&&!buildings.some(b=>b[0]===point))return;
+ kingdomPoint=point;
+ if(point==='merchant')merchantTab='buy';
+ $('kingdomdialog').hidden=false;
+ $('kingdomscene').querySelectorAll('[data-kingdom-point]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.kingdomPoint===point)));
+ renderKingdom();
+ $('kingdomdialog').querySelector('.efk-dialog-close')?.focus({preventScroll:true});
 }
 // Every structure must reach the threshold before the Kingdom evolves.
 // The vista index persists across Ascension, even when buildings reset.
@@ -177,29 +183,32 @@ function earnedKingdomVista(){
  return unlocked;
 }
 function renderKingdom(){
- const cap=buildingCap();
- const earned=earnedKingdomVista();
+ const cap=buildingCap(),earned=earnedKingdomVista();
  if(earned>(s.kingdomVistaMilestone||0)){s.kingdomVistaMilestone=earned;save();}
- // Override legacy combined-level previews with the actual earned vista.
  kingdomVistaPreview=Math.min(KINGDOM_VISTAS.length-1,earned);
  updateIllustratedScenes();
+ // The first visual uses interactive landmark positions; future vistas will
+ // receive their own art/hotspot layouts in later passes.
+ $('kingdomscene').classList.toggle('efk-frontier',earned===0);
  const owned=Object.values(s.build).reduce((n,x)=>n+x,0);
- $('kingdominfo').textContent='Bosses '+bossesDefeated()+'/6 · '+owned+' built levels';
- $('kingdomcap').textContent='Current cap '+cap+' / 12';
- $('kingdombuildcount').textContent=owned?String(owned):'';
- $('blacksmithtab').hidden=!bossClearedAt(0);
- if(kingdomTab==='blacksmith'&&!bossClearedAt(0))kingdomTab='buildings';
- const visible=buildings.filter(b=>buildingUnlocked(b)||s.build[b[0]]>0);
- $('buildlist').innerHTML=visible.map(b=>{
-  const lv=s.build[b[0]],cost=costBuild(b),unlocked=buildingUnlocked(b),maxed=lv>=cap;
+ $('kingdominfo').textContent='Bosses '+bossesDefeated()+'/6 · '+owned+' building levels';
+ $('kingdomcap').textContent='Level cap '+cap+' / 12';
+ const selected=buildings.find(b=>b[0]===kingdomPoint);
+ $('buildlist').innerHTML=selected?(()=>{
+  const b=selected,lv=s.build[b[0]]||0,cost=costBuild(b),unlocked=buildingUnlocked(b),maxed=lv>=cap;
   return `<article class="efk-building ${unlocked?'':'efk-building-locked'}">
-    <div class="efk-building-top"><span class="efk-building-art">${iconHTML(b[2],'lg')}</span><div class="efk-building-name"><strong>${esc(b[1])}</strong><span>${esc(b[5])}</span></div><span class="efk-building-level">Lv ${lv}/${cap}</span></div>
-    <div class="efk-building-track"><span style="width:${100*Math.min(cap,lv)/cap}%"></span></div>
-    <div class="efk-building-bottom"><span class="efk-building-price">${maxed?'Max level':unlocked?short(cost):'Unavailable'}</span>${shopButton('build',b[0],cost,maxed||!unlocked||s.ember<cost,maxed?'Maxed':!unlocked?'Unavailable':'Upgrade')}</div>
-   </article>`;
- }).join('');
+   <div class="efk-building-top"><span class="efk-building-art">${iconHTML(b[2],'lg')}</span><div class="efk-building-name"><strong>${esc(b[1])}</strong><span>${esc(b[5])}</span></div><span class="efk-building-level">Lv ${lv}/${cap}</span></div>
+   <div class="efk-building-track"><span style="width:${100*Math.min(cap,lv)/cap}%"></span></div>
+   <div class="efk-building-bottom"><span class="efk-building-price">${maxed?'Current tier complete':unlocked?short(cost)+' Ember':'Unavailable'}</span>${shopButton('build',b[0],cost,maxed||!unlocked||s.ember<cost,maxed?'Maxed':!unlocked?'Unavailable':'Upgrade')}</div>
+  </article>`;
+ })():'';
  renderKingdomMerchant();
- setKingdomTab(kingdomTab);
+ $('kingdomdialog').hidden=!kingdomPoint;
+ $('kingdomdialogtitle').textContent=selected?selected[1]:kingdomPoint==='merchant'?'The Traveling Merchant':kingdomPoint==='blacksmith'?'The Blacksmith':'Kingdom';
+ $$('[data-kingdom-panel]').forEach(panel=>{
+  const panelType=selected?'buildings':kingdomPoint==='merchant'?'merchant':'blacksmith';
+  panel.hidden=!kingdomPoint||panel.dataset.kingdomPanel!==panelType;
+ });
  setMerchantTab(merchantTab);
 }
 function renderKingdomMerchant(){
@@ -382,7 +391,7 @@ function renderWorld(){
  $('mapmarkers').innerHTML=stops.map(p=>`<button class="caladryn-map-pin ${p.current?'current':''} ${p.available?'open':'locked'}" style="--mx:${p.x}%;--my:${p.y}%" type="button" ${p.attr} ${!p.available?'disabled':''} title="${esc(p.name)} · ${esc(p.requirement)}" aria-label="${esc(p.name)}: ${p.status}"><span class="caladryn-pin-glyph" aria-hidden="true">${p.available?p.symbol:'×'}</span></button>`).join('');
   caladrynMapSignature=mapSignature;
  }
- if(home)renderKingdom();else renderTraining();
+ if(home)renderKingdom();else{closeKingdomLocation();renderTraining();}
 }
 const quests=()=>[
  ['q1','Spark Collector','Tap 30 times',s.clicks,30,120],
@@ -435,7 +444,8 @@ root.addEventListener('click',e=>{let b=e.target.closest('button');if(!b||!root.
 if(Object.prototype.hasOwnProperty.call(b.dataset,'returnHome')){travelToKingdom();go('world');toast('Returned safely to the Kingdom');return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapToggle')){caladrynMapCollapsed=!caladrynMapCollapsed;try{window.localStorage.setItem(CALADRYN_MAP_PREFERENCE,caladrynMapCollapsed?'1':'0')}catch(_){}updateCaladrynMapVisibility();return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapZoom')){const viewport=$('mapviewport'),zoom=viewport.classList.toggle('zoomed');b.setAttribute('aria-pressed',String(zoom));b.textContent=zoom?'Fit map to window':'Enlarge map';if(!zoom)viewport.scrollLeft=0;return}
-if(b.dataset.kingdomTab){setKingdomTab(b.dataset.kingdomTab);return}
+if(b.dataset.kingdomPoint){openKingdomLocation(b.dataset.kingdomPoint);return}
+if(Object.prototype.hasOwnProperty.call(b.dataset,'kingdomClose')){closeKingdomLocation();return}
 if(b.dataset.merchantTab){setMerchantTab(b.dataset.merchantTab);return}
 if(b.dataset.avatarGender){const gender=b.dataset.avatarGender;if(gender!=='male'&&gender!=='female')return;s.avatarBody=gender;renderGear();save();return}if(b.dataset.page){go(b.dataset.page);return}if(b.dataset.go){go(b.dataset.go);return}if(b.dataset.sub){sub=b.dataset.sub;renderMastery();return}if(b.dataset.upgradeFilter){s.upgradeView=b.dataset.upgradeFilter;renderUpgrades();save();return}if(b.dataset.buy){buyMode=b.dataset.buy;$$('[data-buy]').forEach(x=>x.classList.toggle('on',x.dataset.buy===buyMode));renderWorkers();return}
 if(b.id==='ef4-crystal'){mine();return}
