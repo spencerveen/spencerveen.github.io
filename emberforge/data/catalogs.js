@@ -38,17 +38,17 @@ const upgrades=[
 const buildings=[
 ['mine','Crystal Mines','mine',140,.07,'+7% worker income per level'],
 ['barracks','Knight Barracks','barracks',450,.04,'+4% combat XP per level'],
-['library','Arcane Libraries','library',1400,.07,'+7% click income per level'],
-['roost','Dragon Roosts','roost',9000,.06,'+6% battle rewards per level'],
-['watchtower','Watchtowers','watchtower',50000,.025,'Auto-Strike faster by 2.5% per level'],
-['vault','Royal Vaults','vault',300000,.05,'+5% equipment sale value per level']];
+['library','Arcane Libraries','library',1100,.07,'+7% click income per level'],
+['roost','Dragon Roosts','roost',2500,.06,'+6% battle rewards per level'],
+['watchtower','Watchtowers','watchtower',4500,.025,'Auto-Strike faster by 2.5% per level'],
+['vault','Royal Vaults','vault',6500,.05,'+5% equipment sale value per level']];
 const skills=[
 ['harvest','Ember Mastery','flame','+12% click income per level'],
 ['industry','Clockwork Insight','gear','+12% worker income per level'],
 ['blade','Battle Studies','swords','+6% combat XP per level'],
-['fortune','Fortune Seeker','chest','+8% battle rewards per level'],
+['fortune','Fortune Seeker','chest','+15% equipment drop chance per level'],
 ['aura','Soul Resonance','soulfire','+3% Forge and worker income per level'],
-['veteran','Field Commander','badge','+5% Ember rewards from enemies per level']];
+['veteran','Field Commander','badge','+8% Ember rewards from bosses per level']];
 const realms=[
 ['Ashen Wilds','crystal','Ash Imp','ashimp','Cinder Warden','cinderwarden',20,8],
 ['Whispering Forest','map','Thorn Stalker','thornstalker','Ancient Ent','ancientent',250,95],
