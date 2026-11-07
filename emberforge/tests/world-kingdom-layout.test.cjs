@@ -29,3 +29,15 @@ test('Kingdom offers direct world travel while retaining individual building hot
  assert.match(views,/if\(e\.key==='Escape'&&!caladrynMapCollapsed\)/);
  assert.match(views,/if\(e\.target\.id==='ef4-mapregion'\)/);
 });
+
+
+test('widescreen fills idle gutters with decorative vista while preserving hotspot geometry',()=>{
+ assert.match(css,/Widescreen Kingdom treatment/);
+ assert.match(css,/#ef4 \.efk-vista-frame\.efk-kingdom-interactive::before\{/);
+ assert.match(css,/url\('\.\.\/art\/frontier-settlement\.avif'\)/);
+ assert.match(css,/pointer-events:none;/);
+ assert.match(css,/\.efk-vista-frame\.efk-kingdom-interactive>\.kingdomscene\{/);
+ assert.match(css,/aspect-ratio:1672 \/ 941!important/);
+ assert.match(css,/calc\(\(100dvh - 305px\) \* 1672 \/ 941\)/);
+ assert.match(html,/data-kingdom-point="merchant"/);
+});
