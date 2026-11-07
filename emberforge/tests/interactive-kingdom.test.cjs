@@ -8,11 +8,11 @@ const html=read('game.html'),views=read('ui/views.js'),css=read('styles/world.cs
 const kingdom=html.slice(html.indexOf('id="ef4-kingdominterior"'),html.indexOf('<section class="page" data-view="mastery"'));
 const places=['mine','barracks','library','roost','watchtower','vault','merchant'];
 test('first Kingdom scene ships its own dark fantasy visual asset',()=>{
- assert.ok(fs.existsSync(path.join(__dirname,'../art/frontier-settlement.svg')));
- const svg=read('art/frontier-settlement.svg');
- assert.match(svg,/^<svg[^>]*viewBox="0 0 1672 941"/);
- assert.match(svg,/data:image\/avif;base64,/);
- assert.match(css,/frontier-settlement\.svg/);
+ const image=fs.readFileSync(path.join(__dirname,'../art/frontier-settlement.avif'));
+ assert.equal(image.toString('ascii',4,8),'ftyp');
+ assert.equal(image.toString('ascii',8,12),'avif');
+ assert.ok(image.length>40000);
+ assert.match(css,/frontier-settlement\.avif/);
  assert.match(views,/classList\.toggle\('efk-frontier',earned===0\)/);
 });
 test('all six building areas and merchant have interactive, labeled hotspots',()=>{
