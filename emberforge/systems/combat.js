@@ -42,7 +42,7 @@ const playerHitChance=e=>{
  // An unarmed novice misses most swings. Levels, weapon skill and future equipment matter.
  const skill=.018*Math.max(0,s.combatLevel-1);
  const weaponBonus=weapon?.slot==='mainHand'?.10+Math.min(.10,(weapon.power||0)*.005):0;
- return combatClamp(.38+skill+weaponBonus-.007*(e.stage-1)-.03*e.zone-(e.trait==='Swift'?.06:0)-(e.boss?.05:0),.20,.95);
+ return combatClamp(.30+skill+weaponBonus-.007*(e.stage-1)-.03*e.zone-(e.trait==='Swift'?.06:0)-(e.boss?.05:0),.20,.95);
 };
 const enemyHitChance=e=>combatClamp(.88+.006*(e.stage+e.zone*9-s.combatLevel)-(e.trait==='Swift'?.03:0),.68,.95);
 const playerCritChance=()=>combatClamp(.05+.0005*Math.max(0,s.combatLevel-1),.05,.12);
