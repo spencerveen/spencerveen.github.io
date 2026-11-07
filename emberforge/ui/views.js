@@ -379,6 +379,7 @@ function renderWorld(){
  $('worldlocation').textContent=home?'At Kingdom':'Exploring '+location;
  $('returnhome').hidden=home;
  $('kingdominterior').hidden=!home;
+ $('kingdominterior').closest('[data-view="world"]')?.classList.toggle('kingdom-at-home',home);
  $('worldbattle').hidden=home;
  $('worldbattle').classList.toggle('active',!home&&page==='world');
  updateCaladrynMapVisibility();
