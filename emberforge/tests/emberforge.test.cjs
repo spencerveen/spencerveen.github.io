@@ -56,7 +56,7 @@ test('UI and engine retain the controls combat depends upon', () => {
     assert.ok(html.includes('id="' + id + '"'), 'Missing DOM element ' + id);
   }
   const engine = read('core/loop.js');
-  for (const method of ['getCombatState', 'selectStage', 'setAutoAttack', 'strike', 'heal']) {
+  for (const method of ['getCombatState', 'selectStage', 'setAutoAttack', 'strike', 'usePotion']) {
     assert.match(engine, new RegExp('\\b' + method + ':'));
   }
 });
@@ -87,18 +87,18 @@ test('save migration and battle automation remain engine-owned', () => {
   assert.match(read('emberforge-battle.js'), /api\.setAutoAttack\(/);
 });
 
-test('automatic boss salvage does not emit repeated popup notices', () => {
+test('boss loot messages avoid removed salvage popup notices', () => {
   const combat = read('systems/combat.js');
   assert.doesNotMatch(combat, /toast\(['"]Boss chest: ['"]\s*\+\s*drop\.name\s*\+\s*['"] salvaged['"]\)/);
-  assert.match(combat, /if\(e\.boss&&drop&&!drop\.salvaged\)toast\(/);
-  assert.match(combat, /if\(boss\)note\(['"]Boss chest:/);
+  assert.match(combat, /if\(e\.boss&&drop&&!drop\.lost\)toast\(/);
+  assert.match(combat, /if\(boss\)\{s\.lastBossLoot=/);
   const battle = read('emberforge-battle.js');
   assert.match(battle, /routeBattleToasts\(\)/);
 });
 
 test('automatic damage uses engine power and renders hit feedback', () => {
   const engine = read('core/loop.js');
-  assert.match(engine, /let hit=autoPower\(\);damage\(hit\);spawnPop\(/);
+  assert.match(engine, /playerAttack\(true\)/);
   assert.match(engine, /requestAnimationFrame\(tick\)/);
 });
 
@@ -192,7 +192,7 @@ function gameLoopHarness(overrides = {}) {
     realRecovery:()=>0, activeFight:()=>s.auto&&!s.smartResting,
     isDown:()=>s.downUntil>10000||s.hp<=0,
     autoInterval:()=>0.5, foeAttackInterval:()=>0.5, autoPower:()=>12,
-    damage:n=>calls.damage.push(n), takeHit:()=>{calls.hits++;},
+    playerAttack:()=>{calls.damage.push(12);}, takeHit:()=>{calls.hits++;},
     spawnPop:()=>{}, $:()=>({}), fmt:String,
     enemy:()=>({hp:60}), toast:()=>{}, chooseSmartTarget:()=>{},
     stats:()=>{}, renderPage:()=>{calls.render++;},
@@ -251,7 +251,7 @@ function combatHarness() {
     combatLevel:1,hp:105,downUntil:0,autoMode:'selected',auto:true,
     enemyHP:10,enemyTimer:2,enemyHits:2,autoProgress:0.5,
     engagedUntil:15000,smartResting:false,journal:[],
-    ember:1000,potionReady:0
+    ember:1000,potionReady:0,potions:{minor:2}
   };
   const context={
     s, Date:{now:()=>10000}, Math, console,
@@ -264,6 +264,7 @@ function combatHarness() {
     maxSelectable:()=>10,activeBuild:()=>0,activeSkill:()=>0,
     inExpedition:()=>true,atKingdom:()=>false,
     activeTraining:()=>0,upgradeUnlocked:()=>true,
+    potionDefinition:()=>({id:'minor',name:'Minor Healing Potion',heal:.10,maxStack:10}),
     rollBattleBackground:()=>{},renderPage:()=>{},stats:()=>{},
     $:()=>({style:{},textContent:''}),toastTimer:0,setTimeout:()=>0,clearTimeout:()=>{},
     fmt:String,esc:String,needsMain:false
@@ -288,19 +289,19 @@ test('boss navigation resets encounter correctly in both directions', () => {
   assert.equal(game.s.enemyHP,game.run('enemy().hp'));
 });
 
-test('heal spends Ember once, restores health and applies cooldown', () => {
-  const game=combatHarness();
-  game.s.hp=10;
-  game.run('usePotion()');
-  assert.ok(game.s.hp>10);
-  assert.ok(game.s.ember<1000);
-  assert.equal(game.s.potionReady,28000);
-  const hp=game.s.hp, ember=game.s.ember;
-  game.run('usePotion()');
-  assert.equal(game.s.hp,hp);
-  assert.equal(game.s.ember,ember);
+test('potion consumption restores HP, uses inventory, preserves Ember and applies cooldown', () => {
+ const game=combatHarness();
+ game.s.hp=10;
+ game.run('usePotion()');
+ assert.equal(game.s.hp,20.5);
+ assert.equal(game.s.potions.minor,1);
+ assert.equal(game.s.ember,1000);
+ assert.equal(game.s.potionReady,28000);
+ const hp=game.s.hp;
+ game.run('usePotion()');
+ assert.equal(game.s.hp,hp);
+ assert.equal(game.s.potions.minor,1);
 });
-
 test('retreat stops combat and resets encounter health and timers', () => {
   const game=combatHarness();
   game.run('retreat()');
@@ -507,7 +508,7 @@ test('legacy weapon armor and charm mapping preserves stats and valid equipment 
  assert.equal(context.x.equipped.mainHand,null);
  assert.equal(context.x.equipped.chest,null);
  assert.equal(context.x.equipped.charm,'amulet');
- assert.match(read('systems/combat.js'),/gearPower\('armor'\)/);
+ assert.match(read('systems/combat.js'),/gearTotal\(\['helmet','chest','gloves','legs','boots','offHand'\]\)/);
  assert.match(read('systems/combat.js'),/LEGACY_EQUIPMENT_SLOTS\[slot\]/);
 });
 
@@ -631,29 +632,28 @@ test('Equipped slot sprites have inset space to prevent clipped frames',()=>{
  assert.match(css,/align-items:center;justify-items:center/);
 });
 
-test('backpack capacity is 30 and preserves existing inventories above the new limit',()=>{
+test('shared backpack capacity counts equipment and stacks of ten potions',()=>{
  const defs=read('data/definitions.js'),combat=read('systems/combat.js'),views=read('ui/views.js'),html=read('game.html');
  assert.match(defs,/const INVENTORY_CAPACITY=30;/);
- assert.match(combat,/if\(s\.items\.length>=inventoryCapacity\(\)\)/);
- assert.match(views,/const capacity=inventoryCapacity\(\),count=s\.items\.length;/);
- assert.match(views,/Math\.max\(capacity,sorted\.length\)/);
- assert.match(views,/if\(s\.items\.length>=inventoryCapacity\(\)\)/);
+ assert.match(defs,/const inventoryUsedSlots=\(\)=>s\.items\.length\+potionSlotsUsed\(\)/);
+ assert.match(combat,/if\(inventoryUsedSlots\(\)>=inventoryCapacity\(\)\)/);
+ assert.match(combat,/stored%potion\.maxStack===0&&inventoryUsedSlots\(\)>=inventoryCapacity\(\)/);
+ assert.match(views,/const capacity=inventoryCapacity\(\),count=inventoryUsedSlots\(\)/);
+ assert.match(views,/const potionTiles=HEALING_POTIONS\.flatMap/);
  assert.match(html,/Backpack \(0 \/ 30\)/);
- assert.doesNotMatch(views,/Backpack \('\+s\.items\.length\+' \/ 60\)/);
 });
-
-test('Armory inventory only equips and locks, Kingdom owns selling and salvaging',()=>{
+test('Armory manages equipment while Kingdom merchant owns buying and selling',()=>{
  const html=read('game.html'),views=read('ui/views.js'),css=read('styles/inventory.css');
  const gear=html.slice(html.indexOf('<section class="page" data-view="gear">'),html.indexOf('<section class="page" data-view="world">'));
- const kingdom=html.slice(html.indexOf('<section class="caladryn-kingdom-interior"'),html.indexOf('<section class="page" data-view="mastery">'));
+ const kingdom=html.slice(html.indexOf('id="ef4-kingdominterior"'),html.indexOf('<section class="page" data-view="mastery">'));
  assert.match(gear,/ef4-bagtitle/);
  assert.match(gear,/ef4-bagprogress/);
  assert.match(gear,/ef4-baglist/);
- assert.doesNotMatch(gear,/data-action="salvage-|id="ef4-salvagefilter"|data-sell=/);
- assert.match(kingdom,/id="ef4-salvagefilter"/);
+ assert.doesNotMatch(gear,/data-action="salvage-|data-sell=/);
+ assert.match(kingdom,/id="ef4-merchantstock"/);
  assert.match(kingdom,/id="ef4-merchantlist"/);
- assert.match(kingdom,/data-action="salvage-common"/);
- assert.match(kingdom,/data-action="salvage-all"/);
+ assert.match(kingdom,/data-kingdom-tab="merchant"/);
+ assert.match(kingdom,/data-merchant-tab="sell"/);
  const bag=views.slice(views.indexOf('function renderGear(){'),views.indexOf('function renderWorld(){'));
  assert.match(bag,/class="efg-bag-slot efg-bag-empty"/);
  assert.match(bag,/data-equip=/);
@@ -661,12 +661,10 @@ test('Armory inventory only equips and locks, Kingdom owns selling and salvaging
  assert.doesNotMatch(bag,/data-sell=/);
  assert.match(views,/function renderKingdomMerchant\(\)/);
  assert.match(views,/if\(b\.dataset\.sell\)\{if\(!atKingdom\(\)\)return;/);
- assert.match(views,/if\(a\.startsWith\('salvage-'\)&&!atKingdom\(\)\)return;/);
+ assert.match(views,/function buyMerchantPotion\(id\)/);
  assert.match(css,/\.efg-bag-grid/);
  assert.match(css,/\.efk-merchant-item/);
- assert.match(html,/styles\/inventory\.css\?v=1/);
 });
-
 test('shared gear protection honors equipped and locked items',()=>{
  const defs=read('data/definitions.js');
  const part=defs.slice(defs.indexOf('const equippedGearIds='),defs.indexOf('const lootAbilityText='));
@@ -683,49 +681,21 @@ test('shared gear protection honors equipped and locked items',()=>{
  assert.equal(vm.runInContext('isGearTradeProtected(item)',context),false);
 });
 
-test('Kingdom salvage uses one equipment lookup and saves after item removal',()=>{
- const view=read('ui/views.js');
- const combat=read('systems/combat.js');
- const block=view.slice(view.indexOf('function inventorySell('),view.indexOf('function saveCode('));
- assert.match(block,/const equippedIds=equippedGearIds\(\)/);
- assert.match(block,/!isGearTradeProtected\(g,equippedIds\)/);
- assert.match(block,/removed=new Set\(chosen\)/);
- assert.match(block,/s\.items=s\.items\.filter\(g=>!removed\.has\(g\)\)/);
- assert.match(block,/gain\(total\);save\(\);/);
- assert.match(view,/const protectedGear=isGearTradeProtected\(g,equippedIds\)/);
- assert.match(view,/const equipped=isGearEquipped\(g,equippedIds\)/);
- assert.match(combat,/!isGearTradeProtected\(g,equippedIds\)/);
- assert.doesNotMatch(block,/Object\.values\(s\.equipped\)\.includes/);
+test('merchant single-item sales protect equipped or locked gear',()=>{
+ const views=read('ui/views.js');
+ assert.match(views,/const protectedGear=isGearTradeProtected\(g,equippedIds\)/);
+ assert.match(views,/if\(isGearTradeProtected\(g\)\)\{toast\('Unlock and unequip the item first.'/);
+ assert.match(views,/s\.items=s\.items\.filter\(x=>x!==g\)/);
+ assert.match(views,/gain\(sellValue\(g\)\)/);
+ assert.match(views,/renderKingdomMerchant\(\);currencyStats\(\);save\(\)/);
 });
-
-test('bulk salvage preserves same-ID items that are protected or equipped',()=>{
- const view=read('ui/views.js');
- const block=view.slice(view.indexOf('function inventorySell('),view.indexOf('function saveCode('));
- const items=[
-  {id:'same',rarity:'common',locked:true,power:20},
-  {id:'same',rarity:'common',locked:false,power:10},
-  {id:'equipped',rarity:'common',locked:false,power:30},
-  {id:'legend',rarity:'legendary',locked:false,power:200}
- ];
- let saved=0,rendered=0,earned=0;
- const context={
-  s:{items,equipped:{mainHand:'equipped'}},toast:()=>{},fmt:n=>String(n),
-  equippedGearIds:()=>new Set(['equipped']),
-  isGearTradeProtected:(g,ids)=>g.locked||ids.has(g.id),
-  atKingdom:()=>true,
-  sellValue:g=>g.power, gain:n=>{earned+=n},save:()=>{saved++},renderPage:()=>{rendered++}
- };
- vm.createContext(context);
- vm.runInContext(block,context);vm.runInContext('inventorySell(()=>true)',context);
- assert.equal(earned,10);
- assert.equal(saved,1);
- assert.equal(rendered,1);
- assert.equal(context.s.items.length,3);
- assert.ok(context.s.items.includes(items[0]));
- assert.ok(context.s.items.includes(items[2]));
- assert.ok(context.s.items.includes(items[3]));
+test('pre-Ascension salvage actions are unavailable without removing merchant selling',()=>{
+ const html=read('game.html'),views=read('ui/views.js');
+ assert.doesNotMatch(html,/salvage-common|salvage-all|ef4-salvagefilter/);
+ assert.doesNotMatch(views,/function inventorySell\(/);
+ assert.match(views,/if\(b\.dataset\.sell\)/);
+ assert.match(views,/function sellMerchantPotion\(id\)/);
 });
-
 test('Armory fantasy header keeps Equip Best functional and mobile layout scoped',()=>{
  const html=read('game.html'),css=read('styles/armory.css'),views=read('ui/views.js');
  const armory=html.slice(html.indexOf('<section class="page" data-view="gear">'),html.indexOf('<section class="page" data-view="kingdom">'));
