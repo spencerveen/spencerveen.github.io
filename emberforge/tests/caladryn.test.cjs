@@ -134,15 +134,15 @@ test('all six navigation tabs and nested combat switch safely',()=>{
  assert.deepEqual(allViews.filter(x=>x.classList.active).map(x=>x.dataset.view),['world']);
 });
 
-test('Caladryn map resizes with window and only pans after zoom opt-in',()=>{
+test('Caladryn map resizes to the window without unnecessary zoom controls',()=>{
  const css=read('styles/world.css'),html=read('game.html'),view=read('ui/views.js');
  assert.match(css,/#ef4 \.caladryn-map-canvas\{[^\n]*width:100%;min-width:0;aspect-ratio:1672\/941/);
  assert.match(css,/#ef4 \.caladryn-map-viewport\{[^\n]*width:min\(100%,1120px\)/);
- assert.match(css,/#ef4 \.caladryn-map-viewport\.zoomed\{overflow-x:auto/);
+ assert.doesNotMatch(css,/\.caladryn-map-viewport\.zoomed/);
  assert.doesNotMatch(css,/min-width:(?:950|1050|920|860)px/);
  assert.match(html,/id="ef4-mapviewport"/);
- assert.match(html,/data-map-zoom aria-pressed="false"/);
- assert.match(view,/Object\.prototype\.hasOwnProperty\.call\(b\.dataset,'mapZoom'\)/);
+ assert.doesNotMatch(html,/data-map-zoom|Enlarge map/);
+ assert.doesNotMatch(view,/Object\.prototype\.hasOwnProperty\.call\(b\.dataset,'mapZoom'\)/);
 });
 
 test('Battle lives under World, without separate navigation or duplicate combat IDs',()=>{
@@ -189,7 +189,7 @@ test('Map collapse restores preference, keeps return-home control and never hide
  assert.ok(start>=0&&end>start,'Map visibility helper exists');
  const source=view.slice(start,end);
  const handlerStart=view.indexOf("if(Object.prototype.hasOwnProperty.call(b.dataset,'mapToggle'))");
- const handlerEnd=view.indexOf("if(Object.prototype.hasOwnProperty.call(b.dataset,'mapZoom'))",handlerStart);
+ const handlerEnd=view.indexOf("if(b.dataset.kingdomPoint)",handlerStart);
  assert.ok(handlerStart>=0&&handlerEnd>handlerStart);
  const handler=view.slice(handlerStart,handlerEnd);
  const saved={'emberforge-caladryn-map-collapsed':'1'};
