@@ -13,7 +13,8 @@ const KINGDOM_STARTER_GEAR=[
  {name:'Starter Chestplate',slot:'chest',icon:'guardian',power:2,price:240},
  {name:'Starter Gloves',slot:'gloves',icon:'tap',power:1,price:100},
  {name:'Starter Greaves',slot:'legs',icon:'guardian',power:1,price:180},
- {name:'Starter Boots',slot:'boots',icon:'guardian',power:1,price:110}
+ {name:'Starter Boots',slot:'boots',icon:'guardian',power:1,price:110},
+ {name:'Traveler\'s Blade',slot:'mainHand',icon:'swordglow',power:3,price:420,ascension:1}
 ];
 const MERCHANT_GEAR_BY_NAME=new Map(KINGDOM_STARTER_GEAR.map(g=>[g.name,g]));
 // Ashen Wilds is the ONLY realm with active equipment drops.
