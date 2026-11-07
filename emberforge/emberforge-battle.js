@@ -369,7 +369,7 @@ function mount(frame){
    autoButton.textContent="Auto Attack: "+(autoOn?"On":"Off");
    autoButton.setAttribute("aria-pressed",String(autoOn));
    healButton.disabled=!h||h.disabled;
-   healButton.textContent=h?txt(h):"Heal";
+   healButton.textContent=h?txt(h):"Use Potion (0)";
    if(!statusCard||!statusCard.isConnected)statusCard=locateAdventurerCard();
    if(statusCard)statusCard.classList.add("efb-source-hidden");
    var status=statusCard&&txt(statusCard).match(/\b(Resting|In combat|Recovering|Defeated)\b/i);
