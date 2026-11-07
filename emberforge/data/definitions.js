@@ -214,6 +214,19 @@ const ASHEN_LOOT=[
  }
 ];
 // Future-proof equipment layout. Today's loot keeps its legacy weapon/armor/charm types.
+// Regional variants share the same equipment slots and artwork. Centralizing
+// their stats also lets the save loader reconstruct validated gear on reload.
+const regionalGearTemplate=(base,zone)=>({
+ ...base,
+ name:zone?realms[zone][0]+' '+base.name:base.name,
+ power:Math.round(base.power*Math.pow(10,zone)),
+ abilityValue:(base.abilityValue||0)*(['attack','protection'].includes(base.ability)?Math.pow(10,zone):1)
+});
+const validatedEquipmentCatalog=()=>new Map(
+ [...ASHEN_LOOT,...KINGDOM_STARTER_GEAR,
+  ...realms.flatMap((_realm,zone)=>zone===0?[]:ASHEN_LOOT.map(item=>regionalGearTemplate(item,zone)))
+ ].map(item=>[item.name,item])
+);
 const EQUIPMENT_SLOTS=[
  ['helmet','Helmet','medal','head'],['necklace','Necklace','gem','jewelry'],
  ['mainHand','Main Hand','swordglow','hands'],['chest','Chestplate','guardian','body'],
