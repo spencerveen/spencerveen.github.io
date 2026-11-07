@@ -48,7 +48,8 @@ test('equipment improves attack, accuracy, criticals, defense, evasion, block an
  assert.ok(geared.defense()>empty.defense());
  assert.ok(geared.enemyHitChance(mite)<empty.enemyHitChance(mite));
  assert.ok(geared.blockChance()>empty.blockChance());
- assert.ok(geared.recovery(true)>empty.recovery(true));
+ assert.equal(geared.recovery(true),0); // No in-combat regeneration, even with vitality gear.
+ assert.ok(geared.recovery(false)>empty.recovery(false));
 });
 test('iron shield blocks better than rusty shield',()=>{
  const rusty=evaluate(1,{offHand:{slot:'offHand',power:2}});
