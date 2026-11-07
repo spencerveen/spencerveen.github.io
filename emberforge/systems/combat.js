@@ -65,7 +65,7 @@ function playerAttack(auto=false){
  spawnPop($('battlescene'),critical?'CRIT -'+fmt(value):'-'+fmt(value),'battle');
  return {kind:critical?'critical':'hit',damage:value};
 }
-const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.24,stage-1)*(boss?1.8:trait.hp)*(1+.12*Math.max(0,s.ascensions-REALM_ASCENSIONS[zone])));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost'))*(1+.08*activeSkill('fortune')));return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
+const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.24,stage-1)*(boss?1.8:trait.hp));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost'))*(1+.08*activeSkill('fortune')));return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
 const enemy=()=>enemyAt(s.zone,s.stage);
 const foeAttackIntervalFor=e=>e.boss?2.1:2.1*e.traitData.speed;
 const foeRawDamageFor=e=>Math.ceil((4+e.stage*1.65)*Math.pow(4.95,e.zone)*(e.boss?1.4:e.traitData.atk));
@@ -120,7 +120,17 @@ function defeat(){
  gain(e.reward*(firstClear?1.45:1)*(1+.04*activeTraining('blade')+.05*activeSkill('veteran'))*multiplier('battleReward'));earnCombatXP(Math.ceil(e.xp*(firstClear?1.45:.72)));
  s.enemyTimer=0;s.enemyHits=0;
  if(firstClear){s.firstClears[s.zone]=Math.max(s.stage,s.firstClears[s.zone]);if(s.stage<10){s.stageUnlocked[s.zone]=Math.max(s.stageUnlocked[s.zone],s.stage+1);note('New stage unlocked: '+(s.stage+1));}else{s.bossCleared[s.zone]=true;}}
- if(e.boss){s.bosses++;s.bossCleared[s.zone]=true;note('Boss defeated: '+e.name);if(s.zone===s.unlocked&&s.unlocked<5){s.unlocked++;s.stageUnlocked[s.unlocked]=Math.max(1,s.stageUnlocked[s.unlocked]);toast(realms[s.unlocked][0]+' discovered!')}}
+ if(e.boss){
+  const firstBossVictory=!s.bossCleared[s.zone];
+  s.bosses++;s.bossCleared[s.zone]=true;
+  note('Boss defeated: '+e.name);
+  // Region and Kingdom building tiers advance on the first clear only.
+  if(firstBossVictory&&s.zone===s.unlocked&&s.unlocked<realms.length-1){
+   s.unlocked++;
+   s.stageUnlocked[s.unlocked]=Math.max(1,s.stageUnlocked[s.unlocked]);
+   toast(realms[s.unlocked][0]+' discovered!');
+  }
+ }
  let drop=createLoot(e.boss);if(e.boss&&drop&&!drop.lost)toast('Boss drop: '+drop.name+'!');
  rollPotionDrop(e.boss);
  rollBattleBackground();
