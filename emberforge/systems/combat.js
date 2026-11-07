@@ -23,7 +23,7 @@ const maxHealth=()=>Math.ceil(Math.min(1e15,105*Math.pow(1.10,Math.max(0,s.comba
 const defense=()=>1+gearTotal(['helmet','chest','gloves','legs','boots','offHand'])*1.65+gearAbility('protection');
 const recovery=(fighting)=>fighting?0:maxHealth()*(.005+gearAbility('regen'));
 const realRecovery=(fighting)=>recovery(fighting);
-const potionCount=(id='minor')=>Math.min(potionDefinition(id)?.maxStack||0,Math.max(0,Math.floor(s.potions?.[id]||0)));
+const potionCount=(id='minor')=>Math.max(0,Math.floor(Number(s.potions?.[id])||0));
 const isDown=()=>Date.now()<s.downUntil||s.hp<=0;
 const activeFight=()=>inExpedition()&&!isDown()&&((s.auto&&!s.smartResting)||Date.now()<s.engagedUntil);
 const foeAttackInterval=()=>foeAttackIntervalFor(enemy());
@@ -88,7 +88,7 @@ function createLoot(boss){
  const base=eligible.find(item=>(roll-=item.weight)<0)||eligible[eligible.length-1];
  const obj={id:'g'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),name:base.name,slot:base.slot,icon:base.icon,rarity:'common',origin:0,tier:s.stage,locked:false,power:base.power,ability:base.ability||null,abilityValue:base.abilityValue||0};
  s.lootFound++;
- if(s.items.length>=inventoryCapacity()){
+ if(inventoryUsedSlots()>=inventoryCapacity()){
    note('Backpack full: '+obj.name+' could not be collected.');
    return {lost:true,name:obj.name,rarity:'common'};
  }
@@ -100,9 +100,15 @@ function createLoot(boss){
 function rollPotionDrop(boss){
  if(s.zone!==0)return null;
  const potion=potionDefinition('minor');
- if(!potion||potionCount(potion.id)>=potion.maxStack||Math.random()>=(boss?potion.bossDropChance:potion.dropChance))return null;
+ if(!potion||Math.random()>=(boss?potion.bossDropChance:potion.dropChance))return null;
+ const stored=potionCount(potion.id);
+ // Adding to a partial stack consumes no extra slot. A new stack needs space.
+ if(stored%potion.maxStack===0&&inventoryUsedSlots()>=inventoryCapacity()){
+   note('Backpack full: '+potion.name+' could not be collected.');
+   return null;
+ }
  if(!s.potions||typeof s.potions!=='object')s.potions={minor:0};
- s.potions[potion.id]=Math.min(potion.maxStack,potionCount(potion.id)+1);
+ s.potions[potion.id]=stored+1;
  note('Found '+potion.name+' ('+potionCount(potion.id)+' stored)');
  toast('Potion drop: '+potion.name+'!');
  needsMain=true;
