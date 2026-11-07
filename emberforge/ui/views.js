@@ -416,10 +416,6 @@ const quests=()=>[
  ['q13','Realm Sovereign','Complete five Ascensions',s.ascensions,5,150000]
 ];
 function renderMastery(){
- $('legacy').textContent=s.ascensions+' Ascensions';
- $('masterybosses').textContent=bossesDefeated()+' / '+realms.length;
- $('masterysp').textContent=fmt(s.skillPoints)+' SP';
- $('masterysouls').textContent=fmt(s.souls);
  $$('[data-sub]').forEach(button=>{const active=button.dataset.sub===sub;button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active))});
  let box=$('mastercontent'),html='';
  if(sub==='skills'){
@@ -480,10 +476,33 @@ if(sub==='bestiary'){
  }).join('');
 }
 if(sub==='ascend'){let reward=soulReward(),next=ascendTarget(),prog=Math.min(100,100*s.runEarned/next);let lastLoot=s.lastBossLoot?`<div class="hint" style="margin-top:10px">Last boss drop: ${esc(s.lastBossLoot.name)}</div>`:'';html=`<div class="card efm-altar"><span class="efm-overline">THE FINAL RITE</span><div class="efm-altar-icon">${iconHTML("altar","hero")}</div><div class="efm-altar-title">Ascension Altar</div><div class="hint" style="margin:8px auto 14px;max-width:380px">Sacrifice your current run to gain permanent Soulfire and stronger production. Equipment determines combat stats. Defeating bosses unlocks new regions, Kingdom upgrades, and higher skill tiers.</div><div class="grid2" style="max-width:330px;margin:0 auto 14px"><div class="stat"><div class="label">This run</div><div class="big">${fmt(s.runEarned)}</div></div><div class="stat"><div class="label">Soulfire reward</div><div class="big" style="color:#e2bdff">+${fmt(reward)}</div></div></div><div class="progress" style="margin-bottom:10px"><div style="width:${prog}%;background:#ae80ee"></div></div><div class="hint" style="margin-bottom:14px">${reward?'Ascension is ready!':'Earn '+fmt(next-s.runEarned)+' more Ember to ascend. Boss victories unlock higher caps.'}</div><button class="btn btn-gold" data-ascend="1" ${reward<1?'disabled':''}>Ascend ${reward?'for +'+reward+' Soulfire':'· Locked'}</button><div class="hint" style="margin-top:13px">Resets Ember, workers, temporary upgrades, buildings and the selected battle target. Keeps combat levels (health only), training, skills, Soulfire and discoveries. All equipment and potions are lost on Ascension. Boss victories raise training and skill caps.</div>${lastLoot}</div>`}
-box.innerHTML=html;if(sub==='ascend'){
-let row=realms.map((r,i)=>`<div class="rowitem" style="opacity:${realmAccessible(i)?1:.78}"><span class="r-ico">${iconHTML(r[1],'lg')}</span><div class="r-body"><strong>${r[0]}</strong><span class="hint">${i?'Defeat '+realms[i-1][4]+' to unlock':'Starting region'} · Boss: ${r[4]}</span></div><span class="pill">${realmAccessible(i)?'Region unlocked':'Boss required'}</span></div>`).join('');
-box.insertAdjacentHTML('beforeend',`<div class="card efm-realm-roadmap" style="margin-top:12px"><div class="section">Realm unlock roadmap</div><div class="stack" style="gap:7px">${row}</div><div class="hint" style="margin-top:10px">Defeating each region boss increases your Kingdom's building cap and unlocks higher training ranks. Kingdom scenery also requires all six buildings completed to the previous cap.</div></div>`)
-}}
+if(sub==='stats'){
+ const earned=honors.filter(h=>s.ach.includes(h[0])).length;
+ const invested=Object.values(s.skills).reduce((total,level)=>total+(Number(level)||0),0);
+ const buildingLevels=Object.values(s.build).reduce((total,level)=>total+(Number(level)||0),0);
+ const metrics=[
+  ['Guardians vanquished',bossesDefeated()+' / '+realms.length,'First-time guardian victories'],
+  ['Ascensions',fmt(s.ascensions),'Soulfire rebirths completed'],
+  ['Unspent talent',fmt(s.skillPoints)+' SP','Points available for specializations'],
+  ['Soulfire',fmt(s.souls),'Permanent Ascension power'],
+  ['Combat level',fmt(s.combatLevel),'Your adventurer\'s experience'],
+  ['Forge level',fmt(s.level),'Your forge progression'],
+  ['Enemies defeated',fmt(s.kills),'Total enemy victories'],
+  ['Boss victories',fmt(s.bosses),'Includes repeat guardian defeats'],
+  ['Equipment found',fmt(s.lootFound),'Lifetime discovered equipment'],
+  ['Ember earned',fmt(s.lifetime),'Lifetime Ember generation'],
+  ['Invested talent ranks',fmt(invested),'Total permanent skill ranks'],
+  ['Honors earned',earned+' / '+honors.length,'Completed permanent achievements'],
+  ['Kingdom building levels',fmt(buildingLevels),'Current construction levels'],
+  ['Kingdom development',Math.min(6,(s.kingdomVistaMilestone||0)+1)+' / 6','Highest earned Kingdom landscape'],
+  ['Contracts completed',fmt(s.claimed.length),'Claimed quest rewards'],
+  ['Repeatable bounties',fmt(s.bounty),'Hunting contracts completed']
+ ];
+ html=`<div class="efm-chamber-heading"><div><span class="efm-overline">THE CHRONICLE OF DEEDS</span><h3>Your Statistics</h3><p>A record of your journey, from the smallest spark to the greatest triumph. The World Map remains the home of region progression.</p></div></div>
+ <div class="efm-stats-grid">${metrics.map(([label,value,description])=>`<article class="efm-stat"><span>${esc(label)}</span><strong>${esc(String(value))}</strong><small>${esc(description)}</small></article>`).join('')}</div>`;
+}
+box.innerHTML=html;
+}
 function renderPage(){currencyStats();if(page==='workers')renderWorkers();if(page==='upgrades')renderUpgrades();if(page==='gear')renderGear();if(page==='world')renderWorld();if(page==='mastery')renderMastery();stats()}
 function go(p){const jumpToCombat=p==='battle'&&inExpedition();if(p==='battle'||p==='kingdom')p='world';page=p;$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===p||(p==='world'&&inExpedition()&&x.dataset.view==='battle')));$$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===p));renderPage();if(jumpToCombat)$('worldbattle').scrollIntoView?.({behavior:'smooth',block:'start'});}
 function modal(title,body,onConfirm,confirmLabel='Confirm',textarea=false){modalOpen=true;$('modal').style.display='block';$('modal').innerHTML=`<div class="modaloverlay"><div class="modal"><div style="font-size:19px;font-weight:850;margin-bottom:9px">${esc(title)}</div><div class="hint" style="font-size:12px;margin-bottom:15px">${esc(body)}</div>${textarea?'<textarea id="ef4-modaltext" class="textentry" spellcheck="false"></textarea>':''}<div class="two-actions" style="justify-content:flex-end;margin-top:17px"><button class="btn" data-modalcancel="1">Cancel</button><button class="btn btn-gold" data-modalconfirm="1">${esc(confirmLabel)}</button></div></div></div>`;let close=()=>{$('modal').style.display='none';modalOpen=false};root.querySelector('[data-modalcancel]').onclick=close;root.querySelector('[data-modalconfirm]').onclick=()=>{let val=textarea?$('modaltext').value:undefined;let ok=onConfirm(val);if(ok!==false)close();};}
