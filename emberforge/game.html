@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Emberforge VI | Living Kingdoms</title><link rel="stylesheet" href="./styles/game.css?v=1"><link rel="stylesheet" href="./styles/workers.css?v=6"><link rel="stylesheet" href="./styles/upgrades.css?v=3"><link rel="stylesheet" href="./styles/armory.css?v=11"><link rel="stylesheet" href="./styles/inventory.css?v=1"><link rel="stylesheet" href="./styles/world.css?v=5"></head><body style="margin:0;height:100dvh;overflow:hidden;background:#07111c"><div id="ef4" class="ef4">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Emberforge VI | Living Kingdoms</title><link rel="stylesheet" href="./styles/game.css?v=1"><link rel="stylesheet" href="./styles/workers.css?v=6"><link rel="stylesheet" href="./styles/upgrades.css?v=3"><link rel="stylesheet" href="./styles/armory.css?v=11"><link rel="stylesheet" href="./styles/inventory.css?v=1"><link rel="stylesheet" href="./styles/world.css?v=6"></head><body style="margin:0;height:100dvh;overflow:hidden;background:#07111c"><div id="ef4" class="ef4">
 
 <header class="ef-head"><div class="space"><div><div class="kicker">Idle RPG · Emberforge VI · Illustrated</div><div class="brand">Emberforge VI: Living Kingdoms</div><div class="hint">Ascend through six eras. Build power to conquer the endgame.</div></div><div class="two-actions"><span class="pill" id="ef4-savebadge">● Autosave</span><button class="btn btn-quiet" data-action="save">Save</button></div></div>
 <div class="currencies"><div class="currency"><span class="cur-ico" id="ef4-cur-ember"></span><b id="ef4-ember">0</b> Ember</div><div class="currency"><span class="cur-ico" id="ef4-cur-eps"></span><b id="ef4-eps">0</b>/s</div><div class="currency"><span class="cur-ico" id="ef4-cur-click"></span><b id="ef4-click">1</b>/tap</div><div class="currency"><span class="cur-ico" id="ef4-cur-power"></span><b id="ef4-power">1</b> damage</div><div class="currency"><span class="cur-ico" id="ef4-cur-souls"></span><b id="ef4-souls">0</b> Soulfire</div><div class="currency"><span class="cur-ico" id="ef4-cur-sp"></span><b id="ef4-sp">0</b> SP</div><div class="currency hpchip"><span class="cur-ico" id="ef4-cur-health"></span><b id="ef4-tophealth">105/105</b> HP</div><div class="currency"><span class="cur-ico" id="ef4-cur-combat"></span><b id="ef4-topcombat">1</b> Combat Lv</div></div>
@@ -65,37 +65,41 @@
   <div><span class="efk-hub-eyebrow">YOUR KINGDOM</span><h2 class="page-title">Kingdom &amp; Forge</h2></div>
   <div class="efk-hub-summary"><span id="ef4-kingdominfo"></span></div>
  </header>
- <div class="efk-vista-frame">
-  <div class="scene illustrated kingdomscene" id="ef4-kingdomscene">
+ <div class="efk-vista-frame efk-kingdom-interactive">
+  <div class="scene illustrated kingdomscene efk-frontier" id="ef4-kingdomscene">
    <div class="scene-backdrop" id="ef4-kingdombg"></div><div class="scene-vignette"></div><div class="embers"></div>
    <div class="kingdom-overlay" id="ef4-kingdomoverlay"></div>
    <div class="kingdom-scene-info"><div class="kingdom-callout" id="ef4-kingdomcallout"></div><div class="tier-stack" id="ef4-kingdomtiers"></div></div>
    <div class="ground-label">KINGDOM VISTA</div>
+   <div class="efk-map-hotspots" aria-label="Explore the buildings and merchant in your Kingdom">
+    <button type="button" class="efk-map-hotspot efk-point-mine" data-kingdom-point="mine" aria-label="Open Crystal Mines"><span>Crystal Mines</span></button>
+    <button type="button" class="efk-map-hotspot efk-point-watchtower" data-kingdom-point="watchtower" aria-label="Open Watchtowers"><span>Watchtowers</span></button>
+    <button type="button" class="efk-map-hotspot efk-point-barracks" data-kingdom-point="barracks" aria-label="Open Knight Barracks"><span>Knight Barracks</span></button>
+    <button type="button" class="efk-map-hotspot efk-point-vault" data-kingdom-point="vault" aria-label="Open Royal Vaults"><span>Royal Vaults</span></button>
+    <button type="button" class="efk-map-hotspot efk-point-merchant" data-kingdom-point="merchant" aria-label="Visit the Traveling Merchant"><span>Traveling Merchant</span></button>
+    <button type="button" class="efk-map-hotspot efk-point-library" data-kingdom-point="library" aria-label="Open Arcane Libraries"><span>Arcane Libraries</span></button>
+    <button type="button" class="efk-map-hotspot efk-point-roost" data-kingdom-point="roost" aria-label="Open Dragon Roosts"><span>Dragon Roosts</span></button>
+   </div>
   </div>
-  <div class="kingdom-vista-nav efk-vista-controls">
-   <div class="kingdom-vista-status"><strong id="ef4-vistaname">Frontier Forge</strong><span id="ef4-vistainfo" class="hint">Your settlement grows with you</span></div>
-   <div class="efk-vista-actions"><span class="pill" id="ef4-vistacount">1 / 6</span><button class="btn btn-quiet" id="ef4-vistaauto" hidden tabindex="-1" aria-hidden="true">Follow Progress</button></div>
+  <div class="efk-scene-footer"><span>Explore your settlement · Select a building or merchant stall</span><span id="ef4-vistaname">Frontier Forge</span></div>
+  <div class="efk-kingdom-dialog" id="ef4-kingdomdialog" hidden aria-label="Kingdom location details">
+   <div class="efk-dialog-scrim" aria-hidden="true"></div>
+   <div class="efk-dialog-sheet" role="dialog" aria-modal="true" aria-labelledby="ef4-kingdomdialogtitle">
+    <div class="efk-dialog-titlebar"><div><span class="efk-hub-eyebrow">KINGDOM</span><h3 id="ef4-kingdomdialogtitle">Location</h3></div><button type="button" class="efk-dialog-close" data-kingdom-close aria-label="Close location">✕</button></div>
+    <section class="efk-hub-panel" id="ef4-kingdombuildings" data-kingdom-panel="buildings" hidden aria-label="Kingdom building">
+      <div class="efk-section-heading"><div><h3>Building upgrades</h3><p>Strengthen your settlement.</p></div><span id="ef4-kingdomcap" class="efk-section-meta"></span></div>
+      <div class="efk-building-grid" id="ef4-buildlist"></div>
+    </section>
+    <section class="efk-hub-panel" id="ef4-kingdommerchant" data-kingdom-panel="merchant" hidden aria-label="Kingdom merchant">
+      <div class="efk-merchant-switch" role="group" aria-label="Merchant services"><button type="button" data-merchant-tab="buy" class="on" aria-pressed="true">Buy Supplies</button><button type="button" data-merchant-tab="sell" aria-pressed="false">Sell Items</button></div>
+      <div data-merchant-panel="buy"><div id="ef4-merchantstock" class="efk-merchant-list efk-stock-grid"></div></div>
+      <div data-merchant-panel="sell" hidden><div id="ef4-merchantlist" class="efk-merchant-list efk-stock-grid"></div></div>
+    </section>
+    <section class="efk-hub-panel" id="ef4-craftsman" data-kingdom-panel="blacksmith" hidden aria-label="Kingdom blacksmith"><div class="efk-section-heading"><div><h3>Blacksmith</h3><p>Equipment forging will be added here.</p></div></div></section>
+   </div>
   </div>
  </div>
- <div class="efk-legacy-data" aria-hidden="true"><span id="ef4-forgetierstat"></span><span id="ef4-builtlevels"></span><span id="ef4-buildtiermax"></span><div id="ef4-kingdomsummary"></div></div>
- <div class="efk-hub-nav" role="group" aria-label="Kingdom activities">
-  <button type="button" data-kingdom-tab="buildings" class="on" aria-pressed="true">⚒ &nbsp; Buildings <span id="ef4-kingdombuildcount" class="efk-nav-count"></span></button>
-  <button type="button" data-kingdom-tab="merchant" aria-pressed="false">✦ &nbsp; Merchant</button>
-  <button type="button" data-kingdom-tab="blacksmith" id="ef4-blacksmithtab" hidden aria-pressed="false">⚔ &nbsp; Blacksmith</button>
- </div>
- <section class="efk-hub-panel" id="ef4-kingdombuildings" data-kingdom-panel="buildings" aria-label="Kingdom buildings">
-  <div class="efk-section-heading"><div><h3>Kingdom Buildings</h3><p>Expand your settlement and strengthen your economy.</p></div><span id="ef4-kingdomcap" class="efk-section-meta"></span></div>
-  <div class="efk-building-grid" id="ef4-buildlist"></div>
- </section>
- <section class="efk-hub-panel" id="ef4-kingdommerchant" data-kingdom-panel="merchant" hidden aria-label="Kingdom merchant">
-  <div class="efk-section-heading"><div><h3>The Traveling Merchant</h3><p>Basic supplies for the road ahead.</p></div><span class="efk-section-meta">Buy · Sell</span></div>
-  <div class="efk-merchant-switch" role="group" aria-label="Merchant services"><button type="button" data-merchant-tab="buy" class="on" aria-pressed="true">Buy Supplies</button><button type="button" data-merchant-tab="sell" aria-pressed="false">Sell Items</button></div>
-  <div data-merchant-panel="buy"><div id="ef4-merchantstock" class="efk-merchant-list efk-stock-grid"></div></div>
-  <div data-merchant-panel="sell" hidden><div id="ef4-merchantlist" class="efk-merchant-list efk-stock-grid"></div></div>
- </section>
- <section class="efk-hub-panel" id="ef4-craftsman" data-kingdom-panel="blacksmith" hidden aria-label="Kingdom blacksmith">
-  <div class="efk-section-heading"><div><h3>The Blacksmith</h3><p>A craftsman has arrived. Equipment forging will be added here.</p></div></div>
- </section>
+ <div class="efk-legacy-data" aria-hidden="true"><span id="ef4-vistainfo"></span><span id="ef4-vistacount"></span><span id="ef4-vistaauto"></span><span id="ef4-forgetierstat"></span><span id="ef4-builtlevels"></span><span id="ef4-buildtiermax"></span><div id="ef4-kingdomsummary"></div><span id="ef4-kingdombuildcount"></span><span id="ef4-blacksmithtab"></span></div>
 </section>
 </section>
 <section class="page" data-view="mastery"><div class="space" style="flex-wrap:wrap;gap:8px"><div><h2 class="page-title">Your Legacy</h2><div class="hint">Skills, quests, achievements and permanent Ascension powers.</div></div><span class="pill" id="ef4-legacy">0 Ascensions</span></div><div class="seg" id="ef4-subnav" style="margin:12px 0"><button data-sub="skills" class="on">Skill Tree</button><button data-sub="quests">Quests</button><button data-sub="achievements">Achievements</button><button data-sub="bestiary">Bestiary</button><button data-sub="ascend">Ascend</button></div><div id="ef4-mastercontent"></div></section>
