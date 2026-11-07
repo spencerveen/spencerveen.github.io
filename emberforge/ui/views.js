@@ -353,8 +353,10 @@ function renderGear(){
 // All buttons are real DOM controls: no interaction is painted into the image.
 let caladrynMapSignature='';
 const CALADRYN_MAP_PREFERENCE='emberforge-caladryn-map-collapsed';
-let caladrynMapCollapsed=false;
-try{caladrynMapCollapsed=window.localStorage.getItem(CALADRYN_MAP_PREFERENCE)==='1'}catch(_){}
+// Start with the map minimized when visiting the Kingdom so the interactive
+// settlement is the main focus; respect the player's stored map preference.
+let caladrynMapCollapsed=atKingdom();
+try{const savedMapPreference=window.localStorage.getItem(CALADRYN_MAP_PREFERENCE);if(savedMapPreference!==null)caladrynMapCollapsed=savedMapPreference==='1'}catch(_){}
 function updateCaladrynMapVisibility(){
  $('mapregion').hidden=caladrynMapCollapsed;
  const toggle=$('maptoggle');
