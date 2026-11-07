@@ -13,12 +13,14 @@ test('Hall of Legacies retains all five functional Mastery chambers',()=>{
  assert.match(html,/id="ef4-mastercontent"/);
  assert.match(html,/styles\/mastery\.css\?v=\d+/);
 });
-test('Mastery stat strip is connected to persistent game progression',()=>{
- for(const id of ['masterybosses','legacy','masterysp','masterysouls'])
-  assert.match(html,new RegExp('id="ef4-'+id+'"'));
- assert.match(views,/\$\('masterybosses'\)\.textContent=bossesDefeated\(\)/);
- assert.match(views,/\$\('masterysp'\)\.textContent=fmt\(s\.skillPoints\)/);
- assert.match(views,/\$\('masterysouls'\)\.textContent=fmt\(s\.souls\)/);
+test('Mastery statistics live in the dedicated chamber, not an oversized header strip',()=>{
+ assert.match(html,/data-sub="stats"/);
+ assert.doesNotMatch(html,/class="efm-legacy-strip"/);
+ assert.match(views,/if\(sub==='stats'\)/);
+ assert.match(views,/Guardians vanquished/);
+ assert.match(views,/Unspent talent/);
+ assert.match(views,/Soulfire/);
+ assert.match(css,/\.efm-stats-grid/);
 });
 test('specialization paths use existing six skills, level caps and purchase actions',()=>{
  assert.match(views,/id:'forge',name:'The Emberforge'/);
