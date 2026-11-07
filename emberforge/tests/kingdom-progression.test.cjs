@@ -26,6 +26,12 @@ test('Six Kingdom stages unlock only after every structure reaches its threshold
  partial.build[buildings[0][0]]=11;
  assert.equal(fn(partial,buildings),4);
 });
+test('all six buildings unlock during the first era so the first vista is achievable',()=>{
+ const gates=defs.slice(defs.indexOf('const GATE_BUILDINGS=['),defs.indexOf('const upgradeReq'));
+ for(const id of ['mine','barracks','library','roost','watchtower','vault']){
+  assert.match(gates,new RegExp("\\['"+id+"',0,\\d+\\]"));
+ }
+});
 test('Building level cap expands by three each ascension and stops at twelve',()=>{
  assert.ok(buildingCapLine);
  const cap=new Function('s',buildingCapLine+'return buildingCap();');
