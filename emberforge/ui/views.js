@@ -137,7 +137,7 @@ $('buildlist').innerHTML=buildings.filter(b=>buildingUnlocked(b)||s.build[b[0]]>
 function renderKingdomMerchant(){
  const merchantStock=$('merchantstock');
  const full=inventoryUsedSlots()>=inventoryCapacity();
- const gear=KINGDOM_STARTER_GEAR.map(g=>{
+ const gear=KINGDOM_STARTER_GEAR.filter(g=>(g.ascension||0)<=s.ascensions).map(g=>{
    const unavailable=full||s.ember<g.price;
    return `<div class="efk-merchant-item common-gear">
      <div class="efk-merchant-item-art">${lootVisual(g.icon,'lg')}</div>
@@ -162,6 +162,11 @@ function renderKingdomMerchant(){
   const protectedGear=isGearTradeProtected(g,equippedIds);
   return `<div class="efk-merchant-item ${g.rarity}-gear"><div class="efk-merchant-item-art">${lootVisual(g.icon,'lg')}</div><div class="efk-merchant-item-info"><strong class="rarity-${g.rarity}">${esc(g.name)}</strong><span>${g.power?`+${fmt(g.power)} ${equipmentPowerType(equipmentSlotFor(g))}`:'Special effect'}${protectedGear?' · Protected':''}</span></div><div class="efk-merchant-trade"><span>${fmt(sellValue(g))} Ember</span><button class="btn btn-quiet" data-sell="${esc(g.id)}" ${protectedGear?'disabled title="Unlock and unequip this item first"':''}>Sell</button></div></div>`;
  }).join(''):'<div class="efk-merchant-empty">No unwanted equipment to sell.</div>';
+ const potionTrades=HEALING_POTIONS.filter(p=>potionCount(p.id)>0).map(p=>{
+   const price=Math.max(1,Math.floor(p.price*.25));
+   return `<div class="efk-merchant-item"><div class="efk-merchant-item-art">${lootVisual(p.icon,'lg')}</div><div class="efk-merchant-item-info"><strong>${esc(p.name)}</strong><span>${potionCount(p.id)} in backpack</span></div><div class="efk-merchant-trade"><span>+${price} Ember</span><button class="btn btn-quiet" data-merchant-sell-potion="${p.id}">Sell 1</button></div></div>`;
+ }).join('');
+ $('merchantlist').insertAdjacentHTML('beforeend',potionTrades);
  // A blacksmith arrives silently after the first Ascension. Crafting is a later feature.
  $('craftsman').hidden=s.ascensions<1;
  $('craftsman').style.display=s.ascensions>=1?'':'none';
@@ -169,12 +174,19 @@ function renderKingdomMerchant(){
 function buyMerchantGear(name){
  if(!atKingdom())return false;
  const base=MERCHANT_GEAR_BY_NAME.get(name);
- if(!base||s.ember<base.price||inventoryUsedSlots()>=inventoryCapacity())return false;
+ if(!base||(base.ascension||0)>s.ascensions||s.ember<base.price||inventoryUsedSlots()>=inventoryCapacity())return false;
  const item={...base,id:'m'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),
  rarity:'common',origin:0,tier:1,locked:false,ability:null,abilityValue:0};
  s.ember-=base.price;s.items.unshift(item);
  note('Purchased '+base.name);toast(base.name+' purchased');
  save();renderGear();renderKingdomMerchant();currencyStats();return true;
+}
+function sellMerchantPotion(id){
+ if(!atKingdom())return false;
+ const potion=potionDefinition(id);
+ if(!potion||potionCount(id)<1)return false;
+ s.potions[id]--;gain(Math.max(1,Math.floor(potion.price*.25)));
+ note('Sold '+potion.name);save();renderGear();renderKingdomMerchant();currencyStats();return true;
 }
 function buyMerchantPotion(id){
  if(!atKingdom())return false;
@@ -360,6 +372,7 @@ if(b.id==='ef4-crystal'){mine();return}
 if(b.id==='ef4-strike'){manualAttack();return}
 if(b.dataset.merchantGear){buyMerchantGear(b.dataset.merchantGear);return}
 if(b.dataset.merchantPotion){buyMerchantPotion(b.dataset.merchantPotion);return}
+if(b.dataset.merchantSellPotion){sellMerchantPotion(b.dataset.merchantSellPotion);return}
 if(b.dataset.target){let stage=+b.dataset.target;if(stage<=maxSelectable(s.zone)){let wasSmart=s.autoMode==='smart';if(wasSmart){s.autoMode='selected';s.auto=true;}setTarget(stage,{keepAuto:true});if(wasSmart)toast('Switched to farming stage '+stage);save();}return}
 if(b.id==='ef4-auto'){if(isDown())return;let options=['off','selected','smart'],idx=options.indexOf(s.autoMode);s.autoMode=options[(idx+1)%3];s.auto=s.autoMode!=='off';s.autoProgress=0;s.smartResting=false;if(s.autoMode==='smart')chooseSmartTarget();if(s.auto&&!s.smartResting)s.engagedUntil=Date.now()+5500;else s.engagedUntil=0;s.combatMessage=s.autoMode==='off'?'Auto-Farm paused.':s.autoMode==='smart'?'Smart Hunt engaged · predicted safest high-tier target':'Auto-Farm repeating selected stage '+s.stage;toast(s.autoMode==='off'?'Auto-Farm off':s.autoMode==='smart'?'Smart Hunt enabled':'Farming stage '+s.stage);stats();return}
 if(b.id==='ef4-potion'){usePotion('minor');return}
