@@ -83,7 +83,7 @@ test('Approved high-resolution Caladryn painting and its travel waypoints are wi
  assert.match(html,/width="1672" height="941"/);
  assert.match(css,/\.caladryn-map-viewport\{/);
  assert.match(css,/\.caladryn-map-pin\.current\{/);
- assert.match(css,/overflow-x:auto/);
+ assert.match(css,/#ef4 \.caladryn-map-viewport\{[^\n]*overflow:hidden/);
  assert.match(css,/\.caladryn-pin-glyph\{opacity:0/);
  const stops=view.slice(view.indexOf('const CALADRYN_STOPS=['),view.indexOf('function renderWorld(){'));
  assert.equal((stops.match(/name:/g)||[]).length,7);
