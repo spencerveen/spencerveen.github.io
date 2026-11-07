@@ -261,7 +261,7 @@ const equippedGearIds=()=>new Set(Object.values(s.equipped));
 const isGearEquipped=(item,ids=equippedGearIds())=>ids.has(item.id);
 const isGearTradeProtected=(item,ids=equippedGearIds())=>!!item.locked||isGearEquipped(item,ids);
 
-const lootAbilityText=g=>!g.ability?'':g.ability==='regen'?'Healing +'+((g.abilityValue||0)*100).toFixed(3)+'% max HP/s':g.ability==='protection'?'Protection +'+(g.abilityValue||0):g.ability==='attack'?'Attack +'+(g.abilityValue||0):'';
+const lootAbilityText=g=>!g.ability?'':g.ability==='regen'?'Resting healing +'+((g.abilityValue||0)*100).toFixed(3)+'% max HP/s':g.ability==='protection'?'Protection +'+(g.abilityValue||0):g.ability==='attack'?'Attack +'+(g.abilityValue||0):'';
 const lootVisual=(id,size='lg')=>ICON_DATA[id]?iconHTML(id,size):`<span class="lootemoji ${size}" role="img" aria-label="Item">${esc(id||'🗡️')}</span>`;
 const bossClearedAt=i=>!!s.bossCleared?.[i]||i<s.unlocked;
 const maxSelectable=i=>Math.min(10,Math.max(1,s.stageUnlocked?.[i]|| (i<s.unlocked?10:1)));
