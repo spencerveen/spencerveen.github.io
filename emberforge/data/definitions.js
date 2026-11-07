@@ -298,10 +298,10 @@ const inExpedition=()=>s.location==='realm';
 const reqText=(a,f,c)=>[a?'Asc '+a:'',f?'Forge '+f:'',c?'Combat '+c:''].filter(Boolean).join(' · ');
 const requirementFor=u=>{let g=upgradeReq(u);return reqText(g[1],g[2],g[3])};
 const TRAINING=[
-['vitality','Vitality','soulfire','+17% maximum health per level',70],
-['guard','Defense','guardian','Reduces incoming attack damage',95],
-['blade','Technique','swords','+22% direct attack damage per level',110],
-['regen','Recovery','gem','Faster health regeneration',90]
+['vitality','Vitality','soulfire','+6% maximum health per level',70],
+['guard','Battle Experience','guardian','+5% combat XP per level',95],
+['blade','Scavenging','swords','+4% Ember rewards from enemies per level',110],
+['regen','Potioncraft','gem','+2% maximum HP restored by potions per level',90]
 ];
 const XP_GAIN = (zone,stage,boss)=>Math.ceil(15*(stage+1)*Math.pow(5.4,zone)*(boss?5:1));
 const nextCombatXP=level=>Math.ceil(55*Math.pow(1.125,Math.max(0,level-1)));
