@@ -1,49 +1,21 @@
 'use strict';
 const MOB_TRAITS=[{name:'Standard',hp:1,atk:1,speed:1},{name:'Swift',hp:.92,atk:.9,speed:.82},{name:'Standard',hp:1,atk:1,speed:1},{name:'Armored',hp:1.33,atk:.95,speed:1.06},{name:'Fierce',hp:1,atk:1.2,speed:.94},{name:'Standard',hp:1,atk:1,speed:1},{name:'Swift',hp:1,atk:1.11,speed:.85},{name:'Armored',hp:1.4,atk:1,speed:1.08},{name:'Elite',hp:1.28,atk:1.3,speed:.9}];
-// Consumables share the 30-slot backpack with equipment. The buy prices are
-// future merchant stock definitions only; purchasing is not enabled yet.
+// Consumables share the 30-slot backpack with equipment. The merchant sells only basic supplies.
 const HEALING_POTIONS=[
  {id:'minor',name:'Minor Healing Potion',heal:0.10,maxStack:10,price:150,dropChance:0.003, bossDropChance:0.008,icon:'gem'}
 ];
 const potionDefinition=id=>HEALING_POTIONS.find(p=>p.id===id);
-// Starter gear is defined for a future Kingdom merchant, but is not sold or dropped yet.
+// Starter gear is sold only by the Kingdom merchant and never appears in monster loot.
 const KINGDOM_STARTER_GEAR=[
- {
-  "name": "Starter Sword",
-  "slot": "mainHand",
-  "power": 2
- },
- {
-  "name": "Starter Shield",
-  "slot": "offHand",
-  "power": 1
- },
- {
-  "name": "Starter helmet",
-  "slot": "helmet",
-  "power": 1
- },
- {
-  "name": "Starter chest",
-  "slot": "chest",
-  "power": 2
- },
- {
-  "name": "Starter gloves",
-  "slot": "gloves",
-  "power": 1
- },
- {
-  "name": "Starter legs",
-  "slot": "legs",
-  "power": 1
- },
- {
-  "name": "Starter boots",
-  "slot": "boots",
-  "power": 1
- }
+ {name:'Starter Sword',slot:'mainHand',icon:'swordglow',power:2,price:180},
+ {name:'Starter Shield',slot:'offHand',icon:'guardian',power:1,price:160},
+ {name:'Starter Helmet',slot:'helmet',icon:'medal',power:1,price:120},
+ {name:'Starter Chestplate',slot:'chest',icon:'guardian',power:2,price:240},
+ {name:'Starter Gloves',slot:'gloves',icon:'tap',power:1,price:100},
+ {name:'Starter Greaves',slot:'legs',icon:'guardian',power:1,price:180},
+ {name:'Starter Boots',slot:'boots',icon:'guardian',power:1,price:110}
 ];
+const MERCHANT_GEAR_BY_NAME=new Map(KINGDOM_STARTER_GEAR.map(g=>[g.name,g]));
 // Ashen Wilds is the ONLY realm with active equipment drops.
 const ASHEN_LOOT=[
  {
