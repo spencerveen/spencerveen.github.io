@@ -1,0 +1,127 @@
+/* Emberforge Mastery • Hall of Legacies */
+#ef4 .efm-mastery{--efm-gold:#e8bb7f;--efm-muted:#a4abc0;--efm-line:#8f674a77;--efm-iron:#111a2a;color:#e6e0d8}
+#ef4 .efm-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:178px;overflow:hidden;padding:24px clamp(20px,3vw,48px);border:1px solid #a16e497f;border-radius:17px;background:radial-gradient(ellipse at 75% 40%,#63372f73,transparent 40%),radial-gradient(ellipse at 25% 120%,#55352d77,transparent 50%),linear-gradient(125deg,#1d1b25,#101825 65%,#20202a);box-shadow:inset 0 1px #ffc9871a,0 10px 35px #050a1490}
+#ef4 .efm-hero::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.12;background:repeating-linear-gradient(122deg,transparent 0,transparent 58px,#dfae7b 59px,transparent 61px)}
+#ef4 .efm-hero::after{content:"";position:absolute;inset:7px;pointer-events:none;border:1px solid #efc18520;border-radius:12px}
+#ef4 .efm-hero-copy{position:relative;z-index:1;max-width:800px}
+#ef4 .efm-overline{display:block;font-size:10px;font-weight:850;letter-spacing:.24em;color:#dfa76b;text-transform:uppercase}
+#ef4 .efm-hero .page-title{font:700 clamp(28px,3.2vw,52px)/1.05 Georgia,serif;letter-spacing:-.02em;color:#ffe1b2;margin:9px 0}
+#ef4 .efm-hero p{margin:0;color:#b9b9c6;line-height:1.55;max-width:600px;font-size:13px}
+#ef4 .efm-hero-ornament{position:absolute;top:-26px;right:24%;color:#dda56a1e;font-size:200px;pointer-events:none}
+#ef4 .efm-hero-emblem{position:relative;display:grid;place-items:center;flex:0 0 108px;width:108px;height:108px;border:1px solid #d9ab7166;border-radius:50%;background:radial-gradient(circle,#f3a86234,#3a2736 50%,#161c2d 72%);box-shadow:0 0 0 9px #bc824514,0 0 28px #e4a46b24}
+#ef4 .efm-hero-emblem:before{content:"";position:absolute;inset:9px;border:1px dashed #e5b67760;border-radius:50%}
+#ef4 .efm-hero-emblem span{font:700 67px Georgia,serif;color:#eec08a;text-shadow:0 0 22px #ef9e63a0}
+#ef4 .efm-legacy-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0}
+#ef4 .efm-legacy-stat{display:flex;flex-direction:column;justify-content:center;gap:5px;min-width:0;padding:11px 16px;border:1px solid #73584280;border-radius:10px;background:linear-gradient(145deg,#202637,#151d2f);box-shadow:inset 0 1px #ffd79c12}
+#ef4 .efm-legacy-stat>span{font-size:9px;font-weight:800;letter-spacing:.14em;color:#a7a7b9}
+#ef4 .efm-legacy-stat strong{font:700 clamp(17px,1.6vw,24px) Georgia,serif;color:#f8cc90}
+#ef4 .efm-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px}
+#ef4 .efm-nav button{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:52px;padding:10px 8px;border:1px solid #68543f;border-radius:9px;background:linear-gradient(#232c40,#161e2f);color:#c7c5ce;font:750 12px/1.3 inherit;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+#ef4 .efm-nav button:hover,#ef4 .efm-nav button:focus-visible{border-color:#d2a16b;color:#ffe0aa;outline:2px solid transparent;box-shadow:0 0 0 2px #e6b27e35}
+#ef4 .efm-nav button.on{border-color:#e8aa70;background:linear-gradient(145deg,#714531,#392736);color:#ffe2b5;box-shadow:inset 0 1px #ffcc9533,0 4px 14px #0005}
+#ef4 .efm-nav-symbol{font:700 20px Georgia,serif;color:#e4ad75}
+#ef4 .efm-chamber{min-width:0;border:1px solid #5b4b48;border-radius:14px;padding:clamp(14px,2vw,24px);background:radial-gradient(ellipse at 50% 0,#65403326,transparent 38%),linear-gradient(#1c2536,#121b2b);min-height:310px}
+#ef4 .efm-chamber-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+#ef4 .efm-chamber-heading h3{font:700 clamp(21px,2.2vw,30px) Georgia,serif;color:#f5d4a3;margin:6px 0}
+#ef4 .efm-chamber-heading p{font-size:12px;line-height:1.5;color:#b5b5c2;max-width:640px;margin:0}
+#ef4 .efm-token{flex:0 0 auto;display:grid;gap:4px;padding:10px 16px;border:1px solid #c69a6477;border-radius:9px;background:#2a2834;color:#f7dba7;text-align:center}
+#ef4 .efm-token span{font-size:9px;letter-spacing:.18em;color:#c7ad8f}
+#ef4 .efm-token strong{font:700 23px Georgia,serif}
+#ef4 .efm-branches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#ef4 .efm-branch{min-width:0;padding:16px;border:1px solid #79533b;border-radius:12px;background:linear-gradient(155deg,#342b36,#1a2433 35%,#131e30);box-shadow:inset 0 1px #f8bb8240}
+#ef4 .efm-branch-war{border-color:#6f5867;background:linear-gradient(155deg,#332735,#202438 35%,#131e30)}
+#ef4 .efm-branch>header{display:flex;align-items:center;gap:12px;padding-bottom:13px;border-bottom:1px solid #c08b5c37;margin-bottom:12px}
+#ef4 .efm-branch-crest{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border:1px solid #e9ad7388;border-radius:50%;background:#533427;color:#f2ca8d;font:700 25px Georgia,serif;box-shadow:0 0 18px #ec95632b}
+#ef4 .efm-branch-war .efm-branch-crest{background:#392a45;border-color:#ab899c}
+#ef4 .efm-branch h4{font:700 clamp(17px,1.7vw,23px) Georgia,serif;color:#f8d8a8;margin:4px 0}
+#ef4 .efm-branch header p{font-size:11px;color:#c4b8bc;margin:0;line-height:1.4}
+#ef4 .efm-branch-talents{display:grid;gap:9px}
+#ef4 .efm-talent{display:grid;grid-template-columns:43px minmax(0,1fr) auto;align-items:center;gap:11px;padding:12px;border:1px solid #59607899;border-radius:10px;background:#152234dd;transition:border-color .15s,background .15s}
+#ef4 .efm-talent.invested{border-color:#bb915e8c;background:#272b38}
+#ef4 .efm-talent.maxed{border-color:#dcb177}
+#ef4 .efm-talent:hover{border-color:#c9a076}
+#ef4 .efm-talent-icon{display:grid;place-items:center;width:42px;height:42px;border:1px solid #896b53;border-radius:8px;background:radial-gradient(#644836,#27273a)}
+#ef4 .efm-talent-heading{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;justify-content:space-between}
+#ef4 .efm-talent-heading strong{font-size:12px;color:#f0dfc9}
+#ef4 .efm-talent-heading span{font-size:9px;letter-spacing:.08em;color:#e9b981;white-space:nowrap}
+#ef4 .efm-talent-copy p{font-size:11px;color:#aeb8ca;margin:5px 0 8px;line-height:1.4}
+#ef4 .efm-talent-track{height:5px;background:#071321;border-radius:10px;overflow:hidden;border:1px solid #66544f}
+#ef4 .efm-talent-track span{display:block;height:100%;background:linear-gradient(90deg,#92563b,#f1bc7b);border-radius:10px}
+#ef4 .efm-talent-action{align-self:center}
+#ef4 .efm-talent-action .btn{font-size:11px;white-space:nowrap;min-width:80px;padding:8px 9px}
+#ef4 .efm-contract-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#ef4 .efm-contract{display:flex;align-items:center;gap:12px;min-width:0;padding:14px;border:1px solid #61544e;background:linear-gradient(120deg,#242b3b,#182338);border-radius:10px}
+#ef4 .efm-contract.done{border-color:#c4a06e80}
+#ef4 .efm-contract .r-body{flex:1;min-width:0}
+#ef4 .efm-contract .r-body strong{display:block;font-size:13px;color:#f1d7b1}
+#ef4 .efm-contract .r-ico{width:37px;flex:0 0 37px}
+#ef4 .efm-contract .progress{height:5px!important;background:#0c1826}
+#ef4 .efm-contract .progress>div{background:linear-gradient(90deg,#99603b,#deb47a)!important}
+#ef4 .efm-contract .btn{white-space:nowrap;flex:0 0 auto}
+#ef4 .efm-repeatable{margin:14px 0 0!important;border-color:#bd8f5c88!important;background:linear-gradient(125deg,#402e31,#222838)!important}
+#ef4 .efm-mastery .efw-achievements-heading{padding:15px 0 9px;border-bottom:1px solid #9e754754}
+#ef4 .efm-mastery .efw-achievements-heading h3{font:700 22px Georgia,serif;color:#f1cfa0}
+#ef4 .efm-mastery .efw-achievement-worker{border-color:#675245;background:linear-gradient(#242c3d,#182336)}
+#ef4 .efm-mastery .efw-milestone-track span{background:linear-gradient(90deg,#a65c3d,#e6ab6b)}
+#ef4 .efm-trophy-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#ef4 .efm-trophy{background:#1b293d;border:1px solid #6f604d;border-radius:9px;min-width:0}
+#ef4 .efm-trophy.earned{border-color:#caa064;background:linear-gradient(120deg,#3d302f,#1c2938)}
+#ef4 .efm-trophy:not(.earned){opacity:.64}
+#ef4 .efm-bestiary-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+#ef4 .efm-realm-collection{margin:13px 0 0}
+#ef4 .efm-realm-heading{display:flex;align-items:center;gap:10px;padding:8px 12px;background:linear-gradient(90deg,#4a3531,#1b2534);border:1px solid #896546;border-radius:10px 10px 0 0}
+#ef4 .efm-realm-heading strong{font:700 18px Georgia,serif;color:#f0cb99}
+#ef4 .efm-realm-heading span{margin-left:auto;color:#aeb9c8;font-size:11px}
+#ef4 .efm-realm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:12px;background:#101b2db0;border:1px solid #594b4b;border-top:0;border-radius:0 0 10px 10px}
+#ef4 .efm-realm-grid .codexcard{background:#1a2739;border-color:#5e5055}
+#ef4 .efm-realm-grid .codexcard.boss{border-color:#ad795b;background:linear-gradient(135deg,#332832,#1a2739)}
+#ef4 .efm-altar{position:relative;overflow:hidden;text-align:center;padding:27px clamp(12px,3vw,36px);background:radial-gradient(ellipse at 50% -10%,#88583a66,transparent 62%),linear-gradient(155deg,#312738,#121b2f 70%)!important;border:1px solid #bd8e62!important;border-radius:14px}
+#ef4 .efm-altar::before{content:"";position:absolute;inset:9px;border:1px solid #d9a67324;border-radius:9px;pointer-events:none}
+#ef4 .efm-altar-title{font:700 clamp(25px,3vw,38px) Georgia,serif;color:#f8d29e;margin-bottom:8px}
+#ef4 .efm-altar .efm-altar-icon{display:grid;place-items:center;margin:0 auto 10px;width:110px;height:110px;border-radius:50%;border:1px solid #e6a9756b;background:radial-gradient(#b16a4d44,#362e41 54%,#171d2d 72%);box-shadow:0 0 35px #cf895146}
+#ef4 .efm-altar .progress>div{background:linear-gradient(90deg,#955e78,#e1a76f)!important}
+#ef4 .efm-altar .stat{border-color:#9c71577a;background:#1c273a}
+#ef4 .efm-altar .btn-gold{min-width:190px}
+#ef4 .efm-realm-roadmap{border-color:#92704f!important;background:linear-gradient(#252536,#172133)!important}
+#ef4 .efm-realm-roadmap .section{font:700 21px Georgia,serif;color:#f2d2a5}
+@media(max-width:1050px){
+ #ef4 .efm-talent{grid-template-columns:36px minmax(0,1fr);gap:8px}
+ #ef4 .efm-talent-icon{width:36px;height:36px}
+ #ef4 .efm-talent-action{grid-column:2;justify-self:start}
+ #ef4 .efm-realm-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:800px){
+ #ef4 .efm-branches,#ef4 .efm-contract-list{grid-template-columns:1fr}
+ #ef4 .efm-hero{min-height:145px}
+ #ef4 .efm-hero-emblem{flex:0 0 70px;width:70px;height:70px}
+ #ef4 .efm-hero-emblem span{font-size:44px}
+ #ef4 .efm-legacy-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #ef4 .efm-nav{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+ #ef4 .efm-nav button{flex-direction:column;gap:3px;min-height:58px;font-size:10px;padding:7px 3px}
+ #ef4 .efm-nav-symbol{font-size:18px}
+ #ef4 .efm-talent{grid-template-columns:43px minmax(0,1fr) auto}
+ #ef4 .efm-talent-action{grid-column:auto}
+}
+@media(max-width:560px){
+ #ef4 .efm-hero{padding:20px 16px;min-height:0}
+ #ef4 .efm-hero-emblem{display:none}
+ #ef4 .efm-hero .page-title{font-size:29px}
+ #ef4 .efm-hero p{font-size:12px}
+ #ef4 .efm-legacy-stat{padding:10px}
+ #ef4 .efm-legacy-stat strong{font-size:17px}
+ #ef4 .efm-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+ #ef4 .efm-nav button{font-size:9px;letter-spacing:-.025em}
+ #ef4 .efm-chamber{padding:11px}
+ #ef4 .efm-chamber-heading{align-items:flex-start}
+ #ef4 .efm-chamber-heading h3{font-size:22px}
+ #ef4 .efm-token{padding:8px}
+ #ef4 .efm-token strong{font-size:18px}
+ #ef4 .efm-branch{padding:10px}
+ #ef4 .efm-branch>header{gap:8px}
+ #ef4 .efm-branch-crest{flex:0 0 40px;width:40px;height:40px}
+ #ef4 .efm-talent{grid-template-columns:34px minmax(0,1fr);padding:9px}
+ #ef4 .efm-talent-icon{height:34px;width:34px}
+ #ef4 .efm-talent-action{grid-column:2;justify-self:start}
+ #ef4 .efm-realm-grid,#ef4 .efm-trophy-grid{grid-template-columns:1fr}
+ #ef4 .efm-contract{flex-wrap:wrap}
+}
