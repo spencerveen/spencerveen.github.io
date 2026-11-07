@@ -93,7 +93,7 @@ test('Approved high-resolution Caladryn painting and its travel waypoints are wi
 });
 test('legacy users resume their expedition and new users start in Kingdom',()=>{
  const defs=read('data/definitions.js'),formatting=read('core/formatting.js');
- assert.match(defs,/version:11,potions:\{minor:0\},location:'kingdom'/);
+ assert.match(defs,/version:12,workerTimers:\{\},potions:\{minor:0\},location:'kingdom'/);
  assert.match(formatting,/x\.location=\['kingdom','realm'\]\.includes\(obj\.location\)\?obj\.location:'realm'/);
  assert.match(formatting,/if\(x\.location==='kingdom'\)\{x\.autoMode='off';x\.auto=false;/);
  assert.match(formatting,/x\.version=11;/);
