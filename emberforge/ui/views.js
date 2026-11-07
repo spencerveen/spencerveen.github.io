@@ -55,7 +55,7 @@ function stats(){
  $('combattip').textContent=boss?'Bosses strike hard with a special every fourth hit. Ashen Wilds bosses have a small chance to drop any gear. Other realms have no loot yet.':'Each stage can be farmed repeatedly. New stages unlock one at a time after first victories. A safe farming target improves XP and loot.';
  updateHuntBoard();
  let next=s.zone<5?s.zone+1:5;
- $('nextgate').textContent=s.zone<5?'Next realm: '+realms[next][0]+' · Combat Lv '+REALM_LEVELS[next]+', Ascension '+REALM_ASCENSIONS[next]+' and previous boss defeated.':'Endgame unlocked · defeat the Ash King and master the final era.';
+ $('nextgate').textContent=s.zone<5?'Next realm: '+realms[next][0]+' · defeat '+realms[s.zone][4]+' for the first time.':'Final region · defeat its guardian to complete your conquest.';
  setIcon('crystalicon','crystal','crystalHero');setIcon('forgecrest','altar','lg');setIcon('expeditionicon','swords','sm');
  setIcon('card-workers','pickaxe','lg');setIcon('card-gear','backpack','lg');setIcon('card-mastery','altar','lg');
  setIcon('cur-ember','flame','sm');setIcon('cur-eps','gear','sm');setIcon('cur-click','tap','sm');setIcon('cur-power','swordglow','sm');setIcon('cur-souls','soulfire','sm');setIcon('cur-sp','gem','sm');
@@ -110,8 +110,8 @@ function renderUpgrades(){
  const visible=upgrades.filter(u=>(view==='all'||upgradeUnlocked(u))&&(showOwned||!s.ups[u[0]])&&(view!=='affordable'||!s.ups[u[0]]&&s.ember>=u[3]));
  $('upgradeinfo').innerHTML=`<div class="efa-metric"><span>Available powers</span><strong>${unowned.length}</strong></div>
  <div class="efa-metric"><span>Affordable now</span><strong>${affordable.length}</strong></div>
- <div class="efa-metric"><span>Ascension tier</span><strong>${s.ascensions}</strong></div>`;
- $('upgradehint').textContent=view==='all'?'Future powers are previews; unlock their requirements before purchasing.':'Higher-tier powers reveal themselves as your Forge, Combat level and Ascensions grow.';
+ <div class="efa-metric"><span>Bosses defeated</span><strong>${bossesDefeated()} / 6</strong></div>`;
+ $('upgradehint').textContent=view==='all'?'Future powers are previews; unlock their requirements before purchasing.':'Higher-tier powers reveal themselves after boss victories and Forge or Combat milestones.';
  $('upgradelist').innerHTML=visible.map(u=>{
    const owned=!!s.ups[u[0]],unlocked=upgradeUnlocked(u),enabled=unlocked&&!owned&&s.ember>=u[3];
    const state=owned?'owned':!unlocked?'locked':enabled?'affordable':'available';
@@ -137,7 +137,7 @@ let kingdomTab='buildings';
 let merchantTab='buy';
 function setKingdomTab(tab){
  if(!['buildings','merchant','blacksmith'].includes(tab))return;
- if(tab==='blacksmith'&&s.ascensions<1)return;
+ if(tab==='blacksmith'&&!bossClearedAt(0))return;
  kingdomTab=tab;
  $$('[data-kingdom-tab]').forEach(button=>{
   const active=button.dataset.kingdomTab===tab;
@@ -156,35 +156,39 @@ function setMerchantTab(tab){
 }
 // Every structure must reach the threshold before the Kingdom evolves.
 // The vista index persists across Ascension, even when buildings reset.
+// A new landscape requires the corresponding first-time boss defeat AND
+// every Kingdom building completed to the prior tier's cap. Milestones persist
+// between runs, even though Ascension resets the current buildings.
 const KINGDOM_VISTA_MILESTONES=[
- {levels:0,ascensions:0},
- {levels:3,ascensions:0},
- {levels:6,ascensions:1},
- {levels:9,ascensions:2},
- {levels:11,ascensions:3},
- {levels:12,ascensions:4}
+ {levels:0,boss:-1},
+ {levels:3,boss:0},
+ {levels:6,boss:1},
+ {levels:9,boss:2},
+ {levels:11,boss:3},
+ {levels:12,boss:4}
 ];
 function earnedKingdomVista(){
- let unlocked=0;
- for(let i=1;i<KINGDOM_VISTA_MILESTONES.length;i++){
+ let unlocked=Math.min(5,s.kingdomVistaMilestone||0);
+ for(let i=unlocked+1;i<KINGDOM_VISTA_MILESTONES.length;i++){
   const milestone=KINGDOM_VISTA_MILESTONES[i];
-  if(s.ascensions>=milestone.ascensions&&buildings.every(b=>(s.build[b[0]]||0)>=milestone.levels))unlocked=i;
+  if(!bossClearedAt(milestone.boss)||!buildings.every(b=>(s.build[b[0]]||0)>=milestone.levels))break;
+  unlocked=i;
  }
  return unlocked;
 }
 function renderKingdom(){
  const cap=buildingCap();
- const earned=Math.max(s.kingdomVistaMilestone||0,earnedKingdomVista());
+ const earned=earnedKingdomVista();
  if(earned>(s.kingdomVistaMilestone||0)){s.kingdomVistaMilestone=earned;save();}
  // Override legacy combined-level previews with the actual earned vista.
  kingdomVistaPreview=Math.min(KINGDOM_VISTAS.length-1,earned);
  updateIllustratedScenes();
  const owned=Object.values(s.build).reduce((n,x)=>n+x,0);
- $('kingdominfo').textContent='Era '+s.ascensions+'  ·  '+owned+' built levels';
- $('kingdomcap').textContent='Build cap '+cap+' / 12';
+ $('kingdominfo').textContent='Bosses '+bossesDefeated()+'/6 · '+owned+' built levels';
+ $('kingdomcap').textContent='Current cap '+cap+' / 12';
  $('kingdombuildcount').textContent=owned?String(owned):'';
- $('blacksmithtab').hidden=s.ascensions<1;
- if(kingdomTab==='blacksmith'&&s.ascensions<1)kingdomTab='buildings';
+ $('blacksmithtab').hidden=!bossClearedAt(0);
+ if(kingdomTab==='blacksmith'&&!bossClearedAt(0))kingdomTab='buildings';
  const visible=buildings.filter(b=>buildingUnlocked(b)||s.build[b[0]]>0);
  $('buildlist').innerHTML=visible.map(b=>{
   const lv=s.build[b[0]],cost=costBuild(b),unlocked=buildingUnlocked(b),maxed=lv>=cap;
@@ -201,7 +205,7 @@ function renderKingdom(){
 function renderKingdomMerchant(){
  const merchantStock=$('merchantstock');
  const full=inventoryUsedSlots()>=inventoryCapacity();
- const gear=KINGDOM_STARTER_GEAR.filter(g=>(g.ascension||0)<=s.ascensions).map(g=>{
+ const gear=KINGDOM_STARTER_GEAR.filter(g=>(g.ascension||0)<=kingdomBossTier()).map(g=>{
    const unavailable=full||s.ember<g.price;
    return `<div class="efk-merchant-item common-gear">
      <div class="efk-merchant-item-art">${lootVisual(g.icon,'lg')}</div>
@@ -232,13 +236,13 @@ function renderKingdomMerchant(){
  }).join('');
  $('merchantlist').insertAdjacentHTML('beforeend',potionTrades);
  // A blacksmith arrives silently after the first Ascension. Crafting is a later feature.
- $('craftsman').hidden=s.ascensions<1;
- $('craftsman').style.display=s.ascensions>=1?'':'none';
+ $('craftsman').hidden=!bossClearedAt(0);
+ $('craftsman').style.display=bossClearedAt(0)?'':'none';
 }
 function buyMerchantGear(name){
  if(!atKingdom())return false;
  const base=MERCHANT_GEAR_BY_NAME.get(name);
- if(!base||(base.ascension||0)>s.ascensions||s.ember<base.price||inventoryUsedSlots()>=inventoryCapacity())return false;
+ if(!base||(base.ascension||0)>kingdomBossTier()||s.ember<base.price||inventoryUsedSlots()>=inventoryCapacity())return false;
  const item={...base,id:'m'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),
  rarity:'common',origin:0,tier:1,locked:false,ability:null,abilityValue:0};
  s.ember-=base.price;s.items.unshift(item);
@@ -366,11 +370,11 @@ function renderWorld(){
  $('worldbattle').hidden=home;
  $('worldbattle').classList.toggle('active',!home&&page==='world');
  updateCaladrynMapVisibility();
- const mapSignature=[s.location,s.zone,s.unlocked,s.ascensions,s.combatLevel].join('|');
+ const mapSignature=[s.location,s.zone,s.unlocked,s.bossCleared.join('|')].join('|');
  if(mapSignature!==caladrynMapSignature){
  const stops=CALADRYN_STOPS.map((stop,i)=>{
   const kingdom=i===0,z=i-1,available=kingdom||realmAccessible(z),current=kingdom?home:!home&&s.zone===z;
-  const requirement=kingdom?'Safe home base':`Asc ${REALM_ASCENSIONS[z]} · Combat Lv ${REALM_LEVELS[z]}${z?' · previous guardian':''}`;
+  const requirement=kingdom?'Safe home base':z===0?'Starting realm':'Defeat '+realms[z-1][4]+' to unlock';
   const status=current?'Current location':available?'Travel available':'Locked';
   const attr=kingdom?'data-return-home':`data-zone="${z}"`;
   return { ...stop,kingdom,z,available,current,requirement,status,attr};
@@ -415,10 +419,10 @@ if(sub==='achievements'){
  <div class="grid2">`+honors.map(h=>`<div class="rowitem" style="opacity:${s.ach.includes(h[0])?1:.48}"><span class="r-ico">${iconHTML(s.ach.includes(h[0])?'medal':'vault','lg')}</span><div class="r-body"><strong>${h[1]}</strong><span class="hint">${h[2]}</span></div></div>`).join('')+'</div>';
 }
 if(sub==='bestiary'){html='<div class="space" style="margin-bottom:10px"><div class="hint">Track every realm enemy and boss. Only Ashen Wilds currently drops equipment. Boss drops are never guaranteed.</div><span class="pill">Entries '+encounterBook().length+'</span></div><div class="bestiary-grid">'+encounterBook().map(ent=>{let seen=(s.zone===ent.realm&&ent.stage<=maxSelectable(ent.realm))||ent.realm<s.unlocked||((s.codex[ent.id]||0)>0),kills=s.codex[ent.id]||0;return `<div class="codexcard ${seen?'':'locked'}"><div class="codeico">${seen?(ent.boss?iconHTML(ent.icon,'xl'):monsterSheetHTML(ent.realm,ent.stage,'codex')):iconHTML('vault','xl')}</div><div class="codebody"><div class="realmnote">${realms[ent.realm][0]}</div><div class="codextype ${ent.boss?'boss':''}">${ent.boss?'Boss':'Enemy'}</div><strong>${seen?ent.name:'Unknown encounter'}</strong><div class="hint" style="margin-top:4px">${seen?ent.desc:'Defeat earlier bosses to reveal this entry.'}</div><div class="hint" style="margin-top:6px">Defeats: ${fmt(kills)}${ent.boss?' · Boss chest eligible':''}</div></div></div>`}).join('')+'</div>'}
-if(sub==='ascend'){let reward=soulReward(),next=ascendTarget(),prog=Math.min(100,100*s.runEarned/next);let lastLoot=s.lastBossLoot?`<div class="hint" style="margin-top:10px">Last boss drop: ${esc(s.lastBossLoot.name)}</div>`:'';html=`<div class="card" style="background:radial-gradient(ellipse at 50% 5%,#3a3257,#16213a 80%);text-align:center;padding:28px 18px"><div style="display:flex;justify-content:center;margin:4px auto 14px">${iconHTML("altar","hero")}</div><div style="font-size:22px;font-weight:850">Ascension Altar</div><div class="hint" style="margin:8px auto 14px;max-width:380px">Sacrifice your current run to gain permanent Soulfire. Soulfire permanently empowers Forge production with diminishing returns; equipment determines combat stats. Each Ascension unlocks more upgrades, skills, and world regions.</div><div class="grid2" style="max-width:330px;margin:0 auto 14px"><div class="stat"><div class="label">This run</div><div class="big">${fmt(s.runEarned)}</div></div><div class="stat"><div class="label">Soulfire reward</div><div class="big" style="color:#e2bdff">+${fmt(reward)}</div></div></div><div class="progress" style="margin-bottom:10px"><div style="width:${prog}%;background:#ae80ee"></div></div><div class="hint" style="margin-bottom:14px">${reward?'Ascension is ready!':'Earn '+fmt(next-s.runEarned)+' more Ember to ascend. Next era unlocks higher caps.'}</div><button class="btn btn-gold" data-ascend="1" ${reward<1?'disabled':''}>Ascend ${reward?'for +'+reward+' Soulfire':'· Locked'}</button><div class="hint" style="margin-top:13px">Resets Ember, workers, temporary upgrades, buildings and the selected battle target. Keeps combat levels (health only), training, skills, Soulfire and discoveries. All equipment and potions are lost on Ascension. Training and skill caps rise after each Ascension.</div>${lastLoot}</div>`}
+if(sub==='ascend'){let reward=soulReward(),next=ascendTarget(),prog=Math.min(100,100*s.runEarned/next);let lastLoot=s.lastBossLoot?`<div class="hint" style="margin-top:10px">Last boss drop: ${esc(s.lastBossLoot.name)}</div>`:'';html=`<div class="card" style="background:radial-gradient(ellipse at 50% 5%,#3a3257,#16213a 80%);text-align:center;padding:28px 18px"><div style="display:flex;justify-content:center;margin:4px auto 14px">${iconHTML("altar","hero")}</div><div style="font-size:22px;font-weight:850">Ascension Altar</div><div class="hint" style="margin:8px auto 14px;max-width:380px">Sacrifice your current run to gain permanent Soulfire and stronger production. Equipment determines combat stats. Defeating bosses unlocks new regions, Kingdom upgrades, and higher skill tiers.</div><div class="grid2" style="max-width:330px;margin:0 auto 14px"><div class="stat"><div class="label">This run</div><div class="big">${fmt(s.runEarned)}</div></div><div class="stat"><div class="label">Soulfire reward</div><div class="big" style="color:#e2bdff">+${fmt(reward)}</div></div></div><div class="progress" style="margin-bottom:10px"><div style="width:${prog}%;background:#ae80ee"></div></div><div class="hint" style="margin-bottom:14px">${reward?'Ascension is ready!':'Earn '+fmt(next-s.runEarned)+' more Ember to ascend. Boss victories unlock higher caps.'}</div><button class="btn btn-gold" data-ascend="1" ${reward<1?'disabled':''}>Ascend ${reward?'for +'+reward+' Soulfire':'· Locked'}</button><div class="hint" style="margin-top:13px">Resets Ember, workers, temporary upgrades, buildings and the selected battle target. Keeps combat levels (health only), training, skills, Soulfire and discoveries. All equipment and potions are lost on Ascension. Boss victories raise training and skill caps.</div>${lastLoot}</div>`}
 box.innerHTML=html;if(sub==='ascend'){
-let row=REALM_ASCENSIONS.map((a,i)=>`<div class="rowitem" style="opacity:${s.ascensions>=a?1:.78}"><span class="r-ico">${iconHTML(realms[i][1],'lg')}</span><div class="r-body"><strong>${realms[i][0]}</strong><span class="hint">Ascension ${a} · Combat Lv ${REALM_LEVELS[i]} · previous guardian defeated</span></div><span class="pill">${s.ascensions>=a?'Era unlocked':'Future era'}</span></div>`).join('');
-box.insertAdjacentHTML('beforeend',`<div class="card" style="margin-top:12px"><div class="section">Realm unlock roadmap</div><div class="stack" style="gap:7px">${row}</div><div class="hint" style="margin-top:10px">Each Ascension increases the building level cap by 3 (up to 12) and training capacity by 3.</div></div>`)
+let row=realms.map((r,i)=>`<div class="rowitem" style="opacity:${realmAccessible(i)?1:.78}"><span class="r-ico">${iconHTML(r[1],'lg')}</span><div class="r-body"><strong>${r[0]}</strong><span class="hint">${i?'Defeat '+realms[i-1][4]+' to unlock':'Starting region'} · Boss: ${r[4]}</span></div><span class="pill">${realmAccessible(i)?'Region unlocked':'Boss required'}</span></div>`).join('');
+box.insertAdjacentHTML('beforeend',`<div class="card" style="margin-top:12px"><div class="section">Realm unlock roadmap</div><div class="stack" style="gap:7px">${row}</div><div class="hint" style="margin-top:10px">Defeating each region boss increases your Kingdom's building cap and unlocks higher training ranks. Kingdom scenery also requires all six buildings completed to the previous cap.</div></div>`)
 }}
 function renderPage(){currencyStats();if(page==='workers')renderWorkers();if(page==='upgrades')renderUpgrades();if(page==='gear')renderGear();if(page==='world')renderWorld();if(page==='mastery')renderMastery();stats()}
 function go(p){const jumpToCombat=p==='battle'&&inExpedition();if(p==='battle'||p==='kingdom')p='world';page=p;$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===p||(p==='world'&&inExpedition()&&x.dataset.view==='battle')));$$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===p));renderPage();if(jumpToCombat)$('worldbattle').scrollIntoView?.({behavior:'smooth',block:'start'});}
@@ -426,7 +430,7 @@ function modal(title,body,onConfirm,confirmLabel='Confirm',textarea=false){modal
 function saveCode(){save();return btoa(unescape(encodeURIComponent(JSON.stringify(s))))}
 function exportSave(){let code=saveCode();modal('Export your save','Copy this code to move your progress to another browser. Your code includes equipment and Soulfire.',()=>{let t=$('modaltext');t.focus();t.select();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(()=>toast('Save copied to clipboard')).catch(()=>toast('Select and copy the code manually'))}else{try{document.execCommand('copy');toast('Save copied if supported')}catch(e){toast('Select and copy the code manually')}}return false},'Copy Code',true);$('modaltext').value=code;}
 function importSave(){modal('Import save code','Paste a save code from Emberforge III, Reborn v2, or original Emberforge. This replaces the current save.',v=>{try{let o=JSON.parse(decodeURIComponent(escape(atob(v.trim()))));if(!o||!o.gens||!Number.isFinite(Number(o.ember)))throw Error('Bad save');s=clean(o);if(s.hp===0)s.hp=Math.ceil(maxHealth()*.5);if(s.hp===null)s.hp=maxHealth();if(!(s.enemyHP>0))s.enemyHP=enemy().hp;note('Save imported successfully');save();renderPage();toast('Save imported!');return true}catch(e){toast('Invalid or unsupported save code');return false}},'Import',true)}
-function ascend(){let reward=soulReward();if(reward<1){toast('Earn 100K this run first');return}modal('Ascend and Reforge?','Receive +'+reward+' permanent Soulfire. The new era raises building, skill and training caps and unlocks additional powers and regions. Ember, workers, temporary upgrades, buildings, all equipment and potions reset; permanent progress stays.',()=>{let old=s;s=fresh();for(let k of ['lifetime','clicks','souls','ascensions','ach','skills','skillPoints','level','unlocked','kills','bosses','lootFound','claimed','bounty','bountyStart','codex','combatLevel','combatXP','training','stageUnlocked','bossCleared','firstClears','kingdomVistaMax','kingdomVistaMilestone','avatarBody','avatarName'])s[k]=old[k];s.souls+=reward;s.ascensions++;s.hp=maxHealth();s.combatMessage='A new Ascension era begins! Health and permanent skills remain; equipment and potions have been reset.';s.enemyHP=enemy().hp;note('Ascended for +'+reward+' Soulfire');honorCheck();save();renderPage();toast('Ascension complete! +'+reward+' Soulfire');return true},'Ascend Now')}
+function ascend(){let reward=soulReward();if(reward<1){toast('Earn 100K this run first');return}modal('Ascend and Reforge?','Receive +'+reward+' permanent Soulfire. Boss victories, not Ascension, unlock regions, building levels, and new powers. Ember, workers, temporary upgrades, buildings, all equipment and potions reset; permanent progress stays.',()=>{let old=s;s=fresh();for(let k of ['lifetime','clicks','souls','ascensions','ach','skills','skillPoints','level','unlocked','kills','bosses','lootFound','claimed','bounty','bountyStart','codex','combatLevel','combatXP','training','stageUnlocked','bossCleared','firstClears','kingdomVistaMax','kingdomVistaMilestone','avatarBody','avatarName'])s[k]=old[k];s.souls+=reward;s.ascensions++;s.hp=maxHealth();s.combatMessage='A new Ascension era begins! Health and permanent skills remain; equipment and potions have been reset.';s.enemyHP=enemy().hp;note('Ascended for +'+reward+' Soulfire');honorCheck();save();renderPage();toast('Ascension complete! +'+reward+' Soulfire');return true},'Ascend Now')}
 root.addEventListener('click',e=>{let b=e.target.closest('button');if(!b||!root.contains(b)||b.disabled)return;
 if(Object.prototype.hasOwnProperty.call(b.dataset,'returnHome')){travelToKingdom();go('world');toast('Returned safely to the Kingdom');return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapToggle')){caladrynMapCollapsed=!caladrynMapCollapsed;try{window.localStorage.setItem(CALADRYN_MAP_PREFERENCE,caladrynMapCollapsed?'1':'0')}catch(_){}updateCaladrynMapVisibility();return}
