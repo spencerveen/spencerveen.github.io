@@ -214,3 +214,86 @@
   width:min(100%,calc((100dvh - 190px) * 1672 / 941));
  }
 }
+
+
+
+/* World / Kingdom unified layout: the atlas is a navigational overlay,
+   never a second giant picture stacked above the interactive settlement. */
+#ef4 [data-view="world"]{padding-bottom:14px}
+#ef4 .caladryn-header{width:min(100%,1560px,calc((100dvh - 235px) * 1672 / 941));margin:0 auto 10px;padding:10px 15px;gap:12px;border-radius:11px}
+#ef4 .caladryn-header .page-title{font-size:clamp(22px,2.1vw,28px);line-height:1.06;margin:2px 0}
+#ef4 .caladryn-header .caladryn-kicker{font-size:9px;letter-spacing:1.5px}
+#ef4 .caladryn-header p{font-size:11px;line-height:1.3}
+#ef4 .caladryn-head-actions{gap:8px}
+#ef4 .caladryn-current{padding:7px 10px}
+#ef4 .caladryn-map-toggle{padding:7px 12px;min-height:34px}
+#ef4 .caladryn-header.map-collapsed{width:min(100%,1560px,calc((100dvh - 235px) * 1672 / 941));margin:0 auto 10px;padding:10px 15px}
+#ef4 .caladryn-header.map-collapsed .page-title{font-size:clamp(22px,2.1vw,28px)}
+#ef4 .caladryn-header.map-collapsed .caladryn-kicker{display:block}
+#ef4 .caladryn-header.map-collapsed p{display:block}
+#ef4 .efk-hub{width:min(100%,1560px,calc((100dvh - 235px) * 1672 / 941));margin:0 auto;padding:0;border:0}
+#ef4 .efk-vista-frame.efk-kingdom-interactive{width:100%;margin-inline:0}
+#ef4 .efk-hub-header{margin-bottom:8px}
+#ef4 .efk-scene-footer{gap:10px;flex-wrap:wrap}
+#ef4 .efk-scene-footer-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+#ef4 .efk-scene-footer #ef4-vistaname{font-size:11px;color:#f0c58d;font-weight:800}
+#ef4 .efk-scene-footer .efk-world-launch{padding:6px 10px;font-size:11px;white-space:nowrap;border-color:#806646;color:#f6d7a5;background:#2a2b3d}
+#ef4 .efk-scene-footer .efk-world-launch:hover{border-color:#dba86d;background:#383445}
+/* Atlas takes focus when requested. It sits over, not above, the Kingdom or combat. */
+#ef4 .caladryn-map-region{
+ position:fixed;inset:0;z-index:850;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:9px;padding:clamp(12px,3vw,28px);
+ background:rgba(5,10,19,.90);backdrop-filter:blur(7px);
+ overflow-y:auto;overscroll-behavior:contain;
+}
+#ef4 .caladryn-map-region[hidden]{display:none!important}
+#ef4 .caladryn-atlas-head{
+ width:min(100%,1260px,calc((100dvh - 195px)*1672/941));
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ background:linear-gradient(105deg,#222b40,#171e2e);border:1px solid #9b7954;
+ padding:10px 14px;border-radius:12px;box-shadow:0 5px 20px #0006;
+}
+#ef4 .caladryn-atlas-head h3{font:700 clamp(19px,2.3vw,27px)/1.1 Georgia,serif;color:#ffddab;margin:3px 0}
+#ef4 .caladryn-atlas-head p{font-size:11px;color:#b9c6d7;margin:0}
+#ef4 .caladryn-atlas-close{white-space:nowrap;min-height:37px;border-color:#9d744d}
+#ef4 .caladryn-map-region .caladryn-map-viewport{
+ width:min(100%,1260px,calc((100dvh - 195px)*1672/941));
+ max-height:76dvh;margin:0;flex:0 0 auto;border-radius:12px;
+}
+#ef4 .caladryn-map-region .caladryn-map-caption{
+ width:min(100%,1260px,calc((100dvh - 195px)*1672/941));
+ display:flex;align-items:center;justify-content:space-between;
+ padding:3px 2px;margin:0;color:#e2c396;
+}
+#ef4 .caladryn-map-viewport.zoomed{
+ overflow:auto;max-height:76dvh;scrollbar-width:thin;
+ touch-action:pan-x pan-y;
+}
+#ef4 .caladryn-map-region .caladryn-map-viewport.zoomed .caladryn-map-canvas{
+ width:1500px;min-width:1500px;
+}
+@media(max-width:959px){
+ #ef4 .caladryn-header,#ef4 .caladryn-header.map-collapsed,
+ #ef4 .efk-hub{width:100%}
+ #ef4 .efk-vista-frame.efk-kingdom-interactive{width:100%}
+}
+@media(max-width:680px){
+ #ef4 .caladryn-header,#ef4 .caladryn-header.map-collapsed{padding:10px 12px}
+ #ef4 .caladryn-header .page-title{font-size:23px}
+ #ef4 .caladryn-header p,#ef4 .caladryn-header.map-collapsed p{display:none}
+ #ef4 .caladryn-map-region{padding:10px;gap:8px}
+ #ef4 .caladryn-atlas-head{padding:9px 11px}
+ #ef4 .caladryn-atlas-head h3{font-size:19px}
+ #ef4 .caladryn-atlas-head p{display:none}
+ #ef4 .caladryn-map-region .caladryn-map-viewport,
+ #ef4 .caladryn-atlas-head,#ef4 .caladryn-map-region .caladryn-map-caption{width:100%}
+ #ef4 .caladryn-map-region .caladryn-map-viewport.zoomed .caladryn-map-canvas{width:1150px;min-width:1150px}
+ #ef4 .efk-scene-footer{font-size:10px}
+}
+@media(max-width:420px){
+ #ef4 .caladryn-header .page-title{font-size:20px}
+ #ef4 .caladryn-current{font-size:10px;padding:5px 7px}
+ #ef4 .caladryn-map-toggle{font-size:11px;padding:6px 9px}
+ #ef4 .efk-scene-footer-actions{width:100%;justify-content:space-between}
+}
