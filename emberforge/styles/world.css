@@ -481,3 +481,41 @@
   border-inline:0!important;
  }
 }
+
+
+/* Compact World navigation while actively fighting. Preserve atlas and Return
+   to Kingdom controls, but don't spend half the viewport on duplicate titles. */
+@media(min-width:761px){
+ #ef4 .battle-in-realm .caladryn-header,
+ #ef4 .battle-in-realm .caladryn-header.map-collapsed{
+  width:100%;
+  max-width:none;
+  padding:7px 12px;
+  margin:0 0 8px;
+  min-height:48px;
+  gap:10px;
+  flex-wrap:nowrap;
+ }
+ #ef4 .battle-in-realm .caladryn-header .caladryn-kicker,
+ #ef4 .battle-in-realm .caladryn-header p{display:none!important}
+ #ef4 .battle-in-realm .caladryn-header .page-title,
+ #ef4 .battle-in-realm .caladryn-header.map-collapsed .page-title{
+  font-size:clamp(18px,1.6vw,23px);
+  margin:0;
+ }
+ #ef4 .battle-in-realm .caladryn-head-actions{gap:7px;flex-wrap:nowrap}
+ #ef4 .battle-in-realm .caladryn-current{padding:6px 9px;font-size:11px}
+ #ef4 .battle-in-realm .caladryn-map-toggle{min-height:31px;padding:5px 9px;font-size:11px}
+ #ef4 .battle-in-realm .caladryn-head-actions>.btn.btn-gold{padding:6px 11px;font-size:11px}
+ #ef4 .battle-in-realm .caladryn-battle-interior{
+  border-top:0;
+  margin:0;
+  padding:0;
+  scroll-margin-top:0;
+ }
+ #ef4 .battle-in-realm .caladryn-battle-interior.efb-redesigned>.space:first-of-type{display:none!important}
+ #ef4 .battle-in-realm .caladryn-battle-interior.efb-redesigned>.efb-shell{margin:0!important}
+}
+@media(max-width:760px){
+ #ef4 .battle-in-realm .caladryn-battle-interior{margin-top:8px;padding-top:8px}
+}
