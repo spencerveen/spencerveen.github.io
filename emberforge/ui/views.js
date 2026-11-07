@@ -415,7 +415,31 @@ const quests=()=>[
  ['q12','Into the Rift','Reach Celestial Rift',s.unlocked,4,90000],
  ['q13','Realm Sovereign','Complete five Ascensions',s.ascensions,5,150000]
 ];
-function renderMastery(){ $('legacy').textContent=s.ascensions+' Ascensions';$$('[data-sub]').forEach(b=>b.classList.toggle('on',b.dataset.sub===sub));let box=$('mastercontent'),html='';if(sub==='skills'){html=`<div class="space" style="margin-bottom:10px"><strong style="display:flex;align-items:center;gap:8px">${iconHTML('gem','sm')} ${fmt(s.skillPoints)} Skill Points Available</strong><span class="hint">1 point every 4 forge levels · Each first-time boss victory raises your skill rank cap</span></div><div class="shopgrid">`+skills.map(sk=>{let rank=s.skills[sk[0]]||0,cap=skillCap();return `<div class="shopitem"><div class="space"><span class="small-icon">${iconHTML(sk[2],'lg')}</span><span class="pill">Rank ${rank}/${cap}</span></div><strong>${sk[1]}</strong><div class="hint">${sk[3]}</div><div class="shopbottom"><span class="price">${1+Math.floor(rank/2)} SP</span>${shopButton('skill',sk[0],0,rank>=cap||!s.skillPoints||s.skillPoints<1+Math.floor(rank/2),rank>=cap?'Boss cap':('Train · '+(1+Math.floor(rank/2))+' SP'))}</div></div>`}).join('')+'</div>'}
+function renderMastery(){
+ $('legacy').textContent=s.ascensions+' Ascensions';
+ $('masterybosses').textContent=bossesDefeated()+' / '+realms.length;
+ $('masterysp').textContent=fmt(s.skillPoints)+' SP';
+ $('masterysouls').textContent=fmt(s.souls);
+ $$('[data-sub]').forEach(button=>{const active=button.dataset.sub===sub;button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active))});
+ let box=$('mastercontent'),html='';
+ if(sub==='skills'){
+  const branches=[
+   {id:'forge',name:'The Emberforge',desc:'Master the fires that power your realm.',skills:['harvest','industry','aura']},
+   {id:'war',name:'The Warpath',desc:'Turn hard-won victories into lasting strength.',skills:['blade','fortune','veteran']}
+  ];
+  const cards=branch=>branch.skills.map(id=>{
+   const sk=skills.find(skill=>skill[0]===id),rank=s.skills[id]||0,cap=skillCap(),price=1+Math.floor(rank/2),maxed=rank>=cap,affordable=s.skillPoints>=price;
+   const perc=Math.round(100*Math.min(rank,cap)/Math.max(1,cap));
+   return `<article class="efm-talent ${maxed?'maxed':''} ${rank?'invested':''}" aria-label="${esc(sk[1])}, rank ${rank} of ${cap}">
+    <div class="efm-talent-icon">${iconHTML(sk[2],'lg')}</div>
+    <div class="efm-talent-copy"><div class="efm-talent-heading"><strong>${esc(sk[1])}</strong><span>RANK ${rank} / ${cap}</span></div>
+     <p>${esc(sk[3])}</p><div class="efm-talent-track" aria-hidden="true"><span style="width:${perc}%"></span></div>
+    </div><div class="efm-talent-action">${shopButton('skill',id,0,maxed||!affordable,maxed?'Boss cap':'Train · '+price+' SP')}</div>
+   </article>`;
+  }).join('');
+  html=`<div class="efm-chamber-heading"><div><span class="efm-overline">THE INNER SANCTUM</span><h3>Permanent Specializations</h3><p>Earn talent points every four Forge levels. Defeating guardians unlocks higher ranks. These talents survive Ascension.</p></div><div class="efm-token"><span>AVAILABLE</span><strong>${fmt(s.skillPoints)} SP</strong></div></div>
+    <div class="efm-branches">${branches.map(branch=>`<section class="efm-branch efm-branch-${branch.id}"><header><div class="efm-branch-crest" aria-hidden="true">${branch.id==='forge'?'✦':'⚔'}</div><div><span class="efm-overline">PATH OF MASTERY</span><h4>${branch.name}</h4><p>${branch.desc}</p></div></header><div class="efm-branch-talents">${cards(branch)}</div></section>`).join('')}</div>`;
+ }
 if(sub==='quests'){html='<div class="stack">'+quests().map(q=>{let done=s.claimed.includes(q[0]);return `<div class="rowitem"><span class="r-ico">${iconHTML('scroll','lg')}</span><div class="r-body"><strong>${q[1]}</strong><span class="hint">${q[2]} · ${fmt(Math.min(q[4],q[3]))}/${fmt(q[4])}</span><div class="progress" style="height:5px;margin-top:5px"><div style="width:${Math.min(100,100*q[3]/q[4])}%;background:#7adcb4"></div></div></div>${shopButton('quest',q[0],0,done||q[3]<q[4],done?'Claimed':'Claim '+fmt(q[5])+' Ember')}</div>`}).join('');let remaining=Math.max(0,12-(s.kills-s.bountyStart)),reward=Math.ceil(250*(1+.35*s.bounty)*(1+s.zone));html+=`<div class="card"><strong>${iconHTML('scroll','sm')} Repeatable Contract · Hunt 12 enemies</strong><div class="hint" style="margin:5px 0 9px">${12-remaining} / 12 kills this contract · Reward ${fmt(reward)} Ember</div><button class="btn btn-gold" data-bounty="1" ${remaining?'disabled':''}>Claim Bounty</button></div></div>`}
 if(sub==='achievements'){
  const workerProgress=workers.filter(w=>workerUnlocked(w)||(s.gens[w[0]]||0)>0).map(w=>{
