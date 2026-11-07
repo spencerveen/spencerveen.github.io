@@ -8,8 +8,15 @@ const base=path.join(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(base,p),'utf8');
 const monsterSource=read('data/monster-portraits.js');
 const kingdomSource=read('data/kingdom-vistas.js');
-const monsters=vm.runInNewContext(monsterSource+'\nMONSTER_PORTRAITS;');
-const art=vm.runInNewContext(kingdomSource+'\n({KINGDOM_VISTAS, ICON_DATA});');
+// Parse only the immutable artwork lookup literals; the rest of the kingdom
+// module depends on runtime game globals and must not execute in this unit test.
+const monsterPrefix='const MONSTER_PORTRAITS=';
+const monsters=JSON.parse(monsterSource.slice(monsterSource.indexOf(monsterPrefix)+monsterPrefix.length,monsterSource.lastIndexOf(';')));
+const vistaPrefix='const KINGDOM_VISTAS = ';
+const vistas=JSON.parse(kingdomSource.slice(kingdomSource.indexOf(vistaPrefix)+vistaPrefix.length,kingdomSource.indexOf(';\nconst KINGDOM_SCENES')));
+const iconPrefix='const ICON_DATA=';
+const icons=JSON.parse(kingdomSource.slice(kingdomSource.indexOf(iconPrefix)+iconPrefix.length,kingdomSource.lastIndexOf('};')+1));
+const art={KINGDOM_VISTAS:vistas,ICON_DATA:icons};
 
 function assertWebpFile(url){
  assert.match(url,/^\.\/art\/(?:monsters|kingdom|icons)\/[a-z0-9-]+\.webp$/);
