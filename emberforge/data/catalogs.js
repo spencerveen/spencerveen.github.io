@@ -41,7 +41,7 @@ const buildings=[
 ['library','Arcane Libraries','library',1400,.07,'+7% click income per level'],
 ['roost','Dragon Roosts','roost',9000,.06,'+6% battle rewards per level'],
 ['watchtower','Watchtowers','watchtower',50000,.025,'Auto-Strike faster by 2.5% per level'],
-['vault','Royal Vaults','vault',300000,.05,'+5% salvage value per level']];
+['vault','Royal Vaults','vault',300000,.05,'+5% equipment sale value per level']];
 const skills=[
 ['harvest','Ember Mastery','flame','+12% click income per level'],
 ['industry','Clockwork Insight','gear','+12% worker income per level'],
