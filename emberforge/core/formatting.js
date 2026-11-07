@@ -17,10 +17,14 @@ x.combatXP=clamp(x.combatXP,0,1e15);
 // Potion amounts are validated after equipment, so shared backpack capacity is enforced.
 x.hp=Object.prototype.hasOwnProperty.call(obj,'hp')&&obj.version>=5?clamp(obj.hp,0,1e15):null;
 for(let k of Object.keys(f.training))x.training[k]=Math.floor(clamp(x.training[k],0,30));
-x.enemyTimer=0;x.enemyHits=0;x.manualAt=0;x.engagedUntil=0;x.downUntil=0;x.potionReady=0;x.combatMessage='Battle ready';x.zone=Math.floor(clamp(obj.zone??obj.realm??0,0,5));x.unlocked=Math.floor(clamp(x.unlocked,0,5));x.zone=Math.min(x.zone,x.unlocked);while(x.zone>0&&!(x.combatLevel>=REALM_LEVELS[x.zone]&&x.ascensions>=REALM_ASCENSIONS[x.zone])){x.zone--;obj={...obj,stage:1,enemyHP:0}}x.stage=Math.floor(clamp(obj.stage??obj.wave??1,1,10));x.enemyHP=clamp(obj.enemyHP??obj.hp??0,0,1e99);if(oldZone!==x.zone||Number(obj.stage??obj.wave??1)!==x.stage)x.enemyHP=0;x.level=Math.max(1,Math.floor(clamp(x.level,1,999999)));
+x.enemyTimer=0;x.enemyHits=0;x.manualAt=0;x.engagedUntil=0;x.downUntil=0;x.potionReady=0;x.combatMessage='Battle ready';x.zone=Math.floor(clamp(obj.zone??obj.realm??0,0,5));x.unlocked=Math.floor(clamp(x.unlocked,0,5));x.zone=Math.min(x.zone,x.unlocked);x.stage=Math.floor(clamp(obj.stage??obj.wave??1,1,10));x.enemyHP=clamp(obj.enemyHP??obj.hp??0,0,1e99);if(oldZone!==x.zone||Number(obj.stage??obj.wave??1)!==x.stage)x.enemyHP=0;x.level=Math.max(1,Math.floor(clamp(x.level,1,999999)));
 x.stageUnlocked=Array.from({length:6},(_,i)=>i<x.unlocked?10:Math.max(i===0?1:0,Math.floor(clamp(Array.isArray(obj.stageUnlocked)?obj.stageUnlocked[i]:(i===x.zone?x.stage:(i<=x.unlocked?1:0)),0,10))));
 x.firstClears=Array.from({length:6},(_,i)=>Math.floor(clamp(Array.isArray(obj.firstClears)?obj.firstClears[i]:(i<x.unlocked?10:(i===x.zone?Math.max(0,x.stage-1):0)),0,10)));
-x.bossCleared=Array.from({length:6},(_,i)=>!!(Array.isArray(obj.bossCleared)?obj.bossCleared[i]:i<x.unlocked||(x.codex?.[realms[i][5]]||0)>0));
+x.bossCleared=Array.from({length:6},(_,i)=>!!(i<x.unlocked||(Array.isArray(obj.bossCleared)?obj.bossCleared[i]:(x.codex?.[realms[i][5]]||0)>0)));
+// Preserve legacy discovered regions; reconcile first boss kills that were saved
+// without an updated region-unlock counter.
+while(x.unlocked<5&&x.bossCleared[x.unlocked])x.unlocked++;
+if(x.zone>x.unlocked){x.zone=x.unlocked;x.stage=1;x.enemyHP=0;}
 for(let i=0;i<6;i++){if(x.bossCleared[i])x.stageUnlocked[i]=10;if(i<x.unlocked)x.stageUnlocked[i]=10;}
 x.stageUnlocked[x.zone]=Math.max(1,x.stageUnlocked[x.zone]);x.stage=Math.min(x.stage,x.stageUnlocked[x.zone]);
 x.autoMode=['off','selected','smart'].includes(obj.autoMode)?obj.autoMode:(obj.auto?'selected':'off');x.auto=x.autoMode!=='off';x.smartResting=false;
