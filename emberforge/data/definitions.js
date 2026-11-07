@@ -1,6 +1,6 @@
 'use strict';
 const MOB_TRAITS=[{name:'Standard',hp:1,atk:1,speed:1},{name:'Swift',hp:.92,atk:.9,speed:.82},{name:'Standard',hp:1,atk:1,speed:1},{name:'Armored',hp:1.33,atk:.95,speed:1.06},{name:'Fierce',hp:1,atk:1.2,speed:.94},{name:'Standard',hp:1,atk:1,speed:1},{name:'Swift',hp:1,atk:1.11,speed:.85},{name:'Armored',hp:1.4,atk:1,speed:1.08},{name:'Elite',hp:1.28,atk:1.3,speed:.9}];
-// Healing consumables are separate from the equipment backpack. The buy prices are
+// Consumables share the 30-slot backpack with equipment. The buy prices are
 // future merchant stock definitions only; purchasing is not enabled yet.
 const HEALING_POTIONS=[
  {id:'minor',name:'Minor Healing Potion',heal:0.10,maxStack:10,price:150,dropChance:0.003, bossDropChance:0.008,icon:'gem'}
@@ -253,6 +253,12 @@ const EQUIPMENT_SLOT_KEYS=EQUIPMENT_SLOTS.map(slot=>slot[0]);
 // Base storage capacity; a future equipped backpack can expand this without changing slot rendering.
 const INVENTORY_CAPACITY=30;
 const inventoryCapacity=()=>INVENTORY_CAPACITY;
+// Each consumable stack takes one backpack slot. A partly filled stack can be topped up.
+const potionSlotsUsed=()=>HEALING_POTIONS.reduce((total,p)=>{
+ const quantity=Math.max(0,Math.floor(Number(s.potions?.[p.id])||0));
+ return total+Math.ceil(quantity/p.maxStack);
+},0);
+const inventoryUsedSlots=()=>s.items.length+potionSlotsUsed();
 const LEGACY_EQUIPMENT_SLOTS={weapon:'mainHand',armor:'chest',charm:'charm'};
 const equipmentSlotFor=item=>LEGACY_EQUIPMENT_SLOTS[item?.slot]||item?.slot;
 const equipmentPowerType=slot=>slot==='mainHand'?'attack':slot==='back'?'bonus':slot==='charm'||slot==='necklace'||slot.startsWith('ring')?'effect':'defense';
@@ -324,5 +330,5 @@ const encounterBook=()=>realms.flatMap((r,z)=>[
  ...MONSTER_LADDERS[z].map((m,i)=>({id:'mob-'+z+'-'+(i+1),realm:z,stage:i+1,name:m[0],icon:m[1],boss:false,desc:'Stage '+(i+1)+' · '+currentTrait(i+1).name+' encounter. Ashen Wilds can drop stage-appropriate gear.'})),
  {id:r[5],realm:z,stage:10,name:r[4],icon:r[5],boss:true,desc:'Stage 10 Guardian. Low chance to drop any Ashen Wilds equipment; other realms have no drops yet.'}
 ]);
-const fresh=()=>({version:10,potions:{minor:0},location:'kingdom',kingdomVistaMax:0,pendingRelics:[],stageUnlocked:[1,0,0,0,0,0],bossCleared:[false,false,false,false,false,false],firstClears:[0,0,0,0,0,0],autoMode:'off',smartResting:false,upgradeView:'unlocked',showOwned:false,ember:0,lifetime:0,runEarned:0,clicks:0,gens:Object.fromEntries(workers.map(w=>[w[0],0])),ups:{},build:Object.fromEntries(buildings.map(b=>[b[0],0])),skills:{},skillPoints:0,level:1,souls:0,ascensions:0,zone:0,unlocked:0,stage:1,enemyHP:0,kills:0,bosses:0,lootFound:0,items:[],equipped:Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(k=>[k,null])),avatarBody:'male',avatarName:'',auto:false,salvage:'off',autoProgress:0,claimed:[],ach:[],bounty:0,bountyStart:0,updated:Date.now(),journal:[],codex:{},lastBossLoot:null,combatLevel:1,combatXP:0,hp:null,training:{vitality:0,guard:0,blade:0,regen:0},enemyTimer:0,enemyHits:0,manualAt:0,engagedUntil:0,downUntil:0,potionReady:0,combatMessage:"Ready for battle"});
+const fresh=()=>({version:11,potions:{minor:0},location:'kingdom',kingdomVistaMax:0,pendingRelics:[],stageUnlocked:[1,0,0,0,0,0],bossCleared:[false,false,false,false,false,false],firstClears:[0,0,0,0,0,0],autoMode:'off',smartResting:false,upgradeView:'unlocked',showOwned:false,ember:0,lifetime:0,runEarned:0,clicks:0,gens:Object.fromEntries(workers.map(w=>[w[0],0])),ups:{},build:Object.fromEntries(buildings.map(b=>[b[0],0])),skills:{},skillPoints:0,level:1,souls:0,ascensions:0,zone:0,unlocked:0,stage:1,enemyHP:0,kills:0,bosses:0,lootFound:0,items:[],equipped:Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(k=>[k,null])),avatarBody:'male',avatarName:'',auto:false,salvage:'off',autoProgress:0,claimed:[],ach:[],bounty:0,bountyStart:0,updated:Date.now(),journal:[],codex:{},lastBossLoot:null,combatLevel:1,combatXP:0,hp:null,training:{vitality:0,guard:0,blade:0,regen:0},enemyTimer:0,enemyHits:0,manualAt:0,engagedUntil:0,downUntil:0,potionReady:0,combatMessage:"Ready for battle"});
 
