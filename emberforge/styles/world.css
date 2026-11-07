@@ -191,3 +191,26 @@
  #ef4 .efk-map-hotspot span{padding:3px 5px;font-size:10px;bottom:0}
  #ef4 .efk-scene-footer{font-size:11px;padding:8px 10px}
 }
+
+
+/* Desktop Kingdom viewport fit: scale the entire vista without cropping or
+   changing percentage-based hotspot coordinates. Small screens retain full width. */
+@media (min-width:960px){
+ #ef4 .efk-hub{margin-top:8px}
+ #ef4 .efk-hub-header{margin-bottom:8px}
+ #ef4 .efk-vista-frame.efk-kingdom-interactive{
+  width:min(100%,calc((100dvh - 240px) * 1672 / 941));
+  max-width:100%;
+  min-width:0;
+  margin-inline:auto;
+ }
+ #ef4 .efk-kingdom-interactive>.kingdomscene{
+  aspect-ratio:1672 / 941!important;
+  width:100%;
+ }
+}
+@media (min-width:960px) and (max-height:650px){
+ #ef4 .efk-vista-frame.efk-kingdom-interactive{
+  width:min(100%,calc((100dvh - 190px) * 1672 / 941));
+ }
+}
