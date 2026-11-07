@@ -353,10 +353,10 @@ function renderGear(){
 // All buttons are real DOM controls: no interaction is painted into the image.
 let caladrynMapSignature='';
 const CALADRYN_MAP_PREFERENCE='emberforge-caladryn-map-collapsed';
-// Start with the map minimized when visiting the Kingdom so the interactive
-// settlement is the main focus; respect the player's stored map preference.
-let caladrynMapCollapsed=atKingdom();
-try{const savedMapPreference=window.localStorage.getItem(CALADRYN_MAP_PREFERENCE);if(savedMapPreference!==null)caladrynMapCollapsed=savedMapPreference==='1'}catch(_){}
+// Resolve the default after the save has loaded, not while this module initializes.
+let caladrynMapCollapsed=false;
+let caladrynMapPreferenceKnown=false;
+try{const savedMapPreference=window.localStorage.getItem(CALADRYN_MAP_PREFERENCE);if(savedMapPreference!==null){caladrynMapCollapsed=savedMapPreference==='1';caladrynMapPreferenceKnown=true}}catch(_){}
 function updateCaladrynMapVisibility(){
  $('mapregion').hidden=caladrynMapCollapsed;
  const toggle=$('maptoggle');
@@ -375,6 +375,7 @@ const CALADRYN_STOPS=[
 ];
 function renderWorld(){
  const home=atKingdom(),location=home?'The Kingdom':realms[s.zone][0];
+ if(!caladrynMapPreferenceKnown){caladrynMapCollapsed=home;caladrynMapPreferenceKnown=true;}
  $('worldlocation').textContent=home?'At Kingdom':'Exploring '+location;
  $('returnhome').hidden=home;
  $('kingdominterior').hidden=!home;
