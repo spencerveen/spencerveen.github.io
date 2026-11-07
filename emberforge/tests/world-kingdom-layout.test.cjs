@@ -58,3 +58,16 @@ test('merchant panel scrolls internally with a visible close control',()=>{
  assert.match(css,/\.efk-dialog-titlebar\{\s*position:sticky/);
  assert.match(html,/data-kingdom-close/);
 });
+
+
+test('desktop Kingdom uses full width and fixed viewport height with aligned hotspots',()=>{
+ assert.match(css,/Desktop fill mode: intentionally stretch the whole clickable image/);
+ assert.match(css,/\.kingdom-at-home \.efk-vista-frame\.efk-kingdom-interactive>\.kingdomscene\{/);
+ assert.match(css,/width:100%!important;/);
+ assert.match(css,/height:clamp\(260px,calc\(100dvh - 285px\),860px\)!important/);
+ assert.match(css,/aspect-ratio:auto!important/);
+ assert.match(css,/background-size:100% 100%!important/);
+ assert.match(css,/\.kingdom-at-home \.efk-vista-frame\.efk-kingdom-interactive::before,/);
+ assert.match(html,/data-kingdom-point="mine"/);
+ assert.match(html,/data-kingdom-point="merchant"/);
+});
