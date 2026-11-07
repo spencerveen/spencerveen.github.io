@@ -50,5 +50,5 @@ test('Mastery specializations affect different outcomes and display real skill c
  assert.match(combat,/\(1\+\.15\*activeSkill\('fortune'\)\)/);
  assert.match(combat,/e\.boss\?\.08\*activeSkill\('veteran'\):0/);
  assert.match(views,/price=1\+Math\.floor\(rank\/2\)/);
- assert.match(read('game.html'),/>Specializations<\/button>/);
+ assert.match(read('game.html'),/data-sub="skills"[^>]*>[\s\S]*?Specializations<\/span>/);
 });
