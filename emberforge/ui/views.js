@@ -132,8 +132,50 @@ function renderUpgrades(){
    $('upgradelist').innerHTML=`<div class="efa-empty"><strong>${view==='affordable'?'No affordable upgrades right now.':'No upgrades match this view.'}</strong><div>${upcoming.length?'Coming next: '+upcoming.map(u=>esc(u[1])+' ('+esc(requirementFor(u))+')').join(' · '):'All upgrade tiers revealed. Ascend to restore temporary upgrades.'}</div></div>`;
  }
 }
-function renderKingdom(){let cap=buildingCap();updateIllustratedScenes();$('kingdominfo').innerHTML=`Current building capacity: <strong>level ${cap}/12</strong> per structure · Ascend to raise it. Buildings now preview humble, growing, and grand visual tiers as they level.`;
-$('buildlist').innerHTML=buildings.filter(b=>buildingUnlocked(b)||s.build[b[0]]>0).map(b=>{let lv=s.build[b[0]],p=costBuild(b),available=buildingUnlocked(b),maxed=lv>=cap,t=buildTier(lv),next=t<3?(t===0?1:t===1?4:8):null;return `<div class="shopitem ${available?'':'locked-card'}"><div class="space"><span class="small-icon">${iconHTML(b[2],'lg')}</span><span class="pill">Level ${lv} / ${cap}</span></div><strong>${b[1]}</strong><div class="hint">${b[5]}</div><div class="progress"><div style="width:${100*Math.min(12,lv)/12}%;background:#80d9bf"></div></div><div class="build-tier-note"><strong>${BUILD_TIER_NAMES[t]}</strong> · ${BUILD_TIER_NOTES[b[0]][t]}</div><div class="hint kingdom-need">${available?maxed&&cap<12?'More levels unlock after Ascension':'Unlocked':'Dormant until Asc '+buildingReq(b)[1]+', Combat '+buildingReq(b)[2]}</div><div class="tier-next">${next!==null?'Next visual jump at level '+next:'Visual line complete for this era.'}</div><div class="shopbottom"><span class="price">${maxed?'Era cap':short(p)}</span>${shopButton('build',b[0],p,maxed||!available||s.ember<p,maxed?'Era cap':!available?'Locked':'Construct')}</div></div>`}).join('');let future=buildings.filter(b=>!buildingUnlocked(b)&&!s.build[b[0]]).slice(0,2);if(future.length)$('buildlist').innerHTML+=`<div class="upgrade-empty"><strong>Coming in later eras</strong><div class="hint" style="margin-top:7px">${future.map(b=>b[1]+' · Asc '+buildingReq(b)[1]+' / Combat '+buildingReq(b)[2]).join(' · ')}</div></div>`;renderKingdomMerchant()}
+// Kingdom hub keeps its workspace selection while the player shops or builds.
+let kingdomTab='buildings';
+let merchantTab='buy';
+function setKingdomTab(tab){
+ if(!['buildings','merchant','blacksmith'].includes(tab))return;
+ if(tab==='blacksmith'&&s.ascensions<1)return;
+ kingdomTab=tab;
+ $$('[data-kingdom-tab]').forEach(button=>{
+  const active=button.dataset.kingdomTab===tab;
+  button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));
+ });
+ $$('[data-kingdom-panel]').forEach(panel=>{panel.hidden=panel.dataset.kingdomPanel!==tab});
+}
+function setMerchantTab(tab){
+ if(!['buy','sell'].includes(tab))return;
+ merchantTab=tab;
+ $$('[data-merchant-tab]').forEach(button=>{
+  const active=button.dataset.merchantTab===tab;
+  button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));
+ });
+ $$('[data-merchant-panel]').forEach(panel=>{panel.hidden=panel.dataset.merchantPanel!==tab});
+}
+function renderKingdom(){
+ const cap=buildingCap();
+ updateIllustratedScenes();
+ const owned=Object.values(s.build).reduce((n,x)=>n+x,0);
+ $('kingdominfo').textContent='Era '+s.ascensions+'  ·  '+owned+' built levels';
+ $('kingdomcap').textContent='Build cap '+cap+' / 12';
+ $('kingdombuildcount').textContent=owned?String(owned):'';
+ $('blacksmithtab').hidden=s.ascensions<1;
+ if(kingdomTab==='blacksmith'&&s.ascensions<1)kingdomTab='buildings';
+ const visible=buildings.filter(b=>buildingUnlocked(b)||s.build[b[0]]>0);
+ $('buildlist').innerHTML=visible.map(b=>{
+  const lv=s.build[b[0]],cost=costBuild(b),unlocked=buildingUnlocked(b),maxed=lv>=cap;
+  return `<article class="efk-building ${unlocked?'':'efk-building-locked'}">
+    <div class="efk-building-top"><span class="efk-building-art">${iconHTML(b[2],'lg')}</span><div class="efk-building-name"><strong>${esc(b[1])}</strong><span>${esc(b[5])}</span></div><span class="efk-building-level">Lv ${lv}/${cap}</span></div>
+    <div class="efk-building-track"><span style="width:${100*Math.min(cap,lv)/cap}%"></span></div>
+    <div class="efk-building-bottom"><span class="efk-building-price">${maxed?'Max level':unlocked?short(cost):'Unavailable'}</span>${shopButton('build',b[0],cost,maxed||!unlocked||s.ember<cost,maxed?'Maxed':!unlocked?'Unavailable':'Upgrade')}</div>
+   </article>`;
+ }).join('');
+ renderKingdomMerchant();
+ setKingdomTab(kingdomTab);
+ setMerchantTab(merchantTab);
+}
 function renderKingdomMerchant(){
  const merchantStock=$('merchantstock');
  const full=inventoryUsedSlots()>=inventoryCapacity();
@@ -367,6 +409,8 @@ root.addEventListener('click',e=>{let b=e.target.closest('button');if(!b||!root.
 if(Object.prototype.hasOwnProperty.call(b.dataset,'returnHome')){travelToKingdom();go('world');toast('Returned safely to the Kingdom');return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapToggle')){caladrynMapCollapsed=!caladrynMapCollapsed;try{window.localStorage.setItem(CALADRYN_MAP_PREFERENCE,caladrynMapCollapsed?'1':'0')}catch(_){}updateCaladrynMapVisibility();return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapZoom')){const viewport=$('mapviewport'),zoom=viewport.classList.toggle('zoomed');b.setAttribute('aria-pressed',String(zoom));b.textContent=zoom?'Fit map to window':'Enlarge map';if(!zoom)viewport.scrollLeft=0;return}
+if(b.dataset.kingdomTab){setKingdomTab(b.dataset.kingdomTab);return}
+if(b.dataset.merchantTab){setMerchantTab(b.dataset.merchantTab);return}
 if(b.dataset.avatarGender){const gender=b.dataset.avatarGender;if(gender!=='male'&&gender!=='female')return;s.avatarBody=gender;renderGear();save();return}if(b.dataset.vista){let choice=b.dataset.vista;if(choice==='auto')kingdomVistaPreview=null;else{let idx=activeKingdomVista();kingdomVistaPreview=(idx+(choice==='next'?1:-1)+KINGDOM_VISTAS.length)%KINGDOM_VISTAS.length;}updateIllustratedScenes();return}if(b.dataset.page){go(b.dataset.page);return}if(b.dataset.go){go(b.dataset.go);return}if(b.dataset.sub){sub=b.dataset.sub;renderMastery();return}if(b.dataset.upgradeFilter){s.upgradeView=b.dataset.upgradeFilter;renderUpgrades();save();return}if(b.dataset.buy){buyMode=b.dataset.buy;$$('[data-buy]').forEach(x=>x.classList.toggle('on',x.dataset.buy===buyMode));renderWorkers();return}
 if(b.id==='ef4-crystal'){mine();return}
 if(b.id==='ef4-strike'){manualAttack();return}
