@@ -49,6 +49,6 @@ test('Mastery specializations affect different outcomes and display real skill c
  assert.match(catalogs,/Field Commander','badge','\+8% Ember rewards from bosses per level/);
  assert.match(combat,/\(1\+\.15\*activeSkill\('fortune'\)\)/);
  assert.match(combat,/e\.boss\?\.08\*activeSkill\('veteran'\):0/);
- assert.match(views,/\$\{1\+Math\.floor\(rank\/2\)\} SP/);
+ assert.match(views,/price=1\+Math\.floor\(rank\/2\)/);
  assert.match(read('game.html'),/>Specializations<\/button>/);
 });
