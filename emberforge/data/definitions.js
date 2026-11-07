@@ -268,7 +268,7 @@ const workerReq=w=>GATE_WORKERS.find(x=>x[0]===w[0])||[w[0],0,1];
 const workerUnlocked=w=>{let g=workerReq(w);return s.ascensions>=g[1]&&s.level>=g[2]};
 const buildingReq=b=>GATE_BUILDINGS.find(x=>x[0]===b[0])||[b[0],0,1];
 const buildingUnlocked=b=>{let g=buildingReq(b);return s.ascensions>=g[1]&&s.combatLevel>=g[2]};
-const buildingCap=()=>Math.min(12,3+2*s.ascensions);
+const buildingCap=()=>Math.min(12,3+3*s.ascensions);
 const activeBuild=id=>Math.min(s.build[id]||0,buildingCap());
 const trainingCap=()=>Math.min(30,4+3*s.ascensions);
 const skillCap=()=>Math.min(5,1+s.ascensions);
