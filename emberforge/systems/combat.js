@@ -65,10 +65,10 @@ function playerAttack(auto=false){
  spawnPop($('battlescene'),critical?'CRIT -'+fmt(value):'-'+fmt(value),'battle');
  return {kind:critical?'critical':'hit',damage:value};
 }
-const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.24,stage-1)*(boss?4.35:trait.hp)*(1+.12*Math.max(0,s.ascensions-REALM_ASCENSIONS[zone])));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost'))*(1+.08*activeSkill('fortune')));return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
+const enemyAt=(zone,stage)=>{let r=realms[zone],boss=stage===10,trait=currentTrait(stage),mob=boss?null:MONSTER_LADDERS[zone][stage-1];let hp=Math.ceil(r[6]*Math.pow(1.24,stage-1)*(boss?1.8:trait.hp)*(1+.12*Math.max(0,s.ascensions-REALM_ASCENSIONS[zone])));let reward=Math.ceil(r[7]*Math.pow(1.28,stage-1)*(boss?5.2:1)*(1+.06*activeBuild('roost'))*(1+.08*activeSkill('fortune')));return {name:boss?r[4]:mob[0],icon:boss?r[5]:mob[1],boss,trait:boss?'Boss':trait.name,traitData:trait,zone,stage,hp,reward,xp:XP_GAIN(zone,stage,boss)};};
 const enemy=()=>enemyAt(s.zone,s.stage);
-const foeAttackIntervalFor=e=>e.boss?1.55:2.1*e.traitData.speed;
-const foeRawDamageFor=e=>Math.ceil((4+e.stage*1.65)*Math.pow(4.95,e.zone)*(e.boss?2.25:e.traitData.atk));
+const foeAttackIntervalFor=e=>e.boss?2.1:2.1*e.traitData.speed;
+const foeRawDamageFor=e=>Math.ceil((4+e.stage*1.65)*Math.pow(4.95,e.zone)*(e.boss?1.4:e.traitData.atk));
 const expectedFoeHit=e=>{let raw=foeRawDamageFor(e);return Math.max(1,Math.ceil(raw*(1-defense()/(defense()+105+raw*.6))));};
 const predictedFight=e=>{let actualPower=autoPower();let dps=actualPower*playerHitChance(e)*(1+playerCritChance()*(criticalMultiplier-1))/Math.max(.38,autoInterval());let seconds=e.hp/Math.max(1,dps);let hits=Math.max(0,Math.ceil(seconds/foeAttackIntervalFor(e)));let loss=hits*expectedFoeHit(e)*enemyHitChance(e)*(1+enemyCritChance(e)*(criticalMultiplier-1))*(1-blockChance()*blockReduction())*(e.boss?1.18:1)-realRecovery(true)*seconds;return {seconds,loss:Math.max(0,loss),hits};};
 function canAutoFarm(stage){if(stage>maxSelectable(s.zone))return false;if(stage===10&&!bossClearedAt(s.zone))return false;let e=enemyAt(s.zone,stage),v=predictedFight(e);return v.seconds<=(e.boss?46:30)&&v.loss<Math.max(20,Math.min(maxHealth()*.74,s.hp*.79));}
