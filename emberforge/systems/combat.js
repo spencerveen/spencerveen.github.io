@@ -20,7 +20,7 @@ const gearPower=slot=>equippedItem(slot)?.power||0;
 const gearTotal=slots=>slots.reduce((sum,slot)=>sum+gearPower(slot),0);
 const gearAbility=type=>EQUIPMENT_SLOT_KEYS.reduce((n,slot)=>{let g=equippedItem(slot);return n+(g&&g.ability===type?(g.abilityValue||0):0)},0);
 const maxHealth=()=>Math.ceil(Math.min(1e15,105*Math.pow(1.10,Math.max(0,s.combatLevel-1))*(1+.06*activeTraining('vitality'))*(1+gearAbility('health'))));
-const defense=()=>1+gearTotal(['helmet','chest','gloves','legs','boots','offHand'])*1.65+gearAbility('protection');
+const defense=()=>1+gearTotal(['helmet','chest','gloves','legs','boots','offHand'])*1.9+gearAbility('protection');
 const recovery=(fighting)=>fighting?0:maxHealth()*(.005+gearAbility('regen'));
 const realRecovery=(fighting)=>recovery(fighting);
 const potionCount=(id='minor')=>Math.max(0,Math.floor(Number(s.potions?.[id])||0));
