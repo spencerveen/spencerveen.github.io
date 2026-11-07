@@ -245,8 +245,13 @@ const lootVisual=(id,size='lg')=>ICON_DATA[id]?iconHTML(id,size):`<span class="l
 const bossClearedAt=i=>!!s.bossCleared?.[i]||i<s.unlocked;
 const maxSelectable=i=>Math.min(10,Math.max(1,s.stageUnlocked?.[i]|| (i<s.unlocked?10:1)));
 const currentTrait=stage=>MOB_TRAITS[Math.max(0,Math.min(8,stage-1))];
+// Display-only suggested combat levels. Realm gates are earned by defeating bosses.
 const REALM_LEVELS=[1,10,23,40,60,84];
 const REALM_ASCENSIONS=[0,0,1,2,3,5];
+const bossesDefeated=()=>realms.reduce((n,_realm,i)=>n+(bossClearedAt(i)?1:0),0);
+// Building tiers follow completed area bosses; the sixth boss crowns the final era.
+const KINGDOM_BUILDING_CAPS=[3,6,9,11,12];
+const kingdomBossTier=()=>Math.min(5,bossesDefeated());
 const GATE_UPGRADES=[
   ['glove',0,1,1],['pick',0,2,2],['shift',0,3,2],['hammer',0,4,4],
   ['rune',0,5,5],['bellows',0,7,6],['crit',0,8,7],['warbanner',0,10,8],
@@ -263,24 +268,24 @@ const GATE_BUILDINGS=[
  ['mine',0,1],['barracks',0,1],['library',0,4],['roost',0,6],['watchtower',0,8],['vault',0,10]
 ];
 const upgradeReq = u => {let g=GATE_UPGRADES.find(x=>x[0]===u[0]);return g||[u[0],0,1,1]};
-const upgradeUnlocked = u => {let g=upgradeReq(u);return s.ascensions>=g[1]&&s.level>=g[2]&&s.combatLevel>=g[3]};
+const upgradeUnlocked = u => {let g=upgradeReq(u);return kingdomBossTier()>=g[1]&&s.level>=g[2]&&s.combatLevel>=g[3]};
 const workerReq=w=>GATE_WORKERS.find(x=>x[0]===w[0])||[w[0],0,1];
-const workerUnlocked=w=>{let g=workerReq(w);return s.ascensions>=g[1]&&s.level>=g[2]};
+const workerUnlocked=w=>{let g=workerReq(w);return kingdomBossTier()>=g[1]&&s.level>=g[2]};
 const buildingReq=b=>GATE_BUILDINGS.find(x=>x[0]===b[0])||[b[0],0,1];
-const buildingUnlocked=b=>{let g=buildingReq(b);return s.ascensions>=g[1]&&s.combatLevel>=g[2]};
-const buildingCap=()=>Math.min(12,3+3*s.ascensions);
+const buildingUnlocked=b=>{let g=buildingReq(b);return kingdomBossTier()>=g[1]&&s.combatLevel>=g[2]};
+const buildingCap=()=>KINGDOM_BUILDING_CAPS[Math.min(KINGDOM_BUILDING_CAPS.length-1,kingdomBossTier())];
 const activeBuild=id=>Math.min(s.build[id]||0,buildingCap());
-const trainingCap=()=>Math.min(30,4+3*s.ascensions);
-const skillCap=()=>Math.min(5,1+s.ascensions);
+const trainingCap=()=>Math.min(30,4+3*kingdomBossTier());
+const skillCap=()=>Math.min(5,1+kingdomBossTier());
 const activeSkill=id=>Math.min(s.skills[id]||0,skillCap());
 const activeTraining=id=>Math.min(s.training[id]||0,trainingCap());
 const ascendTarget=()=>Math.ceil(100000*Math.pow(2.3,s.ascensions));
 const soulReward=()=>Math.min(5,Math.floor(Math.sqrt(s.runEarned/ascendTarget())));
-const realmAccessible=i=>i<=s.unlocked&&s.combatLevel>=REALM_LEVELS[i]&&s.ascensions>=REALM_ASCENSIONS[i];
+const realmAccessible=i=>Number.isInteger(i)&&i>=0&&i<realms.length&&i<=s.unlocked&&(i===0||bossClearedAt(i-1));
 // Kingdom is a safe world-map destination, not a combat realm.
 const atKingdom=()=>s.location==='kingdom';
 const inExpedition=()=>s.location==='realm';
-const reqText=(a,f,c)=>[a?'Asc '+a:'',f?'Forge '+f:'',c?'Combat '+c:''].filter(Boolean).join(' · ');
+const reqText=(a,f,c)=>[a?'Boss clears '+a:'',f?'Forge '+f:'',c?'Combat '+c:''].filter(Boolean).join(' · ');
 const requirementFor=u=>{let g=upgradeReq(u);return reqText(g[1],g[2],g[3])};
 const TRAINING=[
 ['vitality','Vitality','soulfire','+6% maximum health per level',70],
