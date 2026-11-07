@@ -68,7 +68,7 @@ test('Merchant potion buyback frees a slot and grants a reduced price',()=>{
 });
 test('Old salvage controls do not appear before Ascension, and blacksmith is hidden',()=>{
  assert.doesNotMatch(html,/data-action="salvage-|ef4-salvagefilter|Salvage All/);
- assert.match(html,/id="ef4-craftsman" hidden/);
+ assert.match(html,/id="ef4-craftsman"[^>]*hidden/);
  assert.match(views,/\$\('craftsman'\)\.hidden=s\.ascensions<1/);
  assert.doesNotMatch(views,/if\(a==='salvage-all'\)/);
 });
