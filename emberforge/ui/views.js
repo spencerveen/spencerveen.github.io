@@ -57,7 +57,7 @@ function stats(){
  let next=s.zone<5?s.zone+1:5;
  $('nextgate').textContent=s.zone<5?'Next realm: '+realms[next][0]+' · Combat Lv '+REALM_LEVELS[next]+', Ascension '+REALM_ASCENSIONS[next]+' and previous boss defeated.':'Endgame unlocked · defeat the Ash King and master the final era.';
  setIcon('crystalicon','crystal','crystalHero');setIcon('forgecrest','altar','lg');setIcon('expeditionicon','swords','sm');
- setIcon('card-workers','pickaxe','lg');setIcon('card-gear','backpack','lg');setIcon('card-mastery','altar','lg');setIcon('salvageicon','gear','sm');
+ setIcon('card-workers','pickaxe','lg');setIcon('card-gear','backpack','lg');setIcon('card-mastery','altar','lg');
  setIcon('cur-ember','flame','sm');setIcon('cur-eps','gear','sm');setIcon('cur-click','tap','sm');setIcon('cur-power','swordglow','sm');setIcon('cur-souls','soulfire','sm');setIcon('cur-sp','gem','sm');
  setIcon('cur-health','soulfire','sm');setIcon('cur-combat','swords','sm');
  setIcon('nav-forge','crystal','sm');setIcon('nav-battle','swords','sm');setIcon('nav-workers','pickaxe','sm');setIcon('nav-upgrades','bolt','sm');setIcon('nav-gear','backpack','sm');setIcon('nav-kingdom','castle','sm');setIcon('nav-world','map','sm');setIcon('nav-mastery','altar','sm');
@@ -135,14 +135,56 @@ function renderUpgrades(){
 function renderKingdom(){let cap=buildingCap();updateIllustratedScenes();$('kingdominfo').innerHTML=`Current building capacity: <strong>level ${cap}/12</strong> per structure · Ascend to raise it. Buildings now preview humble, growing, and grand visual tiers as they level.`;
 $('buildlist').innerHTML=buildings.filter(b=>buildingUnlocked(b)||s.build[b[0]]>0).map(b=>{let lv=s.build[b[0]],p=costBuild(b),available=buildingUnlocked(b),maxed=lv>=cap,t=buildTier(lv),next=t<3?(t===0?1:t===1?4:8):null;return `<div class="shopitem ${available?'':'locked-card'}"><div class="space"><span class="small-icon">${iconHTML(b[2],'lg')}</span><span class="pill">Level ${lv} / ${cap}</span></div><strong>${b[1]}</strong><div class="hint">${b[5]}</div><div class="progress"><div style="width:${100*Math.min(12,lv)/12}%;background:#80d9bf"></div></div><div class="build-tier-note"><strong>${BUILD_TIER_NAMES[t]}</strong> · ${BUILD_TIER_NOTES[b[0]][t]}</div><div class="hint kingdom-need">${available?maxed&&cap<12?'More levels unlock after Ascension':'Unlocked':'Dormant until Asc '+buildingReq(b)[1]+', Combat '+buildingReq(b)[2]}</div><div class="tier-next">${next!==null?'Next visual jump at level '+next:'Visual line complete for this era.'}</div><div class="shopbottom"><span class="price">${maxed?'Era cap':short(p)}</span>${shopButton('build',b[0],p,maxed||!available||s.ember<p,maxed?'Era cap':!available?'Locked':'Construct')}</div></div>`}).join('');let future=buildings.filter(b=>!buildingUnlocked(b)&&!s.build[b[0]]).slice(0,2);if(future.length)$('buildlist').innerHTML+=`<div class="upgrade-empty"><strong>Coming in later eras</strong><div class="hint" style="margin-top:7px">${future.map(b=>b[1]+' · Asc '+buildingReq(b)[1]+' / Combat '+buildingReq(b)[2]).join(' · ')}</div></div>`;renderKingdomMerchant()}
 function renderKingdomMerchant(){
- $('salvagefilter').value=s.salvage;
+ const merchantStock=$('merchantstock');
+ const full=inventoryUsedSlots()>=inventoryCapacity();
+ const gear=KINGDOM_STARTER_GEAR.map(g=>{
+   const unavailable=full||s.ember<g.price;
+   return `<div class="efk-merchant-item common-gear">
+     <div class="efk-merchant-item-art">${lootVisual(g.icon,'lg')}</div>
+     <div class="efk-merchant-item-info"><strong>${esc(g.name)}</strong><span>+${fmt(g.power)} ${equipmentPowerType(g.slot)}</span></div>
+     <div class="efk-merchant-trade"><span>${fmt(g.price)} Ember</span><button class="btn" data-merchant-gear="${esc(g.name)}" data-price="${g.price}" ${unavailable?'disabled':''}>Buy</button></div>
+   </div>`;
+ }).join('');
+ const potions=HEALING_POTIONS.map(p=>{
+   const count=potionCount(p.id);
+   const needsSlot=count%p.maxStack===0;
+   const unavailable=(needsSlot&&full)||s.ember<p.price;
+   return `<div class="efk-merchant-item common-gear">
+     <div class="efk-merchant-item-art">${lootVisual(p.icon,'lg')}</div>
+     <div class="efk-merchant-item-info"><strong>${esc(p.name)}</strong><span>Restores ${Math.round(p.heal*100)}% HP · ${count} carried · stacks of ${p.maxStack}</span></div>
+     <div class="efk-merchant-trade"><span>${fmt(p.price)} Ember</span><button class="btn" data-merchant-potion="${p.id}" data-price="${p.price}" ${unavailable?'disabled':''}>Buy</button></div>
+   </div>`;
+ }).join('');
+ merchantStock.innerHTML=gear+potions;
  const items=[...s.items].sort((a,b)=>rarityValue[b.rarity]-rarityValue[a.rarity]||b.power-a.power);
  const equippedIds=equippedGearIds();
  $('merchantlist').innerHTML=items.length?items.map(g=>{
   const protectedGear=isGearTradeProtected(g,equippedIds);
   return `<div class="efk-merchant-item ${g.rarity}-gear"><div class="efk-merchant-item-art">${lootVisual(g.icon,'lg')}</div><div class="efk-merchant-item-info"><strong class="rarity-${g.rarity}">${esc(g.name)}</strong><span>${g.power?`+${fmt(g.power)} ${equipmentPowerType(equipmentSlotFor(g))}`:'Special effect'}${protectedGear?' · Protected':''}</span></div><div class="efk-merchant-trade"><span>${fmt(sellValue(g))} Ember</span><button class="btn btn-quiet" data-sell="${esc(g.id)}" ${protectedGear?'disabled title="Unlock and unequip this item first"':''}>Sell</button></div></div>`;
- }).join(''):'<div class="efk-merchant-empty">No equipment to trade. Gather loot on your adventures, then return to the merchant.</div>';
- $('merchantlist').insertAdjacentHTML('beforeend','<div class="hint" style="padding:12px">Future merchant stock: '+HEALING_POTIONS.map(p=>esc(p.name)+' · '+fmt(p.price)+' Ember · heals '+Math.round(p.heal*100)+'% HP · stack limit '+p.maxStack).join(' · ')+' (not yet purchasable)</div>');
+ }).join(''):'<div class="efk-merchant-empty">No unwanted equipment to sell.</div>';
+ // A blacksmith arrives silently after the first Ascension. Crafting is a later feature.
+ $('craftsman').hidden=s.ascensions<1;
+}
+function buyMerchantGear(name){
+ if(!atKingdom())return false;
+ const base=MERCHANT_GEAR_BY_NAME.get(name);
+ if(!base||s.ember<base.price||inventoryUsedSlots()>=inventoryCapacity())return false;
+ const item={...base,id:'m'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),
+ rarity:'common',origin:0,tier:1,locked:false,ability:null,abilityValue:0};
+ s.ember-=base.price;s.items.unshift(item);
+ note('Purchased '+base.name);toast(base.name+' purchased');
+ save();renderGear();renderKingdomMerchant();currencyStats();return true;
+}
+function buyMerchantPotion(id){
+ if(!atKingdom())return false;
+ const potion=potionDefinition(id);
+ if(!potion||s.ember<potion.price)return false;
+ const count=potionCount(id);
+ if(count%potion.maxStack===0&&inventoryUsedSlots()>=inventoryCapacity())return false;
+ if(!s.potions)s.potions={};
+ s.ember-=potion.price;s.potions[id]=count+1;
+ note('Purchased '+potion.name);toast(potion.name+' purchased');
+ save();renderGear();renderKingdomMerchant();currencyStats();return true;
 }
 function renderGear(){
  const jewelryEmptyArt={necklace:'necklace',ring1:'ring',ring2:'ring',ring3:'ring',ring4:'ring',charm:'charm'};
@@ -304,7 +346,6 @@ box.insertAdjacentHTML('beforeend',`<div class="card" style="margin-top:12px"><d
 function renderPage(){currencyStats();if(page==='workers')renderWorkers();if(page==='upgrades')renderUpgrades();if(page==='gear')renderGear();if(page==='world')renderWorld();if(page==='mastery')renderMastery();stats()}
 function go(p){const jumpToCombat=p==='battle'&&inExpedition();if(p==='battle'||p==='kingdom')p='world';page=p;$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===p||(p==='world'&&inExpedition()&&x.dataset.view==='battle')));$$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===p));renderPage();if(jumpToCombat)$('worldbattle').scrollIntoView?.({behavior:'smooth',block:'start'});}
 function modal(title,body,onConfirm,confirmLabel='Confirm',textarea=false){modalOpen=true;$('modal').style.display='block';$('modal').innerHTML=`<div class="modaloverlay"><div class="modal"><div style="font-size:19px;font-weight:850;margin-bottom:9px">${esc(title)}</div><div class="hint" style="font-size:12px;margin-bottom:15px">${esc(body)}</div>${textarea?'<textarea id="ef4-modaltext" class="textentry" spellcheck="false"></textarea>':''}<div class="two-actions" style="justify-content:flex-end;margin-top:17px"><button class="btn" data-modalcancel="1">Cancel</button><button class="btn btn-gold" data-modalconfirm="1">${esc(confirmLabel)}</button></div></div></div>`;let close=()=>{$('modal').style.display='none';modalOpen=false};root.querySelector('[data-modalcancel]').onclick=close;root.querySelector('[data-modalconfirm]').onclick=()=>{let val=textarea?$('modaltext').value:undefined;let ok=onConfirm(val);if(ok!==false)close();};}
-function inventorySell(predicate){if(!atKingdom())return;const equippedIds=equippedGearIds();const chosen=s.items.filter(g=>!isGearTradeProtected(g,equippedIds)&&g.rarity!=='legendary'&&predicate(g));if(!chosen.length){toast('No matching unequipped items.');return}const total=chosen.reduce((v,g)=>v+sellValue(g),0),removed=new Set(chosen);s.items=s.items.filter(g=>!removed.has(g));gain(total);save();toast('Salvaged '+chosen.length+' items · +'+fmt(total)+' Ember');renderPage();}
 function saveCode(){save();return btoa(unescape(encodeURIComponent(JSON.stringify(s))))}
 function exportSave(){let code=saveCode();modal('Export your save','Copy this code to move your progress to another browser. Your code includes equipment and Soulfire.',()=>{let t=$('modaltext');t.focus();t.select();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(()=>toast('Save copied to clipboard')).catch(()=>toast('Select and copy the code manually'))}else{try{document.execCommand('copy');toast('Save copied if supported')}catch(e){toast('Select and copy the code manually')}}return false},'Copy Code',true);$('modaltext').value=code;}
 function importSave(){modal('Import save code','Paste a save code from Emberforge III, Reborn v2, or original Emberforge. This replaces the current save.',v=>{try{let o=JSON.parse(decodeURIComponent(escape(atob(v.trim()))));if(!o||!o.gens||!Number.isFinite(Number(o.ember)))throw Error('Bad save');s=clean(o);if(s.hp===0)s.hp=Math.ceil(maxHealth()*.5);if(s.hp===null)s.hp=maxHealth();if(!(s.enemyHP>0))s.enemyHP=enemy().hp;note('Save imported successfully');save();renderPage();toast('Save imported!');return true}catch(e){toast('Invalid or unsupported save code');return false}},'Import',true)}
@@ -316,6 +357,8 @@ if(Object.prototype.hasOwnProperty.call(b.dataset,'mapZoom')){const viewport=$('
 if(b.dataset.avatarGender){const gender=b.dataset.avatarGender;if(gender!=='male'&&gender!=='female')return;s.avatarBody=gender;renderGear();save();return}if(b.dataset.vista){let choice=b.dataset.vista;if(choice==='auto')kingdomVistaPreview=null;else{let idx=activeKingdomVista();kingdomVistaPreview=(idx+(choice==='next'?1:-1)+KINGDOM_VISTAS.length)%KINGDOM_VISTAS.length;}updateIllustratedScenes();return}if(b.dataset.page){go(b.dataset.page);return}if(b.dataset.go){go(b.dataset.go);return}if(b.dataset.sub){sub=b.dataset.sub;renderMastery();return}if(b.dataset.upgradeFilter){s.upgradeView=b.dataset.upgradeFilter;renderUpgrades();save();return}if(b.dataset.buy){buyMode=b.dataset.buy;$$('[data-buy]').forEach(x=>x.classList.toggle('on',x.dataset.buy===buyMode));renderWorkers();return}
 if(b.id==='ef4-crystal'){mine();return}
 if(b.id==='ef4-strike'){manualAttack();return}
+if(b.dataset.merchantGear){buyMerchantGear(b.dataset.merchantGear);return}
+if(b.dataset.merchantPotion){buyMerchantPotion(b.dataset.merchantPotion);return}
 if(b.dataset.target){let stage=+b.dataset.target;if(stage<=maxSelectable(s.zone)){let wasSmart=s.autoMode==='smart';if(wasSmart){s.autoMode='selected';s.auto=true;}setTarget(stage,{keepAuto:true});if(wasSmart)toast('Switched to farming stage '+stage);save();}return}
 if(b.id==='ef4-auto'){if(isDown())return;let options=['off','selected','smart'],idx=options.indexOf(s.autoMode);s.autoMode=options[(idx+1)%3];s.auto=s.autoMode!=='off';s.autoProgress=0;s.smartResting=false;if(s.autoMode==='smart')chooseSmartTarget();if(s.auto&&!s.smartResting)s.engagedUntil=Date.now()+5500;else s.engagedUntil=0;s.combatMessage=s.autoMode==='off'?'Auto-Farm paused.':s.autoMode==='smart'?'Smart Hunt engaged · predicted safest high-tier target':'Auto-Farm repeating selected stage '+s.stage;toast(s.autoMode==='off'?'Auto-Farm off':s.autoMode==='smart'?'Smart Hunt enabled':'Farming stage '+s.stage);stats();return}
 if(b.id==='ef4-potion'){usePotion('minor');return}
@@ -331,14 +374,13 @@ if(b.dataset.quest){let q=quests().find(q=>q[0]===b.dataset.quest);if(!q||s.clai
 if(b.dataset.bounty){if(s.kills-s.bountyStart<12)return;let reward=Math.ceil(250*(1+.35*s.bounty)*(1+s.zone));s.bounty++;s.bountyStart=s.kills;gain(reward);toast('Bounty claimed: +'+fmt(reward));renderMastery();currencyStats();return}
 if(b.dataset.claimrelic){if(inventoryUsedSlots()>=inventoryCapacity()){toast('Free an inventory slot first');return}let i=s.pendingRelics.findIndex(g=>g.id===b.dataset.claimrelic);if(i>=0){let [g]=s.pendingRelics.splice(i,1);s.items.unshift(g);renderGear();save();toast(g.name+' claimed from vault')}return}
 if(b.dataset.lock){let g=s.items.find(g=>g.id===b.dataset.lock);if(g){g.locked=!g.locked;renderGear();save();}return}
-if(b.dataset.equip){let g=s.items.find(g=>g.id===b.dataset.equip);if(!g)return;const slot=equipmentSlotFor(g);if(!EQUIPMENT_SLOT_KEYS.includes(slot))return;for(const other of EQUIPMENT_SLOT_KEYS)if(s.equipped[other]===g.id)s.equipped[other]=null;s.equipped[slot]=g.id;renderGear();stats();save();return}if(b.dataset.unequip){if(!EQUIPMENT_SLOT_KEYS.includes(b.dataset.unequip))return;s.equipped[b.dataset.unequip]=null;renderGear();stats();save();return}if(b.dataset.sell){if(!atKingdom())return;let g=s.items.find(g=>g.id===b.dataset.sell);if(!g)return;if(isGearTradeProtected(g)){toast('Unlock and unequip the item first.');return}let sell=()=>{s.items=s.items.filter(x=>x!==g);gain(sellValue(g));renderKingdomMerchant();currencyStats();save()};if(g.rarity==='legendary')modal('Sell this Legendary item?','Permanently salvage '+g.name+'. This item cannot be recovered.',()=>{sell();return true},'Sell Legendary');else sell();return}
+if(b.dataset.equip){let g=s.items.find(g=>g.id===b.dataset.equip);if(!g)return;const slot=equipmentSlotFor(g);if(!EQUIPMENT_SLOT_KEYS.includes(slot))return;for(const other of EQUIPMENT_SLOT_KEYS)if(s.equipped[other]===g.id)s.equipped[other]=null;s.equipped[slot]=g.id;renderGear();stats();save();return}if(b.dataset.unequip){if(!EQUIPMENT_SLOT_KEYS.includes(b.dataset.unequip))return;s.equipped[b.dataset.unequip]=null;renderGear();stats();save();return}if(b.dataset.sell){if(!atKingdom())return;let g=s.items.find(g=>g.id===b.dataset.sell);if(!g)return;if(isGearTradeProtected(g)){toast('Unlock and unequip the item first.');return}let sell=()=>{s.items=s.items.filter(x=>x!==g);gain(sellValue(g));renderKingdomMerchant();currencyStats();save()};if(g.rarity==='legendary')modal('Sell this Legendary item?','Permanently sell '+g.name+'. This item cannot be recovered.',()=>{sell();return true},'Sell Legendary');else sell();return}
 if(b.dataset.ascend){ascend();return}
 if(b.dataset.action){let a=b.dataset.action;if(a==='save'){save();toast('Saved');return}if(a==='export'){exportSave();return}if(a==='import'){importSave();return}if(a==='best'){for(let slot of EQUIPMENT_SLOT_KEYS){let g=s.items.filter(x=>equipmentSlotFor(x)===slot).sort((a,b)=>b.power-a.power)[0];if(g)s.equipped[slot]=g.id}renderGear();stats();save();toast('Best gear equipped');return}
-if(a.startsWith('salvage-')&&!atKingdom())return;if(a==='salvage-common'){inventorySell(g=>g.rarity==='common');return}if(a==='salvage-rare'){inventorySell(g=>rarityValue[g.rarity]<=1);return}if(a==='salvage-epic'){inventorySell(g=>rarityValue[g.rarity]<=2);return}if(a==='salvage-all'){modal('Salvage unequipped gear?','Sell every unlocked and unequipped item. This cannot be undone.',()=>{inventorySell(()=>true);return true},'Salvage All');return}if(a==='reset'){modal('Start a new game?','This clears your current Emberforge III progress. Export a save code first if you might want to restore it.',()=>{s=fresh();kingdomVistaPreview=null;rollBattleBackground();s.enemyHP=enemy().hp;save();go('forge');toast('New adventure started');return true},'Reset Game');return}}
+if(a==='reset'){modal('Start a new game?','This clears your current Emberforge III progress. Export a save code first if you might want to restore it.',()=>{s=fresh();kingdomVistaPreview=null;rollBattleBackground();s.enemyHP=enemy().hp;save();go('forge');toast('New adventure started');return true},'Reset Game');return}}
 });
 root.addEventListener('input',e=>{if(e.target?.id==='ef4-adventurer-name'){s.avatarName=e.target.value.slice(0,32);save()}});
 root.addEventListener('focusout',e=>{if(e.target?.id==='ef4-adventurer-name'){s.avatarName=e.target.value.trim().slice(0,32);e.target.value=s.avatarName;save()}});
-$('salvagefilter').addEventListener('change',v=>{if(!atKingdom()){v.target.value=s.salvage;return}s.salvage='off';v.target.value='off';save()});
 
 $('showowned').addEventListener('change',e=>{s.showOwned=e.target.checked;renderUpgrades();save()});
-function refreshShopAfford(){if(page==='workers'||page==='upgrades'||page==='world'){root.querySelectorAll('[data-price]').forEach(b=>{let p=+b.dataset.price;if(b.dataset.worker&&buyMode==='max'){let w=workers.find(x=>x[0]===b.dataset.worker),c=costWorker(w,'max');if(!c||c.count===0){b.disabled=true}else{b.disabled=false;b.dataset.price=c.price;b.textContent='Hire ×'+fmt(c.count)}return}if(b.dataset.train&&s.training[b.dataset.train]>=trainingCap())return;if(b.dataset.upgrade){let u=upgrades.find(v=>v[0]===b.dataset.upgrade);if(!u||s.ups[b.dataset.upgrade]||!upgradeUnlocked(u))return;}if(b.dataset.build){let build=buildings.find(v=>v[0]===b.dataset.build);if(!build||!buildingUnlocked(build)||s.build[b.dataset.build]>=buildingCap())return;}b.disabled=s.ember<p})}if(page==='upgrades'&&s.upgradeView==='affordable')renderUpgrades()}
+function refreshShopAfford(){if(page==='workers'||page==='upgrades'||page==='world'){root.querySelectorAll('[data-price]').forEach(b=>{let p=+b.dataset.price;if(b.dataset.merchantGear){b.disabled=s.ember<p||inventoryUsedSlots()>=inventoryCapacity();return}if(b.dataset.merchantPotion){let pot=potionDefinition(b.dataset.merchantPotion);b.disabled=!pot||s.ember<p||(potionCount(pot.id)%pot.maxStack===0&&inventoryUsedSlots()>=inventoryCapacity());return}if(b.dataset.worker&&buyMode==='max'){let w=workers.find(x=>x[0]===b.dataset.worker),c=costWorker(w,'max');if(!c||c.count===0){b.disabled=true}else{b.disabled=false;b.dataset.price=c.price;b.textContent='Hire ×'+fmt(c.count)}return}if(b.dataset.train&&s.training[b.dataset.train]>=trainingCap())return;if(b.dataset.upgrade){let u=upgrades.find(v=>v[0]===b.dataset.upgrade);if(!u||s.ups[b.dataset.upgrade]||!upgradeUnlocked(u))return;}if(b.dataset.build){let build=buildings.find(v=>v[0]===b.dataset.build);if(!build||!buildingUnlocked(build)||s.build[b.dataset.build]>=buildingCap())return;}b.disabled=s.ember<p})}if(page==='upgrades'&&s.upgradeView==='affordable')renderUpgrades()}
