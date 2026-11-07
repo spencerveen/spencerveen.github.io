@@ -29,7 +29,7 @@ test('consuming potions changes inventory, health and cooldown but never Ember',
  const begin=combat.indexOf("function usePotion(id='minor')");
  const end=combat.indexOf('\n\nconst costWorker=',begin);
  assert.ok(begin>=0&&end>begin);
- const s={potions:{minor:2},hp:20,potionReady:0,ember:888,combatMessage:''};
+ const s={potions:{minor:12},hp:20,potionReady:0,ember:888,combatMessage:''};
  const script=combat.slice(begin,end)+'\nreturn usePotion;';
  const usePotion=new Function('s','potionDefinition','Date','isDown','maxHealth','potionCount','activeTraining','toast','fmt','stats','save',script)(
   s,()=>({id:'minor',name:'Minor Healing Potion',heal:.10}),{now:()=>10000},
@@ -37,22 +37,24 @@ test('consuming potions changes inventory, health and cooldown but never Ember',
  );
  assert.equal(usePotion(),true);
  assert.equal(s.hp,30);
- assert.equal(s.potions.minor,1);
+ assert.equal(s.potions.minor,11);
  assert.equal(s.ember,888);
  assert.equal(s.potionReady,28000);
  assert.equal(usePotion(),false);
- assert.equal(s.potions.minor,1);
+ assert.equal(s.potions.minor,11);
 });
-test('inventory persists across save migration and ascension, without filling equipment slots',()=>{
- assert.match(definitions,/version:10,potions:\{minor:0\}/);
- assert.match(formatting,/x\.potions=Object\.fromEntries\(HEALING_POTIONS/);
+test('potions share backpack capacity and are lost on Ascension',()=>{
+ assert.match(definitions,/version:11,potions:\{minor:0\}/);
+ assert.match(definitions,/const inventoryUsedSlots=\(\)=>s\.items\.length\+potionSlotsUsed\(\)/);
  assert.doesNotMatch(views.slice(views.indexOf('function ascend(){'),views.indexOf("root.addEventListener('click'")),/'items'|'equipped'|'potions'|'lastBossLoot'/);
- assert.doesNotMatch(combat.slice(combat.indexOf('function rollPotionDrop'),combat.indexOf('function honorCheck')),/s\.items/);
+ assert.match(combat,/inventoryUsedSlots\(\)>=inventoryCapacity\(\)/);
 });
-test('potion drops respect the hard limit of 10 and loading clamps old saves',()=>{
- assert.match(combat,/potionCount\(potion\.id\)>=potion\.maxStack/);
- assert.match(combat,/Math\.min\(potion\.maxStack,potionCount\(potion\.id\)\+1\)/);
- assert.match(formatting,/clamp\(obj\.potions\?\.\[p\.id\]\?\?0,0,p\.maxStack\)/);
+test('stacks of ten occupy backpack slots, with a maximum of 300 potions if empty',()=>{
+ assert.match(definitions,/const INVENTORY_CAPACITY=30/);
+ assert.match(definitions,/Math\.ceil\(quantity\/p\.maxStack\)/);
+ assert.match(views,/const potionTiles=HEALING_POTIONS\.flatMap/);
+ assert.match(combat,/stored%potion\.maxStack===0&&inventoryUsedSlots\(\)>=inventoryCapacity\(\)/);
+ assert.match(formatting,/openSlots\*p\.maxStack/);
 });
 test('battle interface uses potions rather than paid healing',()=>{
  assert.match(html,/id="ef4-potion"[^>]*>Use Potion \(0\)/);
