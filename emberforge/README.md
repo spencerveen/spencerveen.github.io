@@ -55,13 +55,33 @@ grant discrete Ember batches after the timer completes. The Workforce screen
 shows both each payout and its average Ember/sec for comparison.
 
 The purchase growth constant (`WORKER_PRICE_GROWTH`, currently `1.33`),
-cumulative +1% milestones at 10, 25, 50, 100, then at every doubling\n(200, 400, 800, 1,600, ...), and batch accounting all live in
+cumulative +1% milestones at 10, 25, 50, 100, then at every doubling
+(200, 400, 800, 1,600, ...), and batch accounting all live in
 `systems/combat.js`. `accrueWorkerEarnings` handles both active and
 half-rate offline earnings; never add `gain(income() * dt)` alongside it,
 or timed workers will earn twice. Timer progress is saved in
 `s.workerTimers` and resets on Ascension. New worker types can be appended
 to the catalog with their own payout intervals and unlock tiers in
-`GATE_WORKERS` in `data/definitions.js`.\n\nTriumphs tracks a separate permanent per-worker Mastery achievement at 1,000\nlifetime hires across Ascensions, using `s.workerLifetimeHires`. Once earned,\nits progress bar disappears, but the per-run output bonus keeps scaling.\nExisting saves migrate current worker ownership as the initial known lifetime\nhire count; earlier Ascension runs cannot be reconstructed retroactively.
+`GATE_WORKERS` in `data/definitions.js`.
+
+Triumphs tracks a separate permanent per-worker Mastery achievement at 1,000 
+lifetime hires across Ascensions, using `s.workerLifetimeHires`. Once earned, 
+its progress bar disappears, but the per-run output bonus keeps scaling. 
+Existing saves migrate current worker ownership as the initial known lifetime 
+hire count; earlier Ascension runs cannot be reconstructed retroactively.
+
+## Runtime optimization notes
+
+The HUD updates frequently, so `writeStatusText()` skips unchanged text
+instead of repeatedly notifying UI observers. `updateHuntBoard()` updates
+only while the World is visible, rebuilds stage buttons only when their
+contents change, and limits the display-only safe-target forecast to
+roughly once per second. The combat AI still calculates farming decisions
+independently when needed. Worker income and batch payout calculations share
+one production multiplier per evaluation.
+
+Avatar-name typing is kept in memory and saved on blur, autosave, or page exit.
+Avoid adding expensive DOM updates or save writes to per-frame callbacks.
 
 ## Checks
 

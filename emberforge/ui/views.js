@@ -1,14 +1,30 @@
 'use strict';
-function currencyStats(){ $('ember').textContent=fmt(s.ember);$('eps').textContent=fmt(income());$('click').textContent=fmt(clicks());$('power').textContent=fmt(power());$('souls').textContent=fmt(s.souls);$('sp').textContent=fmt(s.skillPoints);$('navlevel').textContent='Forge Lv '+s.level+' · Asc '+s.ascensions;}
-let lastHuntSignature='';
+// Avoid needless DOM mutations: the HUD refreshes several times each second,
+// and unchanged text should not retrigger external MutationObservers.
+function writeStatusText(id,value){
+ const el=$(id),next=String(value);
+ if(el.textContent!==next)el.textContent=next;
+}
+function currencyStats(){ writeStatusText('ember',fmt(s.ember));writeStatusText('eps',fmt(income()));writeStatusText('click',fmt(clicks()));writeStatusText('power',fmt(power()));writeStatusText('souls',fmt(s.souls));writeStatusText('sp',fmt(s.skillPoints));writeStatusText('navlevel','Forge Lv '+s.level+' · Asc '+s.ascensions);}
+// Only rebuild the hunt buttons when the target or unlock state changes.
+// Combat forecasting can be expensive, so sample the informational forecast once
+// per second while World is visible rather than during every Forge/Mastery HUD tick.
+let lastHuntSignature='',lastFarmForecastSignature='',lastFarmForecastAt=0;
 function updateHuntBoard(){
- let max=maxSelectable(s.zone),cleared=s.firstClears[s.zone]||0,signature=[s.zone,s.stage,max,cleared,s.autoMode,Math.floor(s.combatLevel/3),Math.floor(s.hp/maxHealth()*4)].join('|');
- $('huntprogress').textContent='Cleared '+Math.min(9,cleared)+'/9 · '+(s.bossCleared[s.zone]?'Boss slain':'Boss locked until 9');
- $('huntmode').textContent=s.autoMode==='smart'?(s.smartResting?'Smart · recovering':'Smart Hunt'):s.autoMode==='selected'?'Auto · target':'Manual';
- $('huntstatus').textContent=s.autoMode==='smart'?'Automatically chooses a target predicted to be survivable. Bosses enter Smart Hunt after your first victory.':'Win on a stage to unlock the next (+45% first-clear XP and Ember). Earlier stages remain farmable.';
- $('hunttip').textContent= max<10?'Stage '+Math.min(10,max+1)+' unlocks after your first win on stage '+max+'.':'Boss unlocked · select stage 10 to challenge or farm earlier stages.';
- const gearChance=(s.stage===10?.10:s.stage<=3?.035:s.stage<=6?.04:.05)*(1+.15*activeSkill('fortune'));
- $('farmforecast').textContent='Safe target: '+(bestFarmStage()||'rest')+' · Equipment '+(gearChance*100).toFixed(1)+'% · '+realms[s.zone][0]+' gear';
+ if(page!=='world'&&page!=='battle')return;
+ const max=maxSelectable(s.zone),cleared=s.firstClears[s.zone]||0;
+ writeStatusText('huntprogress','Cleared '+Math.min(9,cleared)+'/9 · '+(s.bossCleared[s.zone]?'Boss slain':'Boss locked until 9'));
+ writeStatusText('huntmode',s.autoMode==='smart'?(s.smartResting?'Smart · recovering':'Smart Hunt'):s.autoMode==='selected'?'Auto · target':'Manual');
+ writeStatusText('huntstatus',s.autoMode==='smart'?'Automatically chooses a target predicted to be survivable. Bosses enter Smart Hunt after your first victory.':'Win on a stage to unlock the next (+45% first-clear XP and Ember). Earlier stages remain farmable.');
+ writeStatusText('hunttip',max<10?'Stage '+Math.min(10,max+1)+' unlocks after your first win on stage '+max+'.':'Boss unlocked · select stage 10 to challenge or farm earlier stages.');
+ const now=Date.now(),forecastSignature=[s.zone,s.stage,max,s.combatLevel,s.autoMode,s.smartResting,s.skills?.fortune||0,Object.values(s.equipped||{}).join(','),Math.floor(s.hp/maxHealth()*8)].join('|');
+ if(forecastSignature!==lastFarmForecastSignature||now-lastFarmForecastAt>=1000){
+  const gearChance=(s.stage===10?.10:s.stage<=3?.035:s.stage<=6?.04:.05)*(1+.15*activeSkill('fortune'));
+  writeStatusText('farmforecast','Safe target: '+(bestFarmStage()||'rest')+' · Equipment '+(gearChance*100).toFixed(1)+'% · '+realms[s.zone][0]+' gear');
+  lastFarmForecastSignature=forecastSignature;
+  lastFarmForecastAt=now;
+ }
+ const signature=[s.zone,s.stage,max,cleared,!!s.bossCleared[s.zone]].join('|');
  if(signature===lastHuntSignature)return;
  lastHuntSignature=signature;
  $('huntsteps').innerHTML=Array.from({length:10},(_,n)=>{let stage=n+1,open=stage<=max,mob=enemyAt(s.zone,stage),current=s.stage===stage,first=(s.firstClears[s.zone]||0)>=stage,art=stage===10?iconHTML(mob.icon,'lg'):monsterSheetHTML(s.zone,stage,'hunt');return `<button class="hunt-stage ${current?'current ':''}${stage===10?'boss ':''}${!open?'locked':''}" data-target="${stage}" ${!open?'disabled':''} title="${open?mob.name+' · '+mob.trait+' · '+fmt(mob.hp)+' HP':'Defeat the previous stage to unlock'}"><span class="hunt-num">${stage===10?'BOSS':'#'+stage}</span><span class="hunt-art">${art}</span><span class="hunt-name">${stage===10?'BOSS · ':''}${esc(mob.name)}</span><span class="hunt-badge">${!open?'🔒':first?'✓ Farm':'New'}</span></button>`}).join('');
@@ -16,47 +32,47 @@ function updateHuntBoard(){
 function stats(){
  currencyStats();let e=enemy(),boss=e.boss,now=Date.now();
  let hpMax=maxHealth();s.hp=Math.min(hpMax,Math.max(0,s.hp??hpMax));
- $('tophealth').textContent=fmt(s.hp)+'/'+fmt(hpMax);$('topcombat').textContent=s.combatLevel;
- $('level').textContent='Level '+s.level;$('lifetime').textContent=fmt(s.lifetime);
+ writeStatusText('tophealth',fmt(s.hp)+'/'+fmt(hpMax));writeStatusText('topcombat',s.combatLevel);
+ writeStatusText('level','Level '+s.level);writeStatusText('lifetime',fmt(s.lifetime));
  let low=100*(10**((s.level-1)/4)-1),high=100*(10**(s.level/4)-1);
- $('levelbar').style.width=100*Math.min(1,Math.max(0,(s.lifetime-low)/(high-low)))+'%';$('levelinfo').textContent='Next level at '+fmt(high)+' lifetime Ember';
- $('homeenemy').textContent=e.name;$('homewave').textContent=realms[s.zone][0]+' · '+(e.boss?'BOSS':'Stage '+s.stage+'/10')+' · '+e.trait;
- $('homecombat').textContent='Combat Lv '+s.combatLevel+' · '+fmt(s.hp)+' / '+fmt(hpMax)+' HP';
- $('homebossnote').textContent=boss?'Boss encounter · extra damage and a low Ashen Wilds equipment drop chance.':'Choose and repeat any unlocked stage. New stages unlock after first victories.';
- $('homebattle').textContent=boss?'Enter Boss Battle →':'Enter Battle →';if(boss)setIcon('homeicon',e.icon,'xl');else{let art=$('homeicon'),k='homemob-'+s.zone+'-'+s.stage;if(art.dataset.icon!==k){art.dataset.icon=k;art.innerHTML=monsterSheetHTML(s.zone,s.stage,'home');}}
+ $('levelbar').style.width=100*Math.min(1,Math.max(0,(s.lifetime-low)/(high-low)))+'%';writeStatusText('levelinfo','Next level at '+fmt(high)+' lifetime Ember');
+ writeStatusText('homeenemy',e.name);writeStatusText('homewave',realms[s.zone][0]+' · '+(e.boss?'BOSS':'Stage '+s.stage+'/10')+' · '+e.trait);
+ writeStatusText('homecombat','Combat Lv '+s.combatLevel+' · '+fmt(s.hp)+' / '+fmt(hpMax)+' HP');
+ writeStatusText('homebossnote',boss?'Boss encounter · extra damage and a low Ashen Wilds equipment drop chance.':'Choose and repeat any unlocked stage. New stages unlock after first victories.');
+ writeStatusText('homebattle',boss?'Enter Boss Battle →':'Enter Battle →');if(boss)setIcon('homeicon',e.icon,'xl');else{let art=$('homeicon'),k='homemob-'+s.zone+'-'+s.stage;if(art.dataset.icon!==k){art.dataset.icon=k;art.innerHTML=monsterSheetHTML(s.zone,s.stage,'home');}}
  let pct=100*s.enemyHP/e.hp;$('homehp').style.width=pct+'%';
- $('battleregion').textContent=realms[s.zone][0]+' · '+(boss?'BOSS · ':'')+'Stage '+s.stage+' / 10';
- $('bosstag').textContent=boss?'BOSS BATTLE · Stage 10':'Stage '+s.stage+' encounter';$('bosstag').classList.toggle('boss-pill',boss);
- $('bossbanner').style.display=boss?'block':'none';$('enemylabel').textContent=boss?'Realm Boss':'Current enemy';if(boss)setIcon('enemyart',e.icon,'hero');else{let art=$('enemyart'),k='mob-'+s.zone+'-'+s.stage;if(art.dataset.icon!==k){art.dataset.icon=k;art.innerHTML=monsterSheetHTML(s.zone,s.stage,'hero');}}$('enemyname').textContent=e.name+' · '+e.trait;
- $('hpbar').style.width=pct+'%';$('hptext').textContent=fmt(s.enemyHP)+' / '+fmt(e.hp)+' HP';$('stage').textContent=s.stage+' / 10';
- $('killreward').textContent='+'+fmt(e.reward)+' Ember';$('xpreward').textContent='+'+fmt(e.xp)+' XP';
- $('battlesub').textContent=(boss?'BOSS BATTLE · ':'')+realms[s.zone][0].toUpperCase();
- updateIllustratedScenes();
- $('attackstat').textContent=fmt(power());$('killstat').textContent=fmt(s.kills);$('bossstat').textContent=fmt(s.bosses);
- $('playerlevel').textContent=' · Combat Lv '+s.combatLevel;$('hpplayer').textContent=fmt(s.hp)+' / '+fmt(hpMax)+' HP';
+ writeStatusText('battleregion',realms[s.zone][0]+' · '+(boss?'BOSS · ':'')+'Stage '+s.stage+' / 10');
+ writeStatusText('bosstag',boss?'BOSS BATTLE · Stage 10':'Stage '+s.stage+' encounter');$('bosstag').classList.toggle('boss-pill',boss);
+ $('bossbanner').style.display=boss?'block':'none';writeStatusText('enemylabel',boss?'Realm Boss':'Current enemy');if(boss)setIcon('enemyart',e.icon,'hero');else{let art=$('enemyart'),k='mob-'+s.zone+'-'+s.stage;if(art.dataset.icon!==k){art.dataset.icon=k;art.innerHTML=monsterSheetHTML(s.zone,s.stage,'hero');}}writeStatusText('enemyname',e.name+' · '+e.trait);
+ $('hpbar').style.width=pct+'%';writeStatusText('hptext',fmt(s.enemyHP)+' / '+fmt(e.hp)+' HP');writeStatusText('stage',s.stage+' / 10');
+ writeStatusText('killreward','+'+fmt(e.reward)+' Ember');writeStatusText('xpreward','+'+fmt(e.xp)+' XP');
+ writeStatusText('battlesub',(boss?'BOSS BATTLE · ':'')+realms[s.zone][0].toUpperCase());
+ if(page==='forge'||page==='world'||page==='battle')updateIllustratedScenes();
+ writeStatusText('attackstat',fmt(power()));writeStatusText('killstat',fmt(s.kills));writeStatusText('bossstat',fmt(s.bosses));
+ writeStatusText('playerlevel',' · Combat Lv '+s.combatLevel);writeStatusText('hpplayer',fmt(s.hp)+' / '+fmt(hpMax)+' HP');
  $('playerhpbar').style.width=Math.max(0,100*s.hp/hpMax)+'%';$('playerhpbar').parentNode.classList.toggle('low',s.hp/hpMax<=.30);
- $('xplabel').textContent='Combat XP: '+fmt(s.combatXP)+' / '+fmt(nextCombatXP(s.combatLevel));
+ writeStatusText('xplabel','Combat XP: '+fmt(s.combatXP)+' / '+fmt(nextCombatXP(s.combatLevel)));
  $('combatxpbar').style.width=Math.min(100,100*s.combatXP/nextCombatXP(s.combatLevel))+'%';
- $('defense').textContent='Defense '+fmt(defense());
+ writeStatusText('defense','Defense '+fmt(defense()));
  let active=activeFight(),down=isDown();
- $('combatstate').textContent=down?(now<s.downUntil?'Knocked out · '+Math.ceil((s.downUntil-now)/1000)+'s':'Knocked out'):active?'In combat':'Resting';
+ writeStatusText('combatstate',down?(now<s.downUntil?'Knocked out · '+Math.ceil((s.downUntil-now)/1000)+'s':'Knocked out'):active?'In combat':'Resting');
  $('combatstate').style.borderColor=down?'#ee657e':active?'#e1a46a':'#3d9475';
- $('regen').textContent=active?'No regeneration during combat':'Resting regen +'+fmt(realRecovery(false))+' HP/s';
- $('enemyattack').textContent='Enemy hit '+fmt(foeRawDamage())+' · Every '+foeAttackInterval().toFixed(2)+'s';$('combatodds').textContent='Hit '+Math.round(playerHitChance(e)*100)+'% · Crit '+(playerCritChance()*100).toFixed(1)+'% · Evade '+Math.round((1-enemyHitChance(e))*100)+'% · Block '+Math.round(blockChance()*100)+'%';
+ writeStatusText('regen',active?'No regeneration during combat':'Resting regen +'+fmt(realRecovery(false))+' HP/s');
+ writeStatusText('enemyattack','Enemy hit '+fmt(foeRawDamage())+' · Every '+foeAttackInterval().toFixed(2)+'s');writeStatusText('combatodds','Hit '+Math.round(playerHitChance(e)*100)+'% · Crit '+(playerCritChance()*100).toFixed(1)+'% · Evade '+Math.round((1-enemyHitChance(e))*100)+'% · Block '+Math.round(blockChance()*100)+'%');
  $('enemytimerbar').style.width=(active?Math.min(100,s.enemyTimer/foeAttackInterval()*100):0)+'%';
- $('strike').textContent=down?'Recovering...':boss?'Strike Boss':'Strike';$('strike').disabled=down||now<s.manualAt;
+ writeStatusText('strike',down?'Recovering...':boss?'Strike Boss':'Strike');$('strike').disabled=down||now<s.manualAt;
  $('manualbar').style.width=(down?0:Math.min(100,100*(1-Math.max(0,s.manualAt-now)/650)))+'%';
- $('auto').textContent=s.autoMode==='smart'?'Smart Hunt':s.autoMode==='selected'?'Farm Target':'Auto OFF';$('auto').disabled=down;$('auto').classList.toggle('btn-gold',s.auto);
- $('potion').textContent='Use Potion ('+potionCount()+')'+(now<s.potionReady?' · '+Math.ceil((s.potionReady-now)/1000)+'s':'');
+ writeStatusText('auto',s.autoMode==='smart'?'Smart Hunt':s.autoMode==='selected'?'Farm Target':'Auto OFF');$('auto').disabled=down;$('auto').classList.toggle('btn-gold',s.auto);
+ writeStatusText('potion','Use Potion ('+potionCount()+')'+(now<s.potionReady?' · '+Math.ceil((s.potionReady-now)/1000)+'s':''));
  $('potion').disabled=down||s.hp>=hpMax||now<s.potionReady||potionCount()===0;
  $('retreat').disabled=down||(!active&&s.enemyHP===e.hp);
- $('combatmessage').textContent=s.combatMessage||'Ready for battle';$('combatmessage').classList.toggle('danger',down||s.hp/hpMax<.2);$('combatmessage').classList.toggle('warning',!down&&s.hp/hpMax<.4);
- $('autodesc').textContent=s.autoMode==='smart'?(s.smartResting?'Smart Hunt is resting to recover HP.':'Smart Hunt targets the highest predicted survivable encounter. Proven bosses are eligible.') :s.autoMode==='selected'?'Auto-Farm repeats stage '+s.stage+'. Enemies fight back; retreat or change the target anytime.':'Manual mode · Attack cooldown 0.65s. Select a stage, then strike. Auto cycles OFF → Farm → Smart.';
+ writeStatusText('combatmessage',s.combatMessage||'Ready for battle');$('combatmessage').classList.toggle('danger',down||s.hp/hpMax<.2);$('combatmessage').classList.toggle('warning',!down&&s.hp/hpMax<.4);
+ writeStatusText('autodesc',s.autoMode==='smart'?(s.smartResting?'Smart Hunt is resting to recover HP.':'Smart Hunt targets the highest predicted survivable encounter. Proven bosses are eligible.') :s.autoMode==='selected'?'Auto-Farm repeats stage '+s.stage+'. Enemies fight back; retreat or change the target anytime.':'Manual mode · Attack cooldown 0.65s. Select a stage, then strike. Auto cycles OFF → Farm → Smart.');
  $('battlescene').className='scene illustrated zone'+s.zone+(boss?' bosswave':'');$('bosslootnote').style.display=boss?'block':'none';
- $('combattip').textContent=boss?'Bosses strike hard with a special every fourth hit. Ashen Wilds bosses have a small chance to drop any gear. Other realms have no loot yet.':'Each stage can be farmed repeatedly. New stages unlock one at a time after first victories. A safe farming target improves XP and loot.';
+ writeStatusText('combattip',boss?'Bosses strike hard with a special every fourth hit. Ashen Wilds bosses have a small chance to drop any gear. Other realms have no loot yet.':'Each stage can be farmed repeatedly. New stages unlock one at a time after first victories. A safe farming target improves XP and loot.');
  updateHuntBoard();
  let next=s.zone<5?s.zone+1:5;
- $('nextgate').textContent=s.zone<5?'Next realm: '+realms[next][0]+' · defeat '+realms[s.zone][4]+' for the first time.':'Final region · defeat its guardian to complete your conquest.';
+ writeStatusText('nextgate',s.zone<5?'Next realm: '+realms[next][0]+' · defeat '+realms[s.zone][4]+' for the first time.':'Final region · defeat its guardian to complete your conquest.');
  setIcon('crystalicon','crystal','crystalHero');setIcon('forgecrest','altar','lg');setIcon('expeditionicon','swords','sm');
  setIcon('card-workers','pickaxe','lg');setIcon('card-gear','backpack','lg');setIcon('card-mastery','altar','lg');
  setIcon('cur-ember','flame','sm');setIcon('cur-eps','gear','sm');setIcon('cur-click','tap','sm');setIcon('cur-power','swordglow','sm');setIcon('cur-souls','soulfire','sm');setIcon('cur-sp','gem','sm');
@@ -518,7 +534,7 @@ if(sub==='stats'){
 }
 box.innerHTML=html;
 }
-function renderPage(){currencyStats();if(page==='workers')renderWorkers();if(page==='upgrades')renderUpgrades();if(page==='gear')renderGear();if(page==='world')renderWorld();if(page==='mastery')renderMastery();stats()}
+function renderPage(){if(page==='workers')renderWorkers();if(page==='upgrades')renderUpgrades();if(page==='gear')renderGear();if(page==='world')renderWorld();if(page==='mastery')renderMastery();stats()}
 function go(p){const jumpToCombat=p==='battle'&&inExpedition();if(p==='battle'||p==='kingdom')p='world';page=p;$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===p||(p==='world'&&inExpedition()&&x.dataset.view==='battle')));$$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===p));renderPage();if(jumpToCombat)$('worldbattle').scrollIntoView?.({behavior:'smooth',block:'start'});}
 function modal(title,body,onConfirm,confirmLabel='Confirm',textarea=false){modalOpen=true;$('modal').style.display='block';$('modal').innerHTML=`<div class="modaloverlay"><div class="modal"><div style="font-size:19px;font-weight:850;margin-bottom:9px">${esc(title)}</div><div class="hint" style="font-size:12px;margin-bottom:15px">${esc(body)}</div>${textarea?'<textarea id="ef4-modaltext" class="textentry" spellcheck="false"></textarea>':''}<div class="two-actions" style="justify-content:flex-end;margin-top:17px"><button class="btn" data-modalcancel="1">Cancel</button><button class="btn btn-gold" data-modalconfirm="1">${esc(confirmLabel)}</button></div></div></div>`;let close=()=>{$('modal').style.display='none';modalOpen=false};root.querySelector('[data-modalcancel]').onclick=close;root.querySelector('[data-modalconfirm]').onclick=()=>{let val=textarea?$('modaltext').value:undefined;let ok=onConfirm(val);if(ok!==false)close();};}
 function saveCode(){save();return btoa(unescape(encodeURIComponent(JSON.stringify(s))))}
@@ -567,11 +583,13 @@ if(b.dataset.ascend){ascend();return}
 if(b.dataset.action){let a=b.dataset.action;if(a==='save'){save();toast('Saved');return}if(a==='export'){exportSave();return}if(a==='import'){importSave();return}if(a==='best'){for(let slot of EQUIPMENT_SLOT_KEYS){let g=s.items.filter(x=>equipmentSlotFor(x)===slot).sort((a,b)=>b.power-a.power)[0];if(g)s.equipped[slot]=g.id}renderGear();stats();save();toast('Best gear equipped');return}
 if(a==='reset'){modal('Start a new game?','This clears your current Emberforge III progress. Export a save code first if you might want to restore it.',()=>{s=fresh();kingdomVistaPreview=null;rollBattleBackground();s.enemyHP=enemy().hp;save();go('forge');toast('New adventure started');return true},'Reset Game');return}}
 });
-root.addEventListener('input',e=>{if(e.target?.id==='ef4-adventurer-name'){s.avatarName=e.target.value.slice(0,32);save()}});
+// Keep the edited name in memory, but persist on blur/pagehide instead of
+// serializing the whole save on every keystroke.
+root.addEventListener('input',e=>{if(e.target?.id==='ef4-adventurer-name'){s.avatarName=e.target.value.slice(0,32)}});
 root.addEventListener('focusout',e=>{if(e.target?.id==='ef4-adventurer-name'){s.avatarName=e.target.value.trim().slice(0,32);e.target.value=s.avatarName;save()}});
 
 $('showowned').addEventListener('change',e=>{s.showOwned=e.target.checked;renderUpgrades();save()});
-function refreshShopAfford(){if(page==='workers'||page==='upgrades'||page==='world'){root.querySelectorAll('[data-price]').forEach(b=>{let p=+b.dataset.price;if(b.dataset.merchantGear){b.disabled=s.ember<p||inventoryUsedSlots()>=inventoryCapacity();return}if(b.dataset.merchantPotion){let pot=potionDefinition(b.dataset.merchantPotion);b.disabled=!pot||s.ember<p||(potionCount(pot.id)%pot.maxStack===0&&inventoryUsedSlots()>=inventoryCapacity());return}if(b.dataset.worker&&buyMode==='max'){let w=workers.find(x=>x[0]===b.dataset.worker),c=costWorker(w,'max');if(!c||c.count===0){b.disabled=true}else{b.disabled=false;b.dataset.price=c.price;b.textContent='Hire ×'+fmt(c.count)}return}if(b.dataset.train&&s.training[b.dataset.train]>=trainingCap())return;if(b.dataset.upgrade){let u=upgrades.find(v=>v[0]===b.dataset.upgrade);if(!u||s.ups[b.dataset.upgrade]||!upgradeUnlocked(u))return;}if(b.dataset.build){let build=buildings.find(v=>v[0]===b.dataset.build);if(!build||!buildingUnlocked(build)||s.build[b.dataset.build]>=buildingCap())return;}b.disabled=s.ember<p})}if(page==='upgrades'&&s.upgradeView==='affordable')renderUpgrades();updateWorkerCountdowns()}
+function refreshShopAfford(){if(page==='workers'||page==='upgrades'||page==='world'){root.querySelector('[data-view="'+page+'"]')?.querySelectorAll('[data-price]').forEach(b=>{let p=+b.dataset.price;if(b.dataset.merchantGear){b.disabled=s.ember<p||inventoryUsedSlots()>=inventoryCapacity();return}if(b.dataset.merchantPotion){let pot=potionDefinition(b.dataset.merchantPotion);b.disabled=!pot||s.ember<p||(potionCount(pot.id)%pot.maxStack===0&&inventoryUsedSlots()>=inventoryCapacity());return}if(b.dataset.worker&&buyMode==='max'){let w=workers.find(x=>x[0]===b.dataset.worker),c=costWorker(w,'max');if(!c||c.count===0){b.disabled=true}else{b.disabled=false;b.dataset.price=c.price;b.textContent='Hire ×'+fmt(c.count)}return}if(b.dataset.train&&s.training[b.dataset.train]>=trainingCap())return;if(b.dataset.upgrade){let u=upgrades.find(v=>v[0]===b.dataset.upgrade);if(!u||s.ups[b.dataset.upgrade]||!upgradeUnlocked(u))return;}if(b.dataset.build){let build=buildings.find(v=>v[0]===b.dataset.build);if(!build||!buildingUnlocked(build)||s.build[b.dataset.build]>=buildingCap())return;}b.disabled=s.ember<p})}if(page==='upgrades'&&s.upgradeView==='affordable')renderUpgrades();updateWorkerCountdowns()}
 
 root.addEventListener('click',e=>{
  if(!e.target.closest?.('[data-map-toggle]'))return;

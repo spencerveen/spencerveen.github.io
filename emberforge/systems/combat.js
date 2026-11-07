@@ -26,17 +26,19 @@ const workerSharedFactor=()=>multiplier('prodMult')*(1+.07*activeBuild('mine'))*
 const workerBaseOutput=(w,count=s.gens[w[0]]||0)=>count*(w[4]/workerInterval(w))*(1+workerMilestoneBonus(count));
 const workerProduction=w=>workerUnlocked(w)?workerBaseOutput(w)*workerSharedFactor():0; // average Ember/sec
 const workerMarginalProduction=(w,count=1)=>{let owned=s.gens[w[0]]||0;return (workerBaseOutput(w,owned+count)-workerBaseOutput(w,owned))*workerSharedFactor();};
-const income=()=>workers.reduce((v,w)=>v+workerProduction(w),0); // average rate, for the HUD
+// Reuse the shared multiplier once per read instead of recalculating it for every tier.
+const income=()=>{const shared=workerSharedFactor();return workers.reduce((v,w)=>v+(workerUnlocked(w)?workerBaseOutput(w)*shared:0),0);}; // average Ember/sec
 const workerNextPayout=w=>Math.max(1,Math.ceil(workerInterval(w)-(s.workerTimers?.[w[0]]||0)));
 function accrueWorkerEarnings(seconds,offlineFactor=1){
  if(!Number.isFinite(seconds)||seconds<=0)return 0;
  if(!s.workerTimers||typeof s.workerTimers!=='object')s.workerTimers={};
  let earned=0;
+ const shared=workerSharedFactor();
  for(const w of workers){
   const interval=workerInterval(w);
   const owned=s.gens[w[0]]||0;
   if(interval===1){
-   if(owned>0)earned+=workerProduction(w)*seconds*offlineFactor;
+   if(owned>0&&workerUnlocked(w))earned+=workerBaseOutput(w)*shared*seconds*offlineFactor;
    continue;
   }
   if(owned<=0||!workerUnlocked(w)){delete s.workerTimers[w[0]];continue;}
@@ -44,7 +46,7 @@ function accrueWorkerEarnings(seconds,offlineFactor=1){
   const elapsed=Math.max(0,Math.min(previous,interval-1e-7))+seconds;
   const cycles=Math.floor((elapsed+1e-8)/interval);
   s.workerTimers[w[0]]=Math.max(0,elapsed-cycles*interval);
-  if(cycles>0)earned+=workerProduction(w)*interval*cycles*offlineFactor;
+  if(cycles>0)earned+=workerBaseOutput(w)*shared*interval*cycles*offlineFactor;
  }
  if(earned>0)gain(earned);
  return earned;
