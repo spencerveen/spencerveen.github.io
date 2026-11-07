@@ -5,7 +5,8 @@ function iconKey(id){return ICON_DATA[id]?id:(ICON_ALIASES[id]||LEGACY_ICON_MAP[
 function iconHTML(id,size='md'){let key=iconKey(id);return `<img class="ico ${size}" src="${ICON_DATA[key]}" alt="" draggable="false" decoding="async">`}
 function setIcon(el,id,size='md'){let n=typeof el==='string'?$(el):el;if(!n)return;let key=iconKey(id),label=key+'|'+size;if(n.dataset.icon===label)return;n.dataset.icon=label;n.innerHTML=iconHTML(key,size)}
 function monsterSpriteStyle(zone,stage){return '';}
-function monsterSheetHTML(zone,stage,size='hero'){let src=MONSTER_PORTRAITS[zone]?.[stage-1];return src?`<img class="monster-sheet ${size}" src="${src}" alt="" aria-hidden="true" draggable="false" decoding="async">`:iconHTML('guardian',size==='hero'?'hero':'lg')}
+// Thumbnails defer downloads until they are in view; active enemies load eagerly.
+function monsterSheetHTML(zone,stage,size='hero'){let src=MONSTER_PORTRAITS[zone]?.[stage-1];return src?`<img class="monster-sheet ${size}" src="${src}" alt="" aria-hidden="true" draggable="false" decoding="async" loading="${size==='hunt'?'lazy':'eager'}">`:iconHTML('guardian',size==='hero'?'hero':'lg')}
 
 function clean(obj){let f=fresh();if(!obj||typeof obj!=='object')return f;let x={...f,...obj,gens:{...f.gens,...(obj.gens||{})},ups:{...(obj.ups||{})},build:{...f.build,...(obj.build||{})},skills:{...(obj.skills||{})},codex:{...f.codex,...(obj.codex||{})},training:{...f.training,...(obj.training||{})}};
 for(let k of ['ember','lifetime','runEarned','clicks','souls','ascensions','kills','bosses','lootFound','skillPoints'])x[k]=Math.max(0,Number.isFinite(+x[k])?+x[k]:0);

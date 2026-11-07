@@ -35,16 +35,27 @@ is calculated by the game iframe. Its surrounding site and visual skins should
    JavaScript or CSS file.
 8. Run the contract suite and the browser smoke test after combat or UI changes.
 
-## Artwork follow-up
+## Artwork storage and loading
 
-Realm, boss, and forge background sheets now live in `art/*.webp`,
-referenced by small `data/*backgrounds.js` files. These eight WebP assets
-can be cached independently of JavaScript and fetched when a scene uses them.
+All original illustrations now live in independently cacheable WebP files
+instead of inline base64 image strings. Art is organized by purpose:
 
-Monster portraits and kingdom vistas still contain larger inline image datasets.
-Converting those safely requires handling the large source files, preserving
-their indexed asset contracts, and verifying browser rendering. Keep their
-script order and existing scene dependencies unchanged until then.
+- `art/monsters/realm-<1-6>-stage-<1-9>.webp`: 54 monster portraits
+- `art/kingdom/vista-<0-5>.webp`: six evolving kingdom scenes
+- `art/icons/<name>.webp`: 52 original HUD, worker and monster icons
+- `art/realm-*.webp`, `art/boss-0.webp`, `art/forge-0.webp`: existing background sheets
+
+`data/monster-portraits.js` and `data/kingdom-vistas.js` remain lightweight
+lookup tables so the engine keeps its original `MONSTER_PORTRAITS[realm][stage]`,
+`KINGDOM_VISTAS[index]`, and `ICON_DATA[name]` interfaces. This greatly
+reduces JavaScript payload and defers actual image downloads until used.
+Hunt thumbnails are lazy-loaded; active enemy art loads eagerly.
+When altering backgrounds, compare the complete asset URL rather than its
+string length; different files can have equal-length paths.
+
+Keep the indexed image contracts stable for existing combat, kingdom and
+Mastery rendering. `tests/artwork-assets.test.cjs` validates all 112 files,
+path mappings, lazy-loading behavior and background cache updates.
 
 ## Worker economy and future tiers
 
