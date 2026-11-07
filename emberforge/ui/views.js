@@ -177,16 +177,32 @@ function renderGear(){
    </div>
    <div class="efg-slot-column efg-jewelry"><div class="efg-group-heading">Jewelry</div>${jewels.map(makeSlot).join('')}</div>
  </div>`;
- const capacity=inventoryCapacity(),count=s.items.length;
+ const capacity=inventoryCapacity(),count=inventoryUsedSlots();
  $('bagtitle').textContent='Backpack ('+count+' / '+capacity+')';
  $('bagcapacity').textContent=count+' / '+capacity;
  $('bagprogress').style.width=Math.min(100,100*count/capacity)+'%';
  $('bagprogress').classList.toggle('full',count>=capacity);
  const sorted=[...s.items].sort((a,b)=>rarityValue[b.rarity]-rarityValue[a.rarity]||b.power-a.power);
  const equippedIds=equippedGearIds();
- $('baglist').innerHTML=Array.from({length:Math.max(capacity,sorted.length)},(_,index)=>{
-   const g=sorted[index];
+ // Render one backpack tile per potion stack, including the final partial stack.
+ const potionTiles=HEALING_POTIONS.flatMap(p=>Array.from({length:Math.ceil(potionCount(p.id)/p.maxStack)},(_,i)=>({
+   kind:'potion',definition:p,count:Math.min(p.maxStack,potionCount(p.id)-i*p.maxStack)
+ })));
+ const slots=[...sorted,...potionTiles];
+ $('baglist').innerHTML=Array.from({length:capacity},(_,index)=>{
+   const g=slots[index];
    if(!g)return `<div class="efg-bag-slot efg-bag-empty" aria-label="Empty backpack slot ${index+1}"><span class="efg-bag-slot-index">${String(index+1).padStart(2,'0')}</span><span class="efg-bag-empty-symbol" aria-hidden="true">✧</span><span class="efg-bag-empty-label">Empty</span></div>`;
+   if(g.kind==='potion'){
+     const p=g.definition;
+     return `<article class="efg-bag-slot efg-bag-filled" aria-label="Backpack slot ${index+1}: ${esc(p.name)}, stack of ${g.count}">
+       <span class="efg-bag-slot-index">${String(index+1).padStart(2,'0')}</span>
+       <div class="efg-bag-art">${lootVisual(p.icon,'lg')}</div>
+       <div class="efg-bag-name">${esc(p.name)}</div>
+       <div class="efg-bag-details">Stack ${g.count} / ${p.maxStack}</div>
+       <div class="efg-bag-ability">Restores ${Math.round(p.heal*100)}% max HP · Consumable</div>
+       <div class="efg-bag-actions"><span class="pill">×${g.count}</span></div>
+     </article>`;
+   }
    const equipped=isGearEquipped(g,equippedIds);
    return `<article class="efg-bag-slot efg-bag-filled ${g.rarity}-gear" aria-label="Backpack slot ${index+1}: ${esc(g.name)}">
      <span class="efg-bag-slot-index">${String(index+1).padStart(2,'0')}</span>
@@ -313,7 +329,7 @@ if(Object.prototype.hasOwnProperty.call(b.dataset,'zone')){const z=Number(b.data
 if(b.dataset.skill){let k=b.dataset.skill;if(!skills.find(x=>x[0]===k)||(s.skills[k]||0)>=skillCap()||s.skillPoints<1+Math.floor((s.skills[k]||0)/2))return;s.skillPoints-=1+Math.floor((s.skills[k]||0)/2);s.skills[k]=(s.skills[k]||0)+1;honorCheck();renderMastery();currencyStats();return}
 if(b.dataset.quest){let q=quests().find(q=>q[0]===b.dataset.quest);if(!q||s.claimed.includes(q[0])||q[3]<q[4])return;s.claimed.push(q[0]);gain(q[5]);toast('Quest completed! +'+fmt(q[5])+' Ember');renderMastery();currencyStats();return}
 if(b.dataset.bounty){if(s.kills-s.bountyStart<12)return;let reward=Math.ceil(250*(1+.35*s.bounty)*(1+s.zone));s.bounty++;s.bountyStart=s.kills;gain(reward);toast('Bounty claimed: +'+fmt(reward));renderMastery();currencyStats();return}
-if(b.dataset.claimrelic){if(s.items.length>=inventoryCapacity()){toast('Free an inventory slot first');return}let i=s.pendingRelics.findIndex(g=>g.id===b.dataset.claimrelic);if(i>=0){let [g]=s.pendingRelics.splice(i,1);s.items.unshift(g);renderGear();save();toast(g.name+' claimed from vault')}return}
+if(b.dataset.claimrelic){if(inventoryUsedSlots()>=inventoryCapacity()){toast('Free an inventory slot first');return}let i=s.pendingRelics.findIndex(g=>g.id===b.dataset.claimrelic);if(i>=0){let [g]=s.pendingRelics.splice(i,1);s.items.unshift(g);renderGear();save();toast(g.name+' claimed from vault')}return}
 if(b.dataset.lock){let g=s.items.find(g=>g.id===b.dataset.lock);if(g){g.locked=!g.locked;renderGear();save();}return}
 if(b.dataset.equip){let g=s.items.find(g=>g.id===b.dataset.equip);if(!g)return;const slot=equipmentSlotFor(g);if(!EQUIPMENT_SLOT_KEYS.includes(slot))return;for(const other of EQUIPMENT_SLOT_KEYS)if(s.equipped[other]===g.id)s.equipped[other]=null;s.equipped[slot]=g.id;renderGear();stats();save();return}if(b.dataset.unequip){if(!EQUIPMENT_SLOT_KEYS.includes(b.dataset.unequip))return;s.equipped[b.dataset.unequip]=null;renderGear();stats();save();return}if(b.dataset.sell){if(!atKingdom())return;let g=s.items.find(g=>g.id===b.dataset.sell);if(!g)return;if(isGearTradeProtected(g)){toast('Unlock and unequip the item first.');return}let sell=()=>{s.items=s.items.filter(x=>x!==g);gain(sellValue(g));renderKingdomMerchant();currencyStats();save()};if(g.rarity==='legendary')modal('Sell this Legendary item?','Permanently salvage '+g.name+'. This item cannot be recovered.',()=>{sell();return true},'Sell Legendary');else sell();return}
 if(b.dataset.ascend){ascend();return}
