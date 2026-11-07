@@ -157,7 +157,7 @@ test('Battle lives under World, without separate navigation or duplicate combat 
  assert.ok(world.indexOf('id="ef4-worldbattle"')<world.indexOf('id="ef4-kingdominterior"'));
  for(const id of ['ef4-battlescene','ef4-strike','ef4-auto','ef4-huntsteps','ef4-traininglist','ef4-combatmessage'])assert.equal(html.split('id="'+id+'"').length-1,1,id+' must not duplicate');
  assert.match(view,/\$\('worldbattle'\)\.hidden=home/);
- assert.match(view,/if\(home\)renderKingdom\(\);else renderTraining\(\)/);
+ assert.match(view,/if\(home\)renderKingdom\(\);else\{closeKingdomLocation\(\);renderTraining\(\)\}/);
  assert.match(css,/\.caladryn-battle-interior\{/);
  assert.match(skin,/\[data-view="battle"\]/);
 });
@@ -179,7 +179,7 @@ test('World uses the art map alone; combat and Kingdom render directly beneath i
  assert.match(world,/id="ef4-maptoggle" data-map-toggle/);
  assert.ok(world.indexOf('id="ef4-mapregion"')<world.indexOf('id="ef4-worldbattle"'));
  assert.ok(world.indexOf('id="ef4-worldbattle"')<world.indexOf('id="ef4-kingdominterior"'));
- assert.match(view,/if\(home\)renderKingdom\(\);else renderTraining\(\)/);
+ assert.match(view,/if\(home\)renderKingdom\(\);else\{closeKingdomLocation\(\);renderTraining\(\)\}/);
 });
 
 test('Map collapse restores preference, keeps return-home control and never hides combat',()=>{
