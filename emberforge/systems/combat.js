@@ -83,13 +83,14 @@ function createLoot(boss,firstBossVictory=false){
  // All other encounters drop their own region's scaled equipment.
  const dropRate=(firstBossVictory?1:boss?.10:s.stage<=3?.035:s.stage<=6?.04:.05)*(1+.15*activeSkill('fortune'));
  const lootZone=firstBossVictory?Math.min(realms.length-1,s.zone+1):s.zone;
- const regionPower=Math.pow(10,lootZone);
+
  if(Math.random()>=dropRate)return null;
  const eligible=ASHEN_LOOT.filter(item=>boss||s.stage>=item.min);
  const total=eligible.reduce((sum,item)=>sum+item.weight,0);
  let roll=Math.random()*total;
  const base=firstBossVictory?ASHEN_LOOT.find(item=>item.name==='Iron Sword'):(eligible.find(item=>(roll-=item.weight)<0)||eligible[eligible.length-1]);
- const obj={id:'g'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),name:lootZone?realms[lootZone][0]+' '+base.name:base.name,slot:base.slot,icon:base.icon,rarity:'common',origin:lootZone,tier:s.stage,locked:false,power:Math.round(base.power*regionPower),ability:base.ability||null,abilityValue:base.abilityValue*(base.ability==='attack'||base.ability==='protection'?regionPower:1)||0};
+ const item=regionalGearTemplate(base,lootZone);
+ const obj={...item,id:'g'+Date.now().toString(36)+Math.floor(Math.random()*1e8).toString(36),rarity:'common',origin:lootZone,tier:s.stage,locked:false,ability:item.ability||null};
  s.lootFound++;
  if(inventoryUsedSlots()>=inventoryCapacity()){
    note('Backpack full: '+obj.name+' could not be collected.');
