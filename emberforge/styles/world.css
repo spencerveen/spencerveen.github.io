@@ -345,7 +345,7 @@
  #ef4 .efk-vista-frame.efk-kingdom-interactive>.kingdomscene{
   position:relative;
   z-index:1;
-  width:min(100%,calc((100dvh - 204px) * 1672 / 941));
+  width:min(100%,calc((100dvh - 305px) * 1672 / 941));
   min-width:0;
   margin:0 auto;
   flex:0 0 auto;
@@ -358,7 +358,7 @@
  #ef4 .efk-vista-frame.efk-kingdom-interactive>.efk-scene-footer{
   position:relative;
   z-index:1;
-  width:min(100%,calc((100dvh - 204px) * 1672 / 941));
+  width:min(100%,calc((100dvh - 305px) * 1672 / 941));
   margin-inline:auto;
   border-inline:1px solid #cc9b7444;
  }
@@ -367,6 +367,6 @@
 @media(min-width:1100px) and (max-height:700px){
  #ef4 .efk-vista-frame.efk-kingdom-interactive>.kingdomscene,
  #ef4 .efk-vista-frame.efk-kingdom-interactive>.efk-scene-footer{
-  width:min(100%,calc((100dvh - 185px) * 1672 / 941));
+  width:min(100%,calc((100dvh - 275px) * 1672 / 941));
  }
 }
