@@ -3,19 +3,22 @@ const root=document.getElementById('ef4');
 if(!root)throw new Error('Emberforge game root #ef4 was not found');
 root.dataset.ready='1';
 const $=id=>root.querySelector('#ef4-'+id), $$=s=>root.querySelectorAll(s);
+// [id, name, icon, starting Ember cost, payout per worker, description, payout interval (seconds)]
+// Intervals make new worker types easy to add: omitted interval means continuous Ember/sec.
 const workers=[
-['spark','Spark Sprites','sprite',15,.18,'Tiny gatherers of cinders'],
-['miner','Ember Miners','miner',85,1.2,'Dig glowing veins beneath the realm'],
-['smith','Runic Smiths','smith',440,7,'Hammer warmth into magic'],
-['acolyte','Flame Acolytes','broker',2400,40,'Channel the forge with rituals'],
-['golem','Magma Golems','golem',12500,220,'Never-tiring stone guardians'],
-['alchemist','Ash Alchemists','alchemist',65000,1250,'Distill the essence of fire'],
-['dragon','Ashen Dragons','dragon',350000,7100,'Their breath turns rock to gold'],
-['automaton','Clockwork Titans','engine',2e6,42000,'Automate entire foundries'],
-['portal','Infernal Portals','portalworker',12e6,250000,'Siphon energy from distant worlds'],
-['oracle','Star Oracles','foundry',75e6,1550000,'Pull power from future timelines'],
-['sun','Star Foundries','foundry',475e6,9600000,'Harness the fire of suns'],
-['cosmic','Reality Shapers','engine',3e9,60000000,'Rewrite the laws of creation']];
+['spark','Spark Sprites','sprite',15,.09,'Tiny gatherers of cinders',1],
+['miner','Ember Miners','miner',85,.6,'Dig glowing veins beneath the realm',1],
+['smith','Runic Smiths','smith',440,3.5,'Hammer warmth into magic',1],
+['acolyte','Flame Acolytes','broker',2400,20,'Channel the forge with rituals',1],
+['golem','Magma Golems','golem',12500,110,'Never-tiring stone guardians',1],
+['alchemist','Ash Alchemists','alchemist',65000,1000,'Distill the essence of fire',5],
+['dragon','Ashen Dragons','dragon',350000,7500,'Their breath turns rock to gold',10],
+['automaton','Clockwork Titans','engine',2e6,35000,'Automate entire foundries',20],
+['portal','Infernal Portals','portalworker',12e6,150000,'Siphon energy from distant worlds',30],
+['oracle','Star Oracles','foundry',75e6,600000,'Pull power from future timelines',60],
+['sun','Star Foundries','foundry',475e6,5000000,'Harness the fire of suns',300],
+['cosmic','Reality Shapers','engine',3e9,15000000,'Rewrite the laws of creation',600]
+];
 const upgrades=[
 ['glove','Reinforced Gloves','tap',60,'clickAdd',1,'+1 per click'],
 ['pick','Enchanted Pickaxe','pickaxe',300,'clickAdd',3,'+3 per click'],

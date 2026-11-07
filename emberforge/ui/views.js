@@ -65,11 +65,21 @@ function stats(){
 }
 function renderTraining(){let box=$('traininglist'),cap=trainingCap();box.innerHTML=TRAINING.map(t=>{let lv=s.training[t[0]]||0,c=trainCost(t),maxed=lv>=cap;return `<div class="train-item"><div class="smalltop"><strong>${t[1]}</strong><span class="pill">Lv ${lv}/${cap}</span></div><div class="hint">${t[3]}${lv>cap?' · extra ranks dormant until Ascension':''}</div><div class="space" style="margin-top:auto"><span class="price">${maxed?(cap>=30?'MAX':'Next cap: Ascension') :fmt(c)+' Ember'}</span><button class="btn" data-train="${t[0]}" data-price="${c}" ${maxed||s.ember<c?'disabled':''}>Train</button></div></div>`}).join('')}
 function shopButton(action,id,price,disabled,text='Buy'){return `<button class="btn btn-gold" data-${action}="${esc(id)}" data-price="${price}" ${disabled?'disabled':''}>${text}</button>`}
+const workerRemainingLabel=seconds=>seconds>=60?Math.floor(seconds/60)+'m '+String(seconds%60).padStart(2,'0')+'s':seconds+'s';
+function updateWorkerCountdowns(){
+ if(page!=='workers')return;
+ root.querySelectorAll('[data-worker-countdown]').forEach(node=>{
+  const w=workers.find(x=>x[0]===node.dataset.workerCountdown);
+  if(!w)return;
+  const owned=s.gens[w[0]]||0;
+  node.textContent=owned?'Next payout in '+workerRemainingLabel(workerNextPayout(w)):'Timer starts when hired';
+ });
+}
 function renderWorkerSummary(){
  const summary=$('worker-summary');if(!summary)return;
  const owned=totalWorkers(),production=income();
  const top=workers.filter(workerUnlocked).map(w=>({name:w[1],output:workerProduction(w)})).sort((a,b)=>b.output-a.output)[0];
- summary.innerHTML=`<div class="efw-summary-item"><span>Workforce production</span><strong>${fmt(production)} <small>Ember/sec</small></strong></div>
+ summary.innerHTML=`<div class="efw-summary-item"><span>Average worker production</span><strong>${fmt(production)} <small>Ember/sec</small></strong></div>
  <div class="efw-summary-item"><span>Workers employed</span><strong>${fmt(owned)}</strong></div>
  <div class="efw-summary-item"><span>Top producer</span><strong>${top&&top.output>0?esc(top.name):'None yet'}</strong></div>`;
 }
@@ -77,7 +87,9 @@ function renderWorkers(){
  const visible=workers.filter(workerUnlocked),total=income();
  $('workerlist').innerHTML=visible.map(w=>{
    const c=costWorker(w,buyMode),owned=s.gens[w[0]]||0;
+   const interval=workerInterval(w),timed=interval>1;
    const unit=fmt(w[4]),batch=fmt(w[4]*c.count);
+   const payoutUnit=timed?'/ '+formatWorkerInterval(interval):'/sec';
    const label=c.count?'Hire '+(buyMode==='max'?'×'+fmt(c.count):'×'+c.count):'Unavailable';
    const output=workerProduction(w),share=total>0?Math.min(100,100*output/total):0;
    const marginal=workerMarginalProduction(w),price=costWorker(w,1).price;
@@ -86,17 +98,18 @@ function renderWorkers(){
      <div class="efw-portrait" aria-hidden="true"><span class="efw-portrait-glow"></span>${iconHTML(w[2],'xl')}</div>
      <div class="efw-worker-info">
        <div class="efw-title-row"><div class="efw-worker-title"><strong>${esc(w[1])}</strong><p>${esc(w[5])}</p></div><span class="efw-owned pill">Owned <b>${fmt(owned)}</b></span></div>
-       <div class="efw-output"><span class="efw-flame" aria-hidden="true">✦</span><span><strong>+${unit}</strong> /sec each</span><span class="efw-output-divider" aria-hidden="true"></span><span><strong>+${batch}</strong> base /sec</span></div>
+       <div class="efw-output"><span class="efw-flame" aria-hidden="true">✦</span><span><strong>+${unit}</strong> ${payoutUnit} each</span><span class="efw-output-divider" aria-hidden="true"></span><span><strong>+${batch}</strong> base ${payoutUnit}</span>${timed?`<span class="efw-payout-timer" data-worker-countdown="${esc(w[0])}">${owned?'Next payout in '+workerRemainingLabel(workerNextPayout(w)):'Timer starts when hired'}</span>`:''}</div>
        <div class="efw-metrics">
-         <div class="efw-metric"><span class="efw-metric-label"><span aria-hidden="true">✦</span> Total production</span><div class="efw-metric-value">${fmt(output)} <small>Ember/sec</small></div></div>
+         <div class="efw-metric"><span class="efw-metric-label"><span aria-hidden="true">✦</span> Avg production</span><div class="efw-metric-value">${fmt(output)} <small>Ember/sec</small></div></div>
          <div class="efw-metric"><span class="efw-metric-label"><span aria-hidden="true">◈</span> Workforce share</span><div class="efw-metric-value">${share.toFixed(1)}<small>%</small></div><div class="efw-share-track" aria-hidden="true"><span style="width:${share}%"></span></div></div>
        </div>
-       <div class="efw-efficiency" title="Ember cost per additional 1 Ember/sec from buying the next single worker"><span class="efw-efficiency-label"><span aria-hidden="true">◆</span> Next hire efficiency</span><span class="efw-efficiency-amount"><strong>${efficiency}</strong> Ember / +1 per sec</span></div>
+       <div class="efw-efficiency" title="Ember cost per additional average 1 Ember/sec from the next hire"><span class="efw-efficiency-label"><span aria-hidden="true">◆</span> Next hire efficiency</span><span class="efw-efficiency-amount"><strong>${efficiency}</strong> Ember / +1 per sec</span></div>
        <div class="efw-bottom shopbottom"><span class="efw-price price"><span aria-hidden="true">◆</span> ${c.count?short(c.price):'MAXED'}</span>${shopButton('worker',w[0],c.price,c.count===0||s.ember<c.price,label)}</div>
      </div>
    </article>`;
  }).join('');
  renderWorkerSummary();
+ updateWorkerCountdowns();
 }
 function renderUpgrades(){
  const view=['unlocked','affordable','all'].includes(s.upgradeView)?s.upgradeView:'unlocked',showOwned=!!s.showOwned;
@@ -538,7 +551,7 @@ if(b.id==='ef4-potion'){usePotion('minor');return}
 if(b.id==='ef4-retreat'){retreat();return}
 if(b.dataset.train){let t=TRAINING.find(v=>v[0]===b.dataset.train);if(!t||s.training[t[0]]>=trainingCap())return;let cost=trainCost(t);if(s.ember<cost)return;let oldMax=maxHealth();s.ember-=cost;s.training[t[0]]++;if(t[0]==='vitality')s.hp=Math.min(maxHealth(),s.hp+(maxHealth()-oldMax));s.combatMessage=t[1]+' increased to level '+s.training[t[0]];renderTraining();stats();toast(t[1]+' trained');return}
 
-if(b.dataset.worker){let w=workers.find(w=>w[0]===b.dataset.worker);if(!w||!workerUnlocked(w))return;let c=costWorker(w,buyMode);if(c.count<1||s.ember<c.price)return;s.ember-=c.price;s.gens[w[0]]+=c.count;honorCheck();renderWorkers();currencyStats();save();return}
+if(b.dataset.worker){let w=workers.find(w=>w[0]===b.dataset.worker);if(!w||!workerUnlocked(w))return;let c=costWorker(w,buyMode);if(c.count<1||s.ember<c.price)return;s.ember-=c.price;if(workerInterval(w)>1&&(s.gens[w[0]]||0)===0){s.workerTimers??={};s.workerTimers[w[0]]=0;}s.gens[w[0]]+=c.count;honorCheck();renderWorkers();currencyStats();save();return}
 if(b.dataset.upgrade){let u=upgrades.find(u=>u[0]===b.dataset.upgrade);if(!u||!upgradeUnlocked(u)||s.ups[u[0]]||s.ember<u[3])return;s.ember-=u[3];s.ups[u[0]]=true;toast(u[1]+' unlocked!');renderUpgrades();currencyStats();return}
 if(b.dataset.build){if(!atKingdom()){toast('Return to the Kingdom to construct buildings.');return}let k=buildings.find(v=>v[0]===b.dataset.build);if(!k)return;let n=costBuild(k);if(!buildingUnlocked(k)||s.build[k[0]]>=buildingCap()||s.ember<n)return;s.ember-=n;s.build[k[0]]++;renderKingdom();currencyStats();honorCheck();return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'zone')){const z=Number(b.dataset.zone);if(!travelToRealm(z)){toast('That realm is still locked. Follow the Ember Road and clear the previous guardian.');return}go('world');$('worldbattle').scrollIntoView?.({behavior:'smooth',block:'start'});toast('Traveled to '+realms[z][0]);return}
@@ -556,7 +569,7 @@ root.addEventListener('input',e=>{if(e.target?.id==='ef4-adventurer-name'){s.ava
 root.addEventListener('focusout',e=>{if(e.target?.id==='ef4-adventurer-name'){s.avatarName=e.target.value.trim().slice(0,32);e.target.value=s.avatarName;save()}});
 
 $('showowned').addEventListener('change',e=>{s.showOwned=e.target.checked;renderUpgrades();save()});
-function refreshShopAfford(){if(page==='workers'||page==='upgrades'||page==='world'){root.querySelectorAll('[data-price]').forEach(b=>{let p=+b.dataset.price;if(b.dataset.merchantGear){b.disabled=s.ember<p||inventoryUsedSlots()>=inventoryCapacity();return}if(b.dataset.merchantPotion){let pot=potionDefinition(b.dataset.merchantPotion);b.disabled=!pot||s.ember<p||(potionCount(pot.id)%pot.maxStack===0&&inventoryUsedSlots()>=inventoryCapacity());return}if(b.dataset.worker&&buyMode==='max'){let w=workers.find(x=>x[0]===b.dataset.worker),c=costWorker(w,'max');if(!c||c.count===0){b.disabled=true}else{b.disabled=false;b.dataset.price=c.price;b.textContent='Hire ×'+fmt(c.count)}return}if(b.dataset.train&&s.training[b.dataset.train]>=trainingCap())return;if(b.dataset.upgrade){let u=upgrades.find(v=>v[0]===b.dataset.upgrade);if(!u||s.ups[b.dataset.upgrade]||!upgradeUnlocked(u))return;}if(b.dataset.build){let build=buildings.find(v=>v[0]===b.dataset.build);if(!build||!buildingUnlocked(build)||s.build[b.dataset.build]>=buildingCap())return;}b.disabled=s.ember<p})}if(page==='upgrades'&&s.upgradeView==='affordable')renderUpgrades()}
+function refreshShopAfford(){if(page==='workers'||page==='upgrades'||page==='world'){root.querySelectorAll('[data-price]').forEach(b=>{let p=+b.dataset.price;if(b.dataset.merchantGear){b.disabled=s.ember<p||inventoryUsedSlots()>=inventoryCapacity();return}if(b.dataset.merchantPotion){let pot=potionDefinition(b.dataset.merchantPotion);b.disabled=!pot||s.ember<p||(potionCount(pot.id)%pot.maxStack===0&&inventoryUsedSlots()>=inventoryCapacity());return}if(b.dataset.worker&&buyMode==='max'){let w=workers.find(x=>x[0]===b.dataset.worker),c=costWorker(w,'max');if(!c||c.count===0){b.disabled=true}else{b.disabled=false;b.dataset.price=c.price;b.textContent='Hire ×'+fmt(c.count)}return}if(b.dataset.train&&s.training[b.dataset.train]>=trainingCap())return;if(b.dataset.upgrade){let u=upgrades.find(v=>v[0]===b.dataset.upgrade);if(!u||s.ups[b.dataset.upgrade]||!upgradeUnlocked(u))return;}if(b.dataset.build){let build=buildings.find(v=>v[0]===b.dataset.build);if(!build||!buildingUnlocked(build)||s.build[b.dataset.build]>=buildingCap())return;}b.disabled=s.ember<p})}if(page==='upgrades'&&s.upgradeView==='affordable')renderUpgrades();updateWorkerCountdowns()}
 
 root.addEventListener('click',e=>{
  if(!e.target.closest?.('[data-map-toggle]'))return;

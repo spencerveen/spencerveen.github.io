@@ -188,7 +188,7 @@ function gameLoopHarness(overrides = {}) {
   const context = {
     s, last:0, elapsedUI:0, elapsedAutoSave:0, elapsedShop:0,
     needsMain:false, page:'battle', Date:{now:()=>10000},
-    income:()=>0, gain:()=>{}, maxHealth:()=>100,
+    income:()=>0, gain:()=>{}, accrueWorkerEarnings:()=>0, maxHealth:()=>100,
     realRecovery:()=>0, activeFight:()=>s.auto&&!s.smartResting,
     isDown:()=>s.downUntil>10000||s.hp<=0,
     autoInterval:()=>0.5, foeAttackInterval:()=>0.5, autoPower:()=>12,
@@ -232,7 +232,7 @@ test('game loop continues scheduling frames after an engine exception', () => {
   const tickSource = source.slice(source.indexOf('function tick(now)'),source.indexOf('// The browser UI'));
   let frames=0;
   const context={
-    last:0, income:()=>{throw Error('expected failure');},
+    last:0, accrueWorkerEarnings:()=>{throw Error('expected failure');},
     requestAnimationFrame:()=>{frames++;},
     console:{error:()=>{}}
   };
@@ -347,12 +347,12 @@ test('workforce production milestones apply per type and reset with worker owner
   vm.createContext(context);
   vm.runInContext(part,context);
   const calculate=code=>vm.runInContext(code,context);
-  for(const [count,mult] of [[0,1],[9,1],[10,1.05],[25,1.15],[50,1.30],[100,1.50]]) {
+  for(const [count,mult] of [[0,1],[9,1],[10,1.01],[25,1.02],[50,1.03],[100,1.04]]) {
     state.gens.sprite=count;
     assert.ok(Math.abs(calculate('income()')-count*2*mult)<1e-9,'worker count '+count);
   }
   state.gens.sprite=9;
-  assert.ok(Math.abs(calculate('workerMarginalProduction(workers[0])')-(10*2*1.05-9*2))<1e-9);
+  assert.ok(Math.abs(calculate('workerMarginalProduction(workers[0])')-(10*2*1.01-9*2))<1e-9);
   state.gens.sprite=0;
   assert.equal(calculate('income()'),0,'Ascension resetting workers removes milestone output');
 });

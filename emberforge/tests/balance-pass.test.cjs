@@ -29,12 +29,20 @@ test('first boss clear grants the next region weapon while subsequent drops use 
  assert.match(combat,/createLoot\(e\.boss,firstBossVictory\)/);
  assert.doesNotMatch(combat,/if\(s\.zone!==0\)return null/);
 });
-test('worker price-to-income ratios remain gradual across all twelve tiers',()=>{
+test('the twelve worker tiers match the slower timed economy',()=>{
  const block=catalogs.slice(catalogs.indexOf('const workers=['),catalogs.indexOf('const upgrades=['));
- const rows=[...block.matchAll(/\['[^']+','[^']+','[^']+',([\deE.+-]+),([\deE.+-]+),/g)].map(m=>[+m[1],+m[2]]);
+ const rows=[...block.matchAll(/\['([^']+)','[^']+','[^']+',([\deE.+-]+),([\deE.+-]+),'[^']+',([\d]+)\]/g)].map(m=>({id:m[1],cost:+m[2],payout:+m[3],seconds:+m[4]}));
  assert.equal(rows.length,12);
- for(const [price,rate] of rows)assert.ok(price/rate>=40&&price/rate<=90,'worker payback '+price+'/'+rate);
- assert.match(combat,/const WORKER_MILESTONES=\[\[10,\.05\],\[25,\.10\],\[50,\.15\],\[100,\.20\]\]/);
+ const expected=[.09,.6,3.5,20,110,200,750,1750,5000,10000,5000000/300,25000];
+ const prices=[15,85,440,2400,12500,65000,350000,2e6,12e6,75e6,475e6,3e9];
+ rows.forEach((w,i)=>{
+  assert.equal(w.cost,prices[i],w.id+' starting price');
+  assert.ok(Math.abs(w.payout/w.seconds-expected[i])<1e-7,w.id+' effective rate');
+  assert.equal(w.seconds===1,i<5,w.id+' payout schedule');
+ });
+ assert.match(combat,/const WORKER_PRICE_GROWTH=1\.33;/);
+ assert.match(combat,/const WORKER_MILESTONES=\[\[10,\.01\],\[25,\.01\],\[50,\.01\],\[100,\.01\]\]/);
+ assert.match(combat,/function accrueWorkerEarnings\(seconds,offlineFactor=1\)/);
 });
 test('first Kingdom tier is affordable but still requires significant construction',()=>{
  const block=catalogs.slice(catalogs.indexOf('const buildings=['),catalogs.indexOf('const skills=['));

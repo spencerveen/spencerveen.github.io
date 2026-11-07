@@ -7,14 +7,41 @@ const skillfactor=()=>1+.03*activeSkill('aura');
 const totalWorkers=()=>workers.reduce((v,w)=>v+(s.gens[w[0]]||0),0);
 const multiplier=type=>1+upgrades.reduce((v,u)=>v+(u[4]===type&&s.ups[u[0]]&&upgradeUnlocked(u)?Math.max(0,u[5]-1)*.68:0),0);
 const clicks=()=> (1+upgrades.reduce((v,u)=>v+(u[4]==='clickAdd'&&s.ups[u[0]]&&upgradeUnlocked(u)?u[5]:0),0))*multiplier('clickMult')*(1+.07*activeBuild('library'))*(1+.12*activeSkill('harvest'))*soulfactor()*skillfactor();
-// Workforce milestones apply only to the current run; they reset with workers on Ascension.
-const WORKER_MILESTONES=[[10,.05],[25,.10],[50,.15],[100,.20]];
+// Workforce milestones are per worker type and reset with worker ownership at Ascension.
+const WORKER_MILESTONES=[[10,.01],[25,.01],[50,.01],[100,.01]];
+const WORKER_PRICE_GROWTH=1.33;
 const workerMilestoneBonus=count=>WORKER_MILESTONES.reduce((sum,m)=>sum+(count>=m[0]?m[1]:0),0);
+// Entries define one worker's Ember payout and its duration. Omitting the duration
+// preserves continuous income for future workers.
+const workerInterval=w=>Math.max(1,Number(w[6])||1);
+const formatWorkerInterval=seconds=>seconds>=60?(seconds/60)+' min':seconds+' sec';
 const workerSharedFactor=()=>multiplier('prodMult')*(1+.07*activeBuild('mine'))*(1+.12*activeSkill('industry'))*soulfactor()*skillfactor();
-const workerBaseOutput=(w,count=s.gens[w[0]]||0)=>count*w[4]*(1+workerMilestoneBonus(count));
-const workerProduction=w=>workerUnlocked(w)?workerBaseOutput(w)*workerSharedFactor():0;
+const workerBaseOutput=(w,count=s.gens[w[0]]||0)=>count*(w[4]/workerInterval(w))*(1+workerMilestoneBonus(count));
+const workerProduction=w=>workerUnlocked(w)?workerBaseOutput(w)*workerSharedFactor():0; // average Ember/sec
 const workerMarginalProduction=(w,count=1)=>{let owned=s.gens[w[0]]||0;return (workerBaseOutput(w,owned+count)-workerBaseOutput(w,owned))*workerSharedFactor();};
-const income=()=>workers.reduce((v,w)=>v+workerProduction(w),0);
+const income=()=>workers.reduce((v,w)=>v+workerProduction(w),0); // average rate, for the HUD
+const workerNextPayout=w=>Math.max(1,Math.ceil(workerInterval(w)-(s.workerTimers?.[w[0]]||0)));
+function accrueWorkerEarnings(seconds,offlineFactor=1){
+ if(!Number.isFinite(seconds)||seconds<=0)return 0;
+ if(!s.workerTimers||typeof s.workerTimers!=='object')s.workerTimers={};
+ let earned=0;
+ for(const w of workers){
+  const interval=workerInterval(w);
+  const owned=s.gens[w[0]]||0;
+  if(interval===1){
+   if(owned>0)earned+=workerProduction(w)*seconds*offlineFactor;
+   continue;
+  }
+  if(owned<=0||!workerUnlocked(w)){delete s.workerTimers[w[0]];continue;}
+  const previous=Number(s.workerTimers[w[0]])||0;
+  const elapsed=Math.max(0,Math.min(previous,interval-1e-7))+seconds;
+  const cycles=Math.floor((elapsed+1e-8)/interval);
+  s.workerTimers[w[0]]=Math.max(0,elapsed-cycles*interval);
+  if(cycles>0)earned+=workerProduction(w)*interval*cycles*offlineFactor;
+ }
+ if(earned>0)gain(earned);
+ return earned;
+}
 const equippedItem=slot=>s.items.find(g=>g.id===s.equipped[LEGACY_EQUIPMENT_SLOTS[slot]||slot]);
 const gearPower=slot=>equippedItem(slot)?.power||0;
 const gearTotal=slots=>slots.reduce((sum,slot)=>sum+gearPower(slot),0);
@@ -184,6 +211,6 @@ function usePotion(id='minor'){
  return true;
 }
 
-const costWorker=(w,n)=>{let owned=s.gens[w[0]]||0;if(n==='max'){let cnt=0,sum=0;while(cnt<10000){let price=Math.ceil(w[3]*1.23**(owned+cnt));if(!isFinite(price)||sum+price>s.ember+1e-8)break;sum+=price;cnt++}return {price:sum,count:cnt}}let q=Number(n),price=0;for(let i=0;i<q;i++)price+=Math.ceil(w[3]*1.23**(owned+i));return {price,count:q}};
+const costWorker=(w,n)=>{let owned=s.gens[w[0]]||0;if(n==='max'){let cnt=0,sum=0;while(cnt<10000){let price=Math.ceil(w[3]*WORKER_PRICE_GROWTH**(owned+cnt));if(!isFinite(price)||sum+price>s.ember+1e-8)break;sum+=price;cnt++}return {price:sum,count:cnt}}let q=Number(n),price=0;for(let i=0;i<q;i++)price+=Math.ceil(w[3]*WORKER_PRICE_GROWTH**(owned+i));return {price,count:q}};
 const costBuild=b=>Math.ceil(b[3]*2.72**s.build[b[0]]);
 const short=u=>fmt(u)+' Ember';

@@ -94,3 +94,18 @@
 #ef4 .efw-efficiency-amount strong{color:#ffcb7e;font-size:13px;font-weight:900}
 @media(max-width:640px){#ef4 .efw-metrics{gap:6px}#ef4 .efw-metric{padding:8px}#ef4 .efw-metric-label{font-size:8px;letter-spacing:0}#ef4 .efw-metric-value{font-size:16px}#ef4 .efw-metric-value small{font-size:9px}#ef4 .efw-efficiency{padding:7px 9px}#ef4 .efw-efficiency-label{font-size:9px}#ef4 .efw-efficiency-amount{font-size:9px}}
 @media(max-width:390px){#ef4 .efw-metrics{grid-template-columns:1fr}}
+
+/* Timed workforce payouts share the existing output ribbon, with a live countdown. */
+#ef4 .efw-payout-timer{
+ display:inline-flex;
+ align-items:center;
+ gap:4px;
+ padding:3px 7px;
+ border:1px solid #cd975a55;
+ border-radius:6px;
+ color:#ffd59d;
+ background:#2d211c88;
+ font-size:10px;
+ font-weight:750;
+ white-space:nowrap;
+}

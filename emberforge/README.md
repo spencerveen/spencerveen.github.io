@@ -46,6 +46,23 @@ Converting those safely requires handling the large source files, preserving
 their indexed asset contracts, and verifying browser rendering. Keep their
 script order and existing scene dependencies unchanged until then.
 
+## Worker economy and future tiers
+
+Worker definitions live in `data/catalogs.js`. Each entry uses
+`[id, name, icon, startingCost, payoutPerWorker, description, intervalSeconds]`.
+An omitted or `1`-second interval earns continuously; intervals above 1
+grant discrete Ember batches after the timer completes. The Workforce screen
+shows both each payout and its average Ember/sec for comparison.
+
+The purchase growth constant (`WORKER_PRICE_GROWTH`, currently `1.33`),
+cumulative +1%-per-threshold milestones, and batch accounting all live in
+`systems/combat.js`. `accrueWorkerEarnings` handles both active and
+half-rate offline earnings; never add `gain(income() * dt)` alongside it,
+or timed workers will earn twice. Timer progress is saved in
+`s.workerTimers` and resets on Ascension. New worker types can be appended
+to the catalog with their own payout intervals and unlock tiers in
+`GATE_WORKERS` in `data/definitions.js`.
+
 ## Checks
 
 `node --test emberforge/tests/*.test.cjs`
