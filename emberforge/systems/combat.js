@@ -1,7 +1,7 @@
 'use strict';
 function note(t){s.journal.unshift(t);s.journal=s.journal.slice(0,8)}
 function toast(t){let el=$('toast');el.textContent=t;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2100)}
-function showBossLoot(item){if(!item)return;let scene=$('battlescene');if(!scene)return;scene.querySelectorAll('.chestflash').forEach(n=>n.remove());let box=document.createElement('div');box.className='chestflash';box.innerHTML='<div style="font-size:10px;letter-spacing:1px;opacity:.9">BOSS CHEST OPENED</div><div style="margin-top:4px"><strong class="rarity-'+item.rarity+'">'+item.rarity.toUpperCase()+'</strong> · '+esc(item.name)+'</div><div style="margin-top:2px;color:#ffe1b9">+'+fmt(item.power)+' '+equipmentPowerType(equipmentSlotFor(item))+'</div>';scene.appendChild(box);setTimeout(()=>box.remove(),4200)}
+function showBossLoot(item){if(!item)return;let scene=$('battlescene');if(!scene)return;scene.querySelectorAll('.chestflash').forEach(n=>n.remove());let box=document.createElement('div');box.className='chestflash';box.innerHTML='<div style="font-size:10px;letter-spacing:1px;opacity:.9">BOSS EQUIPMENT DROP</div><div style="margin-top:4px"><strong class="rarity-'+item.rarity+'">'+item.rarity.toUpperCase()+'</strong> · '+esc(item.name)+'</div><div style="margin-top:2px;color:#ffe1b9">+'+fmt(item.power)+' '+equipmentPowerType(equipmentSlotFor(item))+'</div>';scene.appendChild(box);setTimeout(()=>box.remove(),4200)}
 const soulfactor=()=>1+.24*Math.sqrt(s.souls);
 const skillfactor=()=>1+.03*activeSkill('aura');
 const totalWorkers=()=>workers.reduce((v,w)=>v+(s.gens[w[0]]||0),0);
