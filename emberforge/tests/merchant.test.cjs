@@ -10,7 +10,7 @@ function merchantHarness({ember=1000,gear=0,potions=0,bosses=0}={}){
  const s={ember,items:Array.from({length:gear},(_,i)=>({id:'g'+i})),potions:{minor:potions},bosses,journal:[]};
  const stock=[
   {name:'Starter Sword',slot:'mainHand',power:2,price:180,icon:'swordglow'},
-  {name:"Traveler's Blade",slot:'mainHand',power:3,price:420,bosses:1,icon:'swordglow'}
+  {name:"Traveler's Blade",slot:'mainHand',power:16,price:1800,bosses:1,icon:'swordglow'}
  ];
  const pot={id:'minor',price:150,maxStack:10,name:'Minor Healing Potion'};
  const catalog=new Map(stock.map(x=>[x.name,x]));
@@ -31,7 +31,7 @@ test('Kingdom merchant offers purchasable starter gear and healing supplies',()=
  assert.match(views,/data-merchant-potion/);
  assert.match(views,/data-merchant-sell-potion/);
  assert.match(defs,/const KINGDOM_STARTER_GEAR=/);
- assert.match(format,/\.\.\.ASHEN_LOOT,\.\.\.KINGDOM_STARTER_GEAR/);
+ assert.match(format,/validatedEquipmentCatalog\(\)/);
 });
 test('Gear purchase deducts Ember, adds a persistent equippable item, and prevents overflow',()=>{
  const {s,methods}=merchantHarness();
@@ -48,8 +48,10 @@ test('Gear purchase deducts Ember, adds a persistent equippable item, and preven
 test('Only customers who defeated the first boss may purchase the Traveler blade',()=>{
  const before=merchantHarness({bosses:0});
  assert.equal(before.methods.buyMerchantGear("Traveler's Blade"),false);
- const after=merchantHarness({bosses:1});
+ const after=merchantHarness({ember:2000,bosses:1});
  assert.equal(after.methods.buyMerchantGear("Traveler's Blade"),true);
+ assert.equal(after.s.items[0].power,16);
+ assert.equal(after.s.ember,200);
 });
 test('Potions fill partial stacks and require new backpack slots after each ten',()=>{
  const partial=merchantHarness({gear:29,potions:9});
