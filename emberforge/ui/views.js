@@ -353,10 +353,10 @@ function renderGear(){
 // All buttons are real DOM controls: no interaction is painted into the image.
 let caladrynMapSignature='';
 const CALADRYN_MAP_PREFERENCE='emberforge-caladryn-map-collapsed';
-// Resolve the default after the save has loaded, not while this module initializes.
-let caladrynMapCollapsed=false;
-let caladrynMapPreferenceKnown=false;
-try{const savedMapPreference=window.localStorage.getItem(CALADRYN_MAP_PREFERENCE);if(savedMapPreference!==null){caladrynMapCollapsed=savedMapPreference==='1';caladrynMapPreferenceKnown=true}}catch(_){}
+// The atlas is an on-demand overlay. Never reopen it automatically when the
+// game loads: an old expanded-map preference should not cover the Kingdom.
+let caladrynMapCollapsed=true;
+let caladrynMapPreferenceKnown=true;
 function updateCaladrynMapVisibility(){
  $('mapregion').hidden=caladrynMapCollapsed;
  const toggle=$('maptoggle');
@@ -443,8 +443,17 @@ function saveCode(){save();return btoa(unescape(encodeURIComponent(JSON.stringif
 function exportSave(){let code=saveCode();modal('Export your save','Copy this code to move your progress to another browser. Your code includes equipment and Soulfire.',()=>{let t=$('modaltext');t.focus();t.select();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(()=>toast('Save copied to clipboard')).catch(()=>toast('Select and copy the code manually'))}else{try{document.execCommand('copy');toast('Save copied if supported')}catch(e){toast('Select and copy the code manually')}}return false},'Copy Code',true);$('modaltext').value=code;}
 function importSave(){modal('Import save code','Paste a save code from Emberforge III, Reborn v2, or original Emberforge. This replaces the current save.',v=>{try{let o=JSON.parse(decodeURIComponent(escape(atob(v.trim()))));if(!o||!o.gens||!Number.isFinite(Number(o.ember)))throw Error('Bad save');s=clean(o);if(s.hp===0)s.hp=Math.ceil(maxHealth()*.5);if(s.hp===null)s.hp=maxHealth();if(!(s.enemyHP>0))s.enemyHP=enemy().hp;note('Save imported successfully');save();renderPage();toast('Save imported!');return true}catch(e){toast('Invalid or unsupported save code');return false}},'Import',true)}
 function ascend(){let reward=soulReward();if(reward<1){toast('Earn 100K this run first');return}modal('Ascend and Reforge?','Receive +'+reward+' permanent Soulfire. Boss victories, not Ascension, unlock regions, building levels, and new powers. Ember, workers, temporary upgrades, buildings, all equipment and potions reset; permanent progress stays.',()=>{let old=s;s=fresh();for(let k of ['lifetime','clicks','souls','ascensions','ach','skills','skillPoints','level','unlocked','kills','bosses','lootFound','claimed','bounty','bountyStart','codex','combatLevel','combatXP','training','stageUnlocked','bossCleared','firstClears','kingdomVistaMax','kingdomVistaMilestone','avatarBody','avatarName'])s[k]=old[k];s.souls+=reward;s.ascensions++;s.hp=maxHealth();s.combatMessage='A new Ascension era begins! Health and permanent skills remain; equipment and potions have been reset.';s.enemyHP=enemy().hp;note('Ascended for +'+reward+' Soulfire');honorCheck();save();renderPage();toast('Ascension complete! +'+reward+' Soulfire');return true},'Ascend Now')}
-root.addEventListener('keydown',e=>{if(e.key==='Escape'&&kingdomPoint){const previous=kingdomPoint;closeKingdomLocation();$('kingdomscene').querySelector('[data-kingdom-point="'+previous+'"]')?.focus();}});
-root.addEventListener('click',e=>{if(e.target.classList?.contains('efk-dialog-scrim')){closeKingdomLocation();return}let b=e.target.closest('button');if(!b||!root.contains(b)||b.disabled)return;
+root.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!caladrynMapCollapsed){
+  caladrynMapCollapsed=true;
+  try{window.localStorage.setItem(CALADRYN_MAP_PREFERENCE,'1')}catch(_){}
+  updateCaladrynMapVisibility();
+  $('maptoggle').focus();
+  return;
+ }
+ if(e.key==='Escape'&&kingdomPoint){const previous=kingdomPoint;closeKingdomLocation();$('kingdomscene').querySelector('[data-kingdom-point="'+previous+'"]')?.focus();}
+});
+root.addEventListener('click',e=>{if(e.target.id==='ef4-mapregion'){caladrynMapCollapsed=true;try{window.localStorage.setItem(CALADRYN_MAP_PREFERENCE,'1')}catch(_){}updateCaladrynMapVisibility();return}if(e.target.classList?.contains('efk-dialog-scrim')){closeKingdomLocation();return}let b=e.target.closest('button');if(!b||!root.contains(b)||b.disabled)return;
 if(Object.prototype.hasOwnProperty.call(b.dataset,'returnHome')){travelToKingdom();go('world');toast('Returned safely to the Kingdom');return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapToggle')){caladrynMapCollapsed=!caladrynMapCollapsed;try{window.localStorage.setItem(CALADRYN_MAP_PREFERENCE,caladrynMapCollapsed?'1':'0')}catch(_){}updateCaladrynMapVisibility();return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapZoom')){const viewport=$('mapviewport'),zoom=viewport.classList.toggle('zoomed');b.setAttribute('aria-pressed',String(zoom));b.textContent=zoom?'Fit map to window':'Enlarge map';if(!zoom)viewport.scrollLeft=0;return}
@@ -482,3 +491,9 @@ root.addEventListener('focusout',e=>{if(e.target?.id==='ef4-adventurer-name'){s.
 
 $('showowned').addEventListener('change',e=>{s.showOwned=e.target.checked;renderUpgrades();save()});
 function refreshShopAfford(){if(page==='workers'||page==='upgrades'||page==='world'){root.querySelectorAll('[data-price]').forEach(b=>{let p=+b.dataset.price;if(b.dataset.merchantGear){b.disabled=s.ember<p||inventoryUsedSlots()>=inventoryCapacity();return}if(b.dataset.merchantPotion){let pot=potionDefinition(b.dataset.merchantPotion);b.disabled=!pot||s.ember<p||(potionCount(pot.id)%pot.maxStack===0&&inventoryUsedSlots()>=inventoryCapacity());return}if(b.dataset.worker&&buyMode==='max'){let w=workers.find(x=>x[0]===b.dataset.worker),c=costWorker(w,'max');if(!c||c.count===0){b.disabled=true}else{b.disabled=false;b.dataset.price=c.price;b.textContent='Hire ×'+fmt(c.count)}return}if(b.dataset.train&&s.training[b.dataset.train]>=trainingCap())return;if(b.dataset.upgrade){let u=upgrades.find(v=>v[0]===b.dataset.upgrade);if(!u||s.ups[b.dataset.upgrade]||!upgradeUnlocked(u))return;}if(b.dataset.build){let build=buildings.find(v=>v[0]===b.dataset.build);if(!build||!buildingUnlocked(build)||s.build[b.dataset.build]>=buildingCap())return;}b.disabled=s.ember<p})}if(page==='upgrades'&&s.upgradeView==='affordable')renderUpgrades()}
+
+root.addEventListener('click',e=>{
+ if(!e.target.closest?.('[data-map-toggle]'))return;
+ if(!caladrynMapCollapsed)$('mapregion').querySelector('.caladryn-atlas-close')?.focus({preventScroll:true});
+ else $('maptoggle').focus({preventScroll:true});
+});
