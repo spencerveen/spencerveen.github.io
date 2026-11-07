@@ -457,7 +457,6 @@ root.addEventListener('keydown',e=>{
 root.addEventListener('click',e=>{if(e.target.id==='ef4-mapregion'){caladrynMapCollapsed=true;try{window.localStorage.setItem(CALADRYN_MAP_PREFERENCE,'1')}catch(_){}updateCaladrynMapVisibility();return}if(e.target.classList?.contains('efk-dialog-scrim')){closeKingdomLocation();return}let b=e.target.closest('button');if(!b||!root.contains(b)||b.disabled)return;
 if(Object.prototype.hasOwnProperty.call(b.dataset,'returnHome')){travelToKingdom();go('world');toast('Returned safely to the Kingdom');return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'mapToggle')){caladrynMapCollapsed=!caladrynMapCollapsed;try{window.localStorage.setItem(CALADRYN_MAP_PREFERENCE,caladrynMapCollapsed?'1':'0')}catch(_){}updateCaladrynMapVisibility();return}
-if(Object.prototype.hasOwnProperty.call(b.dataset,'mapZoom')){const viewport=$('mapviewport'),zoom=viewport.classList.toggle('zoomed');b.setAttribute('aria-pressed',String(zoom));b.textContent=zoom?'Fit map to window':'Enlarge map';if(!zoom)viewport.scrollLeft=0;return}
 if(b.dataset.kingdomPoint){openKingdomLocation(b.dataset.kingdomPoint);return}
 if(Object.prototype.hasOwnProperty.call(b.dataset,'kingdomClose')){closeKingdomLocation();return}
 if(b.dataset.merchantTab){setMerchantTab(b.dataset.merchantTab);return}
