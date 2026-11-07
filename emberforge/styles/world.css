@@ -29,18 +29,11 @@
 @media(max-width:420px){#ef4 .caladryn-map-pin{width:23px;height:23px}#ef4 .caladryn-map-caption{align-items:center}}
 @media(prefers-reduced-motion:reduce){#ef4 .caladryn-map-pin.current{animation:none}}
 
-/* Default: scale the entire illustration to the available width.
-   Zoom is explicitly opt-in and allows touch/trackpad panning for details. */
-#ef4 .caladryn-map-viewport.zoomed{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#b7834f #101727;touch-action:pan-x pan-y}
-#ef4 .caladryn-map-viewport.zoomed .caladryn-map-canvas{width:1500px;min-width:1500px}
-#ef4 .caladryn-map-zoom-toggle{min-height:30px;padding:6px 13px;border:1px solid #98714b;border-radius:8px;color:#f5d5a4;background:linear-gradient(120deg,#222940,#1a2130);font-size:11px;cursor:pointer}
-#ef4 .caladryn-map-zoom-toggle:hover{border-color:#eeb781;background:#323346}
-#ef4 .caladryn-map-zoom-toggle:focus-visible{outline:2px solid #ffe5b6;outline-offset:3px}
+/* The atlas always fits the available screen; no manual zoom controls. */
 #ef4 .caladryn-battle-interior{margin:20px 0 0;padding-top:18px;border-top:2px solid #956943;scroll-margin-top:20px}
 #ef4 .caladryn-battle-interior[hidden]{display:none!important}
 #ef4 .caladryn-battle-interior .efb-shell{min-height:clamp(420px,calc(100dvh - 250px),820px)}
 @media(max-width:680px){
- #ef4 .caladryn-map-viewport.zoomed .caladryn-map-canvas{width:1150px;min-width:1150px}
  #ef4 .caladryn-battle-interior{margin-top:15px;padding-top:14px}
 }
 
@@ -266,11 +259,9 @@
  display:flex;align-items:center;justify-content:space-between;
  padding:3px 2px;margin:0;color:#e2c396;
 }
-#ef4 .caladryn-map-viewport.zoomed{
  overflow:auto;max-height:76dvh;scrollbar-width:thin;
  touch-action:pan-x pan-y;
 }
-#ef4 .caladryn-map-region .caladryn-map-viewport.zoomed .caladryn-map-canvas{
  width:1500px;min-width:1500px;
 }
 @media(max-width:959px){
@@ -288,7 +279,6 @@
  #ef4 .caladryn-atlas-head p{display:none}
  #ef4 .caladryn-map-region .caladryn-map-viewport,
  #ef4 .caladryn-atlas-head,#ef4 .caladryn-map-region .caladryn-map-caption{width:100%}
- #ef4 .caladryn-map-region .caladryn-map-viewport.zoomed .caladryn-map-canvas{width:1150px;min-width:1150px}
  #ef4 .efk-scene-footer{font-size:10px}
 }
 @media(max-width:420px){
