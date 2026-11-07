@@ -24,31 +24,31 @@ const upgrades=[
 ['rune','Golden Rune','gem',6500,'clickMult',2,'Improves click power'],
 ['bellows','Dragon Bellows','flame',16000,'prodMult',2,'Improves all worker production'],
 ['crit','Volcanic Touch','crystal',35000,'clickAdd',80,'+80 per click'],
-['warbanner','War Banner','badge',70000,'attackMult',2,'Improves attack damage'],
+['warbanner','War Banner','badge',70000,'battleReward',1.1,'Improves Ember rewards from enemies'],
 ['titan','Titan Grip','swordglow',180000,'clickAdd',650,'+650 per click'],
 ['engine','Eternal Engine','gear',400000,'prodMult',3,'Greatly improves worker production'],
 ['crown','Ember Crown','medal',950000,'clickMult',3,'Greatly improves click power'],
-['bloodstone','Bloodstone Blade','swordglow',2200000,'attackMult',3,'Greatly improves attack damage'],
+['bloodstone','Bloodstone Blade','swordglow',2200000,'battleReward',1.15,'Improves Ember rewards from enemies'],
 ['starweave','Starweave Gears','engine',5500000,'prodMult',3,'Strong production enchantment'],
 ['echoes','Echoing Hands','tap',12000000,'clickMult',3,'Strong clicking enchantment'],
-['dragonheart','Dragonheart','dragon',30000000,'attackMult',4,'Powerful attack enchantment'],
+['dragonheart','Dragonheart','dragon',30000000,'battleReward',1.2,'Improves Ember rewards from enemies'],
 ['transcend','Transcendent Forge','altar',80000000,'prodMult',4,'Mythic production enchantment'],
 ['voidhammer','Voidbreaker','swordglow',250000000,'clickAdd',180000,'+180K per click'],
-['worldbreaker','Worldbreaker','altar',800000000,'attackMult',5,'Ultimate attack enchantment']];
+['worldbreaker','Worldbreaker','altar',800000000,'battleReward',1.25,'Improves Ember rewards from enemies']];
 const buildings=[
 ['mine','Crystal Mines','mine',140,.07,'+7% worker income per level'],
-['barracks','Knight Barracks','barracks',450,.08,'+8% battle damage per level'],
+['barracks','Knight Barracks','barracks',450,.04,'+4% combat XP per level'],
 ['library','Arcane Libraries','library',1400,.07,'+7% click income per level'],
 ['roost','Dragon Roosts','roost',9000,.06,'+6% battle rewards per level'],
-['watchtower','Watchtowers','watchtower',50000,.045,'Auto-Strike faster by 4.5% per level'],
+['watchtower','Watchtowers','watchtower',50000,.025,'Auto-Strike faster by 2.5% per level'],
 ['vault','Royal Vaults','vault',300000,.05,'+5% salvage value per level']];
 const skills=[
 ['harvest','Ember Mastery','flame','+12% click income per level'],
 ['industry','Clockwork Insight','gear','+12% worker income per level'],
-['blade','Swordcraft','swords','+14% attack damage per level'],
+['blade','Battle Studies','swords','+6% combat XP per level'],
 ['fortune','Fortune Seeker','chest','+8% battle rewards per level'],
-['aura','Soul Resonance','soulfire','+3% all income and damage per level'],
-['veteran','Field Commander','badge','+8% auto-attack damage per level']];
+['aura','Soul Resonance','soulfire','+3% Forge and worker income per level'],
+['veteran','Field Commander','badge','+5% Ember rewards from enemies per level']];
 const realms=[
 ['Ashen Wilds','crystal','Ash Imp','ashimp','Cinder Warden','cinderwarden',20,8],
 ['Whispering Forest','map','Thorn Stalker','thornstalker','Ancient Ent','ancientent',250,95],
