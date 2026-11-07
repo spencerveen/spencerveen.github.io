@@ -16,14 +16,14 @@ test('combat stops regeneration completely and resting restores half a percent p
  assert.equal(recovery(false),0.5);
  assert.match(recoveryLine,/fighting\?0:/);
 });
-test('healing potions have separate drop rates and a future merchant price',()=>{
+test('healing potions can drop across regions and retain their merchant price',()=>{
  assert.match(definitions,/const HEALING_POTIONS=/);
  assert.match(definitions,/dropChance:0\.003/);
  assert.match(definitions,/bossDropChance:0\.008/);
  assert.match(definitions,/price:150/);
  assert.match(definitions,/heal:0\.10,maxStack:10/);
  assert.match(combat,/rollPotionDrop\(e\.boss\)/);
- assert.match(combat,/if\(s\.zone!==0\)return null;/);
+ assert.doesNotMatch(combat,/if\(s\.zone!==0\)return null;/); // Potions can now drop in every realm.
 });
 test('consuming potions changes inventory, health and cooldown but never Ember',()=>{
  const begin=combat.indexOf("function usePotion(id='minor')");
