@@ -164,6 +164,7 @@ function renderKingdomMerchant(){
  }).join(''):'<div class="efk-merchant-empty">No unwanted equipment to sell.</div>';
  // A blacksmith arrives silently after the first Ascension. Crafting is a later feature.
  $('craftsman').hidden=s.ascensions<1;
+ $('craftsman').style.display=s.ascensions>=1?'':'none';
 }
 function buyMerchantGear(name){
  if(!atKingdom())return false;
