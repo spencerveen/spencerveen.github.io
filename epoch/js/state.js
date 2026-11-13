@@ -1,5 +1,5 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113h";
-import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113h";
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113i";
+import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113i";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113i";
 import {ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
