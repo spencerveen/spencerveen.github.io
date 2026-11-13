@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import {
- CHUNK_SIZE,ACTIVE_RADIUS,terrainHeight,forestObjects,forestAnimals,
+ CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,terrainHeight,forestObjects,forestAnimals,
  chunkCoord,chunkKey
 } from "../js/forest-generation.js";
 
 assert.equal(CHUNK_SIZE,32);
-assert.equal(ACTIVE_RADIUS,1);
+assert.equal(ACTIVE_RADIUS,2);
+assert.equal(DETAIL_RADIUS,1);
 assert.deepEqual(chunkCoord(-.01,-32.01),{cx:-1,cz:-2});
 assert.deepEqual(chunkCoord(0,32),{cx:0,cz:1});
 const seeds=[12000,1337,72031,987654321];
@@ -78,19 +79,22 @@ const disposed=[],world={
 };
 const manager=new ForestChunks(world,1337);
 manager.update(0,0);
-assert.equal(manager.loaded.size,9,"load 3×3 nearby chunks");
+assert.equal(manager.loaded.size,25,"load 5×5 visible terrain chunks");
+assert.equal(manager.status.detailed,9,"detail only the inner 3×3 forest chunks");
 const counts={entities:world.entities.length,obstacles:world.obstacles.length,animals:world.animals.length};
 manager.update(1,1);
-assert.equal(manager.created,9,"same-chunk movement doesn't regenerate meshes");
+assert.equal(manager.created,25,"same-chunk movement doesn't regenerate meshes");
 manager.update(64,0);
-assert.equal(manager.loaded.size,9,"moving away unloads distant chunks");
+assert.equal(manager.loaded.size,25,"moving away unloads distant terrain chunks");
+assert.equal(manager.status.detailed,9,"detail window remains bounded");
 assert(manager.disposed>0&&disposed.length>0,"meshes are disposed");
-assert(manager.created>9,"new chunks appear");
+assert(manager.created>25,"new chunks appear");
 assert(!manager.loaded.has(chunkKey(-1,-1)),"faraway chunks no longer remain in memory");
 manager.update(0,0);
-assert.equal(manager.loaded.size,9);
+assert.equal(manager.loaded.size,25);
+assert.equal(manager.status.detailed,9);
 assert.deepEqual(forestObjects(1337,0,0),forestObjects(1337,0,0));
 assert.equal(world.entities.length,counts.entities,"resource meshes don't accumulate after returning home");
 assert.equal(world.obstacles.length,counts.obstacles,"colliders don't leak after streaming");
 assert.equal(world.animals.length,counts.animals,"deer don't accumulate after streaming");
-console.log("PASS seeded forest: continuous terrain, repeatable resources, 9 active chunks, streaming cleanup, village-safe starter");
+console.log("PASS seeded forest: continuous terrain, repeatable resources, 25 visible terrain chunks and 9 detailed chunks, streaming cleanup, village-safe starter");
