@@ -8,9 +8,9 @@ try{
   const state=new GameState();
   let ui;
   const world=new World(canvas,
-    resource=>{const result=state.gather(resource);if(result)ui.toast(result.label);return result},
+    (resource,action)=>{const result=state.harvestResource(resource,action);if(result)ui.toast(result.label);return result},
     (title,details)=>ui?.status(title,details),
-    id=>ui?.selectPlot(id),state.data.worldSeed);
+    id=>ui?.selectPlot(id),state.data.worldSeed,meta=>state.resourceStatus(meta));
   ui=new UI(state,world);
   window.setInterval(()=>state.advance(1),1000);
   window.addEventListener("pagehide",()=>state.save());
@@ -29,6 +29,8 @@ try{
   Object.defineProperty(globalThis,"epochDebug",{value:()=>({
     year:state.formatYear(),generation:state.data.generation,
     forest:world.terrain.status,
+    resourceNodes:state.resourceStatistics(),
+    resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
     skills:{...state.data.skills},resources:{...state.data.resources},inventory:{slots:state.data.inventory.map(slot=>slot?{...slot}:null),used:state.inventoryUsed(),unpacked:{...state.data.unpacked}},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
     settlement:{plots:{...state.data.village.plots},population:state.data.village.population,capacity:state.villageCapacity(),
