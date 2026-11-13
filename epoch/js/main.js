@@ -30,6 +30,8 @@ try{
     skills:{...state.data.skills},resources:{...state.data.resources},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
     movement:world.character?.animationStatus?.()||null,
+    hairAttachment:world.character?.attachmentStatus?.()||null,
+    npcAttachments:world.people.map(person=>person.human.attachmentStatus?.()||null),
     position:{x:world.player.position.x,z:world.player.position.z}
   }),configurable:true});
 }catch(error){
