@@ -1,4 +1,4 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113f";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113g";
 import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113g";
 import {villagePanel,selectVillagePlot,handleVillageAction} from "./village-ui.js?v=20261113g";
 const $=id=>document.getElementById(id);
