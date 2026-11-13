@@ -113,6 +113,8 @@ export function createLocomotionPlayer(scene,model,data){
  };
  const controller={
   matchedBones:count.size,
+  get mode(){return state},
+  get phase(){return phase},
   update(elapsedSeconds,mode="idle"){
    mode=resolved[mode]?mode:"idle";
    const dt=lastTime===null?0:clamp(elapsedSeconds-lastTime,0,.12);
