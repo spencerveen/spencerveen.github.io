@@ -26,7 +26,7 @@ export function inventoryPanel(ui){
  html+=`</div>`;
  if(used>=INVENTORY_SLOTS)html+=`<p class="info pack-warning">Pack full. Spend resources or discard a stack to make room for more.</p>`;
  if(unpacked){
-  html+=`<div class="entry pack-legacy"><h3>Unpacked supplies from your old save</h3><p>${unpacked} previously collected resources could not fit inside your new ten-slot pack. None were deleted. Free some slots, then retrieve them.</p><small>${ITEM_IDS.filter(id=>d.unpacked[id]>0).map(id=>esc(ITEMS[id].name)+": "+d.unpacked[id]).join(" · ")}</small><button type="button" data-action="retrieve-supplies" ${used===INVENTORY_SLOTS?"disabled":""}>Retrieve available supplies</button></div>`;
+  html+=`<div class="entry pack-legacy"><h3>Unpacked supplies from your old save</h3><p>${unpacked} previously collected resources could not fit inside your new ten-slot pack. None were deleted. Free some slots, then retrieve them.</p><small>${ITEM_IDS.filter(id=>d.unpacked[id]>0).map(id=>esc(ITEMS[id].name)+": "+d.unpacked[id]).join(" · ")}</small><button type="button" data-action="retrieve-supplies">Retrieve available supplies</button></div>`;
  }
  html+=`<p class="info">Gather resources by clicking trees, stones or berry bushes in the world. Trees and berry bushes can also give vines.</p>`;
  html+=`<div class="entry"><h3>🪓 Stone Axe</h3><p>${d.axe?"Equipped. Harvest 3 wood rather than 2 per tree interaction.":"A better tool for woodcutting. Requires the Stone Toolmaking technology."}</p><small>2 wood · 3 stone</small><button data-action="axe" ${d.axe||!d.technologies.includes("tools")||!state.enough({wood:2,stone:3})?"disabled":""}>${d.axe?"Already crafted":"Craft axe"}</button></div>`;
