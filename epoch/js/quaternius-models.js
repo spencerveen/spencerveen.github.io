@@ -1,9 +1,9 @@
 // Real Quaternius Universal Base Characters (Standard, CC0).
 // Mesh, skeleton, skin weights and textures are imported; no body geometry is
 // synthesized here. Current procedural and sculpted versions are fallback only.
-import {normalizeAppearance,HAIR_COLORS,SKIN_TONES} from "./characters.js?v=20261113e";
-import {createModelHuman as createBackupHuman} from "./character-models.js?v=20261113e";
-import {loadLocomotion,createLocomotionPlayer} from "./locomotion.js?v=20261113e";
+import {normalizeAppearance,HAIR_COLORS,SKIN_TONES} from "./characters.js?v=20261113f";
+import {createModelHuman as createBackupHuman} from "./character-models.js?v=20261113f";
+import {loadLocomotion,createLocomotionPlayer} from "./locomotion.js?v=20261113f";
 
 const B=globalThis.BABYLON;
 const containers=new WeakMap();
@@ -24,6 +24,21 @@ function traverse(roots){
  const all=[],visit=node=>{all.push(node);for(const child of node.getChildren?.()||[])visit(child)};
  roots.forEach(visit);return all;
 }
+// Babylon attaches glTF skin bones to animated TransformNodes. Accessories
+// must follow the Head transform, not the model's unmoving actor root.
+function findHeadNode(model){
+ const withoutPrefix=name=>String(name||"").replace(/^epoch_\d+_/,"");
+ for(const skeleton of model.skeletons||[]){
+  for(const bone of skeleton.bones||[]){
+   if(withoutPrefix(bone.name)==="Head"){
+    const linked=bone.getTransformNode?.();
+    if(linked)return linked;
+   }
+  }
+ }
+ return traverse(model.rootNodes||[]).find(node=>withoutPrefix(node.name)==="Head")||null;
+}
+
 const tint=(scene,material,colorHex,weight=.65)=>{
  if(!material)return;
  const c=B.Color3.FromHexString(colorHex);
@@ -39,12 +54,21 @@ export function createQuaterniusHuman(scene,appearance,parent=null,name="human")
  root.scaling.x=profile.build*1.18;
  root.scaling.z=profile.build*1.18;
  root.scaling.y=profile.height*1.18;
- let model=null,hair=null,beard=null,backup=null,destroyed=false;
+ let model=null,hair=null,beard=null,backup=null,destroyed=false,headNode=null;
  const ownedMaterials=[];
  let locomotion=null;
  const rig={
   root,appearance:profile,ready:null,
-  animationStatus(){return {loaded:!!locomotion,matchedBones:locomotion?.matchedBones||0,mode:locomotion?.mode||null}}, 
+  animationStatus(){return {loaded:!!locomotion,matchedBones:locomotion?.matchedBones||0,mode:locomotion?.mode||null}},
+  attachmentStatus(){
+   return {
+    headFound:!!headNode,
+    hairExpected:!!hairFilenames[profile.hairStyle],
+    hairAttached:!!hair && hair.rootNodes.every(node=>node.parent===headNode),
+    beardExpected:profile.sex==="male"&&profile.beard>0,
+    beardAttached:!!beard && beard.rootNodes.every(node=>node.parent===headNode)
+   };
+  },
   animate(time,moving=false,running=false){
    if(destroyed)return;
    if(backup){backup.animate(time,moving);return;}
@@ -66,7 +90,17 @@ export function createQuaterniusHuman(scene,appearance,parent=null,name="human")
   if(destroyed)return null;
   const inst=c.instantiateModelsToScene(n=>"epoch_"+instanceId+"_"+role+"_"+n,true,{doNotInstantiate:true});
   if(destroyed){inst.dispose();return null}
-  for(const part of inst.rootNodes)part.parent=root;
+  for(const part of inst.rootNodes){
+   // Original Quaternius hair geometry already uses the humanoid's rest
+   // coordinate system (head is about 1.7 model units above the ground).
+   // First place it under the actor, then setParent() retains that exact
+   // world-space placement while changing the animation pivot to Head.
+   // A raw "part.parent=headNode" would double-apply the head offset.
+   part.parent=root;
+   part.computeWorldMatrix(true);
+   headNode.computeWorldMatrix(true);
+   part.setParent(headNode);
+  }
   const colors=HAIR_COLORS[profile.hairColor];
   for(const node of traverse(inst.rootNodes)){
    if(!node.material)continue;
@@ -82,14 +116,12 @@ export function createQuaterniusHuman(scene,appearance,parent=null,name="human")
   model=c.instantiateModelsToScene(n=>"epoch_"+instanceId+"_"+n,true,{doNotInstantiate:true});
   if(destroyed){model.dispose();model=null;return false}
   for(const part of model.rootNodes)part.parent=root;
-  // The official animation library includes its own idle, walk, and jog.
-  // Loading it is shared across characters and does not affect saved state.
-  try{
-   locomotion=createLocomotionPlayer(scene,model,await loadLocomotion(scene));
-   locomotion.update(performance.now()/1000,"idle");
-  }catch(error){
-   console.error("Epoch locomotion initialization failed:",error);
-  }
+  headNode=findHeadNode(model);
+  if(!headNode)throw new Error("Quaternius Head joint not found; cannot safely attach hair.");
+  // Attach accessories BEFORE the first animated pose. Quaternius hairstyles
+  // are modeled in the body's rest coordinates. Binding after an idle/jog
+  // frame would bake an incorrect offset into the attachment.
+
   for(const node of traverse(model.rootNodes)){
    const mat=node.material;
    if(!mat)continue;
@@ -106,6 +138,14 @@ export function createQuaterniusHuman(scene,appearance,parent=null,name="human")
   if(profile.sex==="male"&&profile.beard>0){
    try{beard=await placeHair("beard","beard")}
    catch(error){console.warn("Epoch beard failed to load:",error)}
+  }
+  // Start the animation only after both the hair and beard have been
+  // positioned relative to the character's neutral/rest Head joint.
+  try{
+   locomotion=createLocomotionPlayer(scene,model,await loadLocomotion(scene));
+   locomotion.update(performance.now()/1000,"idle");
+  }catch(error){
+   console.error("Epoch locomotion initialization failed:",error);
   }
   return true;
  };

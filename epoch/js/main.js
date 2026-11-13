@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261113e";
-import {World} from "./world.js?v=20261113e";
-import {UI} from "./ui.js?v=20261113e";
+import {GameState} from "./state.js?v=20261113f";
+import {World} from "./world.js?v=20261113f";
+import {UI} from "./ui.js?v=20261113f";
 const loading=document.getElementById("loading");
 try{
   if(!globalThis.BABYLON)throw new Error("Babylon.js failed to load. Check your internet connection.");
@@ -30,12 +30,14 @@ try{
     skills:{...state.data.skills},resources:{...state.data.resources},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
     movement:world.character?.animationStatus?.()||null,
+    hairAttachment:world.character?.attachmentStatus?.()||null,
+    npcAttachments:world.people.map(person=>person.human.attachmentStatus?.()||null),
     position:{x:world.player.position.x,z:world.player.position.z}
   }),configurable:true});
 }catch(error){
   console.error("Epoch failed to initialize:",error);
   const report=[
-    "Epoch build 20261113e",
+    "Epoch build 20261113f",
     error?.stack || String(error),
     "Browser: "+navigator.userAgent
   ].join("\n\n");
