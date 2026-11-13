@@ -10,7 +10,7 @@
  */
 const B=globalThis.BABYLON;
 const cache=new WeakMap();
-const ASSET="./assets/animations/quaternius-locomotion.json?v=20261113i";
+const ASSET="./assets/animations/quaternius-locomotion.json?v=20261113j";
 
 export async function loadLocomotion(scene){
  let p=cache.get(scene);
