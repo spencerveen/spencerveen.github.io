@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {STARTER_SEED} from "../js/forest-generation.js";
+import * as inventory from "../js/inventory.js";
 const load=p=>fs.readFileSync(new URL(p,import.meta.url),"utf8");
 const clean=s=>s.replace(/^import .*$/gm,"").replace(/^export /gm,"");
 const person=new Function(clean(load("../js/characters.js"))+"\nreturn {founderAppearance,descendantAppearance,normalizeAppearance};")();
@@ -10,16 +11,18 @@ const village=new Function(clean(load("../js/settlement.js"))+"\nreturn {BUILDIN
 const store=new Map();
 const localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value),removeItem:key=>store.delete(key)};
 const GameState=new Function("localStorage","deps",
-  "const {founderAppearance,descendantAppearance,normalizeAppearance,BUILDINGS,PLOT_BY_ID,capacity,emptyVillage,STARTER_SEED}=deps;\n"+
+  "const {founderAppearance,descendantAppearance,normalizeAppearance,BUILDINGS,PLOT_BY_ID,capacity,emptyVillage,STARTER_SEED,ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,normalizeUnpacked,migrateResources,addItems,removeItems,countItem,resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked}=deps;\n"+
    clean(load("../js/state.js"))+"\nreturn GameState;"
-)(localStorage,{...person,...village,STARTER_SEED});
+)(localStorage,{...person,...village,STARTER_SEED,...inventory});
 const fresh=new GameState();fresh.onChange=()=>{};
 assert.equal(fresh.villageCapacity(),5);
 assert.equal(fresh.data.village.population,5);
 assert.equal(village.PLOTS.length,5);
 assert.equal(fresh.canBuildPlot("hearth_1").ok,false,"Fire research required");
 assert.equal(fresh.buildVillagePlot("unknown"),false);
-fresh.data.resources.wood=200;fresh.data.resources.stone=200;
+assert.equal(fresh.addResource("wood",70),70);
+assert.equal(fresh.addResource("stone",40),40);
+assert.equal(fresh.inventoryUsed(),10);
 assert(fresh.buildVillagePlot("family_1"),"First hut built");
 assert.equal(fresh.villageCapacity(),8,"Each hut adds exactly three places");
 assert(fresh.data.shelter,"Legacy shelter compatibility flag");
