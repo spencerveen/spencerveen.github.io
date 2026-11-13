@@ -8,6 +8,7 @@ on:
       - 'epoch/tests/**'
       - 'epoch/js/character-models.js'
       - 'epoch/js/quaternius-models.js'
+      - 'epoch/js/locomotion.js'
       - '.github/workflows/epoch-character-checks.yml'
   push:
     branches: [main]
@@ -17,6 +18,7 @@ on:
       - 'epoch/tests/**'
       - 'epoch/js/character-models.js'
       - 'epoch/js/quaternius-models.js'
+      - 'epoch/js/locomotion.js'
 
 jobs:
   validate-glb:
@@ -29,6 +31,10 @@ jobs:
         run: node epoch/tests/check-models.mjs
       - name: Inspect real Quaternius skinned characters and hairstyles
         run: node epoch/tests/check-quaternius.mjs
+      - name: Validate Quaternius walking animation clips
+        run: |
+          node epoch/tests/check-walk-clips.mjs
+          node epoch/tests/check-locomotion-runtime.mjs
       - name: Validate builder reproduces the checked-in assets
         run: |
           node epoch/tools/build-avatar-glb.js
