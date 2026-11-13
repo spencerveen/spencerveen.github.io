@@ -33,6 +33,13 @@ export function countItem(slots,id){
 }
 export function occupiedSlots(slots){return (slots||[]).filter(Boolean).length}
 export function freeSlots(slots){return INVENTORY_SLOTS-occupiedSlots(slots)}
+/** Available quantity that can fit without exceeding 10 slots or 12 per stack. */
+export function itemCapacity(slots,id){
+ id=canonicalItem(id);
+ if(!ITEMS[id])return 0;
+ return (slots||[]).reduce((total,slot)=>total+
+  (!slot?STACK_LIMIT:slot.id===id?Math.max(0,STACK_LIMIT-slot.qty):0),0);
+}
 export function addItems(slots,id,amount){
  id=canonicalItem(id);
  if(!ITEMS[id])return 0;
