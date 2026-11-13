@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {chromium} from "playwright";
+import {forestObjects} from "../js/forest-generation.js";
 
 const output=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"artifacts");
 fs.mkdirSync(output,{recursive:true});
@@ -74,9 +75,19 @@ try{
  // Test actual construction through the public UI and click-to-walk workflow.
  // Before a reload, Epoch's pagehide handler saves the old in-memory state.
  // Seed the fresh document on its next load instead of writing too early.
- await page.addInitScript(()=>{
+ const starterObjects=Array.from({length:9},(_,i)=>forestObjects(idle.forest.seed,i%3-1,Math.floor(i/3)-1)).flat();
+ const removedTree=starterObjects.find(o=>o.resource==="wood");
+ const removedStone=starterObjects.find(o=>o.resource==="stone");
+ const emptyBush=starterObjects.find(o=>o.resource==="food");
+ assert(removedTree&&removedStone&&emptyBush,"test forest contains all three node types");
+ await page.addInitScript(({treeId,stoneId,bushId})=>{
   const key="epoch.stoneage.v1",saved=JSON.parse(localStorage.getItem(key)||"{}");
   saved.version=1;
+  saved.resourceNodes={
+   [treeId]:{remaining:0,removed:true,regrowAt:0},
+   [stoneId]:{remaining:0,removed:true,regrowAt:0},
+   [bushId]:{remaining:0,removed:false,regrowAt:Date.now()+120000}
+  };
   saved.inventory=Array.from({length:10},()=>null);
   saved.inventory[0]={id:"wood",qty:12};
   saved.inventory[1]={id:"wood",qty:12};
@@ -90,13 +101,17 @@ try{
   saved.unpacked={wood:0,stone:0,berries:0,vines:0};
   saved.resources={wood:44,stone:30,food:2,vines:1};
   localStorage.setItem(key,JSON.stringify(saved));
- });
+ },{treeId:removedTree.id,stoneId:removedStone.id,bushId:emptyBush.id});
  await page.reload({waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.worldPlots===5,null,{timeout:45000});
  const reloadedForest=await page.evaluate(()=>window.epochDebug().forest);
  assert.equal(reloadedForest.seed,idle.forest.seed,"reloading must preserve the world seed");
  assert.equal(reloadedForest.loaded,25,"reload recreates exactly 25 visible terrain chunks");
  assert.equal(reloadedForest.detailed,9,"reload keeps detailed forest meshes bounded");
+ assert.equal(reloadedForest.resources,idle.forest.resources-7,"felled tree and exhausted rock meshes do not respawn after reload");
+ const nodes=await page.evaluate(()=>window.epochDebug().resourceNodes);
+ assert.equal(nodes.removed,2,"two persistently removed resource nodes");
+ assert.equal(nodes.depletedBerries,1,"depleted berry bush remains and awaits regrowth");
  const loadedResources=await page.evaluate(()=>window.epochDebug().resources);
  assert.equal(loadedResources.wood,44,"seeded wood stacks load");
  assert.equal(loadedResources.stone,30,"seeded stone stacks load");
@@ -129,6 +144,7 @@ try{
   forestChunks:idle.forest.loaded,
   detailedForestChunks:idle.forest.detailed,
   forestResources:idle.forest.resources,
+  removedResourcesAfterReload:nodes.removed,
   inventorySlots:idle.inventory.slots.length,
   inventoryAfterBuild:afterBuild.inventory.used,
   rigBones:idle.movement.matchedBones,
