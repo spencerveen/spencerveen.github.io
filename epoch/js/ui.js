@@ -1,5 +1,5 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113c";
-import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113c";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113d";
+import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113d";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
