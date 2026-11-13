@@ -212,5 +212,5 @@ export function createHuman(scene,appearance,parent=null,name="human"){
   head.rotation.x=moving?.018*Math.sin(time*2):Math.sin(time*.37)*.012;
   body.position.y=moving?.028*Math.abs(Math.sin(time*1.12)):Math.sin(time*.45)*.013;
  };
- return {root,appearance:p,animate,dispose:()=>root.dispose(false,true)};
+ return {root,appearance:p,animate,dispose:()=>root.dispose(false,false)};
 }
