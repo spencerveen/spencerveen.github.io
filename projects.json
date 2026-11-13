@@ -4,10 +4,27 @@
       "title": "Emberforge",
       "subtitle": "Featured playable project",
       "description": "An evolving fantasy idle RPG with kingdom progression, enemy encounters, upgrades, and an expanding world. Designed and developed through an AI-assisted creative workflow.",
-      "tags": ["Browser game", "JavaScript", "AI-assisted"],
+      "tags": [
+        "Browser game",
+        "JavaScript",
+        "AI-assisted"
+      ],
       "url": "/emberforge/",
       "button": "Play Emberforge",
       "featured": true
+    },
+    {
+      "title": "Epoch: Dawn of the First Tribe",
+      "subtitle": "New 3D playable prototype",
+      "description": "Begin in the Stone Age in a procedural 3D world. Gather resources, develop skills, unlock technologies and cultural traditions, build a shelter, and continue your civilization through descendants.",
+      "tags": [
+        "3D browser game",
+        "Babylon.js",
+        "Pre-alpha"
+      ],
+      "url": "/epoch/",
+      "button": "Play Epoch",
+      "featured": false
     }
   ],
   "independent": []
