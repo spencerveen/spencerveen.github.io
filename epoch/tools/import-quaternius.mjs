@@ -87,3 +87,30 @@ for(const sex of ["Male","Female"]){
  await fs.writeFile(output,result);
  console.log("  Saved",output,Math.round(result.length/1024)+"KiB",g.skins.length+" skin,",g.nodes.length+" nodes");
 }
+
+
+const HAIRROOT="https://raw.githubusercontent.com/NafisRayan/Animate-Rigged-Humanoid-No-Blender/5821923af517ac5fdc82505faa92a0d575fc1b1a/Universal%20Base%20Characters%5BStandard%5D/Universal%20Base%20Characters%5BStandard%5D/Hairstyles/Origin%20at%200/glTF%20(Godot)/";
+for(const hairstyle of ["Buns","Buzzed","BuzzedFemale","Long","SimpleParted","Beard"]){
+ const name="Hair_"+hairstyle;
+ const pull=async filename=>{
+   const res=await fetch(HAIRROOT+encodeURIComponent(filename),{signal:AbortSignal.timeout(60000)});
+   if(!res.ok)throw Error("Could not download hair "+filename+": "+res.status);
+   return Buffer.from(await res.arrayBuffer());
+ };
+ const [jsonBytes,modelBytes]=await Promise.all([pull(name+".gltf"),pull(name+".bin")]);
+ const g=JSON.parse(jsonBytes.toString("utf8"));
+ if(g.meshes?.length!==1||g.nodes?.length!==1)throw Error("Unexpected Quaternius hair model "+name);
+ // Keep the sculpted meshes, UV coordinates and orientations, but color them
+ // through the per-character material palette instead of huge source textures.
+ for(const m of g.materials){
+   delete m.normalTexture;delete m.emissiveTexture;delete m.occlusionTexture;
+   m.pbrMetallicRoughness={baseColorFactor:[0.35,0.23,0.15,1],metallicFactor:0,roughnessFactor:.95};
+ }
+ delete g.images;delete g.textures;delete g.samplers;
+ g.buffers=[{byteLength:pad4(modelBytes).length}];
+ g.asset.generator="Epoch Quaternius hairstyle (original CC0 geometry)";
+ const bytes=glb(g,pad4(modelBytes));
+ const output=path.join(PROJECT,"assets/characters","quaternius_hair_"+hairstyle.toLowerCase()+".glb");
+ await fs.writeFile(output,bytes);
+ console.log("  Saved",name,Math.round(bytes.length/1024)+"KiB");
+}
