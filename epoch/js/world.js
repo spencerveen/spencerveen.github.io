@@ -1,11 +1,11 @@
-import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113j";
-import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113j";
+import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113k";
+import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113k";
 import {PLOT_BY_ID} from "./settlement.js?v=20261113k";
 import {stockpileValidation,nearStockpile,LEGACY_HOME} from "./stockpile.js?v=20261113k";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261113k";
-import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113j";
-import {STARTER_SEED,terrainHeight} from "./forest-generation.js?v=20261113j";
-import {ForestChunks} from "./forest-chunks.js?v=20261113j";
+import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113k";
+import {STARTER_SEED,terrainHeight} from "./forest-generation.js?v=20261113k";
+import {ForestChunks} from "./forest-chunks.js?v=20261113k";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
