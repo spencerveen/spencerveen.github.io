@@ -1,0 +1,31 @@
+name: Epoch character asset checks
+
+on:
+  pull_request:
+    paths:
+      - 'epoch/assets/characters/**'
+      - 'epoch/tools/**'
+      - 'epoch/tests/**'
+      - 'epoch/js/character-models.js'
+      - '.github/workflows/epoch-character-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'epoch/assets/characters/**'
+      - 'epoch/tools/**'
+      - 'epoch/tests/**'
+      - 'epoch/js/character-models.js'
+
+jobs:
+  validate-glb:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect game models
+        run: node epoch/tests/check-models.mjs
+      - name: Validate builder reproduces the checked-in assets
+        run: |
+          node epoch/tools/build-avatar-glb.js
+          git diff --exit-code -- epoch/assets/characters/
