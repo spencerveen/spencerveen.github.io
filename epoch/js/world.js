@@ -13,7 +13,7 @@ export class World {
   this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.onPlot=onPlot;
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
-  this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.011;this.scene.fogColor=new B.Color3(.62,.71,.62);
+  this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.020;this.scene.fogColor=new B.Color3(.62,.71,.62);
   this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();this.makeCamp();createVillageWorld(this,onPlot);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
   this.engine.runRenderLoop(()=>{const dt=Math.min(.045,this.engine.getDeltaTime()/1000);this.update(dt);this.scene.render()});
   window.addEventListener("resize",()=>this.engine.resize());
