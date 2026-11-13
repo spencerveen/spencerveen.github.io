@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261113d";
-import {World} from "./world.js?v=20261113d";
-import {UI} from "./ui.js?v=20261113d";
+import {GameState} from "./state.js?v=20261113e";
+import {World} from "./world.js?v=20261113e";
+import {UI} from "./ui.js?v=20261113e";
 const loading=document.getElementById("loading");
 try{
   if(!globalThis.BABYLON)throw new Error("Babylon.js failed to load. Check your internet connection.");
@@ -34,7 +34,7 @@ try{
 }catch(error){
   console.error("Epoch failed to initialize:",error);
   const report=[
-    "Epoch build 20261113d",
+    "Epoch build 20261113e",
     error?.stack || String(error),
     "Browser: "+navigator.userAgent
   ].join("\n\n");
