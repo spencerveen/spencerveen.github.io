@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261113g";
-import {World} from "./world.js?v=20261113g";
-import {UI} from "./ui.js?v=20261113g";
+import {GameState} from "./state.js?v=20261113h";
+import {World} from "./world.js?v=20261113h";
+import {UI} from "./ui.js?v=20261113h";
 const loading=document.getElementById("loading");
 try{
   if(!globalThis.BABYLON)throw new Error("Babylon.js failed to load. Check your internet connection.");
