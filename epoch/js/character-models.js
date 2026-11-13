@@ -4,7 +4,7 @@
 // This adapter intentionally uses the existing appearance schema and keeps the
 // game loop synchronous while models load asynchronously.
 import {
-  normalizeAppearance, HAIR_COLORS, SKIN_TONES, EYE_COLORS
+  normalizeAppearance, HAIR_COLORS, SKIN_TONES, EYE_COLORS, createHuman as createFallbackHuman
 } from "./characters.js?v=20261113c";
 
 const B=globalThis.BABYLON;
@@ -61,10 +61,11 @@ export function createModelHuman(scene,appearance,parent=null,name="human"){
   // Adjust height and body shape while preserving identical skeletal attachments.
   root.scaling.y=profile.height;
   root.scaling.x=profile.build;root.scaling.z=profile.build;
-  let destroyed=false,instance=null,meshes=[],joints={},localMats=[];
+  let destroyed=false,instance=null,fallback=null,joints={},localMats=[];
   const rig={root,appearance:profile,ready:null,
     animate(time,moving=false){
-      if(destroyed||!instance)return;
+      if(destroyed)return;
+      if(!instance){fallback?.animate(time,moving);return;}
       const cycle=moving?Math.sin(time*1.12)*.51:0;
       const breathe=moving?.017*Math.sin(time*2.1):.012*Math.sin(time*.55);
       const moveArm=(side)=>{const s=side==="L"?-1:1;
@@ -80,6 +81,7 @@ export function createModelHuman(scene,appearance,parent=null,name="human"){
     dispose(){
       destroyed=true;
       if(instance){instance.dispose();instance=null;}
+      if(fallback){fallback.dispose();fallback=null;}
       for(const mat of localMats)mat.dispose();
       localMats=[];
       root.dispose(false,false);
@@ -127,7 +129,10 @@ export function createModelHuman(scene,appearance,parent=null,name="human"){
     // Hide the invisible geometry of unselected hairstyle via parent state.
     return true;
   }).catch(error=>{
-    if(!destroyed)console.error("Epoch GLB character failed to load:",name,error);
+    if(!destroyed){
+      console.error("Epoch GLB character failed to load; using backup mesh:",name,error);
+      fallback=createFallbackHuman(scene,profile,root,name+"_backup");
+    }
     return false;
   });
   return rig;
