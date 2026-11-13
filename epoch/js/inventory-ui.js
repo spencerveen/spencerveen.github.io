@@ -1,4 +1,4 @@
-import {ITEMS,INVENTORY_SLOTS,STACK_LIMIT,ITEM_IDS} from "./inventory.js?v=20261113i";
+import {ITEMS,INVENTORY_SLOTS,STACK_LIMIT,ITEM_IDS} from "./inventory.js?v=20261113j";
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 export function inventoryPanel(ui){
  const state=ui.state,d=state.data;
