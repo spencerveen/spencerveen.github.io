@@ -1,14 +1,15 @@
+import {createHuman,founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export class World {
  constructor(canvas,onGather,onStatus){
   this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;
-  this.keys={};this.path=[];this.target=null;this.entities=[];this.obstacles=[];this.animals=[];this.walkTime=0;this.cooldown=0;
+  this.keys={};this.path=[];this.target=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.011;this.scene.fogColor=new B.Color3(.62,.71,.62);
-  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();this.makeCamp();this.makePlayer();this.makeCamera();this.bindInput();
+  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();this.makeCamp();this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
   this.engine.runRenderLoop(()=>{const dt=Math.min(.045,this.engine.getDeltaTime()/1000);this.update(dt);this.scene.render()});
   window.addEventListener("resize",()=>this.engine.resize());
  }
@@ -100,17 +101,33 @@ export class World {
   this.shelterNode.setEnabled(false);
  }
  makePlayer(){
-  const root=new B.TransformNode("player",this.scene);root.position=V(0,this.groundY(0,0),0);
-  this.player=root;
-  this.primitive("cylinder","torso",root,[0,1.33,0],[.7,1.05,.5],this.m.cloth).isPickable=false;
-  this.primitive("sphere","head",root,[0,2.12,0],[.5,.57,.52],this.m.skin).isPickable=false;
-  this.primitive("sphere","hair",root,[0,2.39,-.05],[.52,.3,.51],this.m.hair).isPickable=false;
-  this.limbs=[];
-  for(const x of [-.27,.27]){
-   const leg=new B.TransformNode("leg",this.scene);leg.parent=root;leg.position=V(x,.85,0);
-   this.primitive("cylinder","trouser",leg,[0,-.39,0],[.27,.82,.27],this.m.cloth).isPickable=false;this.limbs.push(leg);
-   const arm=this.primitive("cylinder","arm",root,[x*2.1,1.38,0],[.24,.88,.24],this.m.skin);arm.rotation.z=x>0?-.12:.12;arm.isPickable=false;
-  }
+  // The stable root represents the world actor; visual meshes can be replaced
+  // at runtime without affecting movement, cameras, or collision.
+  this.player=new B.TransformNode("player actor",this.scene);
+  this.player.position=V(0,this.groundY(0,0),0);
+  this.applyAppearance(founderAppearance());
+ }
+ applyAppearance(appearance){
+  const p=normalizeAppearance(appearance),key=JSON.stringify(p);
+  if(this.character && key===this.appearanceKey)return;
+  if(this.character)this.character.dispose();
+  this.character=createHuman(this.scene,p,this.player,"adventurer");
+  this.appearanceKey=key;
+ }
+ makeVillagers(){
+  const villagers=[
+   {name:"Tala",sex:"female",x:-5,z:7},
+   {name:"Bren",sex:"male",x:-10,z:-5},
+   {name:"Kira",sex:"female",x:6,z:10},
+   {name:"Oren",sex:"male",x:13,z:-5}
+  ];
+  this.people=villagers.map((person,i)=>{
+   const profile=randomAppearance("epoch:tribe:"+person.name,person.sex);
+   const human=createHuman(this.scene,profile,null,person.name);
+   human.root.position=V(person.x,this.groundY(person.x,person.z),person.z);
+   human.root.rotation.y=i*1.55;
+   return {...person,profile,human,phase:i*2.6};
+  });
  }
  makeCamera(){
   const c=new B.ArcRotateCamera("adventurer camera",-Math.PI/2,1.13,18,V(0,1,0),this.scene);
@@ -219,11 +236,12 @@ export class World {
   }
   else this.walkTime=0;
   p.y=this.groundY(p.x,p.z);
-  this.limbs.forEach((leg,i)=>leg.rotation.x=moving?Math.sin(this.walkTime+i*Math.PI)*.48:0);
+  this.character?.animate(moving?this.walkTime:performance.now()/1000,moving);
   if(this.target && Math.hypot(this.target.x-p.x,this.target.z-p.z)<2.55){const target=this.target;this.target=null;this.path=[];this.collect(target)}
   const aim=V(p.x,p.y+1.2,p.z);
   c.setTarget(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));
   const t=performance.now()/1000;
+  this.people.forEach(person=>person.human.animate(t+person.phase,false));
   if(this.flame.isEnabled())this.flame.scaling.y=1.05+.12*Math.sin(t*8);
   this.animals.forEach((a,i)=>{
    a.node.position.x=a.origin.x+Math.sin(t*.18+a.phase)*1.35;
