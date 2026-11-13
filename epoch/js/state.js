@@ -1,11 +1,11 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113i";
-import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113i";
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113j";
+import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113j";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113j";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113j";
 import {harvestAtNode} from "./harvest.js?v=20261113j";
 import {ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
- resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113i";
+ resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113j";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
