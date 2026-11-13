@@ -1,14 +1,14 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113j";
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113k";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261113k";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
  depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261113k";
-import {STARTER_SEED} from "./forest-generation.js?v=20261113j";
-import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113j";
-import {harvestAtNode} from "./harvest.js?v=20261113j";
+import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
+import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113k";
+import {harvestAtNode} from "./harvest.js?v=20261113k";
 import {ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
- resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113j";
+ resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113k";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
