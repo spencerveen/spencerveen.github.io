@@ -184,10 +184,11 @@ export class World {
  }
  interactNearby(action="gather"){
   const p=this.player.position;
-  const near=this.entities.filter(e=>Math.hypot(e.x-p.x,e.z-p.z)<2.7)
+  const near=this.entities.filter(e=>(action!=="cut"||e.resource==="food")
+    &&Math.hypot(e.x-p.x,e.z-p.z)<2.7)
    .sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
   if(near)this.walkToResource(near,action);
-  else this.onStatus("Nothing nearby","Move closer to a tree, rock or berry bush.");
+  else this.onStatus("Nothing nearby",action==="cut"?"Get within gathering range of a berry bush to cut it down.":"Move closer to a tree, rock or berry bush.");
  }
  walkToResource(meta,action="gather"){
   const status=this.getResourceStatus(meta);
