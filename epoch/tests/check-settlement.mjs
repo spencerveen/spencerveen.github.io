@@ -5,7 +5,7 @@ import fs from "node:fs";
 import {STARTER_SEED} from "../js/forest-generation.js";
 import * as inventory from "../js/inventory.js";
 const load=p=>fs.readFileSync(new URL(p,import.meta.url),"utf8");
-const clean=s=>s.replace(/^import[\\s\\S]*?;\\s*$/gm,"").replace(/^export /gm,"");
+const clean=s=>s.replace(/^import[\s\S]*?;\s*$/gm,"").replace(/^export /gm,"");
 const person=new Function(clean(load("../js/characters.js"))+"\nreturn {founderAppearance,descendantAppearance,normalizeAppearance};")();
 const village=new Function(clean(load("../js/settlement.js"))+"\nreturn {BUILDINGS,PLOT_BY_ID,PLOTS,capacity,emptyVillage};")();
 const store=new Map();
