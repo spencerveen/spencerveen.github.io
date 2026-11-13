@@ -107,6 +107,8 @@ export function createModelHuman(scene,appearance,parent=null,name="human"){
       }
       const hairMatch=label.match(/^Hair_([0-5])$/);
       if(hairMatch)n.setEnabled(Number(hairMatch[1])===profile.hairStyle);
+      const beardMatch=label.match(/^Beard_([1-3])$/);
+      if(beardMatch)n.setEnabled(profile.sex==="male" && Number(beardMatch[1])===profile.beard);
       if(!n.material)continue;
       const mat=n.material;
       // Babylon may prepend imported material names. Retain only the last
