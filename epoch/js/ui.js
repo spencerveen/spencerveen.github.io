@@ -56,9 +56,7 @@ export class UI{
    ["hairStyle","Hairstyle",HAIR_STYLES[p.hairStyle].name],
    ["hairColor","Hair color",HAIR_COLORS[p.hairColor].name],
    ["skin","Skin tone","Tone "+(p.skin+1)],
-   ["eyes","Eye color",["Dark brown","Hazel","Blue-gray","Amber"][p.eyes]],
-   ["beard","Facial hair",["None","Stubble","Short beard","Full beard"][p.beard]],
-   ["outfit","Stone Age clothing",OUTFITS[p.outfit]],
+   ["beard","Facial hair",p.beard>0?"Beard":"None"],
    ["height","Height",Math.round(p.height*100)+"%"],
    ["build","Build",Math.round(p.build*100)+"%"]
   ];
@@ -69,7 +67,7 @@ export class UI{
    const color=field==="hairColor"?HAIR_COLORS[p.hairColor].hex:field==="skin"?SKIN_TONES[p.skin]:field==="eyes"?EYE_COLORS[p.eyes]:null;
    html+=`<div class="appearance-picker"><span>${label}</span><div><button data-action="looks" data-field="${field}" data-dir="-1" aria-label="Previous ${label}">‹</button><b>${color?`<i class="swatch" style="background:${color}"></i>`:""}${esc(value)}</b><button data-action="looks" data-field="${field}" data-dir="1" aria-label="Next ${label}">›</button></div></div>`;
   }
-  html+=`<p class="info">Hair and skin colors are inherited with variation. Hairstyles, outfits, and body proportions can differ between generations. These are modular GLB character models with editable materials and shared animation joints. Hair, eye and skin traits carry through family lines.</p>`;
+  html+=`<p class="info">Real Quaternius rigged meshes are used for characters and hair. Body size, selected hair and skin colors carry into descendants with some variation. More outfit and eye-color choices will arrive with the clothing system.</p>`;
   return html;
  }
  skills(){
@@ -123,6 +121,7 @@ export class UI{
    const p=this.state.data.hero.appearance,f=btn.dataset.field,dir=Number(btn.dataset.dir)===-1?-1:1;
    const count={hairStyle:HAIR_STYLES.length,hairColor:HAIR_COLORS.length,skin:SKIN_TONES.length,eyes:EYE_COLORS.length,beard:4,outfit:OUTFITS.length};
    if(f==="sex")this.state.setAppearance({sex:p.sex==="male"?"female":"male"});
+   else if(f==="beard")this.state.setAppearance({beard:p.beard>0?0:1});
    else if(f==="height"||f==="build")this.state.setAppearance({[f]:Math.max(f==="height"?.87:.84,Math.min(f==="height"?1.13:1.18,Math.round((p[f]+dir*.03)*100)/100))});
    else if(Object.hasOwn(count,f))this.state.setAppearance({[f]:(p[f]+dir+count[f])%count[f]});
   }
