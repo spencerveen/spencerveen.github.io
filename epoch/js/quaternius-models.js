@@ -44,6 +44,7 @@ export function createQuaterniusHuman(scene,appearance,parent=null,name="human")
  let locomotion=null;
  const rig={
   root,appearance:profile,ready:null,
+  animationStatus(){return {loaded:!!locomotion,matchedBones:locomotion?.matchedBones||0,mode:locomotion?.mode||null}}, 
   animate(time,moving=false,running=false){
    if(destroyed)return;
    if(backup){backup.animate(time,moving);return;}
