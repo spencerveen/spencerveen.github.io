@@ -32,7 +32,8 @@ Then visit `http://localhost:8000/epoch/`. A direct `file://` open is not recomm
 1. Gather wood from trees and stone from rock deposits.
 2. Research **Control of Fire** in the Tech tab.
 3. Research **Stone Toolmaking**, then craft a **Stone Axe** in Pack.
-4. Build your first **Shelter**.
+4. Open **Village**, walk to a build plot, and construct a **Family Hut** to add room for 3 villagers.
+5. Construct a **Cooking Hearth**, **Toolmaker’s Shelter**, and **Council Lodge** as their prerequisites become available.
 5. Gather berries to earn Culture, then unlock **Tribal Community** and **Oral Tradition**.
 6. Open the **Dynasty** tab and continue playing as a descendant; your civilization persists.
 
@@ -41,7 +42,8 @@ Then visit `http://localhost:8000/epoch/`. A direct `file://` open is not recomm
 - Keyboard and click movement, camera controls and simple A* grid pathfinding
 - Wood/stone/food gathering, XP and leveling for six initial skills
 - Resource costs, technology and civic prerequisites
-- Campfire, stone axe and shelter unlocks
+- Campfire, stone axe, and a five-plot village with Family Huts, Cooking Hearth, Toolmaker’s Shelter, and Council Lodge
+- Each Family Hut expands population capacity by 3; cooking, research, and culture building bonuses come later
 - A prototype succession mechanic with partial skill-XP inheritance and inherited appearance traits
 - Character appearance editor (male/female body templates; six hairstyles, six hair colors, skin and eye colors, outfits, facial hair and proportions)
 - Versioned local save in the browser's `localStorage`
@@ -86,3 +88,6 @@ See [CHARACTER_SYSTEM.md](./CHARACTER_SYSTEM.md) for editable appearance profile
 
 ## Licensed Quaternius character pipeline
 The default humans use Quaternius Universal Base Characters (free Standard CC0). Source: https://quaternius.com/packs/universalbasecharacters.html . Import provenance, author credit, selected hairstyles and source revision are documented in assets/characters/QUATERNIUS.md. Rebuild via node epoch/tools/import-quaternius.mjs.
+
+## Settlement building
+The **Village** tab has five buildable plots in the Stone Age clearing: two Family Huts (+3 people capacity each), a Cooking Hearth, a Toolmaker's Shelter, and a Council Lodge. Click a plot to approach it and use the Village panel to construct it. Resource costs and technology/culture prerequisites apply; older shelter saves migrate automatically. Other building production bonuses, growing population and freely placed buildings will be future work. See [VILLAGE_SYSTEM.md](./VILLAGE_SYSTEM.md) for full rules and ideas.
