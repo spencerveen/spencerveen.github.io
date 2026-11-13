@@ -125,6 +125,7 @@ export function createModelHuman(scene,appearance,parent=null,name="human"){
             if(kind==="Hair")mat.roughness=.94;
           }
           groups.set(mat,true);
+          localMats.push(mat);
         }
       }
     }
