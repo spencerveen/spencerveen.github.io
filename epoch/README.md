@@ -96,5 +96,9 @@ The default humans use Quaternius Universal Base Characters (free Standard CC0).
 ## Settlement building
 The **Village** tab has five buildable plots in the Stone Age clearing: two Family Huts (+3 people capacity each), a Cooking Hearth, a Toolmaker's Shelter, and a Council Lodge. Click a plot to approach it and use the Village panel to construct it. Resource costs and technology/culture prerequisites apply; older shelter saves migrate automatically. Other building production bonuses, growing population and freely placed buildings will be future work. See [VILLAGE_SYSTEM.md](./VILLAGE_SYSTEM.md) for full rules and ideas.
 
+## Depletable forest resources
+
+Trees now contain a finite amount of wood and fall when exhausted; rock deposits disappear after they have been mined out. Berry bushes remain standing after their eight berries run out and regenerate berries after two minutes. Shift+click a bush (or Shift+E nearby, or use the Pack button) to chop it down permanently for three vines. Depletion is saved per world object, so unloading/reloading chunks or starting a new generation does not magically restore felled trees or stones. For mechanics and limits see [RESOURCE_DEPLETION.md](./RESOURCE_DEPLETION.md).
+
 ## Personal inventory
 The starter Wayfarer's Pack has **10 slots**, and wood, stone, wild berries and vines stack to **12 per slot**. Trees yield wood plus vines; berry bushes yield berries plus vines; stone deposits yield stone. Crafting, technology and buildings consume carried stacks. Select a filled slot to inspect or discard it if the pack becomes full. Existing saves with more resources than 10 slots can carry retain the excess as manually recoverable supplies. See [INVENTORY_SYSTEM.md](./INVENTORY_SYSTEM.md).
