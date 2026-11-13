@@ -28,7 +28,8 @@ try{
    && s.npcAttachments.every(n=>n?.headFound && (!n.hairExpected||n.hairAttached) && (!n.beardExpected||n.beardAttached));
  },{timeout:45000});
  const idle=await page.evaluate(()=>window.epochDebug());
- assert.equal(idle.forest.loaded,9,"nine forest chunks surround the player");
+ assert.equal(idle.forest.loaded,25,"25 terrain chunks surround the player");
+ assert.equal(idle.forest.detailed,9,"only nine nearby chunks contain forest meshes");
  assert(idle.forest.resources>=12,"the forest should provide gathering resources");
  assert(idle.forest.animals>=1,"deer still inhabit the forest");
  assert(Number.isInteger(idle.forest.seed),"the world seed is part of game state");
@@ -76,7 +77,8 @@ try{
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.worldPlots===5,null,{timeout:45000});
  const reloadedForest=await page.evaluate(()=>window.epochDebug().forest);
  assert.equal(reloadedForest.seed,idle.forest.seed,"reloading must preserve the world seed");
- assert.equal(reloadedForest.loaded,9,"reload recreates exactly nine forest chunks");
+ assert.equal(reloadedForest.loaded,25,"reload recreates exactly 25 visible terrain chunks");
+ assert.equal(reloadedForest.detailed,9,"reload keeps detailed forest meshes bounded");
  const loadedResources=await page.evaluate(()=>window.epochDebug().resources);
  assert(loadedResources.wood>=100 && loadedResources.stone>=100,"test save resources must be present after reload");
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),null,{timeout:45000});
@@ -97,6 +99,7 @@ try{
  console.log("BROWSER PASS",JSON.stringify({
   seed:idle.forest.seed,
   forestChunks:idle.forest.loaded,
+  detailedForestChunks:idle.forest.detailed,
   forestResources:idle.forest.resources,
   rigBones:idle.movement.matchedBones,
   start:idle.movement.mode,
