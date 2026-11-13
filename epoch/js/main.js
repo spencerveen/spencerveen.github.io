@@ -10,7 +10,9 @@ try{
   const world=new World(canvas,
     (resource,action)=>{const result=state.harvestResource(resource,action);if(result)ui.toast(result.label);return result},
     (title,details)=>ui?.status(title,details),
-    id=>ui?.selectPlot(id),state.data.worldSeed,meta=>state.resourceStatus(meta));
+    id=>ui?.selectPlot(id),state.data.worldSeed,meta=>state.resourceStatus(meta),
+    (x,z)=>state.foundStockpile(x,z),
+    ()=>ui?.openStockpile());
   ui=new UI(state,world);
   window.setInterval(()=>state.advance(1),1000);
   window.addEventListener("pagehide",()=>state.save());
@@ -34,7 +36,10 @@ try{
     skills:{...state.data.skills},resources:{...state.data.resources},inventory:{slots:state.data.inventory.map(slot=>slot?{...slot}:null),used:state.inventoryUsed(),unpacked:{...state.data.unpacked}},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
     settlement:{plots:{...state.data.village.plots},population:state.data.village.population,capacity:state.villageCapacity(),
-      selectedPlot:ui.selectedPlot,worldPlots:world.villagePlots.size},
+      selectedPlot:ui.selectedPlot,worldPlots:world.villagePlots.size,
+      stockpile:state.stockpileInfo(),
+      placingStockpile:world.placingStockpile,
+      worldPlotCenters:Object.fromEntries([...world.villagePlots].map(([id,item])=>[id,{x:item.plot.x,z:item.plot.z}]))},
     movement:world.character?.animationStatus?.()||null,
     hairAttachment:world.character?.attachmentStatus?.()||null,
     npcAttachments:world.people.map(person=>person.human.attachmentStatus?.()||null),
