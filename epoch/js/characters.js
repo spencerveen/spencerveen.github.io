@@ -4,12 +4,12 @@
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 export const HAIR_STYLES=[
- {name:"Short & messy",id:"short"},
- {name:"Shaggy",id:"shaggy"},
- {name:"Shoulder-length",id:"shoulder"},
- {name:"Tied back",id:"tied"},
- {name:"Single braid",id:"braid"},
- {name:"Topknot",id:"topknot"}
+ {name:"Side-parted",id:"short"},
+ {name:"Buzz cut",id:"shaggy"},
+ {name:"Long",id:"shoulder"},
+ {name:"Tied buns",id:"tied"},
+ {name:"Close cropped",id:"braid"},
+ {name:"Shaved",id:"topknot"}
 ];
 export const HAIR_COLORS=[
  {name:"Black",hex:"#25211f"},

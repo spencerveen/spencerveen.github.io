@@ -1,5 +1,5 @@
-import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113c";
-import {createModelHuman} from "./character-models.js?v=20261113c";
+import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113d";
+import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113d";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -112,7 +112,7 @@ export class World {
   const p=normalizeAppearance(appearance),key=JSON.stringify(p);
   if(this.character && key===this.appearanceKey)return;
   if(this.character)this.character.dispose();
-  this.character=createModelHuman(this.scene,p,this.player,"adventurer");
+  this.character=createQuaterniusHuman(this.scene,p,this.player,"adventurer");
   this.appearanceKey=key;
  }
  makeVillagers(){
@@ -124,7 +124,7 @@ export class World {
   ];
   this.people=villagers.map((person,i)=>{
    const profile=randomAppearance("epoch:tribe:"+person.name,person.sex);
-   const human=createModelHuman(this.scene,profile,null,person.name);
+   const human=createQuaterniusHuman(this.scene,profile,null,person.name);
    human.root.position=V(person.x,this.groundY(person.x,person.z),person.z);
    human.root.rotation.y=i*1.55;
    return {...person,profile,human,phase:i*2.6};
