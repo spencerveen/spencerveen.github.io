@@ -21,6 +21,8 @@ function buildAvatarGLB(sex){
  const kneeL=node("LowerLeg_L",legL,V(0,-.45,0)),kneeR=node("LowerLeg_R",legR,V(0,-.45,0));
  const footL=node("Foot_L",kneeL,V(0,-.43,.035)),footR=node("Foot_R",kneeR,V(0,-.43,.035));
  const geom=(name,verts,faces,mat,parent)=>{
+  // Stable precision across V8 and JS runtimes for reproducible binary assets.
+  verts=verts.map(v=>v.map(x=>Math.round(x*100000)/100000));
   const normals=Array(verts.length).fill(0).map(()=>[0,0,0]);
   for(let i=0;i<faces.length;i+=3){
    const a=verts[faces[i]],b=verts[faces[i+1]],c=verts[faces[i+2]];
@@ -175,7 +177,7 @@ function buildAvatarGLB(sex){
  const aligned=()=>{while(bytes.length%4)bytes.push(0)};
  const view=(arr,type)=>{
   aligned();const offset=bytes.length;let b;
-  if(type==="f32"){b=new Uint8Array(arr.length*4);const d=new DataView(b.buffer);arr.forEach((v,i)=>d.setFloat32(i*4,v,true));}
+  if(type==="f32"){b=new Uint8Array(arr.length*4);const d=new DataView(b.buffer);arr.forEach((v,i)=>d.setFloat32(i*4,Math.round(v*100000)/100000,true));}
   else {b=new Uint8Array(arr.length*2);const d=new DataView(b.buffer);arr.forEach((v,i)=>d.setUint16(i*2,v,true));}
   for(const v of b)bytes.push(v);
   const id=bufferViews.length;bufferViews.push({buffer:0,byteOffset:offset,byteLength:b.length});return id;
