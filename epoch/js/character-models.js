@@ -5,7 +5,7 @@
 // game loop synchronous while models load asynchronously.
 import {
   normalizeAppearance, HAIR_COLORS, SKIN_TONES, EYE_COLORS, createHuman as createFallbackHuman
-} from "./characters.js?v=20261113g";
+} from "./characters.js?v=20261113h";
 
 const B=globalThis.BABYLON;
 const containers=new WeakMap();
