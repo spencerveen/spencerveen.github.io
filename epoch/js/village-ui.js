@@ -24,7 +24,7 @@ export function villagePanel(ui){
   html+='<small>No resources required to found your first stockpile.</small>';
   html+=world.placingStockpile?
    '<button type="button" data-action="cancel-stockpile">Cancel placement</button><p class="info">Move your cursor over open ground and left-click to place the stockpile. Green is valid, red is blocked.</p>':
-   '<button type="button" data-action="place-stockpile">Choose stockpile location</button>';
+   '<button type="button" data-action="place-stockpile">Choose stockpile location</button><button type="button" class="game-button alt" data-action="found-nearby-stockpile">Use nearby clearing</button>';
   html+='</div>';
   html+='<p class="info">You can still gather resources now. Once you establish your home, bring your wood, stone, berries and vines back here.</p>';
   return html;
@@ -87,6 +87,11 @@ export function handleVillageAction(ui,btn){
    ui.render();
   }
   return true;
+ }
+ if(action==="found-nearby-stockpile"){
+  const okay=ui.world.foundSuggestedStockpile();
+  ui.toast(okay?"Village founded! Stockpile is ready for deliveries.":"No clear place nearby. Move to another clearing.");
+  ui.render();return true;
  }
  if(action==="cancel-stockpile"){
   ui.world.cancelStockpilePlacement();ui.render();return true;
