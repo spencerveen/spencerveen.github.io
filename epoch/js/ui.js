@@ -132,7 +132,7 @@ export class UI{
   else if(action==="unlock"){const ok=this.state.unlock(btn.dataset.kind,btn.dataset.key);message=ok?"Discovery completed!":"Discovery requirements are not met."}
   else if(action==="next"){const name=this.state.nextGeneration();message="A new generation begins: "+name;}
   else if(action==="reset"){
-   if(window.confirm("Reset all Epoch Stone Age prototype progress? This cannot be undone.")){this.state.reset();this.world.player.position.x=0;this.world.player.position.z=0;this.world.path=[];this.world.target=null;message="A new history begins."}
+   if(window.confirm("Reset all Epoch Stone Age prototype progress? This cannot be undone.")){this.state.reset();this.world.player.position.x=0;this.world.player.position.z=0;this.world.setWorldSeed(this.state.data.worldSeed);this.world.path=[];this.world.target=null;this.world.plotTarget=null;message="A new world and history begin."}
   }
   if(message)this.toast(message);
  }
