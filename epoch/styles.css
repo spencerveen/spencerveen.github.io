@@ -60,3 +60,19 @@ footer{position:absolute;z-index:4;bottom:16px;left:50%;transform:translateX(-50
 .pack-summary b{color:#ead6aa;font-variant-numeric:tabular-nums}
 .pack-warning{border-left:3px solid #d5a16b;padding-left:10px!important;color:#f4cfa1!important}
 .pack-legacy{border-color:#ba946358!important}
+
+/* Stockpile: the center of a Stone Age home settlement. */
+.village-home{border-color:#c0a76b64!important;background:linear-gradient(160deg,#223324,#16241a)!important}
+.village-home h3{color:#efdbac}
+.stockpile-resource-list{display:grid;gap:7px;margin:13px 0}
+.stockpile-resource-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 10px;padding:9px 10px;background:#0e1d14b5;border:1px solid #adad7d27;border-radius:8px}
+.stockpile-resource-row>span:first-child{font-size:11px;color:#e8dbbd;font-weight:700}
+.stockpile-balance{font-size:10px;color:#b7c9ae;white-space:nowrap}
+.stockpile-balance b{color:#edd79d;font-variant-numeric:tabular-nums}
+.stockpile-actions{grid-column:1/-1;display:flex;gap:8px}
+.stockpile-actions button{flex:1;font-size:10px;padding:7px 5px;min-height:28px}
+.stockpile-primary-actions{display:grid;grid-template-columns:1fr;gap:7px;margin:10px 0}
+.stockpile-primary-actions button{font-size:11px;padding:10px}
+.stockpile-primary-actions button:first-child{background:linear-gradient(120deg,#52664a,#324b37);border-color:#b3bd8280}
+.stockpile-primary-actions button:disabled,.stockpile-actions button:disabled{opacity:.42;cursor:not-allowed}
+@media(min-width:550px){.stockpile-primary-actions{grid-template-columns:1fr 1fr}}
