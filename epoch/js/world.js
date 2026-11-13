@@ -1,4 +1,4 @@
-import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113f";
+import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113g";
 import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113g";
 import {PLOTS,PLOT_BY_ID} from "./settlement.js?v=20261113g";
 import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113g";
