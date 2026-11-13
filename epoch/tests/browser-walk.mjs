@@ -16,7 +16,7 @@ try{
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
  page.on("requestfailed",request=>warnings.push(request.url()+" "+request.failure()?.errorText));
- await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113g",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113h",{waitUntil:"domcontentloaded",timeout:45000});
  await page.waitForFunction(()=>typeof window.epochDebug==="function",{timeout:45000});
  await page.waitForFunction(()=>window.epochDebug()?.movement?.loaded===true,{timeout:45000});
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),{timeout:45000});
@@ -28,6 +28,10 @@ try{
    && s.npcAttachments.every(n=>n?.headFound && (!n.hairExpected||n.hairAttached) && (!n.beardExpected||n.beardAttached));
  },{timeout:45000});
  const idle=await page.evaluate(()=>window.epochDebug());
+ assert.equal(idle.forest.loaded,9,"nine forest chunks surround the player");
+ assert(idle.forest.resources>=12,"the forest should provide gathering resources");
+ assert(idle.forest.animals>=1,"deer still inhabit the forest");
+ assert(Number.isInteger(idle.forest.seed),"the world seed is part of game state");
  assert(idle.movement.matchedBones>=60,"should animate at least 60 Quaternius joints");
  assert(idle.hairAttachment.headFound && idle.hairAttachment.hairAttached,"player hair must be parented to the animated Head");
  assert(idle.hairAttachment.beardAttached,"player beard must follow the Head");
@@ -70,6 +74,9 @@ try{
  });
  await page.reload({waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.worldPlots===5,null,{timeout:45000});
+ const reloadedForest=await page.evaluate(()=>window.epochDebug().forest);
+ assert.equal(reloadedForest.seed,idle.forest.seed,"reloading must preserve the world seed");
+ assert.equal(reloadedForest.loaded,9,"reload recreates exactly nine forest chunks");
  const loadedResources=await page.evaluate(()=>window.epochDebug().resources);
  assert(loadedResources.wood>=100 && loadedResources.stone>=100,"test save resources must be present after reload");
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),null,{timeout:45000});
@@ -88,6 +95,9 @@ try{
  await page.screenshot({path:path.join(output,"epoch-first-family-hut.png")});
  if(errors.length)throw new Error("Page errors: "+errors.join("\n"));
  console.log("BROWSER PASS",JSON.stringify({
+  seed:idle.forest.seed,
+  forestChunks:idle.forest.loaded,
+  forestResources:idle.forest.resources,
   rigBones:idle.movement.matchedBones,
   start:idle.movement.mode,
   walking:walk.movement.mode,
