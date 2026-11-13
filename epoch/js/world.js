@@ -125,6 +125,16 @@ export class World {
   this.animals.push({node,origin:V(x,0,z),phase:x+z,chunkKey});
   return node;
  }
+ setWorldSeed(seed){
+  // Reset only streamed terrain/resources/wildlife. Permanent village/characters
+  // remain intact; the Village UI will resync their build state separately.
+  for(const key of [...this.terrain.loaded.keys()])this.terrain.remove(key);
+  this.worldSeed=(Number(seed)>>>0)||STARTER_SEED;
+  this.terrain.seed=this.worldSeed;
+  this.terrain.center=null;
+  this.terrain.update(this.player.position.x,this.player.position.z);
+  this.path=[];this.target=null;this.plotTarget=null;
+ }
  setDiscovery(fire){
   this.flame.setEnabled(!!fire);
   this.fireLight.intensity=fire?1.2:0;
