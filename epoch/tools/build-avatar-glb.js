@@ -181,3 +181,18 @@ function buildAvatarGLB(sex){
 }
 
 // Use buildAvatarGLB('male') / ('female') in a Node toolchain; the output is a base64-encoded glTF 2.0 binary file.
+
+// Rebuild these original assets locally with Node.js 18+:
+//    node epoch/tools/build-avatar-glb.js
+// Blender can import the resulting .glb files for sculpting and rig refinements.
+if (typeof require!=="undefined" && require.main===module) {
+ const fs=require("node:fs"), path=require("node:path");
+ const directory=path.resolve(__dirname,"../assets/characters");
+ fs.mkdirSync(directory,{recursive:true});
+ for (const sex of ["male","female"]) {
+   const asset=buildAvatarGLB(sex);
+   const filename=path.join(directory,"human_"+sex+".glb");
+   fs.writeFileSync(filename,Buffer.from(asset.base64,"base64"));
+   console.log(sex,asset.size+" bytes",asset.meshCount+" meshes",filename);
+ }
+}
