@@ -8,7 +8,7 @@ export const STOCKPILE_CAPACITY=480; // Total individual items, not stacks.
 export const STOCKPILE_INTERACT_RANGE=5;
 export const VILLAGE_RADIUS=24;
 export const BUILD_GRID=2;
-export const LEGACY_HOME=Object.freeze({x:-3,z:-2});
+export const LEGACY_HOME=Object.freeze({x:-2,z:-8});
 export const STOCKPILE_FOOTPRINT=2.15;
 export const canonicalStockpileItem=canonicalItem;
 const safe=n=>Number.isFinite(Number(n))?Math.max(0,Math.floor(Number(n))):0;
@@ -74,6 +74,8 @@ export function stockpileValidation(world,x,z){
  if(!Number.isFinite(x)||!Number.isFinite(z))return {ok:false,reason:"Select a location on the ground."};
  const sx=snapGrid(x),sz=snapGrid(z);
  const player=world.player?.position;
+ if(player&&Math.hypot(player.x-sx,player.z-sz)<2.8)
+  return {ok:false,reason:"Place the stockpile a few paces away from your character.",x:sx,z:sz};
  if(!player||Math.hypot(player.x-sx,player.z-sz)>18)
   return {ok:false,reason:"Choose ground within 18m of your adventurer.",x:sx,z:sz};
  const height=world.groundY(sx,sz);
