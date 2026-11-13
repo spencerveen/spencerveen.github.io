@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import {STARTER_SEED} from "../js/forest-generation.js";
 import * as inventory from "../js/inventory.js";
+import {resourceNodeStatus,resourceStateStats} from "../js/resource-nodes.js";
+import {harvestAtNode} from "../js/harvest.js";
 const load=p=>fs.readFileSync(new URL(p,import.meta.url),"utf8");
 const clean=s=>s.replace(/^import[\s\S]*?;\s*$/gm,"").replace(/^export /gm,"");
 const person=new Function(clean(load("../js/characters.js"))+"\nreturn {founderAppearance,descendantAppearance,normalizeAppearance};")();
@@ -11,9 +13,9 @@ const village=new Function(clean(load("../js/settlement.js"))+"\nreturn {BUILDIN
 const store=new Map();
 const localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value),removeItem:key=>store.delete(key)};
 const GameState=new Function("localStorage","deps",
-  "const {founderAppearance,descendantAppearance,normalizeAppearance,BUILDINGS,PLOT_BY_ID,capacity,emptyVillage,STARTER_SEED,ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,normalizeUnpacked,migrateResources,addItems,removeItems,countItem,resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked}=deps;\n"+
+  "const {founderAppearance,descendantAppearance,normalizeAppearance,BUILDINGS,PLOT_BY_ID,capacity,emptyVillage,STARTER_SEED,ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,normalizeUnpacked,migrateResources,addItems,removeItems,countItem,resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,resourceNodeStatus,resourceStateStats,harvestAtNode}=deps;\n"+
    clean(load("../js/state.js"))+"\nreturn GameState;"
-)(localStorage,{...person,...village,STARTER_SEED,...inventory});
+)(localStorage,{...person,...village,STARTER_SEED,...inventory,resourceNodeStatus,resourceStateStats,harvestAtNode});
 const fresh=new GameState();fresh.onChange=()=>{};
 assert.equal(fresh.villageCapacity(),5);
 assert.equal(fresh.data.village.population,5);
