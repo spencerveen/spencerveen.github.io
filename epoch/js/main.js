@@ -24,6 +24,20 @@ try{
   }),configurable:true});
 }catch(error){
   console.error("Epoch failed to initialize:",error);
+  const report=[
+    "Epoch build 20261113b",
+    error?.stack || String(error),
+    "Browser: "+navigator.userAgent
+  ].join("\n\n");
   loading.querySelector("h2").textContent="Unable to open Epoch";
-  loading.querySelector("p").textContent=error.message;
+  loading.querySelector("p").textContent=String(error?.message||error);
+  const code=document.createElement("pre");
+  code.className="startup-diagnostics";
+  code.textContent=report;
+  loading.append(code);
+  const copy=document.createElement("button");
+  copy.className="diagnostics-copy";
+  copy.textContent="Copy error details";
+  copy.addEventListener("click",()=>navigator.clipboard?.writeText(report).catch(()=>{}));
+  loading.append(copy);
 }
