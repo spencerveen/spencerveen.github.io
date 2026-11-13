@@ -25,8 +25,8 @@ function beam(world,parent,a,b,r,material){
  const [ax,ay,az]=a,[bx,by,bz]=b;
  const from=V(ax,ay,az),to=V(bx,by,bz),offset=to.subtract(from);
  const pole=obj(world,"cylinder","timber beam",parent,[(ax+bx)/2,(ay+by)/2,(az+bz)/2],[r*2,offset.length(),r*2],material);
- pole.rotationQuaternion=B.Quaternion.FromUnitVectorsToRef?.(B.Axis.Y,offset.normalize(),new B.Quaternion())||null;
- if(!pole.rotationQuaternion)pole.rotationQuaternion=B.Quaternion.RotationAxis(B.Axis.Z,-Math.atan2(offset.x,offset.y));
+ // Roof timbers run in the X/Y plane for these early huts.
+ pole.rotationQuaternion=B.Quaternion.RotationAxis(B.Axis.Z,-Math.atan2(offset.x,offset.y));
  return pole;
 }
 function hut(world,parent,materials,large=false){
@@ -142,6 +142,8 @@ export function syncVillageWorld(world,village){
  world.obstacles=world.obstacles.filter(o=>!o.plotId);
  for(const {plot,marker,constructed} of world.villagePlots.values()){
   const built=village?.plots?.[plot.id]===plot.kind;
+  const item=world.villagePlots.get(plot.id);
+  if(item)item.built=built;
   constructed.setEnabled(built);
   marker.material=built?world.villageMats.built:world.villageMats.free;
   if(built && plot.kind!=="hearth"){
