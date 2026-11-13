@@ -11,8 +11,11 @@ export class UI{
  constructor(state,world){
   this.state=state;this.world=world;this.tab="pack";this.selectedPlot="family_1";this.selectedSlot=null;
   document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{
-   this.tab=button.dataset.tab;this.render();
-   $("right").classList.remove("open");
+   this.tab=button.dataset.tab;
+   this.render();
+   // Switching tabs should never dismiss the panel on small screens.
+   // Only the menu toggle itself can hide or show it.
+   $("panel").scrollTop=0;
   }));
   $("toggle").addEventListener("click",()=>{const open=$("right").classList.toggle("open");$("toggle").setAttribute("aria-expanded",String(open))});
   $("help").addEventListener("click",()=>this.help());
