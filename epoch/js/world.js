@@ -179,7 +179,7 @@ export class World {
    const pick=e.pickInfo;if(!pick?.hit)return;const mesh=pick.pickedMesh;
    if(mesh?.metadata?.plotId){this.walkToPlot(mesh.metadata.plotId);return}
    if(mesh?.metadata?.resource){const meta=mesh.metadata;this.walkToResource(meta);return}
-   if(mesh===this.ground){this.target=null;this.plan(pick.pickedPoint.x,pick.pickedPoint.z);this.onStatus("Traveling","Walking to the selected location.")}
+   if(mesh===this.ground){this.target=null;this.plotTarget=null;this.plan(pick.pickedPoint.x,pick.pickedPoint.z);this.onStatus("Traveling","Walking to the selected location.")}
   });
  }
  interactNearby(){
