@@ -37,16 +37,17 @@ Then visit `http://localhost:8000/epoch/`. A direct `file://` open is not recomm
 6. Open the **Dynasty** tab and continue playing as a descendant; your civilization persists.
 
 ## What's implemented
-- A small procedural wilderness, 3D character and roaming deer (placeholder assets)
+- A small procedural wilderness, an animated modular player character, four visually varied human villagers and roaming deer (prototype assets)
 - Keyboard and click movement, camera controls and simple A* grid pathfinding
 - Wood/stone/food gathering, XP and leveling for six initial skills
 - Resource costs, technology and civic prerequisites
 - Campfire, stone axe and shelter unlocks
-- A prototype succession mechanic with partial skill-XP inheritance
+- A prototype succession mechanic with partial skill-XP inheritance and inherited appearance traits
+- Character appearance editor (male/female body templates; six hairstyles, six hair colors, skin and eye colors, outfits, facial hair and proportions)
 - Versioned local save in the browser's `localStorage`
 
 ## Not yet implemented
-Combat, active enemies, hostile animals, hunting, animated NPC conversations, rival civilizations, diplomacy, real family/children mechanics, professional character animations, additional historical ages, multiplayer, accounts and synced saves.
+Combat, active enemies, hostile animals, hunting, NPC conversations/AI, rival civilizations, diplomacy, real family/children mechanics, imported Blender rigs and polished skinning/animation, additional historical ages, multiplayer, accounts and synced saves.
 
 ## Files
 ```
@@ -58,14 +59,19 @@ epoch/
     state.js
     world.js
     ui.js
+    characters.js
+  CHARACTER_SYSTEM.md
   GAME_DESIGN.md
   README.md
 ```
 
 ## Production readiness
-This is a vertical slice, not a finished game. Babylon.js explicitly recommends **not** using its public CDN for production; when we're ready to publish widely, pin the version, bundle it locally, and build a real test pipeline. The generated 3D primitives should be replaced with an optimized and consistent model/animation library. Desktop play is the current target; touch controls need work.
+This is a vertical slice, not a finished game. Babylon.js explicitly recommends **not** using its public CDN for production; when we're ready to publish widely, pin the version, bundle it locally, and build a real test pipeline. The current human models are modular Babylon.js geometry assemblies with joint-based animation, not Blender GLB rigs; they should eventually be replaced with optimized skinned models and a consistent animation library. Desktop play is the current target; touch controls need work.
 
 ## Save format
 Local storage key: `epoch.stoneage.v1`. This pre-alpha format can change, so saves aren't yet guaranteed across breaking updates. Reset is available in the Dynasty panel, with a confirmation.
 
 © 2026. Original Epoch prototype, built as an AI-assisted creative software project.
+
+## Character system
+See [CHARACTER_SYSTEM.md](./CHARACTER_SYSTEM.md) for editable appearance profiles, inheritance rules and the planned Blender/GLB upgrade path. Use the **Character** tab to customize the player model; changing descendants generates a related but distinct appearance.
