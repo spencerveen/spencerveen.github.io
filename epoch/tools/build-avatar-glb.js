@@ -4,7 +4,7 @@ function buildAvatarGLB(sex){
   ["Skin",[0.72,0.43,0.28,1]],["Hair",[.22,.13,.085,1]],["Eye",[.16,.16,.14,1]],["Tunic",[.33,.20,.12,1]],
   ["Leather",[.18,.11,.075,1]],["Fur",[.64,.53,.37,1]],["Trim",[.78,.65,.44,1]],["Boots",[.23,.15,.10,1]]
  ];
- for(const [name,color] of matList) materials.push({name,pbrMetallicRoughness:{baseColorFactor:color,metallicFactor:0,roughnessFactor:.91},doubleSided:false});
+ for(const [name,color] of matList) materials.push({name,pbrMetallicRoughness:{baseColorFactor:color,metallicFactor:0,roughnessFactor:.91},doubleSided:name==="Hair"||name==="Fur"});
  const MI=Object.fromEntries(matList.map((a,i)=>[a[0],i]));
  const node=(name,parent=null,translation=[0,0,0])=>{
   const id=nodes.length;nodes.push({name,translation:translation.map(x=>+x.toFixed(6)),children:[]});
@@ -34,6 +34,7 @@ function buildAvatarGLB(sex){
   const child=node(name,parent);nodes[child].mesh=meshId;return child;
  };
  const loft=(name,parent,mat,rings,n=12)=>{
+  rings=rings[0][0]>rings[rings.length-1][0]?[...rings].reverse():rings;
   const vertices=[],tri=[];
   for(let r=0;r<rings.length;r++){
    const [y,rx,rz,cx=0,cz=0]=rings[r];
@@ -117,6 +118,32 @@ function buildAvatarGLB(sex){
    ellipsoid("Topknot_Main",hp,"Hair",V(0,.65,-.06),V(.19,.15,.19),9,5);
    ellipsoid("Topknot_Tie",hp,"Leather",V(0,.51,-.06),V(.11,.055,.10),9,4);
   }
+ }
+
+ // Variants of facial hair live under head anchors and can be hidden per character.
+ for(let beard=1;beard<=3;beard++){
+  const beardRoot=node("Beard_"+beard,head);
+  if(beard===1){
+   ellipsoid("Light_Stubble",beardRoot,"Hair",V(0,-.225,.144),V(.175,.065,.106),11,5);
+  } else {
+   loft("Chin_Beard_"+beard,beardRoot,"Hair",[
+     [-.42-(beard===3?.08:0),.015,.03,0,.10],
+     [-.32-(beard===3?.05:0),.12,.10,0,.11],
+     [-.19,.205,.13,0,.08],
+     [-.07,.205,.12,0,.06]
+   ],12);
+   for(const side of [-1,1]){
+    ellipsoid("Sideburn_"+side,beardRoot,"Hair",V(side*.165,-.11,.16),V(.08,.16,.095),9,5);
+    ellipsoid("Mustache_"+side,beardRoot,"Hair",V(side*.075,-.15,.272),V(.105,.037,.035),9,4);
+   }
+   if(beard===3)for(let j=-2;j<=2;j++)tube("Beard_Tip_"+j,beardRoot,"Hair",[[j*.065,-.38,.15],[j*.06,-.53+Math.abs(j)*.035,.14]],[.054,.005],6);
+  }
+ }
+ // Primitive cross-stitch detail gives the leather tunic depth without textures.
+ for(let j=0;j<3;j++){
+  const yy=.22-j*.14;
+  tube("Torso_Stitch_A_"+j,spine,"Trim",[[-.075,yy,.245],[.07,yy-.085,.249]],[.019,.019],5);
+  tube("Torso_Stitch_B_"+j,spine,"Trim",[[.07,yy,.247],[-.075,yy-.085,.247]],[.019,.019],5);
  }
  // Arms with sculpted tubular muscles, bracers, palm and thumb.
  for(const side of [-1,1]){
