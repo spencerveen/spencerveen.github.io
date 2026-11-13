@@ -1,14 +1,15 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113h";
-import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113h";
-import {villagePanel,selectVillagePlot,handleVillageAction} from "./village-ui.js?v=20261113h";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113i";
+import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113i";
+import {villagePanel,selectVillagePlot,handleVillageAction} from "./village-ui.js?v=20261113i";
+import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261113i";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
-const icons={wood:"🌲",stone:"🪨",food:"🫐"};
-const names={wood:"Wood",stone:"Stone",food:"Food",knowledge:"Knowledge",culture:"Culture"};
+const icons={wood:"🪵",stone:"🪨",food:"🫐",vines:"🌿"};
+const names={wood:"Wood",stone:"Stone",food:"Wild Berries",vines:"Vines",knowledge:"Knowledge",culture:"Culture"};
 export class UI{
  constructor(state,world){
-  this.state=state;this.world=world;this.tab="pack";this.selectedPlot="family_1";
+  this.state=state;this.world=world;this.tab="pack";this.selectedPlot="family_1";this.selectedSlot=null;
   document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{
    this.tab=button.dataset.tab;this.render();
    $("right").classList.remove("open");
@@ -42,15 +43,7 @@ export class UI{
  cost(cost){
   return Object.entries(cost).map(([name,n])=>`${names[name]||name}: ${n}`).join(" · ");
  }
- pack(){
-  const d=this.state.data;
-  let html=`<div class="panel-title"><h2>Wayfarer's Pack</h2><small>Resources</small></div>`;
-  for(const [key,count] of Object.entries(d.resources))html+=`<div class="resource"><span><i>${icons[key]}</i>${names[key]}</span><b>${count}</b></div>`;
-  html+=`<p class="info">Click resources in the world to approach and gather them. Press E to interact with nearby resources.</p>`;
-  html+=`<div class="entry"><h3>🪓 Stone Axe</h3><p>${d.axe?"Equipped. Harvest 3 wood rather than 2 per tree interaction.":"A better tool for woodcutting. Requires the Stone Toolmaking technology."}</p><small>2 wood · 3 stone</small><button data-action="axe" ${d.axe||!d.technologies.includes("tools")||!this.state.enough({wood:2,stone:3})?"disabled":""}>${d.axe?"Already crafted":"Craft axe"}</button></div>`;
-  html+=`<div class="entry"><h3>🏕 Village Construction</h3><p>Build Family Huts, a Cooking Hearth, the Toolmaker’s Shelter and a Council Lodge.</p><button data-action="open-village">Open Village →</button></div>`;
-  return html;
- }
+ pack(){return inventoryPanel(this)}
  appearance(){
   const d=this.state.data,p=d.hero.appearance;
   const choices=[
@@ -119,6 +112,7 @@ export class UI{
  handleAction(e){
   const btn=e.target.closest("[data-action]");if(!btn)return;
   const action=btn.dataset.action;let message="";
+  if(handlePackAction(this,btn))return;
   if(handleVillageAction(this,btn))return;
   if(action==="looks"){
    const p=this.state.data.hero.appearance,f=btn.dataset.field,dir=Number(btn.dataset.dir)===-1?-1:1;
@@ -138,7 +132,7 @@ export class UI{
  }
  help(){
   $("guide").innerHTML=`<p><strong>Explore:</strong> WASD to walk, Shift to sprint, right-click and drag to orbit the camera, and scroll to zoom. Left-click the ground for automatic pathfinding.</p>
-  <p><strong>Gather:</strong> Left-click a tree, rock, or berry bush. Your adventurer approaches the resource and gathers it. Press E to interact with a nearby resource. Keep gathering to earn personal skill XP, knowledge and culture.</p>
+  <p><strong>Gather:</strong> Trees give wood and vines; rocks give stone; bushes give wild berries and vines. Your starter pack holds ten slots with up to twelve of one item per stack. Full inventory prevents further gathering until you spend or discard items.</p>
   <p><strong>Progress:</strong> Unlock Fire and Stone Toolmaking under Tech, then craft an axe in the Pack. Use the Village tab to build your first huts.</p>
   <p><strong>Village:</strong> Click a marked construction plot, walk into range, then select Construct. Each Family Hut adds space for 3 more villagers.</p>
   <p><strong>Character:</strong> Open the Character tab to change the base body, hair, colors, clothing, and facial hair. NPCs use the same modular system, and descendants inherit traits with variation.</p>

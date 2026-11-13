@@ -1,6 +1,9 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113h";
-import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113h";
-import {STARTER_SEED} from "./forest-generation.js?v=20261113h";
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113i";
+import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113i";
+import {STARTER_SEED} from "./forest-generation.js?v=20261113i";
+import {ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,
+ normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
+ resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113i";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
@@ -19,7 +22,7 @@ const KEY="epoch.stoneage.v1";
 const fresh=()=>({
  version:1,year:-12000,calendarProgress:0,generation:1,worldSeed:Math.floor(Math.random()*0x7fffffff)+1,hero:{name:"Aren",age:18,appearance:founderAppearance()},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
- resources:{wood:0,stone:0,food:0},knowledge:0,culture:0,
+ resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
  lineage:[{name:"Aren",gen:1,start:-12000,role:"Founder",appearance:founderAppearance()}],
  history:["The wanderer Aren entered a quiet clearing in a vast prehistoric wilderness."]
@@ -50,21 +53,80 @@ export class GameState{
    };
   }
   this.data.village.population=Math.max(1,Math.min(capacity(this.data.village),Number(this.data.village.population)||5));
+  // Old saves tracked boundless counters. Pack as much as possible into ten
+  // 12-item slots, and retain any remainder as recoverable migration supplies.
+  // Never silently delete a veteran player's existing wood/stone/berries.
+  if(data?.version===1 && Array.isArray(data.inventory)){
+   this.data.inventory=normalizeInventory(data.inventory);
+   this.data.unpacked=normalizeUnpacked(data.unpacked);
+  }else{
+   const migration=migrateResources(data?.resources);
+   this.data.inventory=migration.slots;
+   this.data.unpacked=migration.unpacked;
+  }
+  this.syncResources();
   this.onChange=()=>{};
   this.lastSave=0;
  }
  save(){try{localStorage.setItem(KEY,JSON.stringify(this.data))}catch(e){console.warn("Save unavailable",e)}}
  changed(message){if(message)this.data.history.unshift(message);this.data.history=this.data.history.slice(0,80);this.save();this.onChange();}
- enough(cost){const s=this.data;return Object.entries(cost).every(([key,value])=>((key==="knowledge"||key==="culture")?s[key]:(s.resources[key]||0))>=value)}
- pay(cost){if(!this.enough(cost))return false;for(const [key,value] of Object.entries(cost)){if(key==="knowledge"||key==="culture")this.data[key]-=value;else this.data.resources[key]-=value;}return true}
+ syncResources(){
+  // Legacy/UI tech APIs continue to read resources.food as Wild Berries.
+  // Inventory slots are the only source of truth for material quantities.
+  this.data.resources=resourceTotals(this.data.inventory);
+ }
+ inventoryUsed(){return occupiedSlots(this.data.inventory)}
+ inventoryCount(id){return countItem(this.data.inventory,id)}
+ inventoryUnpacked(){return unpackedCount(this.data.unpacked)}
+ addResource(id,quantity){
+  const added=addItems(this.data.inventory,id,quantity);
+  this.syncResources();return added;
+ }
+ retrieveLegacySupplies(){
+  const amount=retrieveUnpacked(this.data.inventory,this.data.unpacked);
+  if(amount){this.syncResources();this.changed()}
+  return amount;
+ }
+ discardStack(index){
+  if(!Number.isInteger(index)||index<0||index>=INVENTORY_SLOTS)return false;
+  if(!this.data.inventory[index])return false;
+  this.data.inventory[index]=null;
+  this.syncResources();this.changed();
+  return true;
+ }
+ enough(cost){
+  return Object.entries(cost).every(([key,amount])=>
+   key==="knowledge"||key==="culture"?
+   this.data[key]>=amount:countItem(this.data.inventory,key)>=amount);
+ }
+ pay(cost){
+  if(!this.enough(cost))return false;
+  for(const [key,amount] of Object.entries(cost)){
+   if(key==="knowledge"||key==="culture")this.data[key]-=amount;
+   else removeItems(this.data.inventory,key,amount);
+  }
+  this.syncResources();return true;
+ }
  gainXP(skill,amount){this.data.skills[skill]=(this.data.skills[skill]||0)+amount;this.data.knowledge+=skill==="survival"?0:1}
  gather(type){
-  const m={wood:{name:"wood",skill:"woodcutting",amount:this.data.axe?3:2,xp:13},stone:{name:"stone",skill:"mining",amount:2,xp:12},food:{name:"wild berries",skill:"foraging",amount:2,xp:12}};
-  const v=m[type];if(!v)return null;
-  this.data.resources[type]+=v.amount;this.gainXP(v.skill,v.xp);this.gainXP("survival",2);
+  const gathering={
+   wood:{name:"wood",skill:"woodcutting",amount:this.data.axe?3:2,xp:13},
+   stone:{name:"stone",skill:"mining",amount:2,xp:12},
+   food:{name:"wild berries",skill:"foraging",amount:2,xp:12}
+  };
+  const info=gathering[type];if(!info)return null;
+  const primary=type==="food"?"berries":type;
+  const gained=this.addResource(primary,info.amount);
+  if(!gained)return {label:"Pack full! Spend or drop a stack to gather more.",type:"full"};
+  let vines=0;
+  // Trees and berry bushes both yield basic binding vines. They are real
+  // inventory items and never sneak past the 10-slot limit.
+  if(type==="wood"||type==="food")vines=this.addResource("vines",1);
+  this.gainXP(info.skill,Math.max(1,Math.round(info.xp*gained/info.amount)));
+  this.gainXP("survival",2);
   if(type==="food")this.data.culture++;
   this.changed();
-  return {label:`+${v.amount} ${v.name} · +${v.xp} ${v.skill} XP`,type};
+  return {label:`+${gained} ${info.name}${vines?" · +"+vines+" vines":""}${gained<info.amount?" (pack nearly full)":""}`,type,added:gained,vines};
  }
  eligible(kind,key){
   const d=kind==="tech"?TECH:CIVICS;const owned=kind==="tech"?this.data.technologies:this.data.civics;const node=d[key];

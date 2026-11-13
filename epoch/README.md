@@ -31,7 +31,7 @@ Then visit `http://localhost:8000/epoch/`. A direct `file://` open is not recomm
 | Mouse wheel | Zoom camera |
 
 ## First objectives
-1. Gather wood from trees and stone from rock deposits.
+1. Gather wood and vines from trees, stone from deposits, and wild berries plus vines from bushes. Manage your 10-slot pack (12 items per stack).
 2. Research **Control of Fire** in the Tech tab.
 3. Research **Stone Toolmaking**, then craft a **Stone Axe** in Pack.
 4. Open **Village**, walk to a build plot, and construct a **Family Hut** to add room for 3 villagers.
@@ -42,8 +42,9 @@ Then visit `http://localhost:8000/epoch/`. A direct `file://` open is not recomm
 ## What's implemented
 - A seeded, smooth, continuously streamed forest biome with terrain chunks, original trees, stone deposits, berry bushes and deer; real Quaternius CC0 characters and four villagers
 - Keyboard and click movement, camera controls, and dynamically bounded A* navigation across chunk borders
-- Wood/stone/food gathering, XP and leveling for six initial skills
-- Resource costs, technology and civic prerequisites
+- A proper 10-slot personal inventory: wood, stone, wild berries and vines stack to 12 each; trees and bushes supply vines
+- Woodcutting, mining and berry foraging, with XP and leveling for six initial skills
+- Inventory-backed resource costs, technology and civic prerequisites; legacy resources migrate without loss
 - Campfire, stone axe, and a five-plot village with Family Huts, Cooking Hearth, Toolmaker’s Shelter, and Council Lodge
 - Each Family Hut expands population capacity by 3; cooking, research, and culture building bonuses come later
 - A prototype succession mechanic with partial skill-XP inheritance and inherited appearance traits
@@ -94,3 +95,6 @@ The default humans use Quaternius Universal Base Characters (free Standard CC0).
 
 ## Settlement building
 The **Village** tab has five buildable plots in the Stone Age clearing: two Family Huts (+3 people capacity each), a Cooking Hearth, a Toolmaker's Shelter, and a Council Lodge. Click a plot to approach it and use the Village panel to construct it. Resource costs and technology/culture prerequisites apply; older shelter saves migrate automatically. Other building production bonuses, growing population and freely placed buildings will be future work. See [VILLAGE_SYSTEM.md](./VILLAGE_SYSTEM.md) for full rules and ideas.
+
+## Personal inventory
+The starter Wayfarer's Pack has **10 slots**, and wood, stone, wild berries and vines stack to **12 per slot**. Trees yield wood plus vines; berry bushes yield berries plus vines; stone deposits yield stone. Crafting, technology and buildings consume carried stacks. Select a filled slot to inspect or discard it if the pack becomes full. Existing saves with more resources than 10 slots can carry retain the excess as manually recoverable supplies. See [INVENTORY_SYSTEM.md](./INVENTORY_SYSTEM.md).

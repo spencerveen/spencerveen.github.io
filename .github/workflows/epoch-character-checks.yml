@@ -10,6 +10,8 @@ on:
       - 'epoch/js/quaternius-models.js'
       - 'epoch/js/locomotion.js'
       - 'epoch/js/settlement.js'
+      - 'epoch/js/inventory.js'
+      - 'epoch/js/inventory-ui.js'
       - 'epoch/js/forest-generation.js'
       - 'epoch/js/forest-chunks.js'
       - 'epoch/js/village-world.js'
@@ -25,6 +27,8 @@ on:
       - 'epoch/js/quaternius-models.js'
       - 'epoch/js/locomotion.js'
       - 'epoch/js/settlement.js'
+      - 'epoch/js/inventory.js'
+      - 'epoch/js/inventory-ui.js'
       - 'epoch/js/forest-generation.js'
       - 'epoch/js/forest-chunks.js'
       - 'epoch/js/village-world.js'
@@ -37,6 +41,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Validate ten-slot inventory and save migration
+        run: node epoch/tests/check-inventory.mjs
       - name: Validate seeded forest generation and chunk streaming
         run: node epoch/tests/check-forest.mjs
       - name: Validate village and building save compatibility
