@@ -37,7 +37,7 @@ Then visit `http://localhost:8000/epoch/`. A direct `file://` open is not recomm
 6. Open the **Dynasty** tab and continue playing as a descendant; your civilization persists.
 
 ## What's implemented
-- A small procedural wilderness, two original imported GLB character bases, an animated modular player, four visually varied human villagers and roaming deer
+- A small procedural wilderness, real skinned male and female Quaternius CC0 character models, an animated modular player, four visually varied human villagers and roaming deer
 - Keyboard and click movement, camera controls and simple A* grid pathfinding
 - Wood/stone/food gathering, XP and leveling for six initial skills
 - Resource costs, technology and civic prerequisites
@@ -74,7 +74,7 @@ epoch/
 ```
 
 ## Production readiness
-This is a vertical slice, not a finished game. Babylon.js explicitly recommends **not** using its public CDN for production; when we're ready to publish widely, pin the version, bundle it locally, and build a real test pipeline. The game now uses two authored original GLB character assets with joint-based transform animation, selectable hair/beard assemblies and shared styling. They import into Blender, but are not yet weight-painted skinned armatures; the art and animation still need a refinement pass. Desktop play is the current target; touch controls need work.
+This is a vertical slice, not a finished game. Babylon.js explicitly recommends **not** using its public CDN for production; when we're ready to publish widely, pin the version, bundle it locally, and build a real test pipeline. Epoch now loads Quaternius's genuinely skinned and weighted male and female humanoids by default, including source hairstyle meshes. The previous original experimental GLB assets remain as emergency fallback. Quaternius assets have a real rig but the game's walk/idle animation still needs refinement. Stone Age clothing is the next visual milestone. Desktop play is the current target; touch controls need work.
 
 ## Save format
 Local storage key: `epoch.stoneage.v1`. This pre-alpha format can change, so saves aren't yet guaranteed across breaking updates. Reset is available in the Dynasty panel, with a confirmation.
@@ -83,3 +83,6 @@ Local storage key: `epoch.stoneage.v1`. This pre-alpha format can change, so sav
 
 ## Character system
 See [CHARACTER_SYSTEM.md](./CHARACTER_SYSTEM.md) for editable appearance profiles, inheritance rules and the GLB asset workflow and Blender import instructions. Use the **Character** tab to customize the player model; changing descendants generates a related but distinct appearance.
+
+## Licensed Quaternius character pipeline
+The default humans use Quaternius Universal Base Characters (free Standard CC0). Source: https://quaternius.com/packs/universalbasecharacters.html . Import provenance, author credit, selected hairstyles and source revision are documented in assets/characters/QUATERNIUS.md. Rebuild via node epoch/tools/import-quaternius.mjs.
