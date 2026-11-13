@@ -1,6 +1,6 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113g";
-import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113g";
-import {villagePanel,selectVillagePlot,handleVillageAction} from "./village-ui.js?v=20261113g";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113h";
+import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113h";
+import {villagePanel,selectVillagePlot,handleVillageAction} from "./village-ui.js?v=20261113h";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
