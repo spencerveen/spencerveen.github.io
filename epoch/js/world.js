@@ -236,11 +236,37 @@ export class World {
   window.addEventListener("keyup",e=>{this.keys[e.key.toLowerCase()]=false});
   window.addEventListener("blur",()=>{this.keys={}});
   this.scene.onPointerObservable.add(e=>{
-   if(e.type!==B.PointerEventTypes.POINTERPICK || e.event.button!==0)return;
-   const pick=e.pickInfo;if(!pick?.hit)return;const mesh=pick.pickedMesh;
+   const pick=e.pickInfo;
+   if(this.placingStockpile){
+    if(e.type===B.PointerEventTypes.POINTERMOVE&&pick?.hit&&pick.pickedMesh?.metadata?.terrain)
+     this.previewStockpileAt(pick.pickedPoint.x,pick.pickedPoint.z);
+    if(e.type===B.PointerEventTypes.POINTERPICK&&e.event.button===0){
+     if(!pick?.hit||!pick.pickedMesh?.metadata?.terrain){
+      this.onStatus("Choose open ground","Click a terrain tile to found your village.");return;
+     }
+     const spot=this.previewStockpileAt(pick.pickedPoint.x,pick.pickedPoint.z);
+     if(!spot?.ok){this.onStatus("Stockpile cannot go here",spot?.reason||"Choose another spot.");return}
+     if(this.onFoundStockpile(spot.x,spot.z)){
+      this.cancelStockpilePlacement();
+      this.onStatus("Village founded","Your stockpile is established! Return with gathered resources.");
+     }
+    }
+    return;
+   }
+   if(e.type!==B.PointerEventTypes.POINTERPICK||e.event.button!==0)return;
+   if(!pick?.hit)return;
+   const mesh=pick.pickedMesh;
+   if(mesh?.metadata?.stockpile){this.walkToStockpile();return}
    if(mesh?.metadata?.plotId){this.walkToPlot(mesh.metadata.plotId);return}
-   if(mesh?.metadata?.resource){const meta=mesh.metadata;this.walkToResource(meta,e.event.shiftKey?"cut":"gather");return}
-   if(mesh?.metadata?.terrain){this.target=null;this.plotTarget=null;this.plan(pick.pickedPoint.x,pick.pickedPoint.z);this.onStatus("Traveling","Walking to the selected location.")}
+   if(mesh?.metadata?.resource){
+    this.stockpileTarget=false;
+    this.walkToResource(mesh.metadata,e.event.shiftKey?"cut":"gather");return;
+   }
+   if(mesh?.metadata?.terrain){
+    this.stockpileTarget=false;this.target=null;this.plotTarget=null;
+    this.plan(pick.pickedPoint.x,pick.pickedPoint.z);
+    this.onStatus("Traveling","Walking to the selected location.");
+   }
   });
  }
  interactNearby(action="gather"){
