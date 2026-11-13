@@ -34,24 +34,43 @@ const desired={
 const componentSize={5120:1,5121:1,5122:2,5123:2,5125:4,5126:4};
 const componentCount={SCALAR:1,VEC2:2,VEC3:3,VEC4:4,MAT4:16};
 function accessor(index){
- const a=json.accessors[index],bv=json.bufferViews[a.bufferView];
- if(!a||!bv)throw Error("Missing accessor "+index);
+ const a=json.accessors[index];
+ if(!a)throw Error("Missing accessor "+index);
  const count=componentCount[a.type],bytesEach=componentSize[a.componentType];
- const stride=bv.byteStride||count*bytesEach;
- const offset=binaryStart+bv.byteOffset+(a.byteOffset||0);
- const read=(p)=>{
-  if(a.componentType===5126)return bytes.readFloatLE(p);
-  if(a.componentType===5123)return bytes.readUInt16LE(p);
-  if(a.componentType===5125)return bytes.readUInt32LE(p);
-  if(a.componentType===5121)return bytes.readUInt8(p);
-  throw Error("Unsupported animation component type "+a.componentType);
+ if(!count||!bytesEach)throw Error("Unsupported accessor "+index+" / "+a.type);
+ const read=(type,p)=>{
+  if(type===5126)return bytes.readFloatLE(p);
+  if(type===5123)return bytes.readUInt16LE(p);
+  if(type===5125)return bytes.readUInt32LE(p);
+  if(type===5121)return bytes.readUInt8(p);
+  if(type===5122)return bytes.readInt16LE(p);
+  if(type===5120)return bytes.readInt8(p);
+  throw Error("Unsupported type "+type);
  };
- const values=[];
- for(let i=0;i<a.count;i++){
-  const row=[];for(let j=0;j<count;j++)row.push(read(offset+i*stride+j*bytesEach));
-  values.push(row);
+ const values=Array.from({length:a.count},()=>Array(count).fill(0));
+ if(a.bufferView!==undefined){
+  const bv=json.bufferViews[a.bufferView];
+  if(!bv)throw Error("Missing base buffer view in accessor "+index);
+  const stride=bv.byteStride||count*bytesEach;
+  const offset=binaryStart+bv.byteOffset+(a.byteOffset||0);
+  for(let i=0;i<a.count;i++)
+    for(let j=0;j<count;j++)values[i][j]=read(a.componentType,offset+i*stride+j*bytesEach);
  }
- if(a.sparse)throw Error("Sparse animation accessor "+index+" not supported: use original source GLB");
+ // glTF's optimized animation channels often use sparse-only accessors. An
+ // omitted base bufferView means zero-initialized elements overridden here.
+ if(a.sparse){
+  const {indices,values:changes,count:sparseCount}=a.sparse;
+  const ib=json.bufferViews[indices.bufferView],vb=json.bufferViews[changes.bufferView];
+  if(!ib||!vb)throw Error("Missing sparse buffer view "+index);
+  const indexStart=binaryStart+ib.byteOffset+(indices.byteOffset||0);
+  const valueStart=binaryStart+vb.byteOffset+(changes.byteOffset||0);
+  for(let i=0;i<sparseCount;i++){
+   const dst=read(indices.componentType,indexStart+i*componentSize[indices.componentType]);
+   if(dst>=a.count)throw Error("Sparse index out of range "+index);
+   for(let j=0;j<count;j++)
+    values[dst][j]=read(a.componentType,valueStart+(i*count+j)*bytesEach);
+  }
+ }
  return values;
 }
 const result={version:1,source:"Quaternius Universal Animation Library (CC0)",origin:SOURCE,clips:{}};
