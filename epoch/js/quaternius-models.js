@@ -7,7 +7,7 @@ import {createModelHuman as createBackupHuman} from "./character-models.js?v=202
 const B=globalThis.BABYLON;
 const containers=new WeakMap();
 let idCounter=0;
-const hairFilenames=["simpleparted","buzzed","long","buns","buzzedfemale","buns"];
+const hairFilenames=["simpleparted","buzzed","long","buns","buzzedfemale",null];
 const sourceFor=(sex)=>"quaternius_"+sex+".glb";
 function containerFor(scene,file){
  let existing=containers.get(scene);
@@ -114,11 +114,10 @@ export function createQuaterniusHuman(scene,appearance,parent=null,name="human")
    }
   }
   // Hair is a separately modeled Quaternius asset; no fake sphere-hair.
-  const first=hairFilenames[profile.hairStyle]||"simpleparted";
-  const variant=profile.sex==="female"&&first==="buzzed"?"buzzedfemale":first;
-  try{hair=await placeHair(variant,"hair")}catch(error){console.warn("Epoch hair asset failed; body remains playable:",error)}
+  const variant=hairFilenames[profile.hairStyle];
+  if(variant)try{hair=await placeHair(variant,"hair")}catch(error){console.warn("Epoch hair asset failed; body remains playable:",error)}
   if(profile.sex==="male"&&profile.beard>0){
-   try{beard=await placeHair("beard","beard");if(beard)for(const rootNode of beard.rootNodes)rootNode.scaling.scaleInPlace(profile.beard===1?.78:profile.beard===2?.95:1.1)}
+   try{beard=await placeHair("beard","beard")}
    catch(error){console.warn("Epoch beard failed to load:",error)}
   }
   return true;
