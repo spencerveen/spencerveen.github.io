@@ -1,0 +1,38 @@
+name: Build Epoch Quaternius movement clips
+
+on:
+  push:
+    branches:
+      - feature/epoch-quaternius-walk-idle
+    paths:
+      - 'epoch/tools/import-quaternius-walk.mjs'
+      - '.github/workflows/epoch-walk-import.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-clips:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/epoch-quaternius-walk-idle
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Import original Quaternius walking animations
+        run: node epoch/tools/import-quaternius-walk.mjs
+      - name: Validate clip data
+        run: node epoch/tests/check-walk-clips.mjs
+      - name: Commit reusable animation curves
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add epoch/assets/animations/quaternius-locomotion.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Epoch: include original Quaternius idle walk and run curves"
+            git push origin HEAD:feature/epoch-quaternius-walk-idle
+          fi
