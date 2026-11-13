@@ -60,14 +60,18 @@ try{
  assert((await page.locator("#panel").innerText()).includes("Council Lodge"),"Council Lodge shows its details");
  await page.screenshot({path:path.join(output,"epoch-village-plots.png")});
  // Test actual construction through the public UI and click-to-walk workflow.
- await page.evaluate(()=>{
+ // Before a reload, Epoch's pagehide handler saves the old in-memory state.
+ // Seed the fresh document on its next load instead of writing too early.
+ await page.addInitScript(()=>{
   const key="epoch.stoneage.v1",saved=JSON.parse(localStorage.getItem(key)||"{}");
-  saved.version=1; // A first visit may not have written an initial save yet.
+  saved.version=1;
   saved.resources={...saved.resources,wood:100,stone:100};
   localStorage.setItem(key,JSON.stringify(saved));
  });
  await page.reload({waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.worldPlots===5,null,{timeout:45000});
+ const loadedResources=await page.evaluate(()=>window.epochDebug().resources);
+ assert(loadedResources.wood>=100 && loadedResources.stone>=100,"test save resources must be present after reload");
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),null,{timeout:45000});
  await page.locator('[data-tab="village"]').click();
  await page.locator('[data-action="select-plot"][data-plot="family_1"]').click();
