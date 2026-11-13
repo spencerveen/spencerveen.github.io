@@ -62,6 +62,7 @@ try{
  // Test actual construction through the public UI and click-to-walk workflow.
  await page.evaluate(()=>{
   const key="epoch.stoneage.v1",saved=JSON.parse(localStorage.getItem(key)||"{}");
+  saved.version=1; // A first visit may not have written an initial save yet.
   saved.resources={...saved.resources,wood:100,stone:100};
   localStorage.setItem(key,JSON.stringify(saved));
  });
