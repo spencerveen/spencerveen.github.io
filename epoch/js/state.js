@@ -81,7 +81,7 @@ export class GameState{
   return name;
  }
  advance(dt){
-  const d=this.data;d.calendarProgress+=Math.min(dt,.1)/90;
+  const d=this.data;d.calendarProgress+=Math.min(dt,5)/90;
   if(d.calendarProgress>=1){d.calendarProgress-=1;d.year++;d.hero.age++;this.changed(`${d.hero.name} celebrates another year of life.`)}
  }
  formatYear(){return this.data.year<0?`${Math.abs(this.data.year).toLocaleString()} BCE`:`${this.data.year+1} CE`}
