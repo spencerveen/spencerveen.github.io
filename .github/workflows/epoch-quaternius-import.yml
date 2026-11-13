@@ -1,0 +1,38 @@
+name: Import Quaternius models for Epoch
+
+on:
+  push:
+    branches:
+      - feature/epoch-quaternius-real-humans
+    paths:
+      - '.github/workflows/epoch-quaternius-import.yml'
+      - 'epoch/tools/import-quaternius.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-models:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/epoch-quaternius-real-humans
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare the real Quaternius rigged characters
+        run: node epoch/tools/import-quaternius.mjs
+      - name: Validate GLB assets and source skeletons
+        run: node epoch/tests/check-quaternius.mjs
+      - name: Commit imported model assets to development branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add epoch/assets/characters/quaternius_male.glb epoch/assets/characters/quaternius_female.glb
+          if ! git diff --staged --quiet; then
+            git commit -m "Epoch: import real Quaternius rigged body assets"
+            git push origin HEAD:feature/epoch-quaternius-real-humans
+          fi
