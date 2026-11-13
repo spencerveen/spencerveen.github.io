@@ -1,6 +1,8 @@
 import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113j";
 import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113j";
-import {PLOT_BY_ID} from "./settlement.js?v=20261113j";
+import {PLOT_BY_ID} from "./settlement.js?v=20261113k";
+import {stockpileValidation,nearStockpile,LEGACY_HOME} from "./stockpile.js?v=20261113k";
+import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261113k";
 import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113j";
 import {STARTER_SEED,terrainHeight} from "./forest-generation.js?v=20261113j";
 import {ForestChunks} from "./forest-chunks.js?v=20261113j";
@@ -8,13 +10,13 @@ const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export class World {
- constructor(canvas,onGather,onStatus,onPlot=()=>{},seed=STARTER_SEED,getResourceStatus=()=>null){
-  this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;this.getResourceStatus=getResourceStatus;this.worldSeed=seed>>>0;
-  this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onPlot;
+ constructor(canvas,onGather,onStatus,onPlot=()=>{},seed=STARTER_SEED,getResourceStatus=()=>null,onFoundStockpile=()=>false,onOpenStockpile=()=>{}){
+  this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;this.getResourceStatus=getResourceStatus;this.onFoundStockpile=onFoundStockpile;this.onOpenStockpile=onOpenStockpile;this.worldSeed=seed>>>0;
+  this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onPlot;this.placingStockpile=false;this.stockpileTarget=false;this.stockpile=null;this.stockpileCandidate=null;this.homePositionKey=null;
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.020;this.scene.fogColor=new B.Color3(.62,.71,.62);
-  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();this.makeCamp();createVillageWorld(this,onPlot);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
+  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();this.makeCamp();createVillageWorld(this,onPlot);createStockpileWorld(this);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
   this.engine.runRenderLoop(()=>{const dt=Math.min(.045,this.engine.getDeltaTime()/1000);this.update(dt);this.scene.render()});
   window.addEventListener("resize",()=>this.engine.resize());
  }
@@ -144,15 +146,73 @@ export class World {
   this.flame.setEnabled(!!fire);
   this.fireLight.intensity=fire?1.2:0;
  }
- syncVillage(village){syncVillageWorld(this,village)}
+ syncVillage(village){
+  const pile=village?.stockpile||null;
+  this.stockpile=pile;
+  syncVillageWorld(this,village);
+  syncStockpileWorld(this,pile);
+  this.obstacles=this.obstacles.filter(o=>!o.stockpile);
+  if(pile)this.obstacles.push({x:pile.x,z:pile.z,r:1.65,stockpile:true});
+  const key=pile?pile.x+","+pile.z:"unfounded";
+  if(key===this.homePositionKey)return;
+  this.homePositionKey=key;
+  const base=pile||LEGACY_HOME;
+  const dx=base.x-LEGACY_HOME.x,dz=base.z-LEGACY_HOME.z;
+  const fireX=-5+dx,fireZ=-3+dz;
+  this.fireNode.position=V(fireX,this.groundY(fireX,fireZ),fireZ);
+  this.fireLight.position=V(fireX,this.groundY(fireX,fireZ)+1,fireZ);
+  for(const person of this.people||[]){
+   const x=person.x+dx,z=person.z+dz;
+   person.human.root.position=V(x,this.groundY(x,z),z);
+  }
+ }
  highlightPlot(id){highlightVillagePlot(this,id)}
+ canBuildOnPlot(id){
+  const plot=this.villagePlots?.get(id)?.plot;
+  if(!plot||!this.stockpile)return {ok:false,reason:"Found your village first."};
+  const blocked=this.obstacles.some(o=>!o.plotId&&!o.stockpile
+   &&Math.hypot(o.x-plot.x,o.z-plot.z)<(o.r||0)+(plot.kind==="council"?2.8:2.05));
+  return blocked?{ok:false,reason:"Clear trees or rocks from this building site."}:{ok:true,reason:"Site clear"};
+ }
+ beginStockpilePlacement(){
+  if(this.stockpile)return false;
+  this.placingStockpile=true;this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.path=[];
+  const p=this.player.position;
+  this.stockpileCandidate=stockpileValidation(this,p.x+5,p.z+5);
+  showStockpilePreview(this,this.stockpileCandidate);
+  this.onStatus("Choose stockpile site","Move over level ground, then left-click to found your village. Press Escape to cancel.");
+  return true;
+ }
+ cancelStockpilePlacement(){
+  this.placingStockpile=false;this.stockpileCandidate=null;
+  showStockpilePreview(this,null);
+ }
+ previewStockpileAt(x,z){
+  if(!this.placingStockpile)return null;
+  const result=stockpileValidation(this,x,z);
+  this.stockpileCandidate=result;showStockpilePreview(this,result);
+  return result;
+ }
+ walkToStockpile(){
+  if(!this.stockpile)return false;
+  if(nearStockpile(this.stockpile,this.player.position.x,this.player.position.z)){
+   this.onOpenStockpile();return true;
+  }
+  const p=this.player.position,h=this.stockpile,dx=p.x-h.x,dz=p.z-h.z,len=Math.hypot(dx,dz)||1;
+  const destX=h.x+dx/len*3.4,destZ=h.z+dz/len*3.4;
+  const success=this.plan(destX,destZ);
+  if(success){this.stockpileTarget=true;this.target=null;this.plotTarget=null;
+   this.onStatus("Returning to village","Walking to the stockpile to unload supplies.");
+  }else this.onStatus("Cannot reach stockpile","Try approaching from another side.");
+  return success;
+ }
  distanceToPlot(id){
-  const p=PLOT_BY_ID[id];if(!p)return Infinity;
+  const p=this.villagePlots?.get(id)?.plot;if(!p||!this.stockpile)return Infinity;
   return Math.hypot(this.player.position.x-p.x,this.player.position.z-p.z);
  }
  walkToPlot(id){
-  const plot=PLOT_BY_ID[id];if(!plot)return false;
-  this.target=null;
+  const plot=this.villagePlots?.get(id)?.plot;if(!plot||!this.stockpile)return false;
+  this.target=null;this.stockpileTarget=false;
   this.plotTarget=null;
   const d=this.distanceToPlot(id);
   if(d<=4.2&&d>=2.5){this.onPlot(id);return true}
@@ -170,6 +230,7 @@ export class World {
   window.addEventListener("keydown",e=>{
    if(isText())return;const key=e.key.toLowerCase();
    if(["w","a","s","d","shift","e"].includes(key)){e.preventDefault();this.keys[key]=true;}
+   if(key==="escape"&&this.placingStockpile)this.cancelStockpilePlacement();
    if(key==="e")this.interactNearby(e.shiftKey?"cut":"gather");
   });
   window.addEventListener("keyup",e=>{this.keys[e.key.toLowerCase()]=false});
@@ -198,7 +259,7 @@ export class World {
    this.target=null;this.plotTarget=null;this.path=[];
    this.collect(meta,action);return;
   }
-  this.plotTarget=null;this.target=meta;this.targetAction=action;
+  this.plotTarget=null;this.stockpileTarget=false;this.target=meta;this.targetAction=action;
   const dx=this.player.position.x-meta.x,dz=this.player.position.z-meta.z,len=Math.hypot(dx,dz)||1;
   if(!this.plan(meta.x+dx/len*2.05,meta.z+dz/len*2.05)){
    this.target=null;this.onStatus("Cannot reach resource","Try approaching from another side.");return;
@@ -285,7 +346,7 @@ export class World {
   const forward=V(-Math.cos(c.alpha),0,-Math.sin(c.alpha)),right=V(forward.z,0,-forward.x);
   const x=(this.keys.d?1:0)-(this.keys.a?1:0),z=(this.keys.w?1:0)-(this.keys.s?1:0);
   let direction=V(0,0,0),moving=false;
-  if(x||z){this.path=[];this.target=null;this.plotTarget=null;direction=right.scale(x).add(forward.scale(z)).normalize();moving=true;}
+  if(x||z){this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;direction=right.scale(x).add(forward.scale(z)).normalize();moving=true;}
   else if(this.path.length){
    const next=this.path[0],diff=next.subtract(p);diff.y=0;
    if(diff.length()<.25){this.path.shift();}
@@ -311,6 +372,10 @@ export class World {
   // switches the player to the jogging loop without resetting progression.
   this.character?.animate(performance.now()/1000,moving,moving&&!!this.keys.shift);
   if(this.target && Math.hypot(this.target.x-p.x,this.target.z-p.z)<2.55){const target=this.target,action=this.targetAction;this.target=null;this.path=[];this.collect(target,action)}
+  if(this.stockpileTarget&&this.stockpile
+    &&nearStockpile(this.stockpile,p.x,p.z)){
+   this.stockpileTarget=false;this.path=[];this.onOpenStockpile();
+  }
   if(this.plotTarget && this.distanceToPlot(this.plotTarget)<4.2){
    const id=this.plotTarget;this.plotTarget=null;this.path=[];this.onPlot(id);
   }
