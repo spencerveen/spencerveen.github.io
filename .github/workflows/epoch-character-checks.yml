@@ -9,6 +9,9 @@ on:
       - 'epoch/js/character-models.js'
       - 'epoch/js/quaternius-models.js'
       - 'epoch/js/locomotion.js'
+      - 'epoch/js/settlement.js'
+      - 'epoch/js/village-world.js'
+      - 'epoch/js/village-ui.js'
       - '.github/workflows/epoch-character-checks.yml'
   push:
     branches: [main]
@@ -19,6 +22,9 @@ on:
       - 'epoch/js/character-models.js'
       - 'epoch/js/quaternius-models.js'
       - 'epoch/js/locomotion.js'
+      - 'epoch/js/settlement.js'
+      - 'epoch/js/village-world.js'
+      - 'epoch/js/village-ui.js'
 
 jobs:
   validate-glb:
@@ -27,6 +33,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Validate village and building save compatibility
+        run: node epoch/tests/check-settlement.mjs
       - name: Inspect game models
         run: node epoch/tests/check-models.mjs
       - name: Inspect real Quaternius skinned characters and hairstyles

@@ -1,5 +1,6 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113f";
-import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113f";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113g";
+import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113g";
+import {villagePanel,selectVillagePlot,handleVillageAction} from "./village-ui.js?v=20261113g";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -7,7 +8,7 @@ const icons={wood:"🌲",stone:"🪨",food:"🫐"};
 const names={wood:"Wood",stone:"Stone",food:"Food",knowledge:"Knowledge",culture:"Culture"};
 export class UI{
  constructor(state,world){
-  this.state=state;this.world=world;this.tab="pack";
+  this.state=state;this.world=world;this.tab="pack";this.selectedPlot="family_1";
   document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{
    this.tab=button.dataset.tab;this.render();
    $("right").classList.remove("open");
@@ -18,8 +19,8 @@ export class UI{
   $("modal").addEventListener("click",e=>{if(e.target===$("modal"))this.close()});
   window.addEventListener("keydown",e=>{if(e.key==="Escape")this.close()});
   $("panel").addEventListener("click",e=>this.handleAction(e));
-  state.onChange=()=>{this.world.setDiscovery(state.data.technologies.includes("fire"),state.data.shelter);this.world.applyAppearance(state.data.hero.appearance);this.render()};
-  this.world.setDiscovery(state.data.technologies.includes("fire"),state.data.shelter);
+  state.onChange=()=>{this.world.setDiscovery(state.data.technologies.includes("fire"));this.world.syncVillage(state.data.village);this.world.highlightPlot(this.selectedPlot);this.world.applyAppearance(state.data.hero.appearance);this.render()};
+  this.world.setDiscovery(state.data.technologies.includes("fire"));this.world.syncVillage(state.data.village);this.world.highlightPlot(this.selectedPlot);
   this.world.applyAppearance(state.data.hero.appearance);
   this.render();
  }
@@ -28,12 +29,13 @@ export class UI{
   setTimeout(()=>{n.classList.add("fade");setTimeout(()=>n.remove(),500)},3000);
  }
  status(title,detail){$("action").textContent=title;$("details").textContent=detail}
+ selectPlot(id){selectVillagePlot(this,id)}
  objective(){
   const d=this.state.data,r=d.resources;
   if(!d.technologies.includes("fire"))return {title:"Discover the first flame",description:"Gather wood and stone, earn knowledge through gathering, then research Control of Fire.",progress:`${r.wood}/4 wood · ${r.stone}/2 stone · ${d.knowledge}/3 knowledge`};
   if(!d.technologies.includes("tools"))return {title:"Shape your first tools",description:"Gather resources, then research Stone Toolmaking in the Tech tab.",progress:`${r.wood}/5 wood · ${r.stone}/6 stone · ${d.knowledge}/7 knowledge`};
   if(!d.axe)return {title:"Craft a stone axe",description:"Open your Pack and craft a stone axe. Woodcutting will become more efficient.",progress:`${r.wood}/2 wood · ${r.stone}/3 stone`};
-  if(!d.shelter)return {title:"Build a lasting shelter",description:"Collect wood and stone, then build the first family shelter from your Pack.",progress:`${r.wood}/10 wood · ${r.stone}/6 stone`};
+  if(!d.shelter)return {title:"Raise your first Family Hut",description:"Open Village, travel to a Family Hut plot, and build housing for three more people.",progress:`${r.wood}/10 wood · ${r.stone}/6 stone`};
   if(!d.civics.includes("community"))return {title:"Found a tribal community",description:"Gather food and accumulate culture, then unlock Tribal Community.",progress:`${r.wood}/8 wood · ${r.food}/6 food · ${d.culture}/5 culture`};
   return {title:"Leave a legacy",description:"Develop your skills, explore culture and research, then use the Dynasty tab to continue as your descendant.",progress:"Stone Age foundation achieved"};
  }
@@ -46,7 +48,7 @@ export class UI{
   for(const [key,count] of Object.entries(d.resources))html+=`<div class="resource"><span><i>${icons[key]}</i>${names[key]}</span><b>${count}</b></div>`;
   html+=`<p class="info">Click resources in the world to approach and gather them. Press E to interact with nearby resources.</p>`;
   html+=`<div class="entry"><h3>🪓 Stone Axe</h3><p>${d.axe?"Equipped. Harvest 3 wood rather than 2 per tree interaction.":"A better tool for woodcutting. Requires the Stone Toolmaking technology."}</p><small>2 wood · 3 stone</small><button data-action="axe" ${d.axe||!d.technologies.includes("tools")||!this.state.enough({wood:2,stone:3})?"disabled":""}>${d.axe?"Already crafted":"Craft axe"}</button></div>`;
-  html+=`<div class="entry"><h3>🏕 First Shelter</h3><p>${d.shelter?"Your permanent home stands in the clearing.":"Build a primitive wooden shelter near your campfire."}</p><small>10 wood · 6 stone</small><button data-action="shelter" ${d.shelter||!d.technologies.includes("fire")||!this.state.enough({wood:10,stone:6})?"disabled":""}>${d.shelter?"Shelter built":"Construct shelter"}</button></div>`;
+  html+=`<div class="entry"><h3>🏕 Village Construction</h3><p>Build Family Huts, a Cooking Hearth, the Toolmaker’s Shelter and a Council Lodge.</p><button data-action="open-village">Open Village →</button></div>`;
   return html;
  }
  appearance(){
@@ -108,15 +110,16 @@ export class UI{
   const d=this.state.data,o=this.objective();
   $("year").textContent=this.state.formatYear();$("generation").textContent="GEN "+roman(d.generation);
   $("ancestor-name").textContent=d.hero.name;$("ancestor-age").textContent="Age "+d.hero.age+" · "+(d.generation===1?"Founder":"Descendant");
-  $("settlement-status").textContent=d.shelter?"A permanent family shelter":d.technologies.includes("fire")?"A campfire in the clearing":"Unsettled wilderness";
+  $("settlement-status").textContent=`${d.village.population}/${this.state.villageCapacity()} villagers · ${Object.keys(d.village.plots).length} built`;
   $("science").textContent=d.knowledge;$("culture").textContent=d.culture;
   $("objective-title").textContent=o.title;$("objective-description").textContent=o.description;$("objective-progress").textContent=o.progress;
   document.querySelectorAll("[data-tab]").forEach(node=>{const active=node.dataset.tab===this.tab;node.classList.toggle("active",active);node.setAttribute("aria-selected",String(active))});
-  $("panel").innerHTML=this.tab==="pack"?this.pack():this.tab==="appearance"?this.appearance():this.tab==="skills"?this.skills():this.tab==="tech"?this.trees("tech"):this.tab==="culture"?this.trees("civic"):this.dynasty();
+  $("panel").innerHTML=this.tab==="pack"?this.pack():this.tab==="village"?villagePanel(this):this.tab==="appearance"?this.appearance():this.tab==="skills"?this.skills():this.tab==="tech"?this.trees("tech"):this.tab==="culture"?this.trees("civic"):this.dynasty();
  }
  handleAction(e){
   const btn=e.target.closest("[data-action]");if(!btn)return;
   const action=btn.dataset.action;let message="";
+  if(handleVillageAction(this,btn))return;
   if(action==="looks"){
    const p=this.state.data.hero.appearance,f=btn.dataset.field,dir=Number(btn.dataset.dir)===-1?-1:1;
    const count={hairStyle:HAIR_STYLES.length,hairColor:HAIR_COLORS.length,skin:SKIN_TONES.length,eyes:EYE_COLORS.length,beard:4,outfit:OUTFITS.length};
@@ -126,7 +129,6 @@ export class UI{
    else if(Object.hasOwn(count,f))this.state.setAppearance({[f]:(p[f]+dir+count[f])%count[f]});
   }
   else if(action==="axe")message=this.state.craftAxe()?"Stone axe crafted! Woodcutting is faster.":"Not enough resources.";
-  else if(action==="shelter")message=this.state.buildShelter()?"The first family shelter stands!":"Not ready to build a shelter.";
   else if(action==="unlock"){const ok=this.state.unlock(btn.dataset.kind,btn.dataset.key);message=ok?"Discovery completed!":"Discovery requirements are not met."}
   else if(action==="next"){const name=this.state.nextGeneration();message="A new generation begins: "+name;}
   else if(action==="reset"){
@@ -137,7 +139,8 @@ export class UI{
  help(){
   $("guide").innerHTML=`<p><strong>Explore:</strong> WASD to walk, Shift to sprint, right-click and drag to orbit the camera, and scroll to zoom. Left-click the ground for automatic pathfinding.</p>
   <p><strong>Gather:</strong> Left-click a tree, rock, or berry bush. Your adventurer approaches the resource and gathers it. Press E to interact with a nearby resource. Keep gathering to earn personal skill XP, knowledge and culture.</p>
-  <p><strong>Progress:</strong> Open Tech to unlock Control of Fire and Stone Toolmaking. Craft an axe and a shelter from your Pack. Explore the Culture tree to establish traditions.</p>
+  <p><strong>Progress:</strong> Unlock Fire and Stone Toolmaking under Tech, then craft an axe in the Pack. Use the Village tab to build your first huts.</p>
+  <p><strong>Village:</strong> Click a marked construction plot, walk into range, then select Construct. Each Family Hut adds space for 3 more villagers.</p>
   <p><strong>Character:</strong> Open the Character tab to change the base body, hair, colors, clothing, and facial hair. NPCs use the same modular system, and descendants inherit traits with variation.</p>
   <p><strong>Descendants:</strong> In the Dynasty tab, continue as a new generation. Civilization-wide achievements and buildings remain, while personal skills partly transfer.</p>
   <p><strong>Saving:</strong> Your progress is stored locally in this browser. No account or online multiplayer is included in this prototype.</p>

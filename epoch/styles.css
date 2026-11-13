@@ -24,3 +24,16 @@ footer{position:absolute;z-index:4;bottom:16px;left:50%;transform:translateX(-50
 /* In pre-alpha, show actionable startup details instead of an opaque minified error. */
 .startup-diagnostics{box-sizing:border-box;width:min(740px,calc(100vw - 36px));max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #c4a97959;border-radius:8px;padding:12px;background:#090f0cd9;text-align:left;color:#b8c8b8;font:11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace}
 .diagnostics-copy{font:600 12px system-ui,sans-serif;background:#d0b582;border:0;border-radius:7px;padding:9px 16px;color:#122019}
+
+/* First settlement building and population dashboard. */
+.village-population{display:flex;align-items:end;justify-content:space-between;gap:10px;padding:13px 12px;margin:0 0 11px;background:#bca57212;border:1px solid #d5be8651;border-radius:9px}
+.village-population>div{display:flex;flex-direction:column;gap:5px}
+.village-population small{font-size:9px;font-weight:700;letter-spacing:.12em;color:#d9c18b}
+.village-population strong{font-size:24px;font-family:Georgia,serif;color:#f0e4c5;font-weight:500}
+.village-population>span{font-size:10px;color:#a6b6a5;text-align:right}
+.village-site-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0}
+.village-site-grid button{border:1px solid #ffffff25;background:#18271ecb;border-radius:7px;padding:10px;display:flex;flex-direction:column;gap:5px;align-items:start;transition:border-color .15s,background .15s}
+.village-site-grid button.chosen{border-color:#dfbb7f;background:#ac8e5723}
+.village-site-grid button:hover{border-color:#ccba89}
+.village-site-grid span{font-weight:700;font-size:11px;text-align:left}
+.village-site-grid small{font-size:9px;color:#a9bba7}

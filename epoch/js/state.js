@@ -1,4 +1,5 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113f";
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113g";
+import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113g";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
@@ -18,7 +19,7 @@ const fresh=()=>({
  version:1,year:-12000,calendarProgress:0,generation:1,hero:{name:"Aren",age:18,appearance:founderAppearance()},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
  resources:{wood:0,stone:0,food:0},knowledge:0,culture:0,
- technologies:[],civics:[],axe:false,shelter:false,
+ technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
  lineage:[{name:"Aren",gen:1,start:-12000,role:"Founder",appearance:founderAppearance()}],
  history:["The wanderer Aren entered a quiet clearing in a vast prehistoric wilderness."]
 });
@@ -33,6 +34,17 @@ export class GameState{
    hero:{...base.hero,...data.hero},resources:{...base.resources,...data.resources},
    skills:{...base.skills,...data.skills}}:base;
   this.data.hero.appearance=normalizeAppearance(this.data.hero.appearance||founderAppearance());
+  // Save migration: previous players with a built shelter receive one
+  // Family Hut free in the equivalent original location. No progress lost.
+  if(!data?.village && this.data.shelter){
+   this.data.village={plots:{family_1:"family"},population:5};
+  }else{
+   this.data.village={
+    ...emptyVillage(),...(this.data.village||{}),
+    plots:{...(this.data.village?.plots||{})}
+   };
+  }
+  this.data.village.population=Math.max(1,Math.min(capacity(this.data.village),Number(this.data.village.population)||5));
   this.onChange=()=>{};
   this.lastSave=0;
  }
@@ -65,11 +77,30 @@ export class GameState{
   if(this.data.axe||!this.data.technologies.includes("tools")||!this.pay({wood:2,stone:3}))return false;
   this.data.axe=true;this.gainXP("crafting",28);this.changed(`${this.data.hero.name} crafted a stone axe.`);return true;
  }
- buildShelter(){
-  if(this.data.shelter||!this.data.technologies.includes("fire")||!this.pay({wood:10,stone:6}))return false;
-  this.data.shelter=true;this.gainXP("construction",55);this.data.culture+=3;
-  this.changed(`${this.data.hero.name} built the family's first shelter.`);return true;
+ canBuildPlot(id){
+  const plot=PLOT_BY_ID[id],building=BUILDINGS[plot?.kind];
+  if(!plot||!building)return {ok:false,reason:"Unknown village plot"};
+  if(this.data.village.plots[id])return {ok:false,reason:"Already constructed"};
+  for(const requirement of building.requires){
+   if(!this.data.technologies.includes(requirement)&&!this.data.civics.includes(requirement))
+    return {ok:false,reason:"Unlock "+(requirement==="fire"?"Control of Fire":requirement==="tools"?"Stone Toolmaking":"Tribal Community")+" first"};
+  }
+  if(!this.enough(building.cost))return {ok:false,reason:"Gather more wood and stone"};
+  return {ok:true,reason:"Ready to construct"};
  }
+ buildVillagePlot(id){
+  const result=this.canBuildPlot(id);
+  if(!result.ok)return false;
+  const plot=PLOT_BY_ID[id],building=BUILDINGS[plot.kind];
+  if(!this.pay(building.cost))return false;
+  this.data.village.plots[id]=plot.kind;
+  if(plot.kind==="family")this.data.shelter=true; // Support pre-village saves.
+  this.gainXP("construction",plot.kind==="family"?55:65);
+  this.changed(`${this.data.hero.name}'s village built a ${building.name}.`);
+  return true;
+ }
+ villageCapacity(){return capacity(this.data.village)}
+ buildShelter(){return this.buildVillagePlot("family_1")}
  setAppearance(patch){
   this.data.hero.appearance=normalizeAppearance({...this.data.hero.appearance,...patch});
   this.changed();

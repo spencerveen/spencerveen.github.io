@@ -16,7 +16,7 @@ try{
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
  page.on("requestfailed",request=>warnings.push(request.url()+" "+request.failure()?.errorText));
- await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113e",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113g",{waitUntil:"domcontentloaded",timeout:45000});
  await page.waitForFunction(()=>typeof window.epochDebug==="function",{timeout:45000});
  await page.waitForFunction(()=>window.epochDebug()?.movement?.loaded===true,{timeout:45000});
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),{timeout:45000});
@@ -50,6 +50,42 @@ try{
  await page.keyboard.up("Shift");await page.keyboard.up("w");
  await page.waitForFunction(()=>window.epochDebug()?.movement?.mode==="idle",{timeout:7000});
  await page.screenshot({path:path.join(output,"epoch-idle-after-walk.png")});
+ // Exercise the new settlement UI in a real GPU-backed Babylon scene.
+ const status=await page.evaluate(()=>window.epochDebug());
+ assert.equal(status.settlement.worldPlots,5,"all five village plots must exist in the world");
+ assert.equal(status.settlement.capacity,5,"starting village holds five people");
+ await page.locator('[data-tab="village"]').click();
+ assert.equal(await page.locator('[data-action="select-plot"]').count(),5,"five plot selectors");
+ await page.locator('[data-action="select-plot"][data-plot="council_1"]').click();
+ assert((await page.locator("#panel").innerText()).includes("Council Lodge"),"Council Lodge shows its details");
+ await page.screenshot({path:path.join(output,"epoch-village-plots.png")});
+ // Test actual construction through the public UI and click-to-walk workflow.
+ // Before a reload, Epoch's pagehide handler saves the old in-memory state.
+ // Seed the fresh document on its next load instead of writing too early.
+ await page.addInitScript(()=>{
+  const key="epoch.stoneage.v1",saved=JSON.parse(localStorage.getItem(key)||"{}");
+  saved.version=1;
+  saved.resources={...saved.resources,wood:100,stone:100};
+  localStorage.setItem(key,JSON.stringify(saved));
+ });
+ await page.reload({waitUntil:"domcontentloaded"});
+ await page.waitForFunction(()=>window.epochDebug()?.settlement?.worldPlots===5,null,{timeout:45000});
+ const loadedResources=await page.evaluate(()=>window.epochDebug().resources);
+ assert(loadedResources.wood>=100 && loadedResources.stone>=100,"test save resources must be present after reload");
+ await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),null,{timeout:45000});
+ await page.locator('[data-tab="village"]').click();
+ await page.locator('[data-action="select-plot"][data-plot="family_1"]').click();
+ await page.locator('[data-action="visit-plot"][data-plot="family_1"]').click();
+ await page.waitForFunction(()=>{
+  const pos=window.epochDebug()?.position;
+  return pos&&Math.hypot(pos.x+8,pos.z-4)<4.2;
+ },null,{timeout:16000});
+ await page.locator('[data-action="build-plot"][data-plot="family_1"]').click();
+ await page.waitForFunction(()=>window.epochDebug()?.settlement?.capacity===8,null,{timeout:5000});
+ const settlement=await page.evaluate(()=>window.epochDebug().settlement);
+ assert.equal(settlement.plots.family_1,"family","the house must be saved to the chosen plot");
+ assert.equal(settlement.capacity,8,"family hut adds 3 population capacity");
+ await page.screenshot({path:path.join(output,"epoch-first-family-hut.png")});
  if(errors.length)throw new Error("Page errors: "+errors.join("\n"));
  console.log("BROWSER PASS",JSON.stringify({
   rigBones:idle.movement.matchedBones,

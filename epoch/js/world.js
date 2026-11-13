@@ -1,16 +1,18 @@
-import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113f";
-import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113f";
+import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113g";
+import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113g";
+import {PLOTS,PLOT_BY_ID} from "./settlement.js?v=20261113g";
+import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113g";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export class World {
- constructor(canvas,onGather,onStatus){
+ constructor(canvas,onGather,onStatus,onPlot=()=>{}){
   this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;
-  this.keys={};this.path=[];this.target=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;
+  this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.onPlot=onPlot;
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.011;this.scene.fogColor=new B.Color3(.62,.71,.62);
-  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();this.makeCamp();this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
+  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();this.makeCamp();createVillageWorld(this,onPlot);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
   this.engine.runRenderLoop(()=>{const dt=Math.min(.045,this.engine.getDeltaTime()/1000);this.update(dt);this.scene.render()});
   window.addEventListener("resize",()=>this.engine.resize());
  }
@@ -70,9 +72,11 @@ export class World {
   const trees=[[4,4],[9,7],[13,1],[7,-9],[-9,8],[-14,-3],[-19,9],[16,13],[-22,-11],[11,-17],[19,-7],[-16,17],[1,15],[22,20],[-24,21],[6,22],[-7,-18],[-23,-20],[22,-19]];
   const rocks=[[3,-7],[-8,-8],[11,2],[-13,12],[16,-13],[-19,-16],[0,21],[21,8],[-23,4]];
   const berries=[[-2,5],[6,-4],[-10,1],[11,12],[-15,-10],[3,17],[-20,11]];
-  trees.forEach(([x,z],i)=>this.decorate("wood",i%2?"Pinewood":"Ancient Oak",x,z,"tree"));
-  rocks.forEach(([x,z])=>this.decorate("stone","Stone Deposit",x,z,"rock"));
-  berries.forEach(([x,z])=>this.decorate("food","Wild Berry Bush",x,z,"bush"));
+  // Keep the village footprints clear of resources before we add physical huts.
+  const clear=(x,z)=>PLOTS.every(plot=>Math.hypot(x-plot.x,z-plot.z)>4.2);
+  trees.filter(([x,z])=>clear(x,z)).forEach(([x,z],i)=>this.decorate("wood",i%2?"Pinewood":"Ancient Oak",x,z,"tree"));
+  rocks.filter(([x,z])=>clear(x,z)).forEach(([x,z])=>this.decorate("stone","Stone Deposit",x,z,"rock"));
+  berries.filter(([x,z])=>clear(x,z)).forEach(([x,z])=>this.decorate("food","Wild Berry Bush",x,z,"bush"));
   // Decorative tufts break up the ground plane without introducing an asset pipeline.
   let seed=23;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
   for(let i=0;i<125;i++){
@@ -90,16 +94,7 @@ export class World {
   for(let i=0;i<3;i++){const log=this.primitive("cylinder","fire log",this.fireNode,[0,.18,0],[.27,1.8,.27],this.m.wood);log.rotation.z=Math.PI/2;log.rotation.y=i*2*Math.PI/3;log.isPickable=false}
   this.flame=this.primitive("sphere","flame",this.fireNode,[0,.65,0],[.62,1.15,.62],this.m.fire);this.flame.isPickable=false;this.flame.setEnabled(false);
   this.fireLight=new B.PointLight("fire glow",this.fireNode.position.add(V(0,1,0)),this.scene);this.fireLight.intensity=0;this.fireLight.diffuse=new B.Color3(1,.58,.2);this.fireLight.range=10;
-  this.shelterNode=new B.TransformNode("shelter",this.scene);this.shelterNode.position=V(-8,this.groundY(-8,4),4);
-  const base=this.primitive("box","hut floor",this.shelterNode,[0,.16,0],[4,.3,3.4],this.m.wood);base.isPickable=false;
-  for(const x of [-1.75,1.75])for(const z of [-1.4,1.4]){
-   const pillar=this.primitive("cylinder","hut post",this.shelterNode,[x,1.25,z],[.22,2.4,.22],this.m.wood);pillar.isPickable=false;
-  }
-  for(const x of [-1,1]){
-   const roof=this.primitive("box","slanted hut roof",this.shelterNode,[x*.92,2.58,0],[2.25,.22,4.2],this.m.woodLight);
-   roof.rotation.z=x*-.45;roof.isPickable=false;
-  }
-  this.shelterNode.setEnabled(false);
+
  }
  makePlayer(){
   // The stable root represents the world actor; visual meshes can be replaced
@@ -145,12 +140,31 @@ export class World {
   }
   this.animals.push({node,origin:V(x,0,z),phase:x+z});
  }
- setDiscovery(fire,shelter){
-  this.flame.setEnabled(fire);this.fireLight.intensity=fire?1.2:0;
-  this.shelterNode.setEnabled(shelter);
-  const index=this.obstacles.findIndex(o=>o.hut);if(index!==-1)this.obstacles.splice(index,1);
-  if(shelter)this.obstacles.push({x:-8,z:4,r:2.2,hut:true});
+ setDiscovery(fire){
+  this.flame.setEnabled(!!fire);
+  this.fireLight.intensity=fire?1.2:0;
  }
+ syncVillage(village){syncVillageWorld(this,village)}
+ highlightPlot(id){highlightVillagePlot(this,id)}
+ distanceToPlot(id){
+  const p=PLOT_BY_ID[id];if(!p)return Infinity;
+  return Math.hypot(this.player.position.x-p.x,this.player.position.z-p.z);
+ }
+ walkToPlot(id){
+  const plot=PLOT_BY_ID[id];if(!plot)return false;
+  this.target=null;
+  this.plotTarget=null;
+  const d=this.distanceToPlot(id);
+  if(d<=4.2&&d>=2.5){this.onPlot(id);return true}
+  const dx=this.player.position.x-plot.x,dz=this.player.position.z-plot.z;
+  const len=Math.hypot(dx,dz)||1;
+  const success=this.plan(plot.x+dx/len*3.45,plot.z+dz/len*3.45);
+  if(!success){this.onStatus("Plot unreachable","Try approaching the building from another direction.");return false}
+  this.plotTarget=id;
+  this.onStatus("Approaching "+id.replace("_"," "),"Walking to the village construction site.");
+  return true;
+ }
+
  bindInput(){
   const isText=()=>["INPUT","TEXTAREA"].includes(document.activeElement?.tagName);
   window.addEventListener("keydown",e=>{
@@ -163,8 +177,9 @@ export class World {
   this.scene.onPointerObservable.add(e=>{
    if(e.type!==B.PointerEventTypes.POINTERPICK || e.event.button!==0)return;
    const pick=e.pickInfo;if(!pick?.hit)return;const mesh=pick.pickedMesh;
+   if(mesh?.metadata?.plotId){this.walkToPlot(mesh.metadata.plotId);return}
    if(mesh?.metadata?.resource){const meta=mesh.metadata;this.walkToResource(meta);return}
-   if(mesh===this.ground){this.target=null;this.plan(pick.pickedPoint.x,pick.pickedPoint.z);this.onStatus("Traveling","Walking to the selected location.")}
+   if(mesh===this.ground){this.target=null;this.plotTarget=null;this.plan(pick.pickedPoint.x,pick.pickedPoint.z);this.onStatus("Traveling","Walking to the selected location.")}
   });
  }
  interactNearby(){
@@ -174,8 +189,8 @@ export class World {
  }
  walkToResource(meta){
   const dist=Math.hypot(meta.x-this.player.position.x,meta.z-this.player.position.z);
-  if(dist<2.5){this.target=null;this.path=[];this.collect(meta);return}
-  this.target=meta;const dx=this.player.position.x-meta.x,dz=this.player.position.z-meta.z,len=Math.hypot(dx,dz)||1;
+  if(dist<2.5){this.target=null;this.plotTarget=null;this.path=[];this.collect(meta);return}
+  this.plotTarget=null;this.target=meta;const dx=this.player.position.x-meta.x,dz=this.player.position.z-meta.z,len=Math.hypot(dx,dz)||1;
   this.plan(meta.x+dx/len*2.05,meta.z+dz/len*2.05);
   this.onStatus("Approaching "+meta.label,"Your adventurer is moving into gathering range.");
  }
@@ -220,7 +235,7 @@ export class World {
   const forward=V(-Math.cos(c.alpha),0,-Math.sin(c.alpha)),right=V(forward.z,0,-forward.x);
   const x=(this.keys.d?1:0)-(this.keys.a?1:0),z=(this.keys.w?1:0)-(this.keys.s?1:0);
   let direction=V(0,0,0),moving=false;
-  if(x||z){this.path=[];this.target=null;direction=right.scale(x).add(forward.scale(z)).normalize();moving=true;}
+  if(x||z){this.path=[];this.target=null;this.plotTarget=null;direction=right.scale(x).add(forward.scale(z)).normalize();moving=true;}
   else if(this.path.length){
    const next=this.path[0],diff=next.subtract(p);diff.y=0;
    if(diff.length()<.25){this.path.shift();}
@@ -241,6 +256,9 @@ export class World {
   // switches the player to the jogging loop without resetting progression.
   this.character?.animate(performance.now()/1000,moving,moving&&!!this.keys.shift);
   if(this.target && Math.hypot(this.target.x-p.x,this.target.z-p.z)<2.55){const target=this.target;this.target=null;this.path=[];this.collect(target)}
+  if(this.plotTarget && this.distanceToPlot(this.plotTarget)<4.2){
+   const id=this.plotTarget;this.plotTarget=null;this.path=[];this.onPlot(id);
+  }
   const aim=V(p.x,p.y+1.2,p.z);
   c.setTarget(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));
   const t=performance.now()/1000;

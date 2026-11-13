@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261113f";
-import {World} from "./world.js?v=20261113f";
-import {UI} from "./ui.js?v=20261113f";
+import {GameState} from "./state.js?v=20261113g";
+import {World} from "./world.js?v=20261113g";
+import {UI} from "./ui.js?v=20261113g";
 const loading=document.getElementById("loading");
 try{
   if(!globalThis.BABYLON)throw new Error("Babylon.js failed to load. Check your internet connection.");
@@ -9,7 +9,8 @@ try{
   let ui;
   const world=new World(canvas,
     resource=>{const result=state.gather(resource);if(result)ui.toast(result.label)},
-    (title,details)=>ui?.status(title,details));
+    (title,details)=>ui?.status(title,details),
+    id=>ui?.selectPlot(id));
   ui=new UI(state,world);
   window.setInterval(()=>state.advance(1),1000);
   window.addEventListener("pagehide",()=>state.save());
@@ -29,6 +30,8 @@ try{
     year:state.formatYear(),generation:state.data.generation,
     skills:{...state.data.skills},resources:{...state.data.resources},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
+    settlement:{plots:{...state.data.village.plots},population:state.data.village.population,capacity:state.villageCapacity(),
+      selectedPlot:ui.selectedPlot,worldPlots:world.villagePlots.size},
     movement:world.character?.animationStatus?.()||null,
     hairAttachment:world.character?.attachmentStatus?.()||null,
     npcAttachments:world.people.map(person=>person.human.attachmentStatus?.()||null),
@@ -37,7 +40,7 @@ try{
 }catch(error){
   console.error("Epoch failed to initialize:",error);
   const report=[
-    "Epoch build 20261113f",
+    "Epoch build 20261113g",
     error?.stack || String(error),
     "Browser: "+navigator.userAgent
   ].join("\n\n");
