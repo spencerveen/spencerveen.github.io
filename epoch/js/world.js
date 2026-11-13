@@ -1,5 +1,5 @@
-import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113e";
-import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113e";
+import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113f";
+import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113f";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
