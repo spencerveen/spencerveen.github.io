@@ -1,9 +1,9 @@
-import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113i";
-import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113i";
-import {PLOT_BY_ID} from "./settlement.js?v=20261113i";
-import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113i";
-import {STARTER_SEED,terrainHeight} from "./forest-generation.js?v=20261113i";
-import {ForestChunks} from "./forest-chunks.js?v=20261113i";
+import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113j";
+import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113j";
+import {PLOT_BY_ID} from "./settlement.js?v=20261113j";
+import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113j";
+import {STARTER_SEED,terrainHeight} from "./forest-generation.js?v=20261113j";
+import {ForestChunks} from "./forest-chunks.js?v=20261113j";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
