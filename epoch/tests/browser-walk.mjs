@@ -17,7 +17,7 @@ try{
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
  page.on("requestfailed",request=>warnings.push(request.url()+" "+request.failure()?.errorText));
- await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113j",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113k",{waitUntil:"domcontentloaded",timeout:45000});
  await page.waitForFunction(()=>typeof window.epochDebug==="function",{timeout:45000});
  await page.waitForFunction(()=>window.epochDebug()?.movement?.loaded===true,{timeout:45000});
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),{timeout:45000});
@@ -68,7 +68,16 @@ try{
  assert.equal(status.settlement.worldPlots,5,"all five village plots must exist in the world");
  assert.equal(status.settlement.capacity,5,"starting village holds five people");
  await page.locator('[data-tab="village"]').click();
- assert.equal(await page.locator('[data-action="select-plot"]').count(),5,"five plot selectors");
+ assert.equal((await page.evaluate(()=>window.epochDebug().settlement.stockpile.placed)),false,"new game starts without a founded home");
+ assert.equal(await page.locator('[data-action="place-stockpile"]').count(),1,"players can choose home placement");
+ await page.locator('[data-action="found-nearby-stockpile"]').click();
+ await page.waitForFunction(()=>window.epochDebug()?.settlement?.stockpile?.placed===true,null,{timeout:6000});
+ const founding=await page.evaluate(()=>window.epochDebug().settlement);
+ assert.equal(founding.stockpile.used,0,"new founding stockpile starts empty");
+ assert.equal(founding.worldPlotCenters.family_1.x,-8,"starter blueprint anchors to founding home");
+ assert.equal(founding.worldPlotCenters.family_1.z,4,"old clearing template remains in place for nearby founding");
+ await page.screenshot({path:path.join(output,"epoch-stockpile-founded.png")});
+ assert.equal(await page.locator('[data-action="select-plot"]').count(),5,"five sites around stockpile");
  await page.locator('[data-action="select-plot"][data-plot="council_1"]').click();
  assert((await page.locator("#panel").innerText()).includes("Council Lodge"),"Council Lodge shows its details");
  await page.screenshot({path:path.join(output,"epoch-village-plots.png")});
@@ -122,6 +131,22 @@ try{
  await page.screenshot({path:path.join(output,"epoch-inventory-filled.png")});
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),null,{timeout:45000});
  await page.locator('[data-tab="village"]').click();
+ const stockpileBefore=await page.evaluate(()=>window.epochDebug().settlement.stockpile);
+ assert.equal(stockpileBefore.used,0,"stored resources are independent of backpack");
+ await page.locator('[data-action="return-stockpile"]').click();
+ await page.waitForFunction(()=>{
+  const s=window.epochDebug();
+  return s?.settlement?.stockpile?.placed&&Math.hypot(s.position.x-s.settlement.stockpile.x,s.position.z-s.settlement.stockpile.z)<5;
+ },null,{timeout:16000});
+ await page.waitForFunction(()=>!document.querySelector('[data-action="deposit-all-stockpile"]')?.disabled,null,{timeout:8000});
+ await page.locator('[data-action="deposit-all-stockpile"]').click();
+ await page.waitForFunction(()=>window.epochDebug()?.settlement?.stockpile?.items?.wood===44,null,{timeout:7000});
+ const stored=await page.evaluate(()=>window.epochDebug());
+ assert.equal(stored.settlement.stockpile.items.stone,30);
+ assert.equal(stored.settlement.stockpile.items.berries,2);
+ assert.equal(stored.settlement.stockpile.items.vines,1);
+ assert.equal(stored.inventory.used,0,"backpack empties after dropping supplies at home");
+ await page.screenshot({path:path.join(output,"epoch-stockpile-filled.png")});
  await page.locator('[data-action="select-plot"][data-plot="family_1"]').click();
  await page.locator('[data-action="visit-plot"][data-plot="family_1"]').click();
  await page.waitForFunction(()=>{
@@ -134,8 +159,10 @@ try{
  assert.equal(settlement.plots.family_1,"family","the house must be saved to the chosen plot");
  assert.equal(settlement.capacity,8,"family hut adds 3 population capacity");
  const afterBuild=await page.evaluate(()=>window.epochDebug());
- assert.equal(afterBuild.resources.wood,34,"building consumes wood from stacks");
- assert.equal(afterBuild.resources.stone,24,"building consumes stone from stacks");
+ assert.equal(afterBuild.resources.wood,0,"building does not magically recreate carried wood");
+ assert.equal(afterBuild.resources.stone,0,"building does not use invisible carried stone");
+ assert.equal(afterBuild.settlement.stockpile.items.wood,34,"building consumes stockpiled wood");
+ assert.equal(afterBuild.settlement.stockpile.items.stone,24,"building consumes stockpiled stone");
  assert(afterBuild.inventory.slots.every(s=>!s||s.qty<=12),"all stacks remain at or below 12");
  await page.screenshot({path:path.join(output,"epoch-first-family-hut.png")});
  if(errors.length)throw new Error("Page errors: "+errors.join("\n"));
@@ -145,6 +172,7 @@ try{
   detailedForestChunks:idle.forest.detailed,
   forestResources:idle.forest.resources,
   removedResourcesAfterReload:nodes.removed,
+  stockpile:afterBuild.settlement.stockpile,
   inventorySlots:idle.inventory.slots.length,
   inventoryAfterBuild:afterBuild.inventory.used,
   rigBones:idle.movement.matchedBones,

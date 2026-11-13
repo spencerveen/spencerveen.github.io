@@ -6,16 +6,14 @@ import {STARTER_SEED} from "../js/forest-generation.js";
 import * as inventory from "../js/inventory.js";
 import {resourceNodeStatus,resourceStateStats} from "../js/resource-nodes.js";
 import {harvestAtNode} from "../js/harvest.js";
-const load=p=>fs.readFileSync(new URL(p,import.meta.url),"utf8");
-const clean=s=>s.replace(/^import[\s\S]*?;\s*$/gm,"").replace(/^export /gm,"");
-const person=new Function(clean(load("../js/characters.js"))+"\nreturn {founderAppearance,descendantAppearance,normalizeAppearance};")();
-const village=new Function(clean(load("../js/settlement.js"))+"\nreturn {BUILDINGS,PLOT_BY_ID,PLOTS,capacity,emptyVillage};")();
+import {founderAppearance} from "../js/characters.js";
+import {PLOTS} from "../js/settlement.js";
+import {LEGACY_HOME} from "../js/stockpile.js";
+const person={founderAppearance},village={PLOTS};
 const store=new Map();
-const localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value),removeItem:key=>store.delete(key)};
-const GameState=new Function("localStorage","deps",
-  "const {founderAppearance,descendantAppearance,normalizeAppearance,BUILDINGS,PLOT_BY_ID,capacity,emptyVillage,STARTER_SEED,ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,normalizeUnpacked,migrateResources,addItems,removeItems,countItem,resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,resourceNodeStatus,resourceStateStats,harvestAtNode}=deps;\n"+
-   clean(load("../js/state.js"))+"\nreturn GameState;"
-)(localStorage,{...person,...village,STARTER_SEED,...inventory,resourceNodeStatus,resourceStateStats,harvestAtNode});
+globalThis.localStorage={getItem:key=>store.get(key)||null,
+ setItem:(key,value)=>store.set(key,value),removeItem:key=>store.delete(key)};
+const {GameState}=await import("../js/state.js");
 const fresh=new GameState();fresh.onChange=()=>{};
 assert.equal(fresh.villageCapacity(),5);
 assert.equal(fresh.data.village.population,5);
@@ -25,6 +23,15 @@ assert.equal(fresh.buildVillagePlot("unknown"),false);
 assert.equal(fresh.addResource("wood",70),70);
 assert.equal(fresh.addResource("stone",40),40);
 assert.equal(fresh.inventoryUsed(),10);
+assert.equal(fresh.data.village.stockpile,null,"A new game lets the player place its first stockpile");
+assert.equal(fresh.canBuildPlot("family_1").ok,false,"Must first found a stockpile");
+assert(fresh.foundStockpile(LEGACY_HOME.x,LEGACY_HOME.z),"Found initial stockpile");
+assert.equal(fresh.stockpileInfo().used,0,"Stockpile begins empty");
+assert.equal(fresh.buildVillagePlot("family_1"),false,"Cannot build using carried materials");
+assert.equal(fresh.depositAllToStockpile(100,100),0,"Distant deposit is rejected");
+assert.equal(fresh.depositAllToStockpile(LEGACY_HOME.x,LEGACY_HOME.z),110,"Deposit all collected wood and stone");
+assert.equal(fresh.stockpileInfo().items.wood,70);
+assert.equal(fresh.stockpileInfo().items.stone,40);
 assert(fresh.buildVillagePlot("family_1"),"First hut built");
 assert.equal(fresh.villageCapacity(),8,"Each hut adds exactly three places");
 assert(fresh.data.shelter,"Legacy shelter compatibility flag");
@@ -52,12 +59,14 @@ const previousSave={version:1,hero:{name:"Aren",age:30,appearance:person.founder
 store.set("epoch.stoneage.v1",JSON.stringify(previousSave));
 const migrated=new GameState();
 assert.equal(migrated.data.village.plots.family_1,"family","Old built shelter migrates for free");
+assert.deepEqual({x:migrated.data.village.stockpile.x,z:migrated.data.village.stockpile.z},LEGACY_HOME,"Established villages inherit a free stockpile at the old camp");
 assert.equal(migrated.villageCapacity(),8);
 assert.equal(migrated.data.resources.wood,11,"Existing resources preserved");
 assert.equal(migrated.data.worldSeed,STARTER_SEED,"Old saves use a stable forest seed");
 store.clear();
 const reset=new GameState();
 assert.equal(reset.villageCapacity(),5,"Fresh characters have no inherited huts");
+assert.equal(reset.data.village.stockpile,null,"New games can place a new home");
 assert.equal(Object.keys(reset.data.village.plots).length,0);
 assert(Number.isInteger(reset.data.worldSeed)&&reset.data.worldSeed>0,"New game gets a valid world seed");
 reset.save();

@@ -53,21 +53,12 @@ assert(occupied>=0);
 migration.slots[occupied]=null;
 assert(retrieveUnpacked(migration.slots,migration.unpacked)>0,"old supplies can be reclaimed after freeing a slot");
 
-const load=p=>fs.readFileSync(new URL(p,import.meta.url),"utf8");
-const clean=s=>s.replace(/^import[\s\S]*?;\s*$/gm,"").replace(/^export /gm,"");
-const chars=new Function(clean(load("../js/characters.js"))+
- "\nreturn {founderAppearance,descendantAppearance,normalizeAppearance};")();
-const settlement=new Function(clean(load("../js/settlement.js"))+
- "\nreturn {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage};")();
+import {founderAppearance} from "../js/characters.js";
+const chars={founderAppearance};
 const store=new Map();
-const localStorage={
- getItem:key=>store.get(key)||null,
- setItem:(key,value)=>store.set(key,value),
- removeItem:key=>store.delete(key)
-};
-const deps={...chars,...settlement,...inventory,STARTER_SEED,resourceNodeStatus,resourceStateStats,harvestAtNode};
-const GameState=new Function("localStorage","deps",
- "const {"+Object.keys(deps).join(",")+"}=deps;\n"+clean(load("../js/state.js"))+"\nreturn GameState;")(localStorage,deps);
+globalThis.localStorage={getItem:key=>store.get(key)||null,
+ setItem:(key,value)=>store.set(key,value),removeItem:key=>store.delete(key)};
+const {GameState}=await import("../js/state.js");
 const state=new GameState();
 state.onChange=()=>{};
 assert.equal(state.data.inventory.length,10);

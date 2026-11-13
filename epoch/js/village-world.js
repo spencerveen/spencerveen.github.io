@@ -1,4 +1,4 @@
-import {PLOTS,BUILDINGS} from "./settlement.js?v=20261113j";
+import {PLOTS,BUILDINGS,plotAtHome} from "./settlement.js?v=20261113k";
 // Low-poly architectural placeholders for the first settlement-building slice.
 // Each visual occupies a fixed build plot; meshes and interaction metadata are
 // kept separate from saved game state. Only constructed models cause collision.
@@ -140,15 +140,19 @@ export function createVillageWorld(world,onPlot){
 export function syncVillageWorld(world,village){
  if(!world.villagePlots)return;
  world.obstacles=world.obstacles.filter(o=>!o.plotId);
- for(const {plot,marker,constructed} of world.villagePlots.values()){
-  const built=village?.plots?.[plot.id]===plot.kind;
-  const item=world.villagePlots.get(plot.id);
-  if(item)item.built=built;
-  constructed.setEnabled(built);
+ for(const item of world.villagePlots.values()){
+  const {plot,marker,constructed,parent}=item;
+  const site=plotAtHome(village,plot.id);
+  const visible=!!village?.stockpile;
+  plot.x=site.x;plot.z=site.z;
+  parent.position=V(site.x,world.groundY(site.x,site.z)+.12,site.z);
+  parent.setEnabled(visible);
+  const built=visible&&village?.plots?.[plot.id]===plot.kind;
+  item.built=!!built;
+  constructed.setEnabled(!!built);
   marker.material=built?world.villageMats.built:world.villageMats.free;
-  if(built && plot.kind!=="hearth"){
-   world.obstacles.push({x:plot.x,z:plot.z,r:plot.kind==="council"?2.6:2.0,plotId:plot.id});
-  }
+  if(built && plot.kind!=="hearth")
+   world.obstacles.push({x:site.x,z:site.z,r:plot.kind==="council"?2.6:2.0,plotId:plot.id});
  }
 }
 export function highlightVillagePlot(world,id){
