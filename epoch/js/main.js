@@ -13,8 +13,17 @@ try{
   ui=new UI(state,world);
   window.setInterval(()=>state.advance(1),1000);
   window.addEventListener("pagehide",()=>state.save());
-  loading.classList.add("hidden");
-  ui.toast("The first chapter begins. Explore the clearing.");
+  // Keep the loading screen until the actual player model is in the scene.
+  // A timeout ensures the game remains playable if the asset network stalls.
+  let loaded=false;
+  const reveal=()=>{if(loaded)return;loaded=true;loading.classList.add("hidden");};
+  Promise.race([
+    world.character.ready,
+    new Promise(resolve=>window.setTimeout(()=>resolve(false),8000))
+  ]).then(result=>{
+    reveal();
+    ui.toast(result?"The new adventurer models are ready.":"Epoch opened. Character art may still be loading.");
+  }).catch(error=>{console.error("Epoch character load error:",error);reveal();});
   // Expose a read-only inspection aid for development without exposing mutation methods.
   Object.defineProperty(globalThis,"epochDebug",{value:()=>({
     year:state.formatYear(),generation:state.data.generation,
