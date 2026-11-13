@@ -69,7 +69,7 @@ export class UI{
    const color=field==="hairColor"?HAIR_COLORS[p.hairColor].hex:field==="skin"?SKIN_TONES[p.skin]:field==="eyes"?EYE_COLORS[p.eyes]:null;
    html+=`<div class="appearance-picker"><span>${label}</span><div><button data-action="looks" data-field="${field}" data-dir="-1" aria-label="Previous ${label}">‹</button><b>${color?`<i class="swatch" style="background:${color}"></i>`:""}${esc(value)}</b><button data-action="looks" data-field="${field}" data-dir="1" aria-label="Next ${label}">›</button></div></div>`;
   }
-  html+=`<p class="info">Hair and skin colors are inherited with variation. Hairstyles, outfits, and body proportions can differ between generations. These are procedural 3D meshes with shared animation joints, not separate imported character files.</p>`;
+  html+=`<p class="info">Hair and skin colors are inherited with variation. Hairstyles, outfits, and body proportions can differ between generations. These are modular GLB character models with editable materials and shared animation joints. Hair, eye and skin traits carry through family lines.</p>`;
   return html;
  }
  skills(){
