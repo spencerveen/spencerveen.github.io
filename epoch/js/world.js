@@ -1,4 +1,4 @@
-import {createHuman,founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js";
+import {createHuman,founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113b";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));

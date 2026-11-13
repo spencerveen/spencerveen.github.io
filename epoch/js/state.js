@@ -1,4 +1,4 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js";
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113b";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
