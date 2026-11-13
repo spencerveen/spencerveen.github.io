@@ -1,4 +1,4 @@
-import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113c";
+import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113d";
 import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113d";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
