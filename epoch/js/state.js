@@ -1,5 +1,6 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113g";
-import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113g";
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113h";
+import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113h";
+import {STARTER_SEED} from "./forest-generation.js?v=20261113h";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
@@ -16,7 +17,7 @@ export const CIVICS={
 };
 const KEY="epoch.stoneage.v1";
 const fresh=()=>({
- version:1,year:-12000,calendarProgress:0,generation:1,hero:{name:"Aren",age:18,appearance:founderAppearance()},
+ version:1,year:-12000,calendarProgress:0,generation:1,worldSeed:Math.floor(Math.random()*0x7fffffff)+1,hero:{name:"Aren",age:18,appearance:founderAppearance()},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
  resources:{wood:0,stone:0,food:0},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
@@ -33,6 +34,10 @@ export class GameState{
   this.data=data && data.version===1?{...base,...data,
    hero:{...base.hero,...data.hero},resources:{...base.resources,...data.resources},
    skills:{...base.skills,...data.skills}}:base;
+  // Existing pre-chunk saves get one stable forest seed. New games and
+  // explicitly reset games receive a new seed, persisted with their world.
+  this.data.worldSeed=data?.worldSeed===undefined&&data?.version===1
+   ?STARTER_SEED:(Number(this.data.worldSeed)>>>0)||STARTER_SEED;
   this.data.hero.appearance=normalizeAppearance(this.data.hero.appearance||founderAppearance());
   // Save migration: previous players with a built shelter receive one
   // Family Hut free in the equivalent original location. No progress lost.

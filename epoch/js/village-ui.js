@@ -1,4 +1,4 @@
-import {PLOTS,PLOT_BY_ID,BUILDINGS} from "./settlement.js?v=20261113g";
+import {PLOTS,PLOT_BY_ID,BUILDINGS} from "./settlement.js?v=20261113h";
 const escapeHTML=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
 const cost=items=>Object.entries(items).map(([k,v])=>v+" "+k).join(" · ");
 const prereq=name=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[name]||name);

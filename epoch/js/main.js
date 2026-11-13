@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261113g";
-import {World} from "./world.js?v=20261113g";
-import {UI} from "./ui.js?v=20261113g";
+import {GameState} from "./state.js?v=20261113h";
+import {World} from "./world.js?v=20261113h";
+import {UI} from "./ui.js?v=20261113h";
 const loading=document.getElementById("loading");
 try{
   if(!globalThis.BABYLON)throw new Error("Babylon.js failed to load. Check your internet connection.");
@@ -10,7 +10,7 @@ try{
   const world=new World(canvas,
     resource=>{const result=state.gather(resource);if(result)ui.toast(result.label)},
     (title,details)=>ui?.status(title,details),
-    id=>ui?.selectPlot(id));
+    id=>ui?.selectPlot(id),state.data.worldSeed);
   ui=new UI(state,world);
   window.setInterval(()=>state.advance(1),1000);
   window.addEventListener("pagehide",()=>state.save());
@@ -28,6 +28,7 @@ try{
   // Expose a read-only inspection aid for development without exposing mutation methods.
   Object.defineProperty(globalThis,"epochDebug",{value:()=>({
     year:state.formatYear(),generation:state.data.generation,
+    forest:world.terrain.status,
     skills:{...state.data.skills},resources:{...state.data.resources},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
     settlement:{plots:{...state.data.village.plots},population:state.data.village.population,capacity:state.villageCapacity(),
@@ -40,7 +41,7 @@ try{
 }catch(error){
   console.error("Epoch failed to initialize:",error);
   const report=[
-    "Epoch build 20261113g",
+    "Epoch build 20261113h",
     error?.stack || String(error),
     "Browser: "+navigator.userAgent
   ].join("\n\n");

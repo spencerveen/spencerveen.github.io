@@ -10,6 +10,8 @@ on:
       - 'epoch/js/quaternius-models.js'
       - 'epoch/js/locomotion.js'
       - 'epoch/js/settlement.js'
+      - 'epoch/js/forest-generation.js'
+      - 'epoch/js/forest-chunks.js'
       - 'epoch/js/village-world.js'
       - 'epoch/js/village-ui.js'
       - '.github/workflows/epoch-character-checks.yml'
@@ -23,6 +25,8 @@ on:
       - 'epoch/js/quaternius-models.js'
       - 'epoch/js/locomotion.js'
       - 'epoch/js/settlement.js'
+      - 'epoch/js/forest-generation.js'
+      - 'epoch/js/forest-chunks.js'
       - 'epoch/js/village-world.js'
       - 'epoch/js/village-ui.js'
 
@@ -33,6 +37,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Validate seeded forest generation and chunk streaming
+        run: node epoch/tests/check-forest.mjs
       - name: Validate village and building save compatibility
         run: node epoch/tests/check-settlement.mjs
       - name: Inspect game models
