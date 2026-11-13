@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import * as inventory from "../js/inventory.js";
 import {STARTER_SEED} from "../js/forest-generation.js";
+import {resourceNodeStatus,resourceStateStats} from "../js/resource-nodes.js";
+import {harvestAtNode} from "../js/harvest.js";
 const {ITEMS,ITEM_IDS,INVENTORY_SLOTS,STACK_LIMIT,emptyInventory,addItems,
  removeItems,countItem,migrateResources,retrieveUnpacked,resourceTotals,occupiedSlots}=inventory;
 const slots=emptyInventory();
@@ -63,7 +65,7 @@ const localStorage={
  setItem:(key,value)=>store.set(key,value),
  removeItem:key=>store.delete(key)
 };
-const deps={...chars,...settlement,...inventory,STARTER_SEED};
+const deps={...chars,...settlement,...inventory,STARTER_SEED,resourceNodeStatus,resourceStateStats,harvestAtNode};
 const GameState=new Function("localStorage","deps",
  "const {"+Object.keys(deps).join(",")+"}=deps;\n"+clean(load("../js/state.js"))+"\nreturn GameState;")(localStorage,deps);
 const state=new GameState();

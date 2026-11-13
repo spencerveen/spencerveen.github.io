@@ -11,6 +11,8 @@ on:
       - 'epoch/js/locomotion.js'
       - 'epoch/js/settlement.js'
       - 'epoch/js/inventory.js'
+      - 'epoch/js/resource-nodes.js'
+      - 'epoch/js/harvest.js'
       - 'epoch/js/inventory-ui.js'
       - 'epoch/js/forest-generation.js'
       - 'epoch/js/forest-chunks.js'
@@ -28,6 +30,8 @@ on:
       - 'epoch/js/locomotion.js'
       - 'epoch/js/settlement.js'
       - 'epoch/js/inventory.js'
+      - 'epoch/js/resource-nodes.js'
+      - 'epoch/js/harvest.js'
       - 'epoch/js/inventory-ui.js'
       - 'epoch/js/forest-generation.js'
       - 'epoch/js/forest-chunks.js'
@@ -41,6 +45,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Validate permanent resource depletion and berry regeneration
+        run: node epoch/tests/check-resource-nodes.mjs
       - name: Validate ten-slot inventory and save migration
         run: node epoch/tests/check-inventory.mjs
       - name: Validate seeded forest generation and chunk streaming

@@ -1,4 +1,4 @@
-import {PLOTS,BUILDINGS} from "./settlement.js?v=20261113i";
+import {PLOTS,BUILDINGS} from "./settlement.js?v=20261113j";
 // Low-poly architectural placeholders for the first settlement-building slice.
 // Each visual occupies a fixed build plot; meshes and interaction metadata are
 // kept separate from saved game state. Only constructed models cause collision.

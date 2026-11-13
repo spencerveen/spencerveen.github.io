@@ -1,4 +1,4 @@
-import {ITEMS,INVENTORY_SLOTS,STACK_LIMIT,ITEM_IDS} from "./inventory.js?v=20261113i";
+import {ITEMS,INVENTORY_SLOTS,STACK_LIMIT,ITEM_IDS} from "./inventory.js?v=20261113j";
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 export function inventoryPanel(ui){
  const state=ui.state,d=state.data;
@@ -28,7 +28,8 @@ export function inventoryPanel(ui){
  if(unpacked){
   html+=`<div class="entry pack-legacy"><h3>Unpacked supplies from your old save</h3><p>${unpacked} previously collected resources could not fit inside your new ten-slot pack. None were deleted. Free some slots, then retrieve them.</p><small>${ITEM_IDS.filter(id=>d.unpacked[id]>0).map(id=>esc(ITEMS[id].name)+": "+d.unpacked[id]).join(" · ")}</small><button type="button" data-action="retrieve-supplies">Retrieve available supplies</button></div>`;
  }
- html+=`<p class="info">Gather resources by clicking trees, stones or berry bushes in the world. Trees and berry bushes can also give vines.</p>`;
+ html+=`<p class="info">Trees and stones eventually run out and disappear. Berry bushes lose their fruit after repeated harvests, then regrow berries after two minutes. <b>Shift+click</b> a berry bush (or Shift+E nearby) to chop it down for three vines. Chopped bushes do not regrow.</p>`;
+ html+=`<div class="entry"><h3>🌿 Cut Bush for Vines</h3><p>Move close to a berry bush, then cut it down. This gives 3 vines and permanently removes the bush.</p><button type="button" data-action="chop-bush">Chop nearby berry bush</button></div>`;
  html+=`<div class="entry"><h3>🪓 Stone Axe</h3><p>${d.axe?"Equipped. Harvest 3 wood rather than 2 per tree interaction.":"A better tool for woodcutting. Requires the Stone Toolmaking technology."}</p><small>2 wood · 3 stone</small><button data-action="axe" ${d.axe||!d.technologies.includes("tools")||!state.enough({wood:2,stone:3})?"disabled":""}>${d.axe?"Already crafted":"Craft axe"}</button></div>`;
  html+=`<div class="entry"><h3>🏕 Village Construction</h3><p>Build Family Huts, a Cooking Hearth, the Toolmaker’s Shelter and a Council Lodge using carried resources.</p><button data-action="open-village">Open Village →</button></div>`;
  return html;
@@ -53,6 +54,10 @@ export function handlePackAction(ui,button){
    ui.selectedSlot=null;
    ui.toast(`Dropped ${slot.qty} ${item.name}.`);
   }
+  return true;
+ }
+ if(action==="chop-bush"){
+  ui.world.interactNearby("cut");
   return true;
  }
  if(action==="retrieve-supplies"){

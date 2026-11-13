@@ -1,7 +1,7 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113i";
-import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113i";
-import {villagePanel,selectVillagePlot,handleVillageAction} from "./village-ui.js?v=20261113i";
-import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261113i";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113j";
+import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113j";
+import {villagePanel,selectVillagePlot,handleVillageAction} from "./village-ui.js?v=20261113j";
+import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261113j";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -132,7 +132,7 @@ export class UI{
  }
  help(){
   $("guide").innerHTML=`<p><strong>Explore:</strong> WASD to walk, Shift to sprint, right-click and drag to orbit the camera, and scroll to zoom. Left-click the ground for automatic pathfinding.</p>
-  <p><strong>Gather:</strong> Trees give wood and vines; rocks give stone; bushes give wild berries and vines. Your starter pack holds ten slots with up to twelve of one item per stack. Full inventory prevents further gathering until you spend or discard items.</p>
+  <p><strong>Gather:</strong> Trees run out of wood and fall. Stone deposits disappear after being mined out. Berry bushes grow back their fruit two minutes after they have been harvested clean. You can permanently cut a bush down for three vines with <strong>Shift+click</strong>, <strong>Shift+E</strong> near it, or the Pack button. All resources remain limited by your ten-slot inventory (12 per stack).</p>
   <p><strong>Progress:</strong> Unlock Fire and Stone Toolmaking under Tech, then craft an axe in the Pack. Use the Village tab to build your first huts.</p>
   <p><strong>Village:</strong> Click a marked construction plot, walk into range, then select Construct. Each Family Hut adds space for 3 more villagers.</p>
   <p><strong>Character:</strong> Open the Character tab to change the base body, hair, colors, clothing, and facial hair. NPCs use the same modular system, and descendants inherit traits with variation.</p>

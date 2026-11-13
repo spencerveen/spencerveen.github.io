@@ -1,16 +1,16 @@
-import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113i";
-import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113i";
-import {PLOT_BY_ID} from "./settlement.js?v=20261113i";
-import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113i";
-import {STARTER_SEED,terrainHeight} from "./forest-generation.js?v=20261113i";
-import {ForestChunks} from "./forest-chunks.js?v=20261113i";
+import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113j";
+import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113j";
+import {PLOT_BY_ID} from "./settlement.js?v=20261113j";
+import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113j";
+import {STARTER_SEED,terrainHeight} from "./forest-generation.js?v=20261113j";
+import {ForestChunks} from "./forest-chunks.js?v=20261113j";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export class World {
- constructor(canvas,onGather,onStatus,onPlot=()=>{},seed=STARTER_SEED){
-  this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;this.worldSeed=seed>>>0;
-  this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.onPlot=onPlot;
+ constructor(canvas,onGather,onStatus,onPlot=()=>{},seed=STARTER_SEED,getResourceStatus=()=>null){
+  this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;this.getResourceStatus=getResourceStatus;this.worldSeed=seed>>>0;
+  this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onPlot;
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.020;this.scene.fogColor=new B.Color3(.62,.71,.62);
@@ -43,25 +43,30 @@ export class World {
    B.MeshBuilder.CreateBox(name,{size:1},this.scene);
   mesh.parent=parent;mesh.position=V(...pos);mesh.scaling=V(...sc);mesh.material=mat;return mesh
  }
- decorate(resource,label,x,z,shape,chunkKey=null){
-  const parent=new B.TransformNode(label,this.scene);parent.position=V(x,this.groundY(x,z),z);
-  const mark=(mesh)=>{mesh.metadata={resource,label,x,z,chunkKey};this.entities.push({mesh,parent,resource,label,x,z,chunkKey})};
+ decorate(resource,label,x,z,shape,chunkKey=null,resourceId=null,status=null){
+  const parent=new B.TransformNode(label,this.scene);
+  parent.position=V(x,this.groundY(x,z),z);
+  parent.metadata={resourceId,shape,chunkKey,berryMeshes:[]};
+  const mark=(mesh)=>{mesh.metadata={resource,label,x,z,chunkKey,resourceId,shape};
+   this.entities.push({mesh,parent,resource,label,x,z,chunkKey,resourceId,shape})};
   if(shape==="tree"){
    const trunk=this.primitive("cylinder","tree trunk",parent,[0,1.35,0],[.55,2.7,.55],this.m.wood);mark(trunk);
    for(const [dx,dy,dz,s] of [[0,3.2,0,2.35],[-.8,2.8,.3,1.65],[.75,2.7,-.2,1.85],[.1,3.9,.15,1.45]]){
     const leaf=this.primitive("sphere","tree canopy",parent,[dx,dy,dz],[s,s*.85,s],(dx>0)?this.m.leaves2:this.m.leaves);mark(leaf);
    }
-   this.obstacles.push({x,z,r:.75,chunkKey});
+   this.obstacles.push({x,z,r:.75,chunkKey,resourceId});
   } else if(shape==="rock"){
    const stone=this.primitive("sphere","stone deposit",parent,[0,.47,0],[1.3,.9,1.15],this.m.stone);mark(stone);
    const small=this.primitive("sphere","stone shard",parent,[.56,.25,.42],[.53,.44,.62],this.m.stoneDark);mark(small);
-   this.obstacles.push({x,z,r:.74,chunkKey});
+   this.obstacles.push({x,z,r:.74,chunkKey,resourceId});
   } else {
    for(const [dx,dz] of [[0,0],[.4,.17],[-.28,.3]]){
     const bush=this.primitive("sphere","berry bush",parent,[dx,.42,dz],[.8,.75,.8],this.m.leafBright);mark(bush);
    }
    for(const [dx,dy,dz] of [[-.3,.6,.2],[.27,.57,-.2],[0,.84,.28]]){
-    const berry=this.primitive("sphere","red berries",parent,[dx,dy,dz],[.17,.15,.17],this.m.berries);mark(berry);
+    const berry=this.primitive("sphere","red berries",parent,[dx,dy,dz],[.17,.15,.17],this.m.berries);
+    mark(berry);parent.metadata.berryMeshes.push(berry);
+    if(status&&status.remaining<=0)berry.setEnabled(false);
    }
   }
   return parent;
@@ -165,7 +170,7 @@ export class World {
   window.addEventListener("keydown",e=>{
    if(isText())return;const key=e.key.toLowerCase();
    if(["w","a","s","d","shift","e"].includes(key)){e.preventDefault();this.keys[key]=true;}
-   if(key==="e")this.interactNearby();
+   if(key==="e")this.interactNearby(e.shiftKey?"cut":"gather");
   });
   window.addEventListener("keyup",e=>{this.keys[e.key.toLowerCase()]=false});
   window.addEventListener("blur",()=>{this.keys={}});
@@ -173,26 +178,47 @@ export class World {
    if(e.type!==B.PointerEventTypes.POINTERPICK || e.event.button!==0)return;
    const pick=e.pickInfo;if(!pick?.hit)return;const mesh=pick.pickedMesh;
    if(mesh?.metadata?.plotId){this.walkToPlot(mesh.metadata.plotId);return}
-   if(mesh?.metadata?.resource){const meta=mesh.metadata;this.walkToResource(meta);return}
+   if(mesh?.metadata?.resource){const meta=mesh.metadata;this.walkToResource(meta,e.event.shiftKey?"cut":"gather");return}
    if(mesh?.metadata?.terrain){this.target=null;this.plotTarget=null;this.plan(pick.pickedPoint.x,pick.pickedPoint.z);this.onStatus("Traveling","Walking to the selected location.")}
   });
  }
- interactNearby(){
+ interactNearby(action="gather"){
   const p=this.player.position;
-  const near=this.entities.filter(e=>Math.hypot(e.x-p.x,e.z-p.z)<2.7).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
-  if(near)this.walkToResource(near);else this.onStatus("Nothing nearby","Move closer to a tree, rock or berry bush.");
+  const near=this.entities.filter(e=>(action!=="cut"||e.resource==="food")
+    &&Math.hypot(e.x-p.x,e.z-p.z)<2.7)
+   .sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
+  if(near)this.walkToResource(near,action);
+  else this.onStatus("Nothing nearby",action==="cut"?"Get within gathering range of a berry bush to cut it down.":"Move closer to a tree, rock or berry bush.");
  }
- walkToResource(meta){
+ walkToResource(meta,action="gather"){
+  const status=this.getResourceStatus(meta);
+  if(status?.removed){this.onStatus("Already depleted","This resource is no longer available.");return}
   const dist=Math.hypot(meta.x-this.player.position.x,meta.z-this.player.position.z);
-  if(dist<2.5){this.target=null;this.plotTarget=null;this.path=[];this.collect(meta);return}
-  this.plotTarget=null;this.target=meta;const dx=this.player.position.x-meta.x,dz=this.player.position.z-meta.z,len=Math.hypot(dx,dz)||1;
-  this.plan(meta.x+dx/len*2.05,meta.z+dz/len*2.05);
-  this.onStatus("Approaching "+meta.label,"Your adventurer is moving into gathering range.");
+  if(dist<2.5){
+   this.target=null;this.plotTarget=null;this.path=[];
+   this.collect(meta,action);return;
+  }
+  this.plotTarget=null;this.target=meta;this.targetAction=action;
+  const dx=this.player.position.x-meta.x,dz=this.player.position.z-meta.z,len=Math.hypot(dx,dz)||1;
+  if(!this.plan(meta.x+dx/len*2.05,meta.z+dz/len*2.05)){
+   this.target=null;this.onStatus("Cannot reach resource","Try approaching from another side.");return;
+  }
+  this.onStatus("Approaching "+meta.label,action==="cut"&&meta.resource==="food"?
+   "Going to chop down the bush for vines. This removes it permanently.":
+   "Gathering available materials. Shift+click a berry bush to cut it for vines.");
  }
- collect(meta){
+ collect(meta,action="gather"){
   if(this.cooldown>0)return;
-  this.cooldown=.5;const result=this.onGather(meta.resource);this.onStatus(result?.type==="full"?"Pack full":"Gathering "+meta.label,result?.type==="full"?"Spend or discard a stack to make room.":"Click again or find another resource.");
+  this.cooldown=.5;
+  const result=this.onGather(meta,action);
+  if(result?.removed&&meta.resourceId)this.terrain.removeResource(meta.resourceId,meta.chunkKey);
+  else if(meta.resource==="food"&&meta.resourceId)this.terrain.refreshBerries();
+  this.onStatus(result?.type==="full"?"Pack full":
+   result?.type==="empty"?"Resource depleted":
+   result?.removed?"Resource exhausted":"Gathering "+meta.label,
+   result?.label||"No resources gathered.");
  }
+
  isBlocked(x,z){
   // No legacy square world boundary. Terrain and plots are navigable using
   // the same collision test wherever their chunks are currently active.
@@ -275,13 +301,16 @@ export class World {
    this.walkTime+=dt*speed*2.4;
   }
   else this.walkTime=0;
-  // Loading a new forest chunk is triggered only when crossing a chunk edge.
+  // Chunks regenerate from the seed; berry recovery is based on real elapsed
+  // time even if this node wasn't loaded while the bush was growing back.
   this.terrain.update(p.x,p.z);
+  this.berryClock+=dt;
+  if(this.berryClock>=2){this.berryClock=0;this.terrain.refreshBerries()}
   p.y=this.groundY(p.x,p.z);
   // Drive authored movement clips with a continuous clock; pressing Shift
   // switches the player to the jogging loop without resetting progression.
   this.character?.animate(performance.now()/1000,moving,moving&&!!this.keys.shift);
-  if(this.target && Math.hypot(this.target.x-p.x,this.target.z-p.z)<2.55){const target=this.target;this.target=null;this.path=[];this.collect(target)}
+  if(this.target && Math.hypot(this.target.x-p.x,this.target.z-p.z)<2.55){const target=this.target,action=this.targetAction;this.target=null;this.path=[];this.collect(target,action)}
   if(this.plotTarget && this.distanceToPlot(this.plotTarget)<4.2){
    const id=this.plotTarget;this.plotTarget=null;this.path=[];this.onPlot(id);
   }

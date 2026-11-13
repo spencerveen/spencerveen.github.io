@@ -1,9 +1,11 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113i";
-import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113i";
-import {STARTER_SEED} from "./forest-generation.js?v=20261113i";
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113j";
+import {BUILDINGS,PLOT_BY_ID,capacity,emptyVillage} from "./settlement.js?v=20261113j";
+import {STARTER_SEED} from "./forest-generation.js?v=20261113j";
+import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113j";
+import {harvestAtNode} from "./harvest.js?v=20261113j";
 import {ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
- resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113i";
+ resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113j";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
@@ -22,7 +24,7 @@ const KEY="epoch.stoneage.v1";
 const fresh=()=>({
  version:1,year:-12000,calendarProgress:0,generation:1,worldSeed:Math.floor(Math.random()*0x7fffffff)+1,hero:{name:"Aren",age:18,appearance:founderAppearance()},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
- resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),knowledge:0,culture:0,
+ resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
  lineage:[{name:"Aren",gen:1,start:-12000,role:"Founder",appearance:founderAppearance()}],
  history:["The wanderer Aren entered a quiet clearing in a vast prehistoric wilderness."]
@@ -65,6 +67,9 @@ export class GameState{
    this.data.unpacked=migration.unpacked;
   }
   this.syncResources();
+  // Untouched procedural nodes are implicit. Save only modified resource IDs.
+  this.data.resourceNodes=data?.resourceNodes&&typeof data.resourceNodes==="object"
+   &&!Array.isArray(data.resourceNodes)?{...data.resourceNodes}:{};
   this.onChange=()=>{};
   this.lastSave=0;
  }
@@ -128,6 +133,9 @@ export class GameState{
   this.changed();
   return {label:`+${gained} ${info.name}${vines?" · +"+vines+" vines":""}${gained<info.amount?" (pack nearly full)":""}`,type,added:gained,vines};
  }
+ resourceStatus(meta,now=Date.now()){return resourceNodeStatus(this.data.resourceNodes,meta,now)}
+ resourceStatistics(){return resourceStateStats(this.data.resourceNodes)}
+ harvestResource(meta,action="gather",now=Date.now()){return harvestAtNode(this,meta,action,now)}
  eligible(kind,key){
   const d=kind==="tech"?TECH:CIVICS;const owned=kind==="tech"?this.data.technologies:this.data.civics;const node=d[key];
   if(!node)return false;
