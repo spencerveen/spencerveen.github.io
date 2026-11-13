@@ -19,7 +19,7 @@ export class UI{
   $("modal").addEventListener("click",e=>{if(e.target===$("modal"))this.close()});
   window.addEventListener("keydown",e=>{if(e.key==="Escape")this.close()});
   $("panel").addEventListener("click",e=>this.handleAction(e));
-  state.onChange=()=>{this.world.setDiscovery(state.data.technologies.includes("fire"));this.world.syncVillage(state.data.village);this.world.applyAppearance(state.data.hero.appearance);this.render()};
+  state.onChange=()=>{this.world.setDiscovery(state.data.technologies.includes("fire"));this.world.syncVillage(state.data.village);this.world.highlightPlot(this.selectedPlot);this.world.applyAppearance(state.data.hero.appearance);this.render()};
   this.world.setDiscovery(state.data.technologies.includes("fire"));this.world.syncVillage(state.data.village);this.world.highlightPlot(this.selectedPlot);
   this.world.applyAppearance(state.data.hero.appearance);
   this.render();
