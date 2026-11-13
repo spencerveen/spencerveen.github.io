@@ -183,6 +183,36 @@ export class World {
   this.onStatus("Choose stockpile site","Move over level ground, then left-click to found your village. Press Escape to cancel.");
   return true;
  }
+ findSuggestedStockpileSite(){
+  // Accessible quick-found option: use the original open camp footprint when
+  // available, otherwise look around the current character on the 2m grid.
+  const p=this.player.position,options=[[LEGACY_HOME.x,LEGACY_HOME.z]];
+  for(const radius of [6,8,10,12,14,16]){
+   for(let step=0;step<16;step++){
+    const a=step*Math.PI/8;
+    options.push([p.x+Math.cos(a)*radius,p.z+Math.sin(a)*radius]);
+   }
+  }
+  for(const [x,z] of options){
+   const candidate=stockpileValidation(this,x,z);
+   if(!candidate.ok)continue;
+   // Prefer founding sites whose first housing plot is already unobstructed.
+   const familyX=candidate.x-6,familyZ=candidate.z+12;
+   const familyClear=!this.obstacles.some(o=>!o.plotId
+    &&Math.hypot(o.x-familyX,o.z-familyZ)<(o.r||0)+2.15);
+   if(familyClear)return candidate;
+  }
+  return null;
+ }
+ foundSuggestedStockpile(){
+  if(this.stockpile)return false;
+  const candidate=this.findSuggestedStockpileSite();
+  if(!candidate){this.onStatus("No clear home site","Move to a clearing or chop nearby trees, then try again.");return false}
+  const placed=this.onFoundStockpile(candidate.x,candidate.z);
+  if(placed){this.cancelStockpilePlacement();
+   this.onStatus("Village founded","Stockpile established at "+candidate.x+", "+candidate.z+".");}
+  return placed;
+ }
  cancelStockpilePlacement(){
   this.placingStockpile=false;this.stockpileCandidate=null;
   showStockpilePreview(this,null);
