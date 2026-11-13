@@ -5,7 +5,8 @@
  * The terrain height function is continuous across positive/negative chunks.
  */
 export const CHUNK_SIZE=32;
-export const ACTIVE_RADIUS=1;
+export const ACTIVE_RADIUS=2; // 5×5 terrain-only window
+export const DETAIL_RADIUS=1; // 3×3 region with trees, stone, berries and deer
 export const TERRAIN_SUBDIVISIONS=16;
 export const STARTER_SEED=12000;
 const PLOTS=[
