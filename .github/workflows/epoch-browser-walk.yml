@@ -1,0 +1,41 @@
+name: Epoch browser movement QA
+
+on:
+  pull_request:
+    paths:
+      - 'epoch/js/**'
+      - 'epoch/assets/animations/**'
+      - 'epoch/tests/browser-walk.mjs'
+      - 'epoch/index.html'
+      - '.github/workflows/epoch-browser-walk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependency
+        run: npm install --no-save --no-package-lock playwright@1.58.2
+      - name: Launch Epoch static test server
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/epoch-http.log 2>&1 &
+          sleep 1
+      - name: Confirm imported 3D humanoids animate in Chromium
+        run: node epoch/tests/browser-walk.mjs
+      - name: Preserve screenshots and server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epoch-browser-walk
+          path: |
+            epoch/tests/artifacts/
+            /tmp/epoch-http.log
+          retention-days: 7

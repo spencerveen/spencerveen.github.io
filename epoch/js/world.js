@@ -1,5 +1,5 @@
-import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113d";
-import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113d";
+import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113e";
+import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113e";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -237,7 +237,9 @@ export class World {
   }
   else this.walkTime=0;
   p.y=this.groundY(p.x,p.z);
-  this.character?.animate(moving?this.walkTime:performance.now()/1000,moving);
+  // Drive authored movement clips with a continuous clock; pressing Shift
+  // switches the player to the jogging loop without resetting progression.
+  this.character?.animate(performance.now()/1000,moving,moving&&!!this.keys.shift);
   if(this.target && Math.hypot(this.target.x-p.x,this.target.z-p.z)<2.55){const target=this.target;this.target=null;this.path=[];this.collect(target)}
   const aim=V(p.x,p.y+1.2,p.z);
   c.setTarget(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));

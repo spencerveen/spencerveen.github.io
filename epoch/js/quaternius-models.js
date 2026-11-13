@@ -1,8 +1,9 @@
 // Real Quaternius Universal Base Characters (Standard, CC0).
 // Mesh, skeleton, skin weights and textures are imported; no body geometry is
 // synthesized here. Current procedural and sculpted versions are fallback only.
-import {normalizeAppearance,HAIR_COLORS,SKIN_TONES} from "./characters.js?v=20261113d";
-import {createModelHuman as createBackupHuman} from "./character-models.js?v=20261113d";
+import {normalizeAppearance,HAIR_COLORS,SKIN_TONES} from "./characters.js?v=20261113e";
+import {createModelHuman as createBackupHuman} from "./character-models.js?v=20261113e";
+import {loadLocomotion,createLocomotionPlayer} from "./locomotion.js?v=20261113e";
 
 const B=globalThis.BABYLON;
 const containers=new WeakMap();
@@ -31,15 +32,6 @@ const tint=(scene,material,colorHex,weight=.65)=>{
  if("albedoColor" in material)material.albedoColor=newColor;
  if("diffuseColor" in material)material.diffuseColor=newColor;
 };
-function applyBone(bone,origin,amount){
- if(!bone||!origin)return;
- try{
-  const delta=B.Quaternion.RotationAxis(B.Axis.X,amount);
-  bone.setRotationQuaternion(origin.multiply(delta),B.Space.LOCAL);
- }catch(e){
-  // A future animation controller can provide alternate control for unusual rigs.
- }
-}
 export function createQuaterniusHuman(scene,appearance,parent=null,name="human"){
  const profile=normalizeAppearance(appearance),instanceId=++idCounter;
  const root=new B.TransformNode("quaternius-actor:"+name,scene);
@@ -48,23 +40,18 @@ export function createQuaterniusHuman(scene,appearance,parent=null,name="human")
  root.scaling.z=profile.build*1.18;
  root.scaling.y=profile.height*1.18;
  let model=null,hair=null,beard=null,backup=null,destroyed=false;
- const ownedMaterials=[],binds=new Map();
+ const ownedMaterials=[];
+ let locomotion=null;
  const rig={
   root,appearance:profile,ready:null,
-  animate(time,moving=false){
+  animationStatus(){return {loaded:!!locomotion,matchedBones:locomotion?.matchedBones||0,mode:locomotion?.mode||null}}, 
+  animate(time,moving=false,running=false){
    if(destroyed)return;
    if(backup){backup.animate(time,moving);return;}
    if(!model)return;
-   const swing=moving?Math.sin(time*1.12)*.43:0;
-   const sequence=[
-    ["thigh_l",swing],["thigh_r",-swing],
-    ["calf_l",Math.max(0,-swing)*.48],["calf_r",Math.max(0,swing)*.48],
-    ["upperarm_l",-swing*.5],["upperarm_r",swing*.5],
-    ["lowerarm_l",-.04],["lowerarm_r",-.04],
-    ["spine_01",moving?Math.sin(time*2.24)*.015:Math.sin(time*.65)*.009],
-    ["Head",Math.sin(time*.28)*.01]
-   ];
-   for(const [name,angle] of sequence){const bound=binds.get(name);if(bound)applyBone(bound.bone,bound.rest,angle)}
+   // Play actual authored Quaternius skeleton keyframes on the glTF-linked
+   // TransformNodes. Bone-only animation would be overwritten each frame.
+   locomotion?.update(time,moving?(running?"run":"walk"):"idle");
   },
   dispose(){
    destroyed=true;
@@ -95,13 +82,13 @@ export function createQuaterniusHuman(scene,appearance,parent=null,name="human")
   model=c.instantiateModelsToScene(n=>"epoch_"+instanceId+"_"+n,true,{doNotInstantiate:true});
   if(destroyed){model.dispose();model=null;return false}
   for(const part of model.rootNodes)part.parent=root;
-  for(const skin of model.skeletons||[]){
-   for(const bone of skin.bones||[]){
-    const name=bone.name.replace(/^epoch_\d+_/,"");
-    if(!["thigh_l","thigh_r","calf_l","calf_r","upperarm_l","upperarm_r","lowerarm_l","lowerarm_r","spine_01","Head"].includes(name))continue;
-    const base=bone.getRotationQuaternion(B.Space.LOCAL);
-    if(base)binds.set(name,{bone,rest:base.clone()});
-   }
+  // The official animation library includes its own idle, walk, and jog.
+  // Loading it is shared across characters and does not affect saved state.
+  try{
+   locomotion=createLocomotionPlayer(scene,model,await loadLocomotion(scene));
+   locomotion.update(performance.now()/1000,"idle");
+  }catch(error){
+   console.error("Epoch locomotion initialization failed:",error);
   }
   for(const node of traverse(model.rootNodes)){
    const mat=node.material;
