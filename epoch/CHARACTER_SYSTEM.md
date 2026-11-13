@@ -1,3 +1,16 @@
+# Epoch Characters — Quaternius is the default
+
+The primary player and NPC models are the real Quaternius Universal Base Characters (Standard CC0): skinned male/female meshes, a 65-bone humanoid skeleton, textured skin/eyes, and source hair geometry. These are artist-made meshes, not generated shapes.
+
+See [QUATERNIUS.md](./assets/characters/QUATERNIUS.md) for the license, exact pinned source revision, conversion method, model filenames and limitations.
+
+The existing dynasty appearance data remains in use for sex, hairstyle, hair and skin tint, height and build. Five distinct hair meshes and a shaved option are available in this first pass. Facial hair is currently a single source beard mesh with an on/off choice. Stone Age clothing and extended eye colors are future milestones.
+
+Earlier experimental GLB models and procedural shapes remain available only if an asset fails to load.
+
+---
+
+## Archived fallback system notes
 # Epoch — Stone Age Modular Character Assets (v0.3)
 
 ## Status
