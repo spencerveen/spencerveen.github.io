@@ -67,6 +67,7 @@ export function descendantAppearance(parent,gen){
 }
 const materialCache=new WeakMap();
 function material(scene,hex){
+ if(typeof hex!=="string" || !/^#[0-9a-f]{6}$/i.test(hex))throw new TypeError("Character material requires a #RRGGBB color string");
  let materials=materialCache.get(scene);
  if(!materials){materials=new Map();materialCache.set(scene,materials)}
  if(!materials.has(hex)){
@@ -144,7 +145,7 @@ export function createHuman(scene,appearance,parent=null,name="human"){
  const root=new B.TransformNode("human:"+name,scene);if(parent)root.parent=parent;
  const body=new B.TransformNode("human skeleton",scene);body.parent=root;
  body.scaling=V(p.build,p.height,p.build);
- const skin=material(scene,SKIN_TONES[p.skin]),hair=material(scene,HAIR_COLORS[p.hairColor]);
+ const skin=material(scene,SKIN_TONES[p.skin]),hair=material(scene,HAIR_COLORS[p.hairColor].hex);
  const eye=material(scene,EYE_COLORS[p.eyes]),dark=material(scene,"#30251e"),light=material(scene,"#d8b88e");
  const hide=material(scene,p.outfit===2?"#776347":"#72533b"),fur=material(scene,p.outfit===0?"#a38d71":"#aa9477");
  const leather=material(scene,"#4e3829"),boots=material(scene,"#5b4734");
