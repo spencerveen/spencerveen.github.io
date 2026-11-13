@@ -1,7 +1,7 @@
 // Real Quaternius Universal Base Characters (Standard, CC0).
 // Mesh, skeleton, skin weights and textures are imported; no body geometry is
 // synthesized here. Current procedural and sculpted versions are fallback only.
-import {normalizeAppearance,HAIR_COLORS,SKIN_TONES} from "./characters.js?v=20261113d";
+import {normalizeAppearance,HAIR_COLORS,SKIN_TONES} from "./characters.js?v=20261113e";
 import {createModelHuman as createBackupHuman} from "./character-models.js?v=20261113e";
 import {loadLocomotion,createLocomotionPlayer} from "./locomotion.js?v=20261113e";
 
