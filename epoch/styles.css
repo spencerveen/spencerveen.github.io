@@ -20,3 +20,7 @@ footer{position:absolute;z-index:4;bottom:16px;left:50%;transform:translateX(-50
 .appearance-picker button{font-size:20px;line-height:1;border:1px solid #a28a6285;border-radius:7px;background:#23372c;color:#e1c58f;width:35px;height:30px;flex-shrink:0}
 .appearance-picker button:hover{background:#375340}
 .appearance-picker .swatch{display:inline-block;width:15px;height:15px;border-radius:50%;border:1px solid #ffffff65;box-shadow:0 0 0 1px #0005}
+
+/* In pre-alpha, show actionable startup details instead of an opaque minified error. */
+.startup-diagnostics{box-sizing:border-box;width:min(740px,calc(100vw - 36px));max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #c4a97959;border-radius:8px;padding:12px;background:#090f0cd9;text-align:left;color:#b8c8b8;font:11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace}
+.diagnostics-copy{font:600 12px system-ui,sans-serif;background:#d0b582;border:0;border-radius:7px;padding:9px 16px;color:#122019}
