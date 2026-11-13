@@ -17,6 +17,8 @@ python -m http.server 8000
 
 Then visit `http://localhost:8000/epoch/`. A direct `file://` open is not recommended because the game uses JavaScript modules.
 
+**World generation:** 32-meter chunks; 5×5 nearby terrain meshes; detailed forest, berry bushes, stone and deer inside a 3×3 neighborhood. It is one forest biome for now. Read [WORLD_SYSTEM.md](./WORLD_SYSTEM.md) for design, seed persistence and current limitations.
+
 ### Controls
 | Input | Action |
 |---|---|
@@ -38,13 +40,14 @@ Then visit `http://localhost:8000/epoch/`. A direct `file://` open is not recomm
 6. Open the **Dynasty** tab and continue playing as a descendant; your civilization persists.
 
 ## What's implemented
-- A small procedural wilderness, real skinned male and female Quaternius CC0 character models, an animated modular player, four visually varied human villagers and roaming deer
-- Keyboard and click movement, camera controls and simple A* grid pathfinding
+- A seeded, smooth, continuously streamed forest biome with terrain chunks, original trees, stone deposits, berry bushes and deer; real Quaternius CC0 characters and four villagers
+- Keyboard and click movement, camera controls, and dynamically bounded A* navigation across chunk borders
 - Wood/stone/food gathering, XP and leveling for six initial skills
 - Resource costs, technology and civic prerequisites
 - Campfire, stone axe, and a five-plot village with Family Huts, Cooking Hearth, Toolmaker’s Shelter, and Council Lodge
 - Each Family Hut expands population capacity by 3; cooking, research, and culture building bonuses come later
 - A prototype succession mechanic with partial skill-XP inheritance and inherited appearance traits
+- Persistent procedural world seed (same terrain and resource locations across reloads and descendants)
 - Character appearance editor (male/female body templates; six hairstyles, six hair colors, skin and eye colors, outfits, facial hair and proportions)
 - Versioned local save in the browser's `localStorage`
 
