@@ -191,7 +191,7 @@ export class World {
  }
  collect(meta){
   if(this.cooldown>0)return;
-  this.cooldown=.5;this.onGather(meta.resource);this.onStatus("Gathering "+meta.label,"Click again or find another resource.");
+  this.cooldown=.5;const result=this.onGather(meta.resource);this.onStatus(result?.type==="full"?"Pack full":"Gathering "+meta.label,result?.type==="full"?"Spend or discard a stack to make room.":"Click again or find another resource.");
  }
  isBlocked(x,z){
   // No legacy square world boundary. Terrain and plots are navigable using
