@@ -43,7 +43,11 @@ export class ForestChunks{
   if(chunk.detailed)return;
   const world=this.world,{cx,cz,key}=chunk,scene=world.scene;
   for(const item of forestObjects(this.seed,cx,cz)){
-   chunk.vegetation.push(world.decorate(item.resource,item.label,item.x,item.z,item.shape,key));
+   // Generated positions repeat, but harvesting changes persist by stable ID.
+   // Never recreate a tree, mined rock or chopped bush that was removed.
+   const status=world.getResourceStatus?.(item);
+   if(status?.removed)continue;
+   chunk.vegetation.push(world.decorate(item.resource,item.label,item.x,item.z,item.shape,key,item.id,status));
   }
   const rand=seededRandom(this.seed^0x7baf326,cx,cz);
   for(let i=0;i<13;i++){
@@ -74,6 +78,32 @@ export class ForestChunks{
    animal.node.dispose(false,false);
   world.animals=world.animals.filter(a=>a.chunkKey!==key);
   chunk.detailed=false;
+ }
+ /** Remove a felled tree, exhausted rock or cut-down bush immediately. */
+ removeResource(resourceId,chunkKey){
+  const world=this.world,chunk=this.loaded.get(chunkKey);
+  const root=chunk?.vegetation.find(node=>node.metadata?.resourceId===resourceId);
+  if(root){
+   chunk.vegetation=chunk.vegetation.filter(node=>node!==root);
+   root.dispose(false,false);
+  }
+  world.entities=world.entities.filter(e=>e.resourceId!==resourceId);
+  world.obstacles=world.obstacles.filter(e=>e.resourceId!==resourceId);
+  if(world.target?.resourceId===resourceId){world.target=null;world.path=[]}
+ }
+ /** Restore berry visuals when their clock-based regrowth timer expires. */
+ refreshBerries(){
+  const world=this.world;
+  for(const chunk of this.loaded.values()){
+   if(!chunk.detailed)continue;
+   for(const root of chunk.vegetation){
+    if(root.metadata?.shape!=="bush")continue;
+    const status=world.getResourceStatus?.({id:root.metadata.resourceId,resource:"food"});
+    const show=!status||status.remaining>0;
+    for(const berry of root.metadata.berryMeshes||[])
+     if(berry.isEnabled()!==show)berry.setEnabled(show);
+   }
+  }
  }
  remove(key){
   const chunk=this.loaded.get(key);
