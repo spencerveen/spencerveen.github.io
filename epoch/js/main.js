@@ -18,7 +18,7 @@ try{
   // Expose a read-only inspection aid for development without exposing mutation methods.
   Object.defineProperty(globalThis,"epochDebug",{value:()=>({
     year:state.formatYear(),generation:state.data.generation,
-    skills:{...state.data.skills},resources:{...state.data.resources},
+    skills:{...state.data.skills},resources:{...state.data.resources},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
     position:{x:world.player.position.x,z:world.player.position.z}
   }),configurable:true});

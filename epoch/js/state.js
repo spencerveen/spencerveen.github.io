@@ -1,3 +1,4 @@
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
@@ -14,11 +15,11 @@ export const CIVICS={
 };
 const KEY="epoch.stoneage.v1";
 const fresh=()=>({
- version:1,year:-12000,calendarProgress:0,generation:1,hero:{name:"Aren",age:18},
+ version:1,year:-12000,calendarProgress:0,generation:1,hero:{name:"Aren",age:18,appearance:founderAppearance()},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
  resources:{wood:0,stone:0,food:0},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,
- lineage:[{name:"Aren",gen:1,start:-12000,role:"Founder"}],
+ lineage:[{name:"Aren",gen:1,start:-12000,role:"Founder",appearance:founderAppearance()}],
  history:["The wanderer Aren entered a quiet clearing in a vast prehistoric wilderness."]
 });
 export function threshold(level){return Math.round(35*level**1.65)}
@@ -31,6 +32,7 @@ export class GameState{
   this.data=data && data.version===1?{...base,...data,
    hero:{...base.hero,...data.hero},resources:{...base.resources,...data.resources},
    skills:{...base.skills,...data.skills}}:base;
+  this.data.hero.appearance=normalizeAppearance(this.data.hero.appearance||founderAppearance());
   this.onChange=()=>{};
   this.lastSave=0;
  }
@@ -68,6 +70,10 @@ export class GameState{
   this.data.shelter=true;this.gainXP("construction",55);this.data.culture+=3;
   this.changed(`${this.data.hero.name} built the family's first shelter.`);return true;
  }
+ setAppearance(patch){
+  this.data.hero.appearance=normalizeAppearance({...this.data.hero.appearance,...patch});
+  this.changed();
+ }
  nextGeneration(){
   const old=this.data.hero;
   const names=["Eira","Torin","Mara","Kellan","Sera","Darin","Elowen","Cai","Nessa","Roran"];
@@ -75,8 +81,8 @@ export class GameState{
   const inherited=this.data.civics.includes("apprenticeship")?.25:this.data.civics.includes("oral")?.15:.08;
   this.data.skills=Object.fromEntries(SKILLS.map(([id])=>[id,Math.round(this.data.skills[id]*inherited)]));
   this.data.generation++;this.data.year+=24;this.data.calendarProgress=0;
-  this.data.hero={name,age:18};
-  this.data.lineage.push({name,gen:this.data.generation,start:this.data.year,role:"Descendant of "+old.name});
+  this.data.hero={name,age:18,appearance:descendantAppearance(old.appearance,this.data.generation)};
+  this.data.lineage.push({name,gen:this.data.generation,start:this.data.year,role:"Descendant of "+old.name,appearance:this.data.hero.appearance});
   this.changed(`${old.name}'s legacy passes to ${name}, generation ${this.data.generation}.`);
   return name;
  }

@@ -1,4 +1,5 @@
 import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js";
+import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -17,8 +18,9 @@ export class UI{
   $("modal").addEventListener("click",e=>{if(e.target===$("modal"))this.close()});
   window.addEventListener("keydown",e=>{if(e.key==="Escape")this.close()});
   $("panel").addEventListener("click",e=>this.handleAction(e));
-  state.onChange=()=>{this.world.setDiscovery(state.data.technologies.includes("fire"),state.data.shelter);this.render()};
+  state.onChange=()=>{this.world.setDiscovery(state.data.technologies.includes("fire"),state.data.shelter);this.world.applyAppearance(state.data.hero.appearance);this.render()};
   this.world.setDiscovery(state.data.technologies.includes("fire"),state.data.shelter);
+  this.world.applyAppearance(state.data.hero.appearance);
   this.render();
  }
  toast(message){
@@ -45,6 +47,29 @@ export class UI{
   html+=`<p class="info">Click resources in the world to approach and gather them. Press E to interact with nearby resources.</p>`;
   html+=`<div class="entry"><h3>🪓 Stone Axe</h3><p>${d.axe?"Equipped. Harvest 3 wood rather than 2 per tree interaction.":"A better tool for woodcutting. Requires the Stone Toolmaking technology."}</p><small>2 wood · 3 stone</small><button data-action="axe" ${d.axe||!d.technologies.includes("tools")||!this.state.enough({wood:2,stone:3})?"disabled":""}>${d.axe?"Already crafted":"Craft axe"}</button></div>`;
   html+=`<div class="entry"><h3>🏕 First Shelter</h3><p>${d.shelter?"Your permanent home stands in the clearing.":"Build a primitive wooden shelter near your campfire."}</p><small>10 wood · 6 stone</small><button data-action="shelter" ${d.shelter||!d.technologies.includes("fire")||!this.state.enough({wood:10,stone:6})?"disabled":""}>${d.shelter?"Shelter built":"Construct shelter"}</button></div>`;
+  return html;
+ }
+ appearance(){
+  const d=this.state.data,p=d.hero.appearance;
+  const choices=[
+   ["sex","Body template",p.sex==="male"?"Male":"Female"],
+   ["hairStyle","Hairstyle",HAIR_STYLES[p.hairStyle].name],
+   ["hairColor","Hair color",HAIR_COLORS[p.hairColor].name],
+   ["skin","Skin tone","Tone "+(p.skin+1)],
+   ["eyes","Eye color",["Dark brown","Hazel","Blue-gray","Amber"][p.eyes]],
+   ["beard","Facial hair",["None","Stubble","Short beard","Full beard"][p.beard]],
+   ["outfit","Stone Age clothing",OUTFITS[p.outfit]],
+   ["height","Height",Math.round(p.height*100)+"%"],
+   ["build","Build",Math.round(p.build*100)+"%"]
+  ];
+  let html=`<div class="panel-title"><h2>Appearance</h2><small>${esc(d.hero.name)}</small></div>`;
+  html+=`<p class="info">Every descendant and villager is generated from the same modular human model. Change your adventurer's appearance here and watch the 3D world update instantly.</p>`;
+  for(const [field,label,value] of choices){
+   if(field==="beard"&&p.sex==="female")continue;
+   const color=field==="hairColor"?HAIR_COLORS[p.hairColor].hex:field==="skin"?SKIN_TONES[p.skin]:field==="eyes"?EYE_COLORS[p.eyes]:null;
+   html+=`<div class="appearance-picker"><span>${label}</span><div><button data-action="looks" data-field="${field}" data-dir="-1" aria-label="Previous ${label}">‹</button><b>${color?`<i class="swatch" style="background:${color}"></i>`:""}${esc(value)}</b><button data-action="looks" data-field="${field}" data-dir="1" aria-label="Next ${label}">›</button></div></div>`;
+  }
+  html+=`<p class="info">Hair and skin colors are inherited with variation. Hairstyles, outfits, and body proportions can differ between generations. These are procedural 3D meshes with shared animation joints, not separate imported character files.</p>`;
   return html;
  }
  skills(){
@@ -89,12 +114,19 @@ export class UI{
   $("science").textContent=d.knowledge;$("culture").textContent=d.culture;
   $("objective-title").textContent=o.title;$("objective-description").textContent=o.description;$("objective-progress").textContent=o.progress;
   document.querySelectorAll("[data-tab]").forEach(node=>{const active=node.dataset.tab===this.tab;node.classList.toggle("active",active);node.setAttribute("aria-selected",String(active))});
-  $("panel").innerHTML=this.tab==="pack"?this.pack():this.tab==="skills"?this.skills():this.tab==="tech"?this.trees("tech"):this.tab==="culture"?this.trees("civic"):this.dynasty();
+  $("panel").innerHTML=this.tab==="pack"?this.pack():this.tab==="appearance"?this.appearance():this.tab==="skills"?this.skills():this.tab==="tech"?this.trees("tech"):this.tab==="culture"?this.trees("civic"):this.dynasty();
  }
  handleAction(e){
   const btn=e.target.closest("[data-action]");if(!btn)return;
   const action=btn.dataset.action;let message="";
-  if(action==="axe")message=this.state.craftAxe()?"Stone axe crafted! Woodcutting is faster.":"Not enough resources.";
+  if(action==="looks"){
+   const p=this.state.data.hero.appearance,f=btn.dataset.field,dir=Number(btn.dataset.dir)===-1?-1:1;
+   const count={hairStyle:HAIR_STYLES.length,hairColor:HAIR_COLORS.length,skin:SKIN_TONES.length,eyes:EYE_COLORS.length,beard:4,outfit:OUTFITS.length};
+   if(f==="sex")this.state.setAppearance({sex:p.sex==="male"?"female":"male"});
+   else if(f==="height"||f==="build")this.state.setAppearance({[f]:Math.max(f==="height"?.87:.84,Math.min(f==="height"?1.13:1.18,Math.round((p[f]+dir*.03)*100)/100))});
+   else if(Object.hasOwn(count,f))this.state.setAppearance({[f]:(p[f]+dir+count[f])%count[f]});
+  }
+  else if(action==="axe")message=this.state.craftAxe()?"Stone axe crafted! Woodcutting is faster.":"Not enough resources.";
   else if(action==="shelter")message=this.state.buildShelter()?"The first family shelter stands!":"Not ready to build a shelter.";
   else if(action==="unlock"){const ok=this.state.unlock(btn.dataset.kind,btn.dataset.key);message=ok?"Discovery completed!":"Discovery requirements are not met."}
   else if(action==="next"){const name=this.state.nextGeneration();message="A new generation begins: "+name;}
@@ -107,6 +139,7 @@ export class UI{
   $("guide").innerHTML=`<p><strong>Explore:</strong> WASD to walk, Shift to sprint, right-click and drag to orbit the camera, and scroll to zoom. Left-click the ground for automatic pathfinding.</p>
   <p><strong>Gather:</strong> Left-click a tree, rock, or berry bush. Your adventurer approaches the resource and gathers it. Press E to interact with a nearby resource. Keep gathering to earn personal skill XP, knowledge and culture.</p>
   <p><strong>Progress:</strong> Open Tech to unlock Control of Fire and Stone Toolmaking. Craft an axe and a shelter from your Pack. Explore the Culture tree to establish traditions.</p>
+  <p><strong>Character:</strong> Open the Character tab to change the base body, hair, colors, clothing, and facial hair. NPCs use the same modular system, and descendants inherit traits with variation.</p>
   <p><strong>Descendants:</strong> In the Dynasty tab, continue as a new generation. Civilization-wide achievements and buildings remain, while personal skills partly transfer.</p>
   <p><strong>Saving:</strong> Your progress is stored locally in this browser. No account or online multiplayer is included in this prototype.</p>
   <p><strong>Prototype limitations:</strong> Wildlife is ambient; combat, NPC diplomacy, realistic family relationships, additional ages and advanced animations are planned for later milestones.</p>`;
