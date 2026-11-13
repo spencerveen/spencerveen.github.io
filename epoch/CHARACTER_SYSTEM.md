@@ -1,79 +1,72 @@
-# Epoch — Modular Human System (v0.2)
+# Epoch — Stone Age Modular Character Assets (v0.3)
 
-## Purpose
-Build one reusable set of **stylized, clearly human** characters for player adventurers, descendants and prehistoric villagers. Do not require a unique mesh or rig for each person. Character appearances live in serializable data and can later be extended with true GLB base meshes, Blender shape keys and animations.
+## Status
 
-## Current implementation
-**File:** `js/characters.js`
+**Game integration:** real, original `.glb` mesh assets loaded by Babylon.js for the player and four settlement NPCs. The older primitive-based character model is now used only if a GLB asset cannot load.
 
-The current generator creates articulated 3D humans procedurally in Babylon.js with shared pivot hierarchy:
-- Stable actor root (movement/collision)
-- Human body root (body build and height)
-- Head/neck pivot and facial meshes: visible eyes, eyebrows, nose, jaw, ears and mouth
-- Shoulder/elbow arms and hip/knee legs, feet, hands and simple walking/idle motion
-- Interchangeable hair geometry, beards, clothing forms, belts and accessories
-- Male/female body template with differing shoulders/hips/head proportions
-- Six basic skin tones and four eye colors
-- Six hair styles: Short & messy, Shaggy, Shoulder-length, Tied back, Single braid, Topknot
-- Six natural hair colors: Black, Dark brown, Chestnut, Auburn, Dirty blond, Gray
-- Three Stone Age outfits: Hide wrap, Fur mantle, Primitive tunic
-- Facial hair: None, Stubble, Short beard, Full beard
-- Adjustable height and body build
+**Artwork goal:** stylized, semi-realistic, simple enough to render efficiently in the browser. This is an **original modeled first iteration**, not a pixel-perfect translation of the approved character concept sheet. Expect additional art passes on faces, outfits, hair and animations.
 
-Characters use a shared animation-pivot convention regardless of the selected parts. All geometry and appearance parameters are intended to be cheap enough for a small browser prototype. Materials are cached per scene, and replacing one character does not destroy materials used by the NPCs.
+## Actual 3D files
 
-## Player and descendants
-The starting character has a saved `hero.appearance` object. Existing saves without appearance data receive the original founder's default profile. The Character panel enables cosmetic edits at runtime and updates the 3D avatar immediately.
+- `assets/characters/human_male.glb`
+- `assets/characters/human_female.glb`
 
-When succession occurs, `descendantAppearance(parent, generation)` uses a deterministic seeded generator. Skin, hair and eye colors are biased toward the previous character but allow occasional nearby or independent variation. Sex/body template, hairstyle, beard and clothing can differ. Height and build drift gently, bounded to safe ranges.
+Both are **binary glTF 2.0** models, immediately importable into Blender's File → Import → glTF 2.0. Each model is approximately 279 KB and contains ~5,061 vertices / ~9,442 triangles **including all optional hair and beard meshes**, not all displayed at once.
 
-This is **visual trait inheritance**, not yet biological family genetics. It currently uses the previous playable character as its input; a full family/parents model will be introduced with households and offspring.
+The models use individually sculpted tapered body volumes, shaped head and facial features, detailed hands, layered hide clothing, fur collar, belt, boot wraps, laced tunic accents, six hair assemblies and three beard options. They are not made of the old Babylon spheres-and-boxes character generator.
 
-NPCs use `randomAppearance(seed, sex)` with stable seeds and the **same** shared model and animation API. There are four ambient villagers in the clearing for now; AI, speech and activities are not implemented.
+## Blender workflow
 
-## Example data profile
-```json
-{
-  "sex": "female",
-  "hairStyle": 4,
-  "hairColor": 2,
-  "skin": 3,
-  "eyes": 1,
-  "beard": 0,
-  "outfit": 1,
-  "height": 0.98,
-  "build": 1.03
-}
+Blender itself was not available in the environment used to create this build. The models were generated directly in glTF 2.0 format using the included deterministic builder, rather than exported from an interactive Blender session.
+
+To create an editable `.blend` project on a machine with Blender installed:
+
+```bash
+blender --background --python epoch/tools/open_models_in_blender.py
 ```
 
-All numeric indexes are clamped. Profiles are small enough to store for hundreds or thousands of NPCs.
+Or open each GLB manually in Blender (File → Import → glTF 2.0).
 
-## Engine API
-```js
-import { createHuman, randomAppearance, descendantAppearance } from "./characters.js";
+This outputs `epoch/assets/characters/epoch_humans_editable.blend` locally. You can refine meshes and materials, and eventually create actual armatures and weight-paint deformations there. **The current in-game models use shared pivot-node joint animation, not a fully skinned, weight-painted Blender armature.** The transform hierarchy is intentionally named to make later rigging straightforward.
 
-const npc = createHuman(scene, randomAppearance("npc-127"), null, "npc-127");
-npc.root.position = new BABYLON.Vector3(2, 0, 4);
-npc.animate(elapsedSeconds, false); // idle
-const heir = descendantAppearance(npc.appearance, 2);
-npc.dispose(); // generated meshes removed; cached materials survive
+For deterministic regeneration of the two GLB assets:
+
+```bash
+node epoch/tools/build-avatar-glb.js
 ```
 
-## Planned modeling improvements
-The generator is intentionally a **first real character-shaped prototype**. It is not a completed sculpt, skinned GLB, or Blender armature; it doesn't include facial shape keys, fingers, hair physics or texture maps. Next improvements:
+## Runtime integration
 
-1. Design a consistent underlying character topology and low-to-mid-poly proportions.
-2. Model two rigged base meshes in Blender with identical skeleton names, weights and binding pose.
-3. Add swappable GLB hair meshes, beard variants, and modular Stone Age outfits.
-4. Implement shared idle, walk, sprint, gather, craft and combat animations.
-5. Add face shape keys and deterministic inherited facial traits (nose, brow, jaw, cheeks).
-6. Move to batched/instanced crowd models with mesh LOD to support larger settlements.
-7. Preserve the existing `appearance` data schema and Babylon actor API, so the visuals can improve without changing dynasties or saves.
+- `js/character-models.js`: lazy GLB load, one model source per body template per scene; scene clones for unique characters, with independent material colors and mesh visibility; animated named joints.
+- `js/characters.js`: appearance schema and seeded descendant traits; includes backup procedural models if loading fails.
+- `js/world.js`: creates player and villagers with `createModelHuman`.
+- `js/ui.js`: appearance tab controls.
+- `js/state.js`: stores appearance and inheritance in saved character data.
 
-## Testing
-Use the Character tab to switch body templates, hair, skin, eye color, beard, outfits and body proportions. Move with WASD to check clipping. Then use Dynasty to switch generations and reload the browser to ensure the new appearance persists. NPC villagers should visibly vary in presentation.
+Appearance profile fields remain `sex`, `hairStyle`, `hairColor`, `skin`, `eyes`, `beard`, `outfit`, `height`, `build`. Existing saves remain compatible.
 
-## Notes
-Each sex/body template is a starting geometry preset only. Hairstyles, colors, clothing and body proportions can be used with either. The visual traits have no gameplay statistics or restrictions.
+### Visible variations
 
-The look should be stylized and believable, not photographic. Cosmetic options should remain compatible with future eras: hide and fur clothing will eventually be replaced by medieval, industrial, modern and space-age wardrobes on the same character framework.
+- 2 modeled sex/body templates
+- 6 swappable hairstyles: short, shaggy, shoulder length, tied back, braids, topknot
+- 6 natural hair-color options
+- 6 skin-tone palettes and 4 eye-color options
+- 4 facial-hair settings (none, stubble, short, full; hidden on female template)
+- 3 early outfit color palettes
+- Adjustable height and build
+- NPCs reuse the same GLB sources with unique saved/seeded appearance profiles
+
+Changing appearance clones a new actor model without resetting the world actor's position or movement. Descendants retain some parent color traits and randomly change other features; actual two-parent genetics and family relations are still future systems.
+
+## Browser performance and future work
+
+Each source model contains multiple hidden alternate hairstyle and facial-hair assemblies. Only the selected style is visible in an individual character. The 3D source file is cached once per body template per scene and cloned for villagers.
+
+This is an interim authored 3D art asset system. To approach the concept art more closely, the next iterations should focus on:
+1. Blender hand-refinement of the mesh topology and face, with shape keys for facial genetics.
+2. Proper **skinned armature**, weight painting around knees/elbows, hand and wrist deformation.
+3. Shared authored idle, walk, sprint, gather and combat animation clips.
+4. Individually modeled hide outfits, equipment and armor for historical eras.
+5. LOD meshes and mesh combining for dozens or hundreds of NPCs.
+
+There is no physics-driven hair, facial animation, cloth simulation, or gameplay AI in this iteration.
