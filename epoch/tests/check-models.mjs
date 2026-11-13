@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const folder=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../assets/characters");
@@ -54,7 +55,7 @@ for(const sex of ["male","female"]){
   }
   assert(count>3500 && faces>7000,"substantive sculpted geometry");
   assert(gltf.meshes.length>120,"modular parts present");
-  signatures.push(buf.toString("base64",0,96));
+  signatures.push(createHash("sha256").update(buf).digest("hex"));
   console.log(`PASS ${sex}: ${gltf.meshes.length} meshes / ${count} vertices / ${faces} triangles / ${Math.round(buf.length/1024)} KiB`);
 }
 assert.notEqual(signatures[0],signatures[1],"male and female meshes must differ");
