@@ -23,7 +23,7 @@ try{
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
  page.on("requestfailed",request=>warnings.push(request.url()+" "+request.failure()?.errorText));
- await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113n",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261114a",{waitUntil:"domcontentloaded",timeout:45000});
  await page.locator('[data-menu="continue"]').waitFor({timeout:45000});
  assert(await page.locator("#start-screen").isVisible(),"title screen appears before world loads");
  assert.equal(await page.locator('[data-tab="appearance"]').count(),0,"no in-game character customization tab");
@@ -75,24 +75,31 @@ try{
  assert.equal(await page.locator(".pack-slot").count(),10,"pack shows ten slots");
  assert((await page.locator("#panel").innerText()).includes("12 per space"),"stack limit explained");
  await page.screenshot({path:path.join(output,"epoch-inventory-empty.png")});
- // Exercise the new settlement UI in a real GPU-backed Babylon scene.
+ // A new village has no pre-existing 3D construction slots.
  const status=await page.evaluate(()=>window.epochDebug());
- assert.equal(status.settlement.worldPlots,5,"all five village plots must exist in the world");
- assert.equal(status.settlement.capacity,5,"starting village holds five people");
+ assert.equal(status.settlement.renderedBuildings,0,"new world must not render unbuilt village sites");
+ assert.deepEqual(status.settlement.buildings,[],"new world has no built structures");
+ assert.equal(status.settlement.capacity,5,"village starts with five residents");
  await page.locator('[data-tab="village"]').click();
- assert.equal((await page.evaluate(()=>window.epochDebug().settlement.stockpile.placed)),false,"new game starts without a founded home");
- assert.equal(await page.locator('[data-action="place-stockpile"]').count(),1,"players can choose home placement");
- await page.locator('[data-action="found-nearby-stockpile"]').click();
- await page.waitForFunction(()=>window.epochDebug()?.settlement?.stockpile?.placed===true,null,{timeout:6000});
+ assert.equal(status.settlement.stockpile.placed,false,"no auto-created stockpile");
+ await page.locator('[data-action="place-stockpile"]').click();
+ const initialPreview=await page.evaluate(()=>window.epochDebug().settlement);
+ assert(initialPreview.placingStockpile,"founding launches preview rather than spawning immediately");
+ assert(initialPreview.stockpileCandidate?.ok,"stockpile preview starts at a valid site");
+ assert.equal(initialPreview.stockpile.placed,false,"stockpile is not yet placed");
+ await page.locator('[data-action="grid-nudge"][data-dx="1"]').click();
+ const nudged=await page.evaluate(()=>window.epochDebug().settlement.stockpileCandidate);
+ assert.equal(nudged.x,initialPreview.stockpileCandidate.x+2,"arrow moves preview one 2m cell");
+ await page.locator('[data-action="grid-nudge"][data-dx="-1"]').click();
+ await page.locator('[data-action="confirm-stockpile"]').click();
+ await page.waitForFunction(()=>window.epochDebug()?.settlement?.stockpile?.placed===true,null,{timeout:7000});
  const founding=await page.evaluate(()=>window.epochDebug().settlement);
- assert.equal(founding.stockpile.used,0,"new founding stockpile starts empty");
- assert.equal(founding.worldPlotCenters.family_1.x,-8,"starter blueprint anchors to founding home");
- assert.equal(founding.worldPlotCenters.family_1.z,4,"old clearing template remains in place for nearby founding");
- await page.screenshot({path:path.join(output,"epoch-stockpile-founded.png")});
- assert.equal(await page.locator('[data-action="select-plot"]').count(),5,"five sites around stockpile");
- await page.locator('[data-action="select-plot"][data-plot="council_1"]').click();
- assert((await page.locator("#panel").innerText()).includes("Council Lodge"),"Council Lodge shows its details");
- await page.screenshot({path:path.join(output,"epoch-village-plots.png")});
+ assert.equal(founding.stockpile.used,0,"stockpile starts with no materials");
+ assert.equal(founding.renderedBuildings,0,"founding stockpile creates no empty building rings");
+ assert(founding.hasGrid,"construction grid is available on demand");
+ assert.equal(founding.gridVisible,false,"construction grid remains hidden normally");
+ assert.equal(await page.locator('[data-action="select-plot"]').count(),0,"old fixed plot selector is gone");
+ await page.screenshot({path:path.join(output,"epoch-stockpile-free-grid.png")});
  // Test actual construction through the public UI and click-to-walk workflow.
  // Before a reload, Epoch's pagehide handler saves the old in-memory state.
  // Seed the fresh document on its next load instead of writing too early.
@@ -127,7 +134,7 @@ try{
  await page.locator('[data-menu="continue"]').waitFor({timeout:45000});
  assert(await page.locator("#start-screen").isVisible(),"reloading returns to title");
  await page.locator('[data-menu="continue"]').click();
- await page.waitForFunction(()=>window.epochDebug()?.settlement?.worldPlots===5,null,{timeout:45000});
+ await page.waitForFunction(()=>window.epochDebug()?.settlement?.stockpile?.placed===true,null,{timeout:45000});
  const reloadedForest=await page.evaluate(()=>window.epochDebug().forest);
  assert.equal(reloadedForest.seed,idle.forest.seed,"reloading must preserve the world seed");
  assert.equal(reloadedForest.loaded,25,"reload recreates exactly 25 visible terrain chunks");
@@ -162,32 +169,37 @@ try{
  assert.equal(stored.settlement.stockpile.items.vines,1);
  assert.equal(stored.inventory.used,0,"backpack empties after dropping supplies at home");
  await page.screenshot({path:path.join(output,"epoch-stockpile-filled.png")});
- await page.locator('[data-action="select-plot"][data-plot="family_1"]').click();
- await page.locator('[data-action="visit-plot"][data-plot="family_1"]').click();
- // The build UI accepts any point 2.65–5m from the plot; its walking
- // destination is allowed to stop at the outer edge of that range.
- const withinBuildRange=()=>page.waitForFunction(()=>{
-  const pos=window.epochDebug()?.position;
-  if(!pos)return false;
-  const distance=Math.hypot(pos.x+8,pos.z-4);
-  return distance>=2.65 && distance<=5;
- },null,{timeout:16000});
- try{await withinBuildRange()}catch{
-  console.log("Replanning approach to hut from",await page.evaluate(()=>window.epochDebug()?.position));
-  await page.locator('[data-action="visit-plot"][data-plot="family_1"]').click();
-  await withinBuildRange();
- }
- await page.locator('[data-action="build-plot"][data-plot="family_1"]').click();
- await page.waitForFunction(()=>window.epochDebug()?.settlement?.capacity===8,null,{timeout:5000});
+ await page.locator('[data-action="start-building"][data-kind="family"]').click();
+ const buildingPreview=await page.evaluate(()=>window.epochDebug().settlement);
+ assert.equal(buildingPreview.placingBuilding,"family","choosing a hut starts building mode");
+ assert(buildingPreview.buildingCandidate?.ok,"auto-preview selects clear land");
+ assert.equal(buildingPreview.renderedBuildings,0,"preview not counted as constructed");
+ assert.equal(buildingPreview.gridVisible,true,"2m construction grid appears only in building mode");
+ await page.locator('[data-action="grid-rotate"]').click();
+ const rotated=await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate);
+ assert.equal(rotated.turn,1,"rotation changes by 90 degrees");
+ await page.locator('[data-action="grid-nudge"][data-dx="1"]').click();
+ const moved=await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate);
+ assert.equal(moved.x,rotated.x+2,"arrow control moves hut one cell");
+ await page.locator('[data-action="grid-nudge"][data-dx="-1"]').click();
+ await page.screenshot({path:path.join(output,"epoch-village-building-preview.png")});
+ await page.locator('[data-action="confirm-building"]').click();
+ await page.waitForFunction(()=>window.epochDebug()?.settlement?.capacity===8,null,{timeout:7000});
  const settlement=await page.evaluate(()=>window.epochDebug().settlement);
- assert.equal(settlement.plots.family_1,"family","the house must be saved to the chosen plot");
- assert.equal(settlement.capacity,8,"family hut adds 3 population capacity");
+ assert.equal(settlement.buildings.length,1,"one finished Family Hut is saved");
+ assert.equal(settlement.buildings[0].kind,"family");
+ assert.equal(settlement.buildings[0].x,rotated.x);
+ assert.equal(settlement.buildings[0].z,rotated.z);
+ assert.equal(settlement.buildings[0].turn,1,"building orientation persists");
+ assert.equal(settlement.renderedBuildings,1,"only completed structure is rendered");
+ assert.equal(settlement.gridVisible,false,"temporary grid hides after construction");
+ assert.equal(settlement.capacity,8,"hut adds three population spaces");
  const afterBuild=await page.evaluate(()=>window.epochDebug());
- assert.equal(afterBuild.resources.wood,0,"building does not magically recreate carried wood");
- assert.equal(afterBuild.resources.stone,0,"building does not use invisible carried stone");
- assert.equal(afterBuild.settlement.stockpile.items.wood,34,"building consumes stockpiled wood");
- assert.equal(afterBuild.settlement.stockpile.items.stone,24,"building consumes stockpiled stone");
- assert(afterBuild.inventory.slots.every(s=>!s||s.qty<=12),"all stacks remain at or below 12");
+ assert.equal(afterBuild.resources.wood,0,"builder does not spend carried wood");
+ assert.equal(afterBuild.resources.stone,0,"builder does not spend carried stone");
+ assert.equal(afterBuild.settlement.stockpile.items.wood,34,"hut uses ten stockpiled wood");
+ assert.equal(afterBuild.settlement.stockpile.items.stone,24,"hut uses six stockpiled stone");
+ assert(afterBuild.inventory.slots.every(s=>!s||s.qty<=12),"inventory remains stack-limited");
  await page.screenshot({path:path.join(output,"epoch-first-family-hut.png")});
  // Responsive regression: the nav header cannot collapse under long content,
  // and switching tabs must never dismiss the mobile drawer.
@@ -288,7 +300,7 @@ try{
  const newPage=await newContext.newPage();
  const creatorErrors=[];
  newPage.on("pageerror",error=>creatorErrors.push(String(error)));
- await newPage.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113n-new",{waitUntil:"domcontentloaded",timeout:45000});
+ await newPage.goto("http://127.0.0.1:8765/epoch/?browser-test=20261114a-new",{waitUntil:"domcontentloaded",timeout:45000});
  await newPage.locator('[data-menu="new"]').waitFor({timeout:45000});
  assert(await newPage.locator('[data-menu="continue"]').isDisabled(),"clean browser has no Continue game");
  assert.equal(await newPage.locator(".epoch-save-card").count(),3,"three slots in title menu");
