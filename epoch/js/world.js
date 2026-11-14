@@ -5,12 +5,14 @@ import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114y
 import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114y";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
-import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114y";
-import {ForestChunks} from "./forest-chunks.js?v=20261114textures1";
+import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114hunt1";
+import {ForestChunks} from "./forest-chunks.js?v=20261114hunt1";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114textures1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
+import {WILDLIFE,animalMotion,WILDLIFE_ATTACK_COOLDOWN,
+ BOAR_ATTACK_COOLDOWN,HUNT_DISTANCE_BUFFER} from "./hunting.js?v=20261114hunt1";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -20,6 +22,10 @@ export class World {
   this.onTribeDiscover=tribeHandlers.onDiscover||(()=>{});
   this.onTribeInteract=tribeHandlers.onInteract||(()=>{});
   this.onResidentSelect=tribeHandlers.onResidentSelect||(()=>{});
+  this.getWildlifeStatus=tribeHandlers.getWildlifeStatus||(()=>null);
+  this.onWildlifeHunt=tribeHandlers.onWildlifeHunt||(()=>({ok:false,reason:"Hunting unavailable."}));
+  this.onWildlifeHarvest=tribeHandlers.onWildlifeHarvest||(()=>({ok:false,reason:"Harvest unavailable."}));
+  this.onWildlifeDamage=tribeHandlers.onWildlifeDamage||(()=>false);
   this.spendSprint=tribeHandlers.spendSprint||(()=>true);
   this.spendSwim=tribeHandlers.spendSwim||tribeHandlers.spendSprint||(()=>true);
   this.getVitals=tribeHandlers.getVitals||(()=>({health:100,gameOver:false}));
@@ -36,6 +42,7 @@ export class World {
   this.cameraKeys={};this.cameraOrbitVelocity={horizontal:0,vertical:0};
   this.stockpileInRange=undefined;this.onInteractionRangeChange=()=>{};this.hoveredInteraction=null;this.waterNoticeCooldown=0;
   this.swimExhausted=false;this.waterMotion="land";this.onWaterModeChange=()=>{};
+  this.huntCooldown=0;this.boarCooldown=0;
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.020;this.scene.fogColor=new B.Color3(.62,.71,.62);
@@ -279,15 +286,101 @@ export class World {
   },{passive:false});
   canvas.addEventListener("contextmenu",e=>e.preventDefault());
  }
- makeAnimal(x,z,chunkKey=null){
-  const node=new B.TransformNode("wandering deer",this.scene);node.position=V(x,this.groundY(x,z),z);
-  this.primitive("sphere","deer body",node,[0,.9,0],[1.35,.67,.59],this.m.woodLight).isPickable=false;
-  this.primitive("sphere","deer head",node,[0,1.37,.63],[.48,.45,.5],this.m.woodLight).isPickable=false;
-  for(const dx of [-.43,.43])for(const dz of [-.2,.22]){
-   this.primitive("cylinder","deer leg",node,[dx,.43,dz],[.12,.72,.12],this.m.wood).isPickable=false;
+ makeAnimal(x,z,chunkKey=null,definition={}){
+  const species=WILDLIFE[definition.species]?definition.species:"deer";
+  const id=definition.id||("wildlife:"+chunkKey+":"+Math.round(x*100)+":"+Math.round(z*100));
+  const record=this.getWildlifeStatus({id,species});
+  if(record?.looted)return null;
+  const def=WILDLIFE[species],node=new B.TransformNode(species+" wildlife",this.scene);
+  node.position=V(x,this.groundY(x,z),z);
+  const mark=mesh=>{
+   mesh.isPickable=true;
+   mesh.metadata={animalId:id,animalSpecies:species};
+   return mesh;
+  };
+  const size=def.scale;
+  node.scaling=V(size,size,size);
+  const brown=species==="boar"?this.m.wood:species==="rabbit"?this.m.woodLight:this.m.woodLight;
+  mark(this.primitive("sphere",species+" body",node,[0,.91,0],
+   species==="boar"?[1.36,.83,.77]:[1.35,.67,.59],brown));
+  mark(this.primitive("sphere",species+" head",node,[0,1.33,.66],
+   species==="boar"?[.68,.52,.55]:[.48,.45,.5],brown));
+  for(const dx of [-.4,.4])for(const dz of [-.19,.22])
+   mark(this.primitive("cylinder",species+" leg",node,[dx,.43,dz],
+    [.12,.72,.12],this.m.wood));
+  if(species==="rabbit"){
+   for(const dx of [-.21,.21])
+    mark(this.primitive("cylinder","rabbit ear",node,[dx,1.93,.71],
+     [.14,.64,.16],this.m.woodLight));
+  }else if(species==="boar"){
+   for(const dx of [-.35,.35])
+    mark(this.primitive("sphere","boar tusk",node,[dx,1.13,1.05],
+     [.15,.15,.27],this.m.stone));
+  }else{
+   for(const dx of [-.3,.3])
+    mark(this.primitive("cylinder","deer antler",node,[dx,1.85,.64],
+     [.08,.53,.08],this.m.wood));
   }
-  this.animals.push({node,origin:V(x,0,z),phase:x+z,chunkKey});
+  const dead=record?.dead||false;
+  const animal={id,species,definition:{id,species},node,
+   origin:V(x,0,z),phase:x+z,chunkKey,dead,
+   fleeUntil:0,nextImpact:0};
+  if(dead){node.rotation.z=-Math.PI/2;node.position.y-=.18;}
+  this.animals.push(animal);
   return node;
+ }
+ nearbyAnimal(dead=false,reach=2.7){
+  const pos=this.player.position;
+  return this.animals.filter(a=>a.dead===dead&&
+   Math.hypot(a.node.position.x-pos.x,a.node.position.z-pos.z)<=reach)
+   .sort((a,b)=>Math.hypot(a.node.position.x-pos.x,a.node.position.z-pos.z)-
+    Math.hypot(b.node.position.x-pos.x,b.node.position.z-pos.z))[0]||null;
+ }
+ huntAnimal(animal){
+  if(!animal||animal.dead)return false;
+  const p=this.player.position,def=WILDLIFE[animal.species];
+  const weapon=this.getVitals().weapon;
+  const reach=(weapon?.reach||2.3)+HUNT_DISTANCE_BUFFER;
+  if(Math.hypot(animal.node.position.x-p.x,animal.node.position.z-p.z)>reach){
+   this.onStatus("Out of hunting range","Approach "+def.name+" with WASD, then press H or click.");
+   return false;
+  }
+  if(this.huntCooldown>0)return false;
+  const result=this.onWildlifeHunt(animal.definition);
+  this.onStatus(result.ok?(result.dead?"Hunt successful":"Hunting "+def.name):"Cannot hunt",
+   result.reason||"Equip a weapon to hunt.");
+  if(result.ok){
+   this.huntCooldown=WILDLIFE_ATTACK_COOLDOWN;
+   animal.fleeUntil=performance.now()/1000+6;
+   if(result.dead){
+    animal.dead=true;
+    animal.node.rotation.z=-Math.PI/2;
+    animal.node.position.y=this.groundY(animal.node.position.x,animal.node.position.z)-.18;
+   }
+  }
+  return !!result.ok;
+ }
+ huntNearest(){
+  const animal=this.nearbyAnimal(false,3.8);
+  if(animal)return this.huntAnimal(animal);
+  this.onStatus("No wildlife nearby",
+   "Move within weapon reach of a deer, rabbit or boar, then press H.");
+  return false;
+ }
+ harvestWildlife(animal){
+  if(!animal?.dead)return false;
+  if(Math.hypot(animal.node.position.x-this.player.position.x,
+   animal.node.position.z-this.player.position.z)>2.7){
+   this.onStatus("Move closer","Approach the carcass to collect its materials.");
+   return false;
+  }
+  const result=this.onWildlifeHarvest(animal.definition);
+  this.onStatus(result.ok?"Carcass harvested":"Cannot gather",result.reason);
+  if(result.ok){
+   animal.node.dispose(false,false);
+   this.animals=this.animals.filter(a=>a!==animal);
+  }
+  return !!result.ok;
  }
  setWorldSeed(seed){
   // Reset only streamed terrain/resources/wildlife. Permanent village/characters
@@ -530,7 +623,7 @@ export class World {
    if(this.inputBlocked||e.defaultPrevented||isText())return;const key=e.key.toLowerCase();
    // F now performs nearby interactions. Preserve Ctrl/Cmd+F browser Find,
    // and do not harvest repeatedly while the key is held.
-   if(key==="f"&&(e.ctrlKey||e.metaKey||e.altKey||e.repeat))return;
+   if((key==="f"||key==="h")&&(e.ctrlKey||e.metaKey||e.altKey||e.repeat))return;
    // Enter activates a focused HTML button itself; do not also place a building.
    if(key==="enter"&&document.activeElement?.closest("button,a,[role='button']"))return;
    if(this.placingStockpile||this.placingBuilding){
@@ -555,7 +648,7 @@ export class World {
      this.onStatus(outcome.ok?"Construction complete":"Cannot place here",outcome.reason||"Your village has grown.");
      return;
     }
-    if(key==="f")return;
+    if(key==="f"||key==="h")return;
    }
    // Sample held arrow keys in the render loop, independent of OS key repeat.
    if(["arrowleft","arrowright","arrowup","arrowdown"].includes(key)&&
@@ -566,6 +659,7 @@ export class World {
    }
    if(["w","a","s","d","shift","f"].includes(key)){e.preventDefault();this.keys[key]=true;}
    if(key==="f")this.interactNearby(e.shiftKey?"cut":"gather");
+   if(key==="h"){e.preventDefault();this.huntNearest()}
   });
   window.addEventListener("keyup",e=>{
    const key=e.key.toLowerCase();
@@ -607,7 +701,8 @@ export class World {
    }
    if(e.type===B.PointerEventTypes.POINTERMOVE){
     const meta=pick?.pickedMesh?.metadata;
-    const key=meta?.stockpile?"stockpile":meta?.buildingId||meta?.tribeId||meta?.residentId||null;
+    const key=meta?.stockpile?"stockpile":meta?.buildingId||meta?.tribeId||
+     meta?.residentId||meta?.animalId||null;
     this.canvas.style.cursor=key||meta?.resource?"pointer":"default";
     if(key&&key!==this.hoveredInteraction){
      if(meta.stockpile)this.onStatus("Village stockpile","Walk here with WASD, then click to open village storage.");
@@ -628,6 +723,11 @@ export class World {
    if(e.type!==B.PointerEventTypes.POINTERPICK||e.event?.button!==0)return;
    if(!pick?.hit)return;
    const mesh=pick.pickedMesh;
+   if(mesh?.metadata?.animalId){
+    const animal=this.animals.find(a=>a.id===mesh.metadata.animalId);
+    if(animal){if(animal.dead)this.harvestWildlife(animal);else this.huntAnimal(animal);}
+    return;
+   }
    if(mesh?.metadata?.tribeId){this.walkToTribe(mesh.metadata.tribeId);return}
    if(mesh?.metadata?.residentId){
     this.path=[];this.target=null;this.tribeTarget=null;
@@ -655,6 +755,10 @@ export class World {
   });
  }
  interactNearby(action="gather"){
+  if(action==="gather"){
+   const corpse=this.nearbyAnimal(true,2.7);
+   if(corpse){this.harvestWildlife(corpse);return;}
+  }
   const p=this.player.position;
   const near=this.entities.filter(e=>(action!=="cut"||e.resource==="food")
     &&Math.hypot(e.x-p.x,e.z-p.z)<2.7)
@@ -768,6 +872,8 @@ export class World {
   else if(this.placingStockpile||this.placingBuilding)this.resetCameraKeys();
   else this.updateKeyboardCamera(dt);
   this.cooldown=Math.max(0,this.cooldown-dt);
+  this.huntCooldown=Math.max(0,this.huntCooldown-dt);
+  this.boarCooldown=Math.max(0,this.boarCooldown-dt);
   this.waterNoticeCooldown=Math.max(0,this.waterNoticeCooldown-dt);
   const p=this.player.position,c=this.camera;
   const forward=V(-Math.cos(c.alpha),0,-Math.sin(c.alpha)),right=V(forward.z,0,-forward.x);
@@ -895,11 +1001,30 @@ export class World {
   for(const camp of this.tribeCamps.values())
    camp.humans.forEach((human,i)=>human.animate(t+i*1.25,false));
   if(this.flame?.isEnabled())this.flame.scaling.y=1.05+.12*Math.sin(t*8);
-  this.animals.forEach((a,i)=>{
-   a.node.position.x=a.origin.x+Math.sin(t*.18+a.phase)*1.35;
-   a.node.position.z=a.origin.z+Math.cos(t*.18+a.phase)*1.2;
-   a.node.position.y=this.groundY(a.node.position.x,a.node.position.z);
-   a.node.rotation.y=Math.atan2(Math.cos(t*.18+a.phase),-Math.sin(t*.18+a.phase));
-  });
+  // Behavior is local and deterministic in each loaded wildlife territory.
+  // Fleeing animals avoid water and blocked props; boars defend themselves
+  // after being attacked and can injure an unprepared hunter.
+  if(!this.inputBlocked){
+   for(const a of this.animals){
+    if(a.dead)continue;
+    const now=a.node.position;
+    const result=animalMotion(a.species,now.x,now.z,a.origin.x,a.origin.z,
+     p.x,p.z,t,dt,t<a.fleeUntil);
+    const water=this.terrain.waterAt(result.x,result.z);
+    if(water.depth<.08&&!this.isBlocked(result.x,result.z)&&
+       Math.abs(this.groundY(result.x,result.z)-this.groundY(now.x,now.z))<.42){
+     now.x=result.x;now.z=result.z;
+    }
+    now.y=this.groundY(now.x,now.z);
+    a.node.rotation.y+=(result.heading-a.node.rotation.y)*Math.min(1,dt*6);
+    const distance=Math.hypot(now.x-p.x,now.z-p.z);
+    if(a.species==="boar"&&t<a.fleeUntil&&distance<1.8&&
+       this.boarCooldown<=0&&!deep){
+     this.boarCooldown=BOAR_ATTACK_COOLDOWN;
+     this.onWildlifeDamage(WILDLIFE.boar.contactDamage,"a wild boar attack");
+     this.onStatus("Wild boar attack!","The boar struck back. Retreat or fight.");
+    }
+   }
+  }
  }
 }

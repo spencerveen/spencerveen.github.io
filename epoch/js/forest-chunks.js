@@ -1,5 +1,5 @@
 import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeight,
- forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261114y";
+ forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261114hunt1";
 import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114beaches2";
 import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114watershed3";
 import {terrainAppearanceAt,mountainOutcropSites,mountainHabitat} from "./mountain-appearance.js?v=20261114beaches2";
@@ -262,13 +262,14 @@ export class ForestChunks{
    chunk.vegetation.push(tuft);
   }
   for(const animal of forestAnimals(this.seed,cx,cz)){
+   if(world.getWildlifeStatus?.(animal)?.looted)continue;
    if(withinCamp(animal.x,animal.z,2)||
       beachAt(animal.x,animal.z,this.seed).vegetationClear)continue;
    const animalWater=this.waterAt(animal.x,animal.z);
    if(animalWater.depth<.12&&
      mountainHabitat(mountainAt(animal.x,animal.z,this.seed,
       this.mountainProtectedSites,animalWater.corridorDistance).uplift).animals)
-    world.makeAnimal(animal.x,animal.z,key);
+    world.makeAnimal(animal.x,animal.z,key,animal);
   }
   if(tribe)world.spawnTribeCamp(tribe,key);
   else if(relocated&&dryTribe)world.spawnAbandonedTribeCamp?.(candidate,key);

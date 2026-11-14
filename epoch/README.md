@@ -50,6 +50,14 @@ New games start with **one resident: the founder**. Small independent tribes app
 
 The title screen offers New Game, Continue, and three independent local save slots. Founder appearance is chosen when starting a new game and cannot be edited afterward. Descendants inherit related appearance traits. There is no global Village, Technology, Culture, Dynasty, or Character tab.
 
+## Phase 5B — Wild animals and hunting
+
+The wilderness now spawns seeded **deer, wild boars and rabbits**, each with distinct size, health, movement speed, and behavior. Deer and rabbits wander and flee from approaching hunters; boars respond aggressively when provoked and can damage your hero. Wildlife avoids swimming into rivers and crossing blocked terrain, and stays near its original habitat. The original procedural deer are retained with stable identifiers; extra rabbits and boars vary by chunk and world seed.
+
+Craft and **equip a Wooden Club, Stone Axe or Stone Spear**, approach wildlife with WASD, then press **H** or click a nearby animal to attack. Weapons use their real catalog damage, reach and stamina costs, and lose one durability per successful blow. Hunting has a short cooldown and requires sufficient stamina. A defeated animal leaves a persistent carcass; stand beside it and press **F** (or click it) to collect meat, fur, hide and bone. Loot goes to your backpack only if all drops fit, avoiding accidental losses when full; a harvested carcass stays gone when terrain chunks reload or the save reopens. Animal injuries are recorded, too, so a damaged animal doesn't mysteriously heal when a chunk unloads.
+
+**Raw animal meat is a gathered food material, not currently edible.** Cooking and safe meals follow in Phase 5C, when the Cooking Hearth becomes useful.
+
 ## Phase 5A — Primitive crafting and durability
 
 **Village Stockpile → Craft** now supports three complete recipes. A **Wooden Club** costs 3 stored Wood and is available immediately. The **Stone Axe** costs 2 stored Wood and 3 stored Stone, requiring Stone Toolmaking. The **Stone Spear** costs 2 stored Wood, 1 stored Flint and 1 stored Vines, also requiring Stone Toolmaking. Deposit gathered supplies at the village stockpile before crafting. A crafted tool equips automatically if Main Hand is empty; otherwise it enters a free backpack slot. Costs are not charged when crafting is blocked by research, distance, missing supplies, a full backpack or already owning that weapon.
@@ -80,6 +88,8 @@ Press **E** during gameplay to eat one Wild Berry straight from the backpack, wi
 | Left-click resource / F nearby | Gather only when in range; walk with WASD first |
 | Shift-click berry bush / Shift + F nearby | Permanently clear a bush for vines |
 | Click a tribal leader, sign or camp shelter | Interact after approaching manually with WASD; trust quests remain available |
+| H beside wildlife / click animal | Attack with an equipped primitive weapon; costs Stamina and weapon durability |
+| F near a carcass / click carcass | Harvest meat, fur, hides and bones into backpack |
 | F near a tribal leader | Open a nearby tribe encounter (if no gatherable resource takes priority) |
 | Click a named villager or overhead nameplate | Open their saved personal profile |
 | F beside a villager | Inspect the closest villager if no gatherable resource takes priority |

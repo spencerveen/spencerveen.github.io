@@ -1,5 +1,6 @@
-import {GameState} from "./state.js?v=20261114craft1";
-import {World} from "./world.js?v=20261114quickeat1";
+import {GameState} from "./state.js?v=20261114hunt1";
+import {ITEMS} from "./inventory.js?v=20261114craft1";
+import {World} from "./world.js?v=20261114hunt1";
 import {UI} from "./ui.js?v=20261114quickeat1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
@@ -38,7 +39,14 @@ async function startEpoch({slot,newGame=false,founder=null}){
      onResidentSelect:id=>ui?.openResident(id),
      spendSprint:amount=>state.spendStamina(amount,"sprint"),
      spendSwim:amount=>state.spendStamina(amount,"swim"),
-     getVitals:()=>state.survivalStatus()
+     getVitals:()=>({...state.survivalStatus(),
+      weapon:state.data.equipment.weapon?{
+       id:state.data.equipment.weapon,
+       reach:ITEMS[state.data.equipment.weapon]?.combat?.reach||0}:null}),
+     getWildlifeStatus:animal=>state.wildlifeStatus(animal),
+     onWildlifeHunt:animal=>state.huntAnimal(animal),
+     onWildlifeHarvest:animal=>state.harvestAnimal(animal),
+     onWildlifeDamage:(damage,reason)=>state.damageHero(damage,reason)
     });
   ui=new UI(state,world);
   sessionStarted=true;
@@ -62,6 +70,9 @@ async function startEpoch({slot,newGame=false,founder=null}){
     ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal,activeResidentId:ui.activeResidentId},
     forest:world.terrain.status,
     resourceNodes:state.resourceStatistics(),
+    wildlife:world.animals.map(a=>({id:a.id,species:a.species,dead:a.dead,
+     status:state.wildlifeStatus(a.definition),
+     x:a.node.position.x,z:a.node.position.z})),
     resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
     skills:{...state.data.skills},resources:{...state.data.resources},inventory:{slots:state.data.inventory.map(slot=>slot?{...slot}:null),used:state.inventoryUsed(),unpacked:{...state.data.unpacked}},
     equipment:{weapon:state.data.equipment.weapon,weaponCondition:state.equippedToolCondition(),body:state.data.equipment.body,
