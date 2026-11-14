@@ -55,6 +55,15 @@ export function placementCheck({village,world,kind,x,z,turn=0,ignoreId=null}){
     return {...answer,ok:false,reason:"Buildings need dry land above the waterline."};
   }
  }
+ // Check the full building footprint, not just its center, so a bank cannot
+ // hide shallow water under a corner or along one side of the foundation.
+ if(world?.terrain?.waterAt){
+  const diagonal=radius/Math.SQRT2;
+  const samples=[[0,0],[radius,0],[-radius,0],[0,radius],[0,-radius],
+   [diagonal,diagonal],[diagonal,-diagonal],[-diagonal,diagonal],[-diagonal,-diagonal]];
+  if(samples.some(([dx,dz])=>(world.terrain.waterAt(x+dx,z+dz)?.depth||0)>.03))
+   return {...answer,ok:false,reason:"Build on dry land above the shoreline."};
+ }
  // A four-direction terrain sample catches slope before spending materials.
  if(world?.groundY){
   const center=world.groundY(x,z);
