@@ -52,8 +52,8 @@ try{
   "deep sea uses swimming instead of blocking player movement");
  assert(test.oceanMeshes>0&&test.hasMarineBlue,"ocean uses the marine color palette");
  assert.equal(test.underWaterResources,0);
- assert.equal(test.first.loaded,25);
- assert.equal(test.offshore.loaded,25);
+ assert.equal(test.first.loaded,81);
+ assert.equal(test.offshore.loaded,81);
  assert(test.offshore.oceanChunks>=20,"farther east should become entirely open sea");
  assert(test.offshoreMeshes>0&&test.someLowRes,
   "offshore water uses reduced-complexity meshes");
