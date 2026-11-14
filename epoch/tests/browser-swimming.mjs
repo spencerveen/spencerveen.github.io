@@ -32,7 +32,7 @@ try{
   localStorage.setItem("epoch.stoneage.legacy.migrated","no-legacy");
  });
  await page.goto(gameUrl,{waitUntil:"domcontentloaded",timeout:45000});
- await continueGame(page);
+ await continueGame(page,{model:true});
  const crossed=await page.evaluate(crossings=>{
   const w=window.__epochTestWorld;
   // Forest props remain solid. Select a real bank-to-bank route clear of
@@ -54,12 +54,13 @@ try{
   w.terrain.update(x,z-14);
   w.camera.alpha=-Math.PI/2;w.keys.w=true;w.keys.shift=false;
   const initial=w.getVitals().stamina;
-  let encounteredDeep=false,maxError=0;
+  let encounteredDeep=false,maxError=0,swimClip=false;
   for(let i=0;i<450&&w.player.position.z<z+14;i++){
    w.update(.045);
    const water=w.terrain.waterAt(w.player.position.x,w.player.position.z);
    if(water.depth>=.85){
     encounteredDeep=true;
+    if(w.character?.animationStatus()?.mode==="swim")swimClip=true;
     maxError=Math.max(maxError,Math.abs(w.player.position.y-
      Math.max(w.groundY(w.player.position.x,w.player.position.z),water.surfaceY-1.04)));
    }
@@ -67,14 +68,41 @@ try{
   w.keys.w=false;
   return {initial,remaining:w.getVitals().stamina,z:w.player.position.z,
    encounteredDeep,maxError,loaded:w.terrain.loaded.size,mode:w.waterMotion,
-   route,blockedAtStart:w.isBlocked(x,z-14)};
+   route,swimClip,blockedAtStart:w.isBlocked(x,z-14)};
  },crossings);
  assert(!crossed.problem,JSON.stringify(crossed));
  assert(crossed.encounteredDeep,"player enters river: "+JSON.stringify(crossed));
+ assert(crossed.swimClip,"real skinned character uses the swim clip in deep water");
  assert(crossed.z>crossed.route.z+8,"WASD crosses deep water: "+JSON.stringify(crossed));
  assert(crossed.remaining<crossed.initial-2,"swimming consumes stamina");
  assert(crossed.maxError<.001,"character floats at sampled waterline");
  assert.equal(crossed.loaded,25);
+ const animation=await page.evaluate(({x,z})=>{
+  const w=window.__epochTestWorld;
+  w.player.position.x=x;w.player.position.z=z;
+  w.player.position.y=w.groundY(x,z);
+  w.terrain.update(x,z);
+  w.keys={};
+  w.update(.045);
+  const bone=w.scene.transformNodes.find(n=>/(?:^|_)upperarm_l$/.test(n.name));
+  if(!bone?.rotationQuaternion)return {problem:"No linked Quaternius shoulder joint"};
+  const a=bone.rotationQuaternion.clone();
+  const t=performance.now()/1000;
+  for(let i=0;i<11;i++)w.character.animate(t+.1*i,true,false,"swimming");
+  const b=bone.rotationQuaternion.clone();
+  const delta=Math.abs(a.x-b.x)+Math.abs(a.y-b.y)+Math.abs(a.z-b.z)+Math.abs(a.w-b.w);
+  w.update(.045);
+  const floating=w.character.animationStatus().mode;
+  w.player.position.x=0;w.player.position.z=0;
+  w.player.position.y=w.groundY(0,0);
+  w.terrain.update(0,0);
+  w.update(.045);
+  return {delta,floating,land:w.character.animationStatus().mode};
+ },crossed.route);
+ assert(!animation.problem,JSON.stringify(animation));
+ assert(animation.delta>.04,"arms perform distinct crawl strokes: "+JSON.stringify(animation));
+ assert.equal(animation.floating,"float","resting afloat uses a separate float clip");
+ assert.equal(animation.land,"idle","walking out of water restores land animation");
  assert.deepEqual(errors,[]);
- console.log("PASS browser swimming: crossed river, spent stamina and floated at the waterline");
+ console.log("PASS browser swimming: river crossing, stamina, 3D crawl strokes, float and shore transitions");
 }finally{await browser.close()}

@@ -24,6 +24,8 @@ assert(Math.abs(swimJointPose("thigh_l",0,"swim").pitch-
  swimJointPose("thigh_l",SWIM_CYCLE/4,"swim").pitch)>.12,"legs kick");
 assert.notDeepEqual(swimJointPose("upperarm_l",0,"float"),
  swimJointPose("upperarm_l",0,"swim"),"floating is distinct from moving strokes");
-assert.deepEqual(swimJointPose("upperarm_l",0,"swim"),
- swimJointPose("upperarm_l",SWIM_CYCLE,"swim"),"swim stroke loops exactly");
+const first=swimJointPose("upperarm_l",0,"swim");
+const loop=swimJointPose("upperarm_l",SWIM_CYCLE,"swim");
+for(const key of ["yaw","pitch","roll","weight"])
+ assert(Math.abs(first[key]-loop[key])<1e-12,"swim strokes loop smoothly without a seam");
 console.log("PASS procedural water clips: alternate strokes, kick, float, numeric joints and loops");

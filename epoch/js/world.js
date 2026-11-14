@@ -1,5 +1,5 @@
 import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113k";
-import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113k";
+import {createQuaterniusHuman} from "./quaternius-models.js?v=20261114swimanim1";
 import {BUILDINGS} from "./settlement.js?v=20261114u";
 import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114y";
 import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114y";
