@@ -832,9 +832,16 @@ export class World {
   const bedY=this.groundY(p.x,p.z);
   p.y=deep?Math.max(bedY,waterNow.surfaceY-SWIM.surfaceOffset):bedY;
   if(this.character?.root){
-   // Temporary buoyancy and lean until an authored swim clip is available.
-   this.character.root.position.y=deep?Math.sin(performance.now()/1000*3.8)*.045:0;
-   this.character.root.rotation.x=deep?-.16:0;
+   // Turn the entire existing skinned body into a mostly horizontal swimmer.
+   // Keeping this on the avatar's visual root leaves collisions and camera
+   // anchored to the original world actor and makes entering/exiting smooth.
+   const root=this.character.root;
+   const t=performance.now()/1000;
+   const blend=Math.min(1,Math.max(0,dt)*7);
+   const height=deep?.85+.045*Math.sin(t*3.4):0;
+   root.position.y+=(height-root.position.y)*blend;
+   root.position.z+=((deep?-.45:0)-root.position.z)*blend;
+   root.rotation.x+=((deep?1.18:0)-root.rotation.x)*blend;
   }
   const atStockpile=nearStockpile(this.stockpile,p.x,p.z);
   if(atStockpile!==this.stockpileInRange){
@@ -843,7 +850,8 @@ export class World {
   }
   // Drive authored movement clips with a continuous clock; pressing Shift
   // switches the player to the jogging loop without resetting progression.
-  this.character?.animate(performance.now()/1000,actuallyMoved,running);
+  this.character?.animate(performance.now()/1000,actuallyMoved,running,
+   this.waterMotion,!!this.keys.shift);
   const focus=this.focusTarget;
   const aim=focus?V(focus.x,this.groundY(focus.x,focus.z)+1.2,focus.z):V(p.x,p.y+1.2,p.z);
   // Never call ArcRotateCamera.setTarget every frame: it recomputes alpha/beta

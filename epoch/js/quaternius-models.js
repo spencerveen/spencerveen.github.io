@@ -3,7 +3,7 @@
 // synthesized here. Current procedural and sculpted versions are fallback only.
 import {normalizeAppearance,HAIR_COLORS,SKIN_TONES} from "./characters.js?v=20261113j";
 import {createModelHuman as createBackupHuman} from "./character-models.js?v=20261113j";
-import {loadLocomotion,createLocomotionPlayer} from "./locomotion.js?v=20261113j";
+import {loadLocomotion,createLocomotionPlayer} from "./locomotion.js?v=20261114swimanim1";
 
 const B=globalThis.BABYLON;
 const containers=new WeakMap();
@@ -69,13 +69,16 @@ export function createQuaterniusHuman(scene,appearance,parent=null,name="human")
     beardAttached:!!beard && beard.rootNodes.every(node=>node.parent===headNode)
    };
   },
-  animate(time,moving=false,running=false){
+  animate(time,moving=false,running=false,waterMode="land",fastSwim=false){
    if(destroyed)return;
    if(backup){backup.animate(time,moving);return;}
    if(!model)return;
-   // Play actual authored Quaternius skeleton keyframes on the glTF-linked
-   // TransformNodes. Bone-only animation would be overwritten each frame.
-   locomotion?.update(time,moving?(running?"run":"walk"):"idle");
+   // Swim and float animate the very same imported skinned joints as the
+   // authored Quaternius land clips, with smooth crossfades between modes.
+   const mode=waterMode==="swimming"?"swim":
+    waterMode==="floating"||waterMode==="exhausted"?"float":
+    moving?(running?"run":"walk"):"idle";
+   locomotion?.update(time,mode,mode==="swim"&&fastSwim?1.4:1);
   },
   dispose(){
    destroyed=true;

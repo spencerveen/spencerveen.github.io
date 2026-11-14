@@ -27,6 +27,8 @@ jobs:
           node --check epoch/js/residents.js
           node --check epoch/js/survival.js
           node --check epoch/js/swimming.js
+          node --check epoch/js/swim-animation.js
+          node --check epoch/js/locomotion.js
           node --check epoch/js/harvest.js
           node --check epoch/js/inventory-ui.js
           node --check epoch/js/equipment.js
@@ -57,6 +59,8 @@ jobs:
         run: node epoch/tests/check-survival.mjs
       - name: Verify swimming stamina drain and floating recovery
         run: node epoch/tests/check-swimming.mjs
+      - name: Validate swim/float skeletal poses and authored locomotion transitions
+        run: node epoch/tests/check-swim-animation.mjs
       - name: Validate temporary developer cheats without corrupting saves
         run: node epoch/tests/check-dev-cheats.mjs
       - name: Validate annual villager aging, natural death and succession at age 100

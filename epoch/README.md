@@ -97,6 +97,12 @@ During a running game, press **L** to open or close the developer panel. It cont
 
 These are deliberately temporary, session-only test switches in `js/dev-cheats.js`. They default to off every time Epoch opens, are not stored in save slots, and do not undo an already completed game-over. Players' villages, normal saves and death/permadeath rules when the toggles are off remain intact. The dev-only module, UI controls and state hooks can all be removed before release.
 
+## Animated swimming and floating
+
+The real Quaternius humanoid now has **procedural skeletal swimming**: alternating arm pulls, bent elbows, fluttering leg kicks, and subtle torso movement while crossing rivers, lakes, or ocean. Releasing WASD switches to a slower treading/float animation, including when exhausted. Pressing Shift increases the stroke rhythm for fast swimming. The avatar's visual root leans into a mostly horizontal floating position above the water surface, with smooth transitions when entering or leaving water. Animated hair, accessories and the existing glTF rig stay attached.
+
+The original idle, walk and jog animations remain active on dry ground and transition cleanly from swimming. No imported animation assets or save fields were changed. The procedural motion is implemented in `swim-animation.js` and layered onto `locomotion.js`. A formal mocap swimming clip may replace the procedural motion later.
+
 ## Swimming and water traversal
 
 Deep water in rivers, lakes and oceans is now traversable with **WASD**. Shallows (under 0.85m depth) remain walkable, while swimming moves at 2.25m/s and drains **5.25 stamina per second**. **Shift** swims at 3.1m/s for **9.25 stamina per second**. Swimming consumes the same stamina as sprinting and gathering, and stops normal stamina regeneration during active swim strokes. Releasing movement allows the character to float in place and recover. Exhausted swimmers remain afloat without dying and can continue when they have recovered 5 stamina; an exhausted swimmer can always climb into adjacent shallows. This makes rivers crossable without enabling endless free swimming.
