@@ -23,7 +23,7 @@ try{
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
  page.on("requestfailed",request=>warnings.push(request.url()+" "+request.failure()?.errorText));
- await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113m",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113n",{waitUntil:"domcontentloaded",timeout:45000});
  await page.locator('[data-menu="continue"]').waitFor({timeout:45000});
  assert(await page.locator("#start-screen").isVisible(),"title screen appears before world loads");
  assert.equal(await page.locator('[data-tab="appearance"]').count(),0,"no in-game character customization tab");
@@ -242,7 +242,7 @@ try{
  const newPage=await newContext.newPage();
  const creatorErrors=[];
  newPage.on("pageerror",error=>creatorErrors.push(String(error)));
- await newPage.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113m-new",{waitUntil:"domcontentloaded",timeout:45000});
+ await newPage.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113n-new",{waitUntil:"domcontentloaded",timeout:45000});
  await newPage.locator('[data-menu="new"]').waitFor({timeout:45000});
  assert(await newPage.locator('[data-menu="continue"]').isDisabled(),"clean browser has no Continue game");
  assert.equal(await newPage.locator(".epoch-save-card").count(),3,"three slots in title menu");
