@@ -62,7 +62,7 @@ try{
  assert(!check.problem,JSON.stringify(check));
  assert(check.sample.depth>1&&check.sample.kind!=="land");
  assert.equal(check.blocked,false,"deep water no longer forms an invisible movement wall");
- assert.equal(check.status.loaded,25);
+ assert.equal(check.status.loaded,81);
  assert(check.waterMeshes>0,"some streamed chunks contain visible water");
  assert.equal(check.waterPickable,false,"water does not intercept world object interactions");
  assert.equal(check.waterLayerCorrect,true,"water shares the depth buffer with trees and characters");
@@ -85,8 +85,8 @@ try{
    waterCount:w.scene.meshes.filter(m=>m.name.startsWith("Water [")).length};
  },check.deep);
  assert.deepEqual(reload.after,reload.original,"water remains exactly where it was after streaming away and back");
- assert.equal(reload.far.loaded,25);
- assert.equal(reload.returned.loaded,25);
+ assert.equal(reload.far.loaded,81);
+ assert.equal(reload.returned.loaded,81);
  assert.equal(reload.waterCount,reload.returned.waterChunks,"water meshes are correctly disposed on streaming");
  assert.deepEqual(errors,[],"rivers render without JavaScript errors");
  console.log("PASS browser 4B.2: rendered river mesh, deep-water collision, dry starter, seamless streaming and cleanup");
