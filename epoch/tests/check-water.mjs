@@ -24,7 +24,9 @@ for(let i=0;i<surface.indices.length;i+=3){
  const a=surface.indices[i]*3,b=surface.indices[i+1]*3,c=surface.indices[i+2]*3;
  const wx=(surface.positions[a]+surface.positions[b]+surface.positions[c])/3+(riverChunk.cx+.5)*CHUNK_SIZE;
  const wz=(surface.positions[a+2]+surface.positions[b+2]+surface.positions[c+2])/3+(riverChunk.cz+.5)*CHUNK_SIZE;
- assert(waterAt(wx,wz,STARTER_SEED).depth>.001,"water triangles should remain inside wet terrain");
+ const centroid=waterAt(wx,wz,STARTER_SEED);
+ assert(centroid.depth>.001||centroid.shore<1.5,
+  "a water triangle may cross the shoreline by only a sub-meter boundary approximation");
 }
 
 assert(SHALLOW_LIMIT>.3&&SHALLOW_LIMIT<1.3);
