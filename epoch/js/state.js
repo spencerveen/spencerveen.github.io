@@ -21,6 +21,7 @@ import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normali
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114fish1";
 import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack,CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261114hunt1";
+import {VILLAGER_CARRY_CAPACITY,normalizeCargo,normalizeHaulPosition,cargoCount,transferCargo} from "./villager-hauling.js?v=20261114haul1";
 import {FISH_STAMINA_COST,FISH_CATCH_AMOUNT,normalizeFishCatches} from "./fishing.js?v=20261114fish1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
@@ -405,7 +406,7 @@ export class GameState{
    id:member.id,name:member.name,sex:member.sex,age:member.age,
    originTribeId:tribe.id,originTribeName:tribe.name,
    role:member.role==="leader"?"formerLeader":"resident",recruitment:"peaceful",
-   joinedYear:this.data.year,homeId:null,job:"idle",
+   joinedYear:this.data.year,homeId:null,job:"idle",cargo:{},haulPosition:null,
    memories:[{year:this.data.year,text:"Welcomed peacefully from "+tribe.name+"."}]
   }));
   this.data.village.residents.push(...arrivals);
@@ -476,11 +477,52 @@ export class GameState{
    apply=()=>{this.data.wildlife[task.id]={species:task.species,health:0,dead:true,looted:true};removed=true};
   }else return {ok:false,reason:"Job and target do not match."};
   const total=Object.values(goods).reduce((sum,n)=>sum+n,0);
-  if(total>stockpileSpace(pile))return {ok:false,reason:"Stockpile is full."};
+  if(total>VILLAGER_CARRY_CAPACITY)return {ok:false,reason:"Load exceeds carrying capacity."};
+  const position=normalizeHaulPosition({x,z})||{x:pile.x,z:pile.z};
+  // A single synchronous transaction owns the source resource and cargo.
   apply();
-  for(const [item,amount] of Object.entries(goods))pile.items[item]=(pile.items[item]||0)+amount;
+  villager.cargo=normalizeCargo(goods);
+  villager.haulPosition=position;
   this.changed();
-  return {ok:true,goods,removed};
+  return {ok:true,goods:{...villager.cargo},removed,carried:total};
+ }
+ /** Deliver real carried items at the village stockpile. A full store leaves
+  * the unaccepted items in the villager's hands until space is available.
+  * Job changes never erase cargo or prevent its later delivery.
+  */
+ deliverVillagerCargo(id){
+  const villager=this.data.village.residents.find(p=>p.id===id);
+  const pile=this.data.village.stockpile;
+  if(!villager||!pile||this.data.survival.gameOver)return {ok:false,reason:"Delivery unavailable."};
+  if(cargoCount(villager.cargo)===0)return {ok:false,reason:"No carried supplies."};
+  const before={...villager.cargo},outcome=transferCargo(before,pile);
+  if(!outcome.moved)return {ok:false,remaining:outcome.remaining,reason:"Stockpile is full."};
+  villager.cargo=outcome.left;
+  if(outcome.remaining===0)villager.haulPosition=null;
+  this.changed();
+  return {ok:true,moved:outcome.moved,remaining:outcome.remaining,
+   goods:Object.fromEntries(Object.entries(before).map(([item,qty])=>
+    [item,qty-(outcome.left[item]||0)]).filter(([,qty])=>qty>0))};
+ }
+ villageHaulingStatus(){
+  const transit={},workers=[];
+  for(const resident of this.data.village.residents){
+   const cargo=normalizeCargo(resident.cargo),total=cargoCount(cargo);
+   if(total)workers.push({id:resident.id,name:resident.name,items:cargo,total});
+   for(const [item,qty] of Object.entries(cargo))
+    transit[item]=(transit[item]||0)+qty;
+  }
+  return {inTransit:Object.values(transit).reduce((sum,qty)=>sum+qty,0),
+   byItem:transit,carriers:workers};
+ }
+ /** Compatibility for old, synchronous work tests. The world now calls the
+  * collect and deliver functions separately, after physical travel.
+  */
+ completeVillagerWork(id,task){
+  const pick=this.collectVillagerCargo(id,task);
+  if(!pick.ok)return pick;
+  const drop=this.deliverVillagerCargo(id);
+  return {...drop,removed:pick.removed,goods:pick.goods};
  }
  villageHousing(){return housingUnits(this.data.village)}
  assignResidentHome(id,homeId){
@@ -589,6 +631,8 @@ export class GameState{
    this.changed(oldName+" died from "+reason+". No villagers remain. This civilization has ended.");
    return true;
   }
+  // Successors leave their worker cargo in village storage before taking office.
+  if(this.data.village.stockpile)transferCargo(chosen.cargo,this.data.village.stockpile);
   this.data.village.residents=roster.filter(r=>r.id!==chosen.id);
   this.data.village.population=this.data.village.residents.length+1;
   this.data.hero={name:chosen.name,age:chosen.age,
