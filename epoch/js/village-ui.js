@@ -3,6 +3,7 @@ import {nearStockpile,STOCKPILE_CAPACITY,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE
 import {STOCKPILE_ITEM_IDS,ITEMS,itemCapacity,toolMaxDurability,toolCondition} from "./inventory.js?v=20261114fish1";
 import {CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
+import {VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs1";
 const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
 const prereq=id=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[id]||id);
 const near=ui=>nearStockpile(ui.state.data.village.stockpile,ui.world.player.position.x,ui.world.player.position.z);
@@ -93,7 +94,7 @@ function peoplePanel(ui){
  let html='<div class="village-population"><div><small>SETTLEMENT POPULATION</small><strong>'+
   state.data.village.population+' / '+state.villageCapacity()+
   '</strong></div><span>'+people.length+' other residents</span></div>'+
-  '<p class="context-note">Each villager has their own identity, story and place to live. Select someone to learn about them or move them between available homes.</p>'+
+  '<p class="context-note">Assign jobs through individual profiles. Villagers travel to nearby work sites and bring gathered supplies back to your stockpile.</p>'+
   '<h3 class="section-heading">Housing</h3>';
  for(const h of homes){
   html+='<div class="timeline"><b>'+esc(h.label)+'</b><span>'+
@@ -109,7 +110,7 @@ function peoplePanel(ui){
   const home=homes.find(h=>h.id===person.homeId);
   const source=person.originTribeName||"Original settler";
   html+='<div class="entry resident-row"><div><h3>'+esc(person.name)+'</h3><p>Age '+person.age+
-   ' · '+esc(home?.label||"Communal camp")+'</p><small>'+
+   ' · '+esc(home?.label||"Communal camp")+'</p><small>'+esc(VILLAGER_JOBS[person.job]?.name||"Unassigned")+' · '+
    (person.recruitment==="peaceful"?"Welcomed from "+esc(source):"Longtime villager")+
    '</small></div><button type="button" data-action="view-resident" data-id="'+esc(person.id)+'">View profile</button></div>';
  }
