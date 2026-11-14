@@ -106,3 +106,7 @@ The first player village now begins by placing a **free Stockpile** on clear, le
 
 ## Personal inventory
 The starter Wayfarer's Pack has **10 slots**, and wood, stone, wild berries and vines stack to **12 per slot**. Trees yield wood plus vines; berry bushes yield berries plus vines; stone deposits yield stone. Crafting, technology and buildings consume carried stacks. Select a filled slot to inspect or discard it if the pack becomes full. Existing saves with more resources than 10 slots can carry retain the excess as manually recoverable supplies. See [INVENTORY_SYSTEM.md](./INVENTORY_SYSTEM.md).
+
+### Buildable Cooking Hearth
+
+The original static campfire has been removed from the starting world. Researching **Control of Fire** unlocks the **Cooking Hearth** blueprint, but does not create an automatic campfire. Deposit **6 wood and 5 stone** at your village stockpile, approach the Cooking Hearth construction plot and build it; only then will the hearth's stones, logs, flames, and firelight appear. The completed structure and its location persist with the village save. Cooking food remains a future feature.

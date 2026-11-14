@@ -23,7 +23,7 @@ try{
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
  page.on("requestfailed",request=>warnings.push(request.url()+" "+request.failure()?.errorText));
- await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113m",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113n",{waitUntil:"domcontentloaded",timeout:45000});
  await page.locator('[data-menu="continue"]').waitFor({timeout:45000});
  assert(await page.locator("#start-screen").isVisible(),"title screen appears before world loads");
  assert.equal(await page.locator('[data-tab="appearance"]').count(),0,"no in-game character customization tab");
@@ -237,12 +237,58 @@ try{
   assert(!(await page.locator("#right").evaluate(el=>el.classList.contains("open"))),
    "menu toggle still closes the sidebar");
  }
+ // The old ambient campfire must never exist. Researching Fire alone
+ // unlocks construction, not an instant campfire in the world.
+ assert.equal(idle.hearth.built,false,"no Cooking Hearth exists at game start");
+ assert.equal(idle.hearth.visible,false,"unbuilt hearth geometry stays hidden");
+ assert.equal(idle.hearth.lit,false,"no free flame appears before construction");
+ assert.equal(idle.hearth.glow,0,"no ambient hearth glow before construction");
+ assert.equal(idle.hearth.freeCampfires,0,"the free-standing old campfire is gone");
+ await page.evaluate(()=>sessionStorage.setItem("epoch.hearthFixture","research"));
+ await page.addInitScript(()=>{
+  const mode=sessionStorage.getItem("epoch.hearthFixture");
+  if(!mode)return;
+  const key="epoch.stoneage.slot.1";
+  const saved=JSON.parse(localStorage.getItem(key)||"{}");
+  saved.technologies=[...new Set([...(saved.technologies||[]),"fire"])];
+  saved.village=saved.village||{plots:{},population:5};
+  saved.village.plots={...(saved.village.plots||{})};
+  if(mode==="built")saved.village.plots.hearth_1="hearth";
+  else delete saved.village.plots.hearth_1;
+  localStorage.setItem(key,JSON.stringify(saved));
+ });
+ const loadHeathFixture=async ()=>{
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.locator('[data-menu="continue"]').click();
+  await page.waitForFunction(()=>!!window.epochDebug()?.hearth,null,{timeout:45000});
+  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),null,{timeout:45000});
+  return page.evaluate(()=>window.epochDebug());
+ };
+ const researched=await loadHeathFixture();
+ assert(researched.technologies.includes("fire"),"fire research is available for hearth construction");
+ assert.equal(researched.hearth.built,false,"researching fire does not automatically build the hearth");
+ assert.equal(researched.hearth.visible,false,"empty Cooking Hearth plot has no built firepit");
+ assert.equal(researched.hearth.lit,false,"researching fire does not ignite a free campfire");
+ assert.equal(researched.hearth.glow,0,"research alone produces no firelight");
+ await page.evaluate(()=>sessionStorage.setItem("epoch.hearthFixture","built"));
+ const builtHearth=await loadHeathFixture();
+ assert.equal(builtHearth.settlement.plots.hearth_1,"hearth","constructed hearth is persisted in village plots");
+ assert.equal(builtHearth.hearth.built,true,"Cooking Hearth construction activates the building");
+ assert.equal(builtHearth.hearth.visible,true,"completed Cooking Hearth geometry becomes visible");
+ assert.equal(builtHearth.hearth.lit,true,"constructed hearth flame lights after fire research");
+ assert(builtHearth.hearth.glow>0,"constructed Cooking Hearth produces firelight");
+ assert.equal(builtHearth.hearth.freeCampfires,0,"no duplicate legacy campfire after construction");
+ assert(Math.abs(builtHearth.hearth.position.x-builtHearth.settlement.worldPlotCenters.hearth_1.x)<.01,
+   "firelight is at the stockpile-relative Cooking Hearth plot, not the old clearing");
+ assert(Math.abs(builtHearth.hearth.position.z-builtHearth.settlement.worldPlotCenters.hearth_1.z)<.01,
+   "firelight follows the placed village plot");
+ await page.screenshot({path:path.join(output,"epoch-built-cooking-hearth.png")});
  // Separate clean browser context: test New Game > founder creation > Save > Continue.
  const newContext=await browser.newContext({viewport:{width:390,height:780},deviceScaleFactor:1});
  const newPage=await newContext.newPage();
  const creatorErrors=[];
  newPage.on("pageerror",error=>creatorErrors.push(String(error)));
- await newPage.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113m-new",{waitUntil:"domcontentloaded",timeout:45000});
+ await newPage.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113n-new",{waitUntil:"domcontentloaded",timeout:45000});
  await newPage.locator('[data-menu="new"]').waitFor({timeout:45000});
  assert(await newPage.locator('[data-menu="continue"]').isDisabled(),"clean browser has no Continue game");
  assert.equal(await newPage.locator(".epoch-save-card").count(),3,"three slots in title menu");

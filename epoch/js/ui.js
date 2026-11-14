@@ -1,4 +1,4 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113m";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113n";
 import {villagePanel,selectVillagePlot,openStockpile,handleVillageAction} from "./village-ui.js?v=20261113m";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261113m";
 const $=id=>document.getElementById(id);

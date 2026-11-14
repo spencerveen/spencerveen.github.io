@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261113m";
-import {World} from "./world.js?v=20261113m";
-import {UI} from "./ui.js?v=20261113m";
+import {GameState} from "./state.js?v=20261113n";
+import {World} from "./world.js?v=20261113n";
+import {UI} from "./ui.js?v=20261113n";
 import {TitleScreen} from "./title-screen.js?v=20261113m";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
@@ -45,6 +45,10 @@ async function startEpoch({slot,newGame=false,founder=null}){
     resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
     skills:{...state.data.skills},resources:{...state.data.resources},inventory:{slots:state.data.inventory.map(slot=>slot?{...slot}:null),used:state.inventoryUsed(),unpacked:{...state.data.unpacked}},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
+    hearth:{built:!!world.hearthBuilt,visible:!!world.villagePlots.get("hearth_1")?.constructed.isEnabled(),
+      lit:!!world.flame?.isEnabled(),glow:world.fireLight?.intensity||0,
+      freeCampfires:world.scene.transformNodes.filter(n=>n.name==="campfire").length,
+      position:world.fireLight?{x:world.fireLight.position.x,z:world.fireLight.position.z}:null},
     settlement:{plots:{...state.data.village.plots},population:state.data.village.population,capacity:state.villageCapacity(),
       selectedPlot:ui.selectedPlot,worldPlots:world.villagePlots.size,
       stockpile:state.stockpileInfo(),

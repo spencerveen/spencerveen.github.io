@@ -3,7 +3,7 @@ import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113k";
 import {PLOT_BY_ID} from "./settlement.js?v=20261113k";
 import {stockpileValidation,nearStockpile,LEGACY_HOME} from "./stockpile.js?v=20261113k";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261113k";
-import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113k";
+import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113n";
 import {STARTER_SEED,terrainHeight} from "./forest-generation.js?v=20261113k";
 import {ForestChunks} from "./forest-chunks.js?v=20261113k";
 const B=globalThis.BABYLON;
@@ -16,7 +16,7 @@ export class World {
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.020;this.scene.fogColor=new B.Color3(.62,.71,.62);
-  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();this.makeCamp();createVillageWorld(this,onPlot);createStockpileWorld(this);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
+  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();createVillageWorld(this,onPlot);createStockpileWorld(this);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
   this.engine.runRenderLoop(()=>{const dt=Math.min(.045,this.engine.getDeltaTime()/1000);this.update(dt);this.scene.render()});
   window.addEventListener("resize",()=>this.engine.resize());
  }
@@ -78,15 +78,6 @@ export class World {
   // remain. Positions outside it are generated from the persistent seed.
   this.terrain.update(0,0);
  }
- makeCamp(){
-  this.fireNode=new B.TransformNode("campfire",this.scene);this.fireNode.position=V(-5,this.groundY(-5,-3),-3);
-  for(let i=0;i<9;i++){const a=i*Math.PI*2/9;
-   this.primitive("sphere","fire ring",this.fireNode,[Math.cos(a)*.9,.1,Math.sin(a)*.9],[.45,.28,.4],this.m.stoneDark).isPickable=false;}
-  for(let i=0;i<3;i++){const log=this.primitive("cylinder","fire log",this.fireNode,[0,.18,0],[.27,1.8,.27],this.m.wood);log.rotation.z=Math.PI/2;log.rotation.y=i*2*Math.PI/3;log.isPickable=false}
-  this.flame=this.primitive("sphere","flame",this.fireNode,[0,.65,0],[.62,1.15,.62],this.m.fire);this.flame.isPickable=false;this.flame.setEnabled(false);
-  this.fireLight=new B.PointLight("fire glow",this.fireNode.position.add(V(0,1,0)),this.scene);this.fireLight.intensity=0;this.fireLight.diffuse=new B.Color3(1,.58,.2);this.fireLight.range=10;
-
- }
  makePlayer(){
   // The stable root represents the world actor; visual meshes can be replaced
   // at runtime without affecting movement, cameras, or collision.
@@ -143,8 +134,14 @@ export class World {
   this.path=[];this.target=null;this.plotTarget=null;
  }
  setDiscovery(fire){
-  this.flame.setEnabled(!!fire);
-  this.fireLight.intensity=fire?1.2:0;
+  // Fire research is only the prerequisite for building the hearth.
+  this.fireDiscovered=!!fire;
+  this.updateHearthFire();
+ }
+ updateHearthFire(){
+  const lit=!!(this.fireDiscovered&&this.hearthBuilt);
+  if(this.flame)this.flame.setEnabled(lit);
+  if(this.fireLight)this.fireLight.intensity=lit?1.2:0;
  }
  syncVillage(village){
   const pile=village?.stockpile||null;
@@ -158,9 +155,6 @@ export class World {
   this.homePositionKey=key;
   const base=pile||LEGACY_HOME;
   const dx=base.x-LEGACY_HOME.x,dz=base.z-LEGACY_HOME.z;
-  const fireX=-5+dx,fireZ=-3+dz;
-  this.fireNode.position=V(fireX,this.groundY(fireX,fireZ),fireZ);
-  this.fireLight.position=V(fireX,this.groundY(fireX,fireZ)+1,fireZ);
   for(const person of this.people||[]){
    const x=person.x+dx,z=person.z+dz;
    person.human.root.position=V(x,this.groundY(x,z),z);
@@ -439,7 +433,7 @@ export class World {
   c.setTarget(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));
   const t=performance.now()/1000;
   this.people.forEach(person=>person.human.animate(t+person.phase,false));
-  if(this.flame.isEnabled())this.flame.scaling.y=1.05+.12*Math.sin(t*8);
+  if(this.flame?.isEnabled())this.flame.scaling.y=1.05+.12*Math.sin(t*8);
   this.animals.forEach((a,i)=>{
    a.node.position.x=a.origin.x+Math.sin(t*.18+a.phase)*1.35;
    a.node.position.z=a.origin.z+Math.cos(t*.18+a.phase)*1.2;
