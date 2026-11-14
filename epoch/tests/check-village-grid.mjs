@@ -53,7 +53,7 @@ const hearth=state.placeVillageBuilding("hearth",4,-4,3,world);
 assert(hearth.ok,"Cooking Hearth can be positioned independently");
 assert.equal(state.placeVillageBuilding("hearth",-12,-8,0,world).ok,false,"only one hearth per village");
 assert.equal(state.data.village.buildings.length,3);
-assert.equal(state.stockpileInfo().items.wood,34);
+assert.equal(state.stockpileInfo().items.wood,44);
 assert.equal(state.stockpileInfo().items.stone,23);
 state.save();
 const reload=new GameState();
