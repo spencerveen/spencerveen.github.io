@@ -134,14 +134,6 @@ try{
   });
   assert(queued.path>0&&queued.hasTarget,"precondition: travel and a gather target are queued before clicking the building");
  }});
- const techDebug=await page.evaluate(()=>{
-  const w=window.__epochTestWorld,b=w.currentVillage?.buildings?.find(x=>x.id==="test_lore"),p=w.player.position;
-  return {context:window.epochDebug().ui,position:{x:p.x,z:p.z},
-   building:b?{x:b.x,z:b.z}:null,distance:b?Math.hypot(p.x-b.x,p.z-b.z):null,
-   status:{title:document.getElementById("action")?.textContent,detail:document.getElementById("details")?.textContent},
-   path:w.path.length,keys:w.keys,inputBlocked:w.inputBlocked};
- });
- console.log("TECH CLICK DIAGNOSTIC",JSON.stringify(techDebug));
  await page.waitForFunction(()=>window.epochDebug().ui.context==="tech",null,{timeout:5000});
  assert.deepEqual(await page.evaluate(()=>({path:window.__epochTestWorld.path.length,target:window.__epochTestWorld.target})),{path:0,target:null},"opening a building cancels the previous travel and gather intent");
  assert.equal((await page.evaluate(()=>window.epochDebug().ui)).sourceBuildingId,"test_lore");
@@ -220,10 +212,10 @@ try{
  const deposit=page.locator('[data-action="deposit-stockpile"][data-item="wood"]');
  assert.equal(await deposit.isDisabled(),false,"stockpile opens with working resource transfers");
  await page.locator("#panel").focus();
- await page.evaluate(()=>{const w=window.__epochTestWorld;w.keys.s=true;for(let i=0;i<65;i++)w.update(1/60);w.keys.s=false});
+ await page.evaluate(()=>{const w=window.__epochTestWorld;w.keys.w=true;for(let i=0;i<65;i++)w.update(1/60);w.keys.w=false});
  assert.equal(await deposit.isDisabled(),true,"leaving stockpile range disables transfer without changing tabs");
  assert(await page.locator("#panel").evaluate(n=>document.activeElement===n),"proximity refresh keeps focus on the panel instead of selecting an arbitrary action");
- await page.evaluate(()=>{const w=window.__epochTestWorld;w.keys.w=true;for(let i=0;i<65;i++)w.update(1/60);w.keys.w=false});
+ await page.evaluate(()=>{const w=window.__epochTestWorld;w.keys.s=true;for(let i=0;i<65;i++)w.update(1/60);w.keys.s=false});
  assert.equal(await deposit.isDisabled(),false,"walking back into range refreshes transfer controls");
  assert(await page.locator("#panel").evaluate(n=>document.activeElement===n),"returning into range preserves panel focus too");
 
