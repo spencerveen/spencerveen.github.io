@@ -64,7 +64,11 @@ assert.deepEqual(reloaded.data.village.residents,g.data.village.residents,"roste
 assert.deepEqual(reloaded.tribeRecord(tribe.id),g.tribeRecord(tribe.id));
 assert.equal(reloaded.inviteTribe(tribe.id),false,"reloading never duplicates recruits");
 reloaded.nextGeneration();
-assert.deepEqual(reloaded.data.village.residents,g.data.village.residents,"recruits persist through succession");
+assert.deepEqual(reloaded.data.village.residents.map(({age,...rest})=>rest),
+ g.data.village.residents.map(({age,...rest})=>rest),
+ "recruits keep their names, IDs, origins and homes through succession");
+assert(reloaded.data.village.residents.every((person,i)=>person.age===g.data.village.residents[i].age+24),
+ "the old 24-year succession skip ages every existing resident too");
 assert.equal(reloaded.data.village.population,g.data.village.population);
 const legacy={version:1,worldSeed:12000,hero:{name:"Old Founder"},village:{population:5,plots:{},buildings:[]}};
 saves.set("epoch.stoneage.slot.2",JSON.stringify(legacy));
