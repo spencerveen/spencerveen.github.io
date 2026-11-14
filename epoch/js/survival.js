@@ -47,10 +47,18 @@ export function advanceVitals(vitals,seconds,sprinting=false){
  if(vitals.hunger>25&&!sprinting) vitals.health=clamp(vitals.health+SURVIVAL.healthRegen*dt,0,100);
  return Object.keys(old).some(k=>vitals[k]!==old[k]);
 }
-export function consumeBerries(vitals){
- if(vitals.gameOver||vitals.health<=0)return false;
- vitals.hunger=clamp(vitals.hunger+SURVIVAL.berryHunger,0,100);
- vitals.foodSeconds=SURVIVAL.berryDuration; // Refresh, never stack.
- vitals.stamina=clamp(vitals.stamina+SURVIVAL.berryStamina,0,maxStamina(vitals));
+export const FOOD_EFFECTS=Object.freeze({
+ berries:Object.freeze({hunger:SURVIVAL.berryHunger,stamina:SURVIVAL.berryStamina,health:0,berryBoost:true}),
+ cooked_meat:Object.freeze({hunger:38,stamina:16,health:6,berryBoost:false}),
+ berry_roast:Object.freeze({hunger:52,stamina:20,health:10,berryBoost:true})
+});
+export function consumeFood(vitals,id){
+ const food=FOOD_EFFECTS[id];
+ if(!food||vitals.gameOver||vitals.health<=0)return false;
+ vitals.hunger=clamp(vitals.hunger+food.hunger,0,100);
+ if(food.berryBoost)vitals.foodSeconds=SURVIVAL.berryDuration;
+ vitals.stamina=clamp(vitals.stamina+food.stamina,0,maxStamina(vitals));
+ vitals.health=clamp(vitals.health+food.health,0,100);
  return true;
 }
+export function consumeBerries(vitals){return consumeFood(vitals,"berries")}

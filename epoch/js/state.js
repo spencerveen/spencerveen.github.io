@@ -1,5 +1,6 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
-import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeBerries} from "./survival.js?v=20261114beaches2";
+import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeFood,FOOD_EFFECTS} from "./survival.js?v=20261114cook1";
+import {COOKING_RECIPES,COOKING_REACH,prepareCooking} from "./cooking.js?v=20261114cook1";
 import {newDevCheats,validDevCheat} from "./dev-cheats.js?v=20261114devpanel1";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114w";
@@ -22,7 +23,7 @@ import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack,CR
 import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261114hunt1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
-  ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
+  ["crafting","Crafting"],["cooking","Cooking"],["construction","Construction"],["survival","Survival"]
 ];
 export const TECH={
  fire:{name:"Control of Fire",description:"Learn to start and tend fire. Unlocks construction of the village Cooking Hearth; no campfire is built automatically.",cost:{wood:4,stone:2,knowledge:3},needs:[]},
@@ -473,20 +474,26 @@ export class GameState{
   return true;
  }
  swingWeapon(){return this.spendStamina(SURVIVAL.weaponSwingCost,"attack")}
- eatBerries(index=null){
-  if(this.data.survival.gameOver)return false;
+ eatFood(id,index=null){
+  if(!FOOD_EFFECTS[id]||this.data.survival.gameOver)return false;
   if(index!==null){
    if(!Number.isInteger(index)||index<0||index>=INVENTORY_SLOTS||
-      this.data.inventory[index]?.id!=="berries"||this.data.inventory[index].qty<1)return false;
-  }else if(this.inventoryCount("berries")<1)return false;
-  if(!consumeBerries(this.data.survival))return false;
+      this.data.inventory[index]?.id!==id||this.data.inventory[index].qty<1)return false;
+  }else if(this.inventoryCount(id)<1)return false;
+  if(!consumeFood(this.data.survival,id))return false;
   if(index!==null){
    this.data.inventory[index].qty--;
    if(this.data.inventory[index].qty===0)this.data.inventory[index]=null;
-  }else removeItems(this.data.inventory,"berries",1);
+  }else removeItems(this.data.inventory,id,1);
   this.syncResources();
-  this.changed(this.data.hero.name+" ate wild berries and regained energy.");
+  this.changed(this.data.hero.name+" ate "+ITEMS[id].name.toLowerCase()+" and regained energy.");
   return true;
+ }
+ eatBerries(index=null){return this.eatFood("berries",index)}
+ quickEat(){
+  for(const id of ["berry_roast","cooked_meat","berries"])
+   if(this.inventoryCount(id)>0&&this.eatFood(id))return id;
+  return null;
  }
  chooseSuccessor(id){
   if(this.data.survival.gameOver)return false;
@@ -675,6 +682,29 @@ export class GameState{
   return true;
  }
  craftAxe(x,z){return this.craftTool("stone_axe",x,z)}
+ cookingPreview(recipeId,x,z){
+  const recipe=COOKING_RECIPES[recipeId],village=this.data.village;
+  if(!recipe)return {ok:false,reason:"Unknown recipe."};
+  if(this.data.survival.gameOver)return {ok:false,reason:"Cannot cook while incapacitated."};
+  if(!this.data.technologies.includes("fire"))return {ok:false,reason:"Research Control of Fire first."};
+  const hearth=village.buildings.find(b=>b.kind==="hearth");
+  if(!hearth)return {ok:false,reason:"Build a Cooking Hearth first."};
+  if(!Number.isFinite(x)||!Number.isFinite(z)||
+     Math.hypot(x-hearth.x,z-hearth.z)>COOKING_REACH)
+   return {ok:false,reason:"Move within "+COOKING_REACH+"m of the Cooking Hearth."};
+  return prepareCooking(recipeId,this.data.inventory,village.stockpile);
+ }
+ cookRecipe(recipeId,x,z){
+  const ready=this.cookingPreview(recipeId,x,z);
+  if(!ready.ok)return {ok:false,reason:ready.reason};
+  this.data.inventory=ready.pack;
+  this.data.village.stockpile.items=ready.supplies;
+  this.syncResources();
+  this.gainXP("cooking",ready.recipe.xp);
+  this.changed(this.data.hero.name+" prepared "+ready.recipe.name.toLowerCase()+" at the Cooking Hearth.");
+  return {ok:true,reason:"Prepared "+ready.recipe.output.qty+" "+ITEMS[ready.recipe.output.id].name+
+   ". Open Inventory or press E to eat.",item:ready.recipe.output.id,qty:ready.recipe.output.qty};
+ }
  stockpileInfo(){
   const pile=this.data.village.stockpile;
   return {placed:!!pile,x:pile?.x??null,z:pile?.z??null,
