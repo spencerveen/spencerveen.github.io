@@ -133,7 +133,7 @@ try{
  });
  await clickWorldObject(page,{stockpile:true});
  await page.waitForFunction(()=>window.epochDebug()?.ui?.context==="village"&&window.epochDebug()?.ui?.panelOpen,null,{timeout:9000});
- await page.locator('[data-action="village-section"][data-section="people"]').click();
+ await page.locator('nav.section-tabs [data-action="village-section"][data-section="people"]').click();
  assert((await page.locator("#panel").innerText()).includes("Housing"),"the People section shows available homes");
  assert.equal(await page.locator('[data-action="view-resident"]').count(),tribe.population,"all recruits have selectable personal records");
  const residentId=afterJoin.settlement.residents[0].id;
