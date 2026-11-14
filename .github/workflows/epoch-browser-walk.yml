@@ -48,6 +48,8 @@ jobs:
         run: node epoch/tests/browser-equipment.mjs
       - name: Craft a club, axe and spear in the stockpile interface
         run: node epoch/tests/browser-crafting.mjs
+      - name: Hunt a rabbit with H, gather its carcass with F, and reload the world
+        run: node epoch/tests/browser-hunting.mjs
       - name: Validate water meshes, deep-water collision and chunk cleanup
         run: node epoch/tests/browser-water.mjs
       - name: Inspect exposed mountain rock and vegetation streaming in Chromium
