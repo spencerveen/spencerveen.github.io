@@ -1,4 +1,5 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113m";
+import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
+import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeBerries} from "./survival.js?v=20261114q";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114m";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
@@ -7,7 +8,7 @@ import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed
  depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261113k";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113k";
-import {harvestAtNode} from "./harvest.js?v=20261113k";
+import {harvestAtNode} from "./harvest.js?v=20261114q";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114m";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
@@ -45,6 +46,7 @@ const fresh=(founder=null)=>{
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
  knowledgeClaims:[],researchSeconds:0,tribes:{},
+ survival:freshSurvival(),successorId:null,lastDeath:null,
  lineage:[{name,gen:1,start:-12000,role:"Founder",appearance:{...appearance}}],
  history:["The wanderer "+name+" entered a quiet clearing in a vast prehistoric wilderness."]
  };
@@ -109,7 +111,17 @@ export class GameState{
    ];
   }
   normalizeHomes(this.data.village);
-  this.data.village.population=this.data.village.residents.length+1;
+  this.data.survival=normalizeSurvival(data?.survival);
+  this.data.successorId=this.data.village.residents.some(r=>r.id===data?.successorId)?data.successorId:null;
+  this.data.lastDeath=data?.lastDeath&&typeof data.lastDeath==="object"&&
+   Number.isSafeInteger(data.lastDeath.id)?{
+    id:data.lastDeath.id,oldName:String(data.lastDeath.oldName||"").slice(0,60),
+    successorName:String(data.lastDeath.successorName||"").slice(0,60),
+    reason:String(data.lastDeath.reason||"").slice(0,110),
+    year:Number.isFinite(data.lastDeath.year)?data.lastDeath.year:this.data.year,
+    gameOver:data.lastDeath.gameOver===true
+   }:null;
+  this.data.village.population=this.data.survival.gameOver?0:this.data.village.residents.length+1;
   // Legacy villages keep previously achieved progress; they must not receive
   // retroactive first-build bonuses when the new progression system loads.
   if(Array.isArray(data?.knowledgeClaims)){
@@ -141,6 +153,8 @@ export class GameState{
   this.data.resourceNodes=data?.resourceNodes&&typeof data.resourceNodes==="object"
    &&!Array.isArray(data.resourceNodes)?{...data.resourceNodes}:{};
   this.onChange=()=>{};
+  this.onVitals=()=>{};
+  this.sprintedThisTick=false;this.vitalSaveClock=0;
   this.lastSave=0;
  }
  save(){
@@ -292,6 +306,76 @@ export class GameState{
   const resident=this.data.village.residents.find(r=>r.id===id);
   const unit=housingUnits(this.data.village).find(h=>h.id===homeId);
   this.changed(resident.name+" moved to "+unit.label+".");
+  return true;
+ }
+ survivalStatus(){
+  const vitals=this.data.survival;
+  return {...vitals,maxStamina:maxStamina(vitals)};
+ }
+ canSpendStamina(amount){const v=this.data.survival;return !v.gameOver&&v.health>0&&v.stamina+1e-8>=amount}
+ spendStamina(amount,reason=""){
+  if(!spendStamina(this.data.survival,amount))return false;
+  if(reason==="sprint")this.sprintedThisTick=true;
+  this.onVitals();
+  return true;
+ }
+ swingWeapon(){return this.spendStamina(SURVIVAL.weaponSwingCost,"attack")}
+ eatBerries(){
+  if(this.data.survival.gameOver||this.inventoryCount("berries")<1)return false;
+  if(!consumeBerries(this.data.survival))return false;
+  removeItems(this.data.inventory,"berries",1);
+  this.syncResources();
+  this.changed(this.data.hero.name+" ate wild berries and regained energy.");
+  return true;
+ }
+ chooseSuccessor(id){
+  if(this.data.survival.gameOver)return false;
+  const chosen=id===null?null:this.data.village.residents.find(r=>r.id===id);
+  if(id!==null&&!chosen)return false;
+  if(this.data.successorId===id)return true;
+  this.data.successorId=id;
+  this.changed(id?chosen.name+" was named the next leader.":"The named successor was cleared.");
+  return true;
+ }
+ damageHero(amount,reason="an injury"){
+  const v=this.data.survival;
+  if(v.gameOver||!Number.isFinite(amount)||amount<=0||v.health<=0)return false;
+  v.health=Math.max(0,v.health-amount);
+  if(v.health<=0)return this.heroDies(reason);
+  this.changed(this.data.hero.name+" was injured.");
+  return true;
+ }
+ heroDies(reason="a fatal injury"){
+  const v=this.data.survival;
+  if(v.gameOver||v.health>0)return false;
+  const oldName=this.data.hero.name,roster=this.data.village.residents;
+  const named=roster.find(r=>r.id===this.data.successorId);
+  const chosen=named||roster[Math.floor(Math.random()*roster.length)]||null;
+  const eventId=++v.deathCount;
+  const previous=this.data.lineage.at(-1);
+  if(previous){previous.deathYear=this.data.year;previous.deathReason=String(reason).slice(0,110)}
+  this.data.successorId=null;
+  if(!chosen){
+   v.gameOver=true;
+   this.data.village.population=0;
+   this.data.lastDeath={id:eventId,oldName,successorName:"",reason,year:this.data.year,gameOver:true};
+   this.changed(oldName+" died from "+reason+". No villagers remain. This civilization has ended.");
+   return true;
+  }
+  this.data.village.residents=roster.filter(r=>r.id!==chosen.id);
+  this.data.village.population=this.data.village.residents.length+1;
+  this.data.hero={name:chosen.name,age:chosen.age,
+   appearance:randomAppearance("epoch:villager:"+chosen.id,chosen.sex),sourceResidentId:chosen.id};
+  const inherited=this.data.civics.includes("apprenticeship")?.25:
+    this.data.civics.includes("oral")?.15:.08;
+  this.data.skills=Object.fromEntries(SKILLS.map(([id])=>[id,Math.round(this.data.skills[id]*inherited)]));
+  this.data.generation++;
+  this.data.lineage.push({name:chosen.name,gen:this.data.generation,start:this.data.year,
+   role:named?"Named successor":"Chosen by the survivors",
+   sourceResidentId:chosen.id,appearance:{...this.data.hero.appearance}});
+  v.health=75;v.stamina=Math.min(80,maxStamina(v));v.gameOver=false;
+  this.data.lastDeath={id:eventId,oldName,successorName:chosen.name,reason,year:this.data.year,gameOver:false};
+  this.changed(oldName+" died from "+reason+". "+chosen.name+" now leads the village.");
   return true;
  }
  gainXP(skill,amount){this.data.skills[skill]=(this.data.skills[skill]||0)+amount}
@@ -458,6 +542,14 @@ export class GameState{
  }
  advance(dt){
   const d=this.data,seconds=Math.max(0,Math.min(dt,5));
+  if(d.survival.gameOver)return;
+  const survivalChanged=advanceVitals(d.survival,seconds,this.sprintedThisTick);
+  this.sprintedThisTick=false;
+  if(survivalChanged){
+   this.onVitals();
+   this.vitalSaveClock+=seconds;
+   if(this.vitalSaveClock>=8){this.vitalSaveClock=0;this.save()}
+  }
   d.calendarProgress+=seconds/90;
   // An operational shelter slowly generates Knowledge during active play.
   // Villager assignments and offline research are future mechanics.

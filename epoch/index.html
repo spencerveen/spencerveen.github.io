@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#101b17"><title>Epoch | Dawn of the First Tribe</title>
-<link rel="stylesheet" href="./styles.css?v=20261114n">
+<link rel="stylesheet" href="./styles.css?v=20261114q">
 <script src="https://cdn.babylonjs.com/babylon.js" defer></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js" defer></script>
-<script type="module" src="./js/main.js?v=20261114p"></script>
+<script type="module" src="./js/main.js?v=20261114q"></script>
 </head>
 <body>
 <canvas id="scene" tabindex="0" aria-label="3D Stone Age world"></canvas><div class="vignette"></div>
@@ -19,7 +19,14 @@
  <span class="kicker">YOUR NEXT CHAPTER</span><h2 id="objective-title">Establish your camp</h2>
  <p id="objective-description">Choose a clearing for your first stockpile.</p>
  <div class="objective-bottom"><small id="objective-progress">Your first stockpile is free</small><button id="objective-action" type="button" data-action="objective">Establish camp</button></div>
- <div class="hero-chip"><b id="ancestor-name">Aren</b><span id="ancestor-age">Age 18 · Founder</span></div><span id="settlement-status">A new beginning</span>
+ <div class="hero-chip"><b id="ancestor-name">Aren</b><span id="ancestor-age">Age 18 · Founder</span></div>
+ <div id="survival-hud" class="survival-hud" aria-label="Character survival">
+  <div class="survival-stat"><span>♥ Health</span><strong id="health-value">100 / 100</strong><div class="survival-bar"><i id="health-bar"></i></div></div>
+  <div class="survival-stat"><span>⚡ Stamina</span><strong id="stamina-value">100 / 100</strong><div class="survival-bar"><i id="stamina-bar"></i></div></div>
+  <div class="survival-stat"><span>● Hunger</span><strong id="hunger-value">100%</strong><div class="survival-bar"><i id="hunger-bar"></i></div></div>
+  <small id="food-effect" class="survival-food-effect">Eat berries from Inventory for a short stamina boost</small>
+ </div>
+ <span id="settlement-status">A new beginning</span>
 </aside>
 <nav id="hud-tools" class="hud-tools" aria-label="Personal interfaces">
  <button type="button" data-tab="pack" aria-controls="right" aria-expanded="false"><span class="tool-icon" aria-hidden="true">▣</span><span class="tool-label">Inventory</span><kbd>I</kbd></button>

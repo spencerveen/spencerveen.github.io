@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261114n";
-import {World} from "./world.js?v=20261114n";
-import {UI} from "./ui.js?v=20261114p";
+import {GameState} from "./state.js?v=20261114q";
+import {World} from "./world.js?v=20261114q";
+import {UI} from "./ui.js?v=20261114q";
 import {TitleScreen} from "./title-screen.js?v=20261114b";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
@@ -31,12 +31,14 @@ async function startEpoch({slot,newGame=false,founder=null}){
      onInteract:tribe=>ui?.openTribe(tribe),
      getRecord:id=>state.tribeRecord(id),
      getHome:()=>state.data.village.stockpile,
-     onResidentSelect:id=>ui?.openResident(id)
+     onResidentSelect:id=>ui?.openResident(id),
+     spendSprint:amount=>state.spendStamina(amount,"sprint"),
+     getVitals:()=>state.survivalStatus()
     });
   ui=new UI(state,world);
   sessionStarted=true;
   state.save();
-  window.setInterval(()=>state.advance(1),1000);
+  window.setInterval(()=>{if(!ui?.modal)state.advance(1)},1000);
   window.addEventListener("pagehide",()=>state.save());
   let revealed=false;
   const reveal=()=>{if(revealed)return;revealed=true;loading.classList.add("hidden");};
@@ -50,6 +52,8 @@ async function startEpoch({slot,newGame=false,founder=null}){
   // Expose a read-only inspection aid for development without exposing mutation methods.
   Object.defineProperty(globalThis,"epochDebug",{value:()=>({
     slot:state.slot,heroName:state.data.hero.name,year:state.formatYear(),generation:state.data.generation,
+    survival:state.survivalStatus(),successorId:state.data.successorId,
+    lastDeath:state.data.lastDeath?{...state.data.lastDeath}:null,
     ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal,activeResidentId:ui.activeResidentId},
     forest:world.terrain.status,
     resourceNodes:state.resourceStatistics(),

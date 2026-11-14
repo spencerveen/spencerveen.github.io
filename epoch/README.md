@@ -23,7 +23,7 @@ Visit `http://127.0.0.1:8765/epoch/`. No backend is required. The current Babylo
 
 | Interface or place | What it opens |
 |---|---|
-| Inventory button / I | Ten-slot inventory, stack inspection/discard, Stone Axe crafting |
+| Inventory button / I | Ten-slot inventory, eat berries, stack inspection/discard, Stone Axe crafting |
 | Skills button / K | Six personal skill tracks and XP progress |
 | Objective → Establish camp | Free first-stockpile placement |
 | Village Stockpile | Village **Storage / Build / Buildings / People** sections |
@@ -33,11 +33,16 @@ Visit `http://127.0.0.1:8765/epoch/`. No backend is required. The current Babylo
 | Cooking Hearth | Hearth information; cooking recipes are planned |
 | Wilderness tribal camps and leaders | Meet leaders, help with supply quests to earn Trust, and invite tribes to settle peacefully |
 | Village residents (click people or open Stockpile → People) | Inspect a villager's personal chronicle, former clanmates, housemates and housing assignment |
+| Survival HUD | Health, Stamina, Hunger and temporary food-bonus timer; bars appear by the founder's name |
 | Game menu | Save game, Help, and Save & return to title |
 
 New games start with **one resident: the founder**. Small independent tribes appear in the wilderness with **2–5 seeded, named people**, tribal leaders and simple camps. Visit the camp or click its people and huts to meet the leader. Their names and locations reproduce from the saved world seed. Tribes remember discovery, Trust, fulfilled requests and relocation through saves and terrain streaming. **Peaceful recruitment is now playable:** bring a tribal leader three requested sets of carried supplies (berries, wood and stone), earn 35 Trust per successful request, then invite the whole tribe when Trust reaches 100 and your village has enough open housing for everyone. The tribe dismantles its original camp, which remains an abandoned clearing and never respawns as an active settlement. Recruits become saved named residents visible in your village and the stockpile's People roster. Razing, combat, individual negotiations, happiness, traits and villager jobs are later milestones.
 
 **Phase 3: people and housing.** The stockpile now has a **People** section with the founder, each named villager, a population summary, and actual occupancy for the communal camp and every Family Hut. Click **View profile**, or click a villager/nameplate in the 3D world, to inspect their story, origin tribe, arrival year, original tribal leadership, former clanmates and current housemates. The founder uses one of the five communal spaces; up to four other villagers can live in the camp, and each Family Hut provides three more beds. You can **assign a resident to any home with an available bed**; assignments instantly reposition that villager in the village, are recorded in their personal chronicle, and survive reloads and succession. Migrated saves receive compatible names and housing records. Housing moves are instantaneous for now: walking home, relationships beyond shared clan/household history, jobs and mood simulation are future development stages. Other home-village NPCs appear only for residents actually recorded in the save; older villages retain their saved residents. Recruitment, births, and villager jobs are planned for later. A Family Hut adds housing capacity, not residents.
+
+**Phase 4 survival foundations.** Every controlled character has 100 Health, up to 100 base Stamina and 100 Hunger. Hunger decreases only during active unpaused gameplay and never directly hurts or kills the player. When hunger reaches zero, available stamina is capped at 45 and stamina regeneration slows; food restores your ability to act. Harvesting consumes stamina (tree 6, stone 5, berries 2, clearing a bush 8); actions do not spend stamina or deplete a resource when the pack is full or stamina is insufficient. Holding Shift while moving spends 11 stamina per second, and automatically slows to walking when exhausted. Stamina recovers naturally when not sprinting, with hunger affecting recovery speed. **Eat one carried berry** from Inventory to restore 24 Hunger and 12 Stamina and gain **+20 maximum Stamina for two active minutes**. The food timer refreshes rather than stacking; its expiration returns stamina to the normal limit. These values persist in each save and are not simulated while offline.
+
+**Death and continuation.** You can designate any named village resident as your successor in Stockpile → People → View profile; the Family Hut's Dynasty screen also shows the current designation. When a character dies from damage, control moves to that named villager if available; otherwise, a random living resident takes over. The successor leaves the regular villager roster (so population is not duplicated), inherits the saved village, and begins their rule in the settlement. There is no automatic 24-year skip on death, and prior leaders are recorded in the lineage. **If nobody survives besides the player, death permanently ends the run**; the slot retains the final history but cannot be resumed. Old saves are migrated with full health, stamina and hunger, preserving existing progress. Weapons, hostile NPC combat and causes of injury are not playable yet; the damage/death logic is ready for them. The older manual Dynasty succession remains separate from combat death.
 
 The title screen offers New Game, Continue, and three independent local save slots. Founder appearance is chosen when starting a new game and cannot be edited afterward. Descendants inherit related appearance traits. There is no global Village, Technology, Culture, Dynasty, or Character tab.
 
@@ -54,7 +59,8 @@ The title screen offers New Game, Continue, and three independent local save slo
 
 | Input | Action |
 |---|---|
-| WASD / Shift + WASD | Walk / sprint relative to the camera |
+| WASD / Shift + WASD | Walk / sprint relative to the camera (sprinting uses Stamina) |
+| Inventory → Eat 1 berry | Restore Hunger, Stamina and a timed +20 maximum Stamina bonus |
 | Left-click ground | Auto-walk to a position |
 | Left-click resource / E nearby | Approach and gather / gather a nearby resource |
 | Shift-click berry bush / Shift + E nearby | Permanently clear a bush for vines |
@@ -91,7 +97,7 @@ Progress autosaves after state changes. The game menu also offers **Save game** 
 
 ## Current limits and assets
 
-Housing capacity increases immediately; peaceful recruitment, individual villager profiles, remembered arrival stories, shared clan/household connections and housing assignments are implemented. Worker jobs, food/happiness needs, personality traits, births, deaths, combat, hunting, branching conversations, complex diplomacy, rival civilization AI, additional ages, multiplayer, accounts, and synced saves are not yet implemented. Research and Culture are functional building activities; automatic building production bonuses remain planned. Desktop play is the main target, with responsive panels and on-screen placement controls; complete touch movement still needs work.
+Housing capacity increases immediately; peaceful recruitment, individual villager profiles, personal survival, food consumption and death/survivor succession are implemented. Worker jobs, villager hunger/deaths, happiness, personality traits, births, hostile combat, weapons, hunting, branching conversations, complex diplomacy, rival civilization AI, additional ages, multiplayer, accounts, and synced saves are not yet implemented. Research and Culture are functional building activities; automatic building production bonuses remain planned. Desktop play is the main target, with responsive panels and on-screen placement controls; complete touch movement still needs work.
 
 Characters use Quaternius Universal Base Characters Standard **CC0** assets with real skinned rigs, separate hairstyles, and authored idle/walk/run clips. Source credit, license, pinned import revision, and rebuild instructions are in [assets/characters/QUATERNIUS.md](./assets/characters/QUATERNIUS.md). Previous original GLBs remain as fallback art. Stone Age clothing and animation polish are future visual work; the founder creator currently uses a stylized reference portrait.
 

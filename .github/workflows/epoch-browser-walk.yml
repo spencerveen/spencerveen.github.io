@@ -34,6 +34,8 @@ jobs:
         run: node epoch/tests/browser-contextual-ui.mjs
       - name: Explore seeded wilderness tribes and interact with their leaders
         run: node epoch/tests/browser-tribes.mjs
+      - name: Validate survival HUD, eating, sprinting and permanent death
+        run: node epoch/tests/browser-survival.mjs
       - name: Confirm imported 3D humanoids animate in Chromium
         run: node epoch/tests/browser-walk.mjs
       - name: Preserve screenshots and server logs

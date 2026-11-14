@@ -18,6 +18,8 @@ export class World {
   this.onTribeDiscover=tribeHandlers.onDiscover||(()=>{});
   this.onTribeInteract=tribeHandlers.onInteract||(()=>{});
   this.onResidentSelect=tribeHandlers.onResidentSelect||(()=>{});
+  this.spendSprint=tribeHandlers.spendSprint||(()=>true);
+  this.getVitals=tribeHandlers.getVitals||(()=>({health:100,gameOver:false}));
   this.getTribeRecord=tribeHandlers.getRecord||(()=>null);
   this.getTribeHome=tribeHandlers.getHome||(()=>null);
   this.discoveredTribes=new Set();this.tribeTarget=null;
@@ -302,6 +304,15 @@ export class World {
  focusResident(id){
   const person=this.people.find(p=>p.id===id);
   return person?this.focusLocation(person.x,person.z):false;
+ }
+ respawnAtHome(){
+  const home=this.currentVillage?.stockpile||LEGACY_HOME;
+  const x=home.x+3,z=home.z+3;
+  this.player.position.copyFrom(V(x,this.groundY(x,z),z));
+  this.keys={};this.resetCameraKeys();this.path=[];this.target=null;
+  this.stockpileTarget=false;this.tribeTarget=null;this.plotTarget=null;
+  this.focusTarget=null;this.cameraDragging=false;this.cooldown=0;
+  if(this.camera)this.camera.target.copyFrom(V(x,this.player.position.y+1,z));
  }
  walkToTribe(id){
   const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===id);
@@ -652,6 +663,7 @@ export class World {
   if(result?.removed&&meta.resourceId)this.terrain.removeResource(meta.resourceId,meta.chunkKey);
   else if(meta.resource==="food"&&meta.resourceId)this.terrain.refreshBerries();
   this.onStatus(result?.type==="full"?"Pack full":
+   result?.type==="exhausted"?"Exhausted":
    result?.type==="empty"?"Resource depleted":
    result?.removed?"Resource exhausted":"Gathering "+meta.label,
    result?.label||"No resources gathered.");
@@ -732,8 +744,10 @@ export class World {
    if(diff.length()<.25){this.path.shift();}
    else{direction=diff.normalize();moving=true;}
   }
+  let running=false;
   if(moving){
-   const speed=this.keys.shift?6.4:3.6,movement=direction.scale(speed*dt);
+   running=!!this.keys.shift && this.spendSprint(11*dt);
+   const speed=running?6.4:3.6,movement=direction.scale(speed*dt);
    const test=p.add(movement);
    if(!this.isBlocked(test.x,test.z)){p.x=test.x;p.z=test.z}
    else if(!this.isBlocked(p.x+movement.x,p.z))p.x+=movement.x;
@@ -775,7 +789,7 @@ export class World {
   }
   // Drive authored movement clips with a continuous clock; pressing Shift
   // switches the player to the jogging loop without resetting progression.
-  this.character?.animate(performance.now()/1000,moving,moving&&!!this.keys.shift);
+  this.character?.animate(performance.now()/1000,moving,running);
   if(this.target && Math.hypot(this.target.x-p.x,this.target.z-p.z)<2.55){const target=this.target,action=this.targetAction;this.target=null;this.path=[];this.collect(target,action)}
   if(this.stockpileTarget&&this.stockpile
     &&nearStockpile(this.stockpile,p.x,p.z)){

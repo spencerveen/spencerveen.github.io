@@ -4,8 +4,10 @@
  * character's ten-slot inventory.
  */
 import {addItems,itemCapacity} from "./inventory.js?v=20261113j";
+import {SURVIVAL} from "./survival.js?v=20261114q";
 import {RESOURCE_NODES,BUSH_VINE_YIELD,resourceNodeStatus,recordResourceNode} from "./resource-nodes.js?v=20261113j";
 export function harvestAtNode(state,meta,action="gather",now=Date.now()){
+ if(state.data.survival?.gameOver)return {type:"empty",label:"Your civilization has ended."};
  const status=resourceNodeStatus(state.data.resourceNodes,meta,now);
  if(!status)return {type:"empty",label:"No resource found here."};
  if(status.removed)return {type:"empty",resourceId:status.id,removed:true,label:"This resource has already been depleted."};
@@ -13,6 +15,8 @@ export function harvestAtNode(state,meta,action="gather",now=Date.now()){
  if(status.kind==="food"&&action==="cut"){
   if(itemCapacity(state.data.inventory,"vines")<BUSH_VINE_YIELD)
    return {type:"full",resourceId:status.id,label:"Need room for "+BUSH_VINE_YIELD+" vines before cutting down this bush."};
+  if(!state.spendStamina(SURVIVAL.gatherCost.cut))
+   return {type:"exhausted",label:"Too exhausted to cut this bush. Rest or eat berries."};
   addItems(state.data.inventory,"vines",BUSH_VINE_YIELD);
   recordResourceNode(state.data.resourceNodes,status,0,{removed:true,now});
   state.syncResources();
@@ -32,6 +36,11 @@ export function harvestAtNode(state,meta,action="gather",now=Date.now()){
   food:{item:"berries",amount:2,skill:"foraging",xp:12,label:"wild berries"}
  }[status.kind];
  const requested=Math.min(status.remaining,harvesting.amount);
+ const staminaCost=SURVIVAL.gatherCost[status.kind];
+ if(itemCapacity(state.data.inventory,harvesting.item)<=0)
+  return {type:"full",resourceId:status.id,label:"Pack full! Spend or discard a stack first."};
+ if(!state.spendStamina(staminaCost))
+  return {type:"exhausted",label:"Not enough stamina to gather. Rest or eat berries."};
  const added=addItems(state.data.inventory,harvesting.item,requested);
  if(!added)return {type:"full",resourceId:status.id,label:"Pack full! Spend or discard a stack first."};
  let vines=0;

@@ -2,7 +2,7 @@ import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114n";
 import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
 import {BUILDINGS} from "./settlement.js?v=20261114b";
 import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114n";
-import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114b";
+import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114q";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -13,6 +13,7 @@ const skillNotes={woodcutting:"Practice by gathering wood from trees.",mining:"P
 export class UI{
  constructor(state,world){
   this.state=state;this.world=world;this.tab="pack";this.panelOpen=false;this.villageSection="storage";this.sourceBuildingId=null;this.selectedBuildingId=null;this.selectedSlot=null;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;this.panelMarkup=null;
+  this.lastSeenDeath=state.data.lastDeath?.id||0;
   document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{if(this.panelOpen&&this.tab===button.dataset.tab)this.closePanel();else this.openPanel(button.dataset.tab)}));
   $("toggle").addEventListener("click",()=>this.modal?this.close():this.menu());
   $("close-panel").addEventListener("click",()=>this.closePanel());
@@ -21,9 +22,58 @@ export class UI{
   $("modal").addEventListener("click",e=>{if(e.target===$("modal"))this.close()});
   $("panel").addEventListener("click",e=>this.handleAction(e));$("guide").addEventListener("click",e=>this.handleAction(e));
   window.addEventListener("keydown",e=>this.keydown(e));
-  state.onChange=()=>{world.setDiscovery(state.data.technologies.includes("fire"));world.syncVillage(state.data.village);world.applyAppearance(state.data.hero.appearance);this.render()};
+  state.onChange=()=>{
+   world.setDiscovery(state.data.technologies.includes("fire"));
+   world.syncVillage(state.data.village);world.applyAppearance(state.data.hero.appearance);
+   this.render();
+   const death=state.data.lastDeath;
+   if(death&&death.id!==this.lastSeenDeath){
+    this.lastSeenDeath=death.id;
+    if(!death.gameOver)world.respawnAtHome();
+    this.showDeathResult();
+   }
+  };
+  state.onVitals=()=>this.renderVitals();
   world.onInteractionRangeChange=()=>{if(this.panelOpen&&this.tab==="village")this.render()};
   world.setDiscovery(state.data.technologies.includes("fire"));world.syncVillage(state.data.village);world.applyAppearance(state.data.hero.appearance);this.render();
+  if(state.data.survival.gameOver)this.showDeathResult();
+ }
+ renderVitals(){
+  const s=this.state.survivalStatus();
+  const meter=(name,value,max,label)=>{
+   document.getElementById(name+"-value").textContent=label;
+   document.getElementById(name+"-bar").style.width=(Math.min(100,Math.max(0,value/max*100)))+"%";
+  };
+  meter("health",s.health,100,Math.ceil(s.health)+" / 100");
+  meter("stamina",s.stamina,s.maxStamina,Math.floor(s.stamina)+" / "+s.maxStamina);
+  meter("hunger",s.hunger,100,Math.ceil(s.hunger)+"%");
+  document.getElementById("food-effect").textContent=s.foodSeconds>0?
+   "🫐 Berry boost · +20 max Stamina · "+Math.ceil(s.foodSeconds)+"s left":
+   s.hunger<=0?"Starving: stamina capped at 45. Eat to recover.":
+   s.hunger<25?"Hungry: slower stamina recovery. Eat wild berries.":
+   "Eat berries from Inventory for temporary extra stamina";
+  document.body.classList.toggle("survival-critical",s.health<25);
+  document.body.classList.toggle("survival-starving",s.hunger<=0);
+  document.body.classList.toggle("epoch-game-over",s.gameOver);
+ }
+ showDeathResult(){
+  const death=this.state.data.lastDeath;
+  if(!death)return;
+  if(death.gameOver){
+   this.showDialog("gameover","Your Civilization Has Fallen",
+    '<div class="entry"><h3>The last life has ended</h3><p>'+
+    esc(death.oldName)+' died from '+esc(death.reason)+
+    '. No living villagers remain to continue the settlement.</p>'+
+    '<p class="context-note">This world is now ended. Your history remains saved in this slot, but you cannot continue playing. Start a new game to begin another civilization.</p></div>'+
+    '<button type="button" data-action="gameover-title">Save and return to title</button>');
+  }else{
+   this.showDialog("death","A New Leader Rises",
+    '<div class="entry"><h3>'+esc(death.oldName)+' has died</h3>'+
+    '<p>Cause: '+esc(death.reason)+'.</p><p>'+
+    esc(death.successorName)+' now leads your settlement. The village, people, discoveries and buildings survive.</p>'+
+    '<p class="context-note">Control has passed to a surviving villager and you have returned home. Designate a successor through People to choose the next leader.</p></div>'+
+    '<button type="button" data-action="resume">Continue as '+esc(death.successorName)+'</button>');
+  }
  }
  toast(message){const n=document.createElement("div");n.className="toast";n.textContent=message;$("toasts").prepend(n);while($("toasts").children.length>3)$("toasts").lastElementChild.remove();setTimeout(()=>{n.classList.add("fade");setTimeout(()=>n.remove(),350)},3500)}
  status(title,detail){$("action").textContent=title;$("details").textContent=detail}
@@ -47,6 +97,7 @@ export class UI{
   const arrival=resident.recruitment==="peaceful"?
    "Joined peacefully from "+esc(origin):"Resident of the original settlement";
   const role=resident.role==="formerLeader"?"Former tribal leader":"Villager";
+  const selected=this.state.data.successorId===resident.id;
   const homeLabel=home?.label||"Communal camp";
   const homesHtml=homes.map(unit=>{
    const isCurrent=unit.id===resident.homeId,full=unit.occupied>=unit.capacity;
@@ -69,6 +120,11 @@ export class UI{
    '<p><strong>Status:</strong> Settled · No village job assigned</p>'+
    '<p><strong>Joined:</strong> '+year(resident.joinedYear)+'</p>'+
    '<p class="context-note">Work habits, happiness, loyalty and personality will be developed in later phases.</p></div>'+
+   '<div class="entry"><h3>Leadership</h3><p>'+
+   (selected?esc(resident.name)+' is your designated successor.':
+    'If your character dies, a named successor takes control. Without one, a surviving villager is chosen randomly.')+'</p>'+
+   '<button type="button" data-action="name-successor" data-id="'+esc(resident.id)+'">'+
+   (selected?'Clear successor':'Name as successor')+'</button></div>'+
    '<h3 class="section-heading">Housing assignment</h3>'+
    '<p class="context-note">Move this resident to an available place without exceeding its bed capacity. The founder occupies one communal camp bed.</p>'+
    '<div class="resident-home-options">'+homesHtml+'</div>'+
@@ -195,11 +251,18 @@ export class UI{
   const d=this.state.data,retained=d.civics.includes("apprenticeship")?25:d.civics.includes("oral")?15:8;
   let html='<div class="dynasty-summary"><span class="kicker">YOUR FAMILY, YOUR LEGACY</span><h3>'+esc(d.hero.name)+'</h3><p>Age '+d.hero.age+' · Generation '+roman(d.generation)+'</p><span class="stat-pill">'+retained+'% skill XP inherited</span></div><div class="entry"><h3>The next generation</h3><p>Your descendant inherits this world, its buildings, supplies, discoveries and traditions. Personal skills begin with '+retained+'% of your experience.</p><button type="button" data-action="next">Plan succession →</button><small>You will review the change before continuing.</small></div><h3 class="section-heading">Family chronicle</h3>';
   for(const g of [...d.lineage].reverse())html+='<div class="timeline"><b>'+esc(g.name)+' · Generation '+roman(g.gen)+'</b><span>'+esc(g.role)+' · '+Math.abs(g.start).toLocaleString()+' '+(g.start<0?"BCE":"CE")+'</span></div>';
+  const named=d.village.residents.find(r=>r.id===d.successorId);
+  html='<div class="entry"><h3>Successor upon death</h3><p>'+
+   (named?esc(named.name)+' will inherit leadership when you die.':
+    d.village.residents.length?'No successor named. A random surviving villager will take control.':
+    'Your founder is alone. If your character dies, the game ends.')+
+   '</p><small>Set a successor through Stockpile → People → View profile.</small></div>'+html;
   html+='<h3 class="section-heading">Recent history</h3>';for(const item of d.history.slice(0,6))html+='<div class="timeline"><span>'+esc(item)+'</span></div>';return html;
  }
  building(){const def=BUILDINGS[this.contextBuilding()?.kind];return '<div class="building-context"><span class="stat-pill">Village gathering place</span><h3>'+esc(def?.name||"Village building")+'</h3><p>'+esc(def?.description||"")+'</p></div><p class="context-note">Cooking recipes are a future milestone. Your built hearth and fire are saved with this village.</p>'}
  render(){
   const d=this.state.data,o=this.objective(),placing=!!(this.world.placingStockpile||this.world.placingBuilding);
+  this.renderVitals();
   $("year").textContent=this.state.formatYear();$("generation").textContent="GEN "+roman(d.generation);$("ancestor-name").textContent=d.hero.name;$("ancestor-age").textContent="Age "+d.hero.age+" · "+(d.generation===1?"Founder":"Descendant");$("settlement-status").textContent=d.village.stockpile?d.village.population+"/"+this.state.villageCapacity()+" villagers · "+d.village.buildings.length+" buildings":"The beginning of your story";
   $("science").textContent=d.knowledge;$("culture").textContent=d.culture;$("objective-title").textContent=o.title;$("objective-description").textContent=o.description;$("objective-progress").textContent=o.progress;$("objective-action").textContent=o.action;
   document.body.classList.toggle("is-panel-open",this.panelOpen);document.body.classList.toggle("is-placing",placing);
@@ -213,7 +276,20 @@ export class UI{
  }
  handleAction(e){
   const btn=e.target.closest("[data-action]");if(!btn||btn.disabled)return;const action=btn.dataset.action;let message="";
+  if(this.state.data.survival.gameOver){
+   if(action==="gameover-title"){this.state.save();window.location.reload()}
+   return;
+  }
   if(handlePackAction(this,btn)||handleVillageAction(this,btn))return;
+  if(action==="name-successor"){
+   if(this.modal!=="resident"||this.activeResidentId!==btn.dataset.id)return;
+   const id=this.state.data.successorId===this.activeResidentId?null:this.activeResidentId;
+   if(this.state.chooseSuccessor(id)){
+    this.openResident(this.activeResidentId);
+    this.toast(id?"A successor has been named.":"Successor designation cleared.");
+   }
+   return;
+  }
   if(action==="resident-home"){
    if(this.modal!=="resident"||btn.dataset.id!==this.activeResidentId)return;
    if(this.state.assignResidentHome(this.activeResidentId,btn.dataset.home)){
@@ -256,14 +332,15 @@ export class UI{
  }
  showDialog(kind,title,html){
   if(!this.modal)this.dialogReturnFocus=document.activeElement;this.modal=kind;this.world.inputBlocked=true;
-  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="succession"?"ONE GENERATION TO THE NEXT":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
+  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="succession"?"ONE GENERATION TO THE NEXT":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":kind==="death"?"A LIFE ENDS, A LEADER RISES":kind==="gameover"?"THE END OF A CIVILIZATION":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
+  $("modal").classList.toggle("is-game-over",kind==="gameover");
   for(const id of ["scene","left","hud-tools","right","toggle"])$(id).inert=true;$("toggle").setAttribute("aria-expanded","true");
   ($("guide").querySelector("button:not(:disabled)")||$("close-modal")).focus({preventScroll:true});
  }
  menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
  help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Click the ground to walk there. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. Move people between homes with free beds from their profiles.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Family Hut → Dynasty.</strong> Follow your lineage and plan succession.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Click their people, huts or leader signs to approach and meet them. Press E near a leader to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Click a tree, rock or berry bush to gather; E gathers nearby. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
  close(){
-  if(!this.modal)return;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
+  if(!this.modal||this.modal==="gameover")return;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
   const target=this.dialogReturnFocus;(target?.isConnected&&!target.closest("[inert]")?target:$("toggle")).focus({preventScroll:true});
  }
  keydown(e){

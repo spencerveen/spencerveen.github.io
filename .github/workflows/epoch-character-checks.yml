@@ -25,6 +25,9 @@ jobs:
           node --check epoch/js/world.js
           node --check epoch/js/village-ui.js
           node --check epoch/js/residents.js
+          node --check epoch/js/survival.js
+          node --check epoch/js/harvest.js
+          node --check epoch/js/inventory-ui.js
       - name: Validate contextual interfaces and research/culture bootstrap
         run: node epoch/tests/check-contextual-ui.mjs
       - name: Validate civilization-based Knowledge and single-founder population
@@ -35,6 +38,8 @@ jobs:
         run: node epoch/tests/check-recruitment.mjs
       - name: Validate individual resident profiles, housing and legacy migrations
         run: node epoch/tests/check-residents.mjs
+      - name: Validate hunger, stamina, berries, injuries and survivor succession
+        run: node epoch/tests/check-survival.mjs
       - name: Validate title save slots, migration and character creation locks
         run: node epoch/tests/check-save-slots.mjs
       - name: Validate permanent resource depletion and berry regeneration

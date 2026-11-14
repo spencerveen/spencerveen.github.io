@@ -27,6 +27,14 @@ export function inventoryPanel(ui){
  if(unpacked){
   html+=`<div class="entry pack-legacy"><h3>Saved supplies</h3><p>${unpacked} items from your earlier save are safely stored outside this inventory. Free a slot to retrieve them.</p><small>${ITEM_IDS.filter(id=>d.unpacked[id]>0).map(id=>esc(ITEMS[id].name)+": "+d.unpacked[id]).join(" · ")}</small><button type="button" data-action="retrieve-supplies">Retrieve supplies</button></div>`;
  }
+ const vitals=state.survivalStatus();
+ html+='<div class="panel-title"><h3>Food & Survival</h3><small>Eating from your backpack</small></div>';
+ html+='<div class="entry"><h3>🫐 Wild Berries</h3>'+
+  '<p>Berries restore 24 Hunger and 12 Stamina, and temporarily increase your maximum Stamina by 20 for 2 minutes. Bonuses refresh but do not stack. Hunger alone never kills your character.</p>'+
+  '<p class="context-note">Carried berries: '+state.inventoryCount("berries")+' · Hunger: '+Math.round(vitals.hunger)+' / 100 · Stamina: '+
+  Math.floor(vitals.stamina)+' / '+vitals.maxStamina+'</p>'+
+  '<button type="button" data-action="eat-berries" '+
+  (!state.inventoryCount("berries")||vitals.gameOver?'disabled':'')+'>Eat 1 berry</button></div>';
  const toolsKnown=d.technologies.includes("tools"),axeCost={wood:2,stone:3};
  const missing=Object.entries(axeCost).filter(([id,needed])=>state.inventoryCount(id)<needed);
  html+=`<div class="panel-title"><h3>Crafting</h3><small>Uses carried supplies</small></div>`;
@@ -47,6 +55,10 @@ export function inventoryPanel(ui){
 }
 export function handlePackAction(ui,button){
  const action=button.dataset.action;
+ if(action==="eat-berries"){
+  ui.toast(ui.state.eatBerries()?"You ate wild berries. Stamina and hunger restored.":"No berries available to eat.");
+  return true;
+ }
  if(action==="pack-slot"){
   const idx=Number(button.dataset.slot);
   if(!Number.isInteger(idx)||idx<0||idx>=INVENTORY_SLOTS)return true;
