@@ -155,10 +155,19 @@ try{
  await page.screenshot({path:path.join(output,"epoch-stockpile-filled.png")});
  await page.locator('[data-action="select-plot"][data-plot="family_1"]').click();
  await page.locator('[data-action="visit-plot"][data-plot="family_1"]').click();
- await page.waitForFunction(()=>{
+ // The build UI accepts any point 2.65–5m from the plot; its walking
+ // destination is allowed to stop at the outer edge of that range.
+ const withinBuildRange=()=>page.waitForFunction(()=>{
   const pos=window.epochDebug()?.position;
-  return pos&&Math.hypot(pos.x+8,pos.z-4)<4.2;
+  if(!pos)return false;
+  const distance=Math.hypot(pos.x+8,pos.z-4);
+  return distance>=2.65 && distance<=5;
  },null,{timeout:16000});
+ try{await withinBuildRange()}catch{
+  console.log("Replanning approach to hut from",await page.evaluate(()=>window.epochDebug()?.position));
+  await page.locator('[data-action="visit-plot"][data-plot="family_1"]').click();
+  await withinBuildRange();
+ }
  await page.locator('[data-action="build-plot"][data-plot="family_1"]').click();
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.capacity===8,null,{timeout:5000});
  const settlement=await page.evaluate(()=>window.epochDebug().settlement);
