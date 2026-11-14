@@ -1,6 +1,6 @@
 import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeight,
  forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261114y";
-import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114y";
+import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114mountains1";
 import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
@@ -65,18 +65,24 @@ export class ForestChunks{
   this.world=world;this.seed=seed>>>0;
   this.loaded=new Map();this.center=null;this.created=0;this.disposed=0;
   this.protectedSites=Array.isArray(world.waterSafeSites)?[...world.waterSafeSites]:[];
+  this.mountainProtectedSites=Array.isArray(world.mountainSafeSites)?[...world.mountainSafeSites]:[];
  }
- heightAt(x,z){return waterTerrainHeight(x,z,this.seed,this.protectedSites)}
- waterAt(x,z){return waterAt(x,z,this.seed,this.protectedSites)}
+ heightAt(x,z){return waterTerrainHeight(x,z,this.seed,this.protectedSites,this.mountainProtectedSites)}
+ waterAt(x,z){return waterAt(x,z,this.seed,this.protectedSites,this.mountainProtectedSites)}
  refreshProtectedSites(cx,cz){
   // Cover every tribe within reach of the entire five-by-five window, plus
   // two extra chunk rings. Camps keep their exact original seed positions.
   const sites=[...(this.world.waterSafeSites||[])];
+  const mountainSites=[...(this.world.mountainSafeSites||[])];
   for(let dx=-5;dx<=5;dx++)for(let dz=-5;dz<=5;dz++){
    const tribe=tribeAtChunk(this.seed,cx+dx,cz+dz);
-   if(tribe)sites.push({x:tribe.x,z:tribe.z,radius:10});
+   if(tribe){
+    sites.push({x:tribe.x,z:tribe.z,radius:10});
+    mountainSites.push({x:tribe.x,z:tribe.z,radius:14});
+   }
   }
   this.protectedSites=sites;
+  this.mountainProtectedSites=mountainSites;
  }
  get status(){
   return {seed:this.seed,center:this.center?{...this.center}:null,
@@ -95,7 +101,7 @@ export class ForestChunks{
   const terrainColors=[];
   for(let i=0;i<positions.length;i+=3){
    const sample=this.waterAt(x+positions[i],z+positions[i+2]);
-   positions[i+1]=sample.depth>0?sample.bedY:terrainHeight(x+positions[i],z+positions[i+2],this.seed);
+   positions[i+1]=sample.depth>0?sample.bedY:sample.surfaceY-.055;
    const shore=Math.max(0,1-sample.shore/2.8);
    // Warm, subdued riverbanks instead of the saturated yellow fringe.
    terrainColors.push(1+shore*.32,1+shore*.13,1+shore*.055,1);

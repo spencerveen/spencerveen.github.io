@@ -3,7 +3,8 @@
  * Never use Math.random or per-chunk water endpoints: a river must continue
  * across all seams and survive save/reload without saving geometry.
  */
-import {terrainHeight,STARTER_SEED} from "./forest-generation.js?v=20261114y";
+import {STARTER_SEED} from "./forest-generation.js?v=20261114y";
+import {mountainTerrainHeight} from "./mountain-generation.js?v=20261114mountains1";
 export const WATER_MODEL_VERSION=1;
 export const SHALLOW_LIMIT=.85;
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
@@ -33,7 +34,7 @@ export function lakeSites(seed,channel,section){
  const radius=14+rand(seed,channel,section,3)*17;
  return [{id:"lake:"+channel+":"+section,kind:"lake",x,z,radius}];
 }
-export function waterAt(x,z,seed=STARTER_SEED,protectedSites=[]){
+export function waterAt(x,z,seed=STARTER_SEED,protectedSites=[],mountainProtectedSites=[]){
  if(!Number.isFinite(x)||!Number.isFinite(z))return {kind:"land",depth:0,shore:Infinity};
  const phase=seedPhase(seed),approx=Math.round((z-72-42*Math.sin(phase*2.4))/195);
  let best=Infinity,kind="land",siteId=null;
@@ -60,14 +61,14 @@ export function waterAt(x,z,seed=STARTER_SEED,protectedSites=[]){
  const inside=Math.max(0,-best);
  const raw=inside>0?(kind==="lake"?(.18+2.25*smooth(inside/5)):(.15+1.5*smooth(inside/2.8))):0;
  const depth=raw*protection;
- const base=terrainHeight(x,z,seed);
+ const base=mountainTerrainHeight(x,z,seed,mountainProtectedSites);
  return {kind:depth>.02?kind:"land",depth:depth>.02?depth:0,
   shore:Math.abs(best),id:depth>.02?siteId:null,
   surfaceY:base+.055,bedY:base-depth,
   shallow:depth>0&&depth<SHALLOW_LIMIT,
   passable:depth<SHALLOW_LIMIT};
 }
-export function waterTerrainHeight(x,z,seed=STARTER_SEED,protectedSites=[]){
- const sample=waterAt(x,z,seed,protectedSites);
- return sample.depth>0?sample.bedY:terrainHeight(x,z,seed);
+export function waterTerrainHeight(x,z,seed=STARTER_SEED,protectedSites=[],mountainProtectedSites=[]){
+ const sample=waterAt(x,z,seed,protectedSites,mountainProtectedSites);
+ return sample.depth>0?sample.bedY:sample.surfaceY-.055;
 }

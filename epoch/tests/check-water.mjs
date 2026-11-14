@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {terrainHeight,STARTER_SEED,CHUNK_SIZE,chunkCoord} from "../js/forest-generation.js";
+import {mountainTerrainHeight} from "../js/mountain-generation.js";
 import {buildWaterSurface} from "../js/forest-chunks.js";
 import {WATER_MODEL_VERSION,SHALLOW_LIMIT,riverCenter,riverWidth,lakeSites,waterAt,waterTerrainHeight} from "../js/water-generation.js";
 import {stockpileValidation} from "../js/stockpile.js";
@@ -36,7 +37,7 @@ for(const seed of [12000,1337,987654321,42]){
   assert.deepEqual(waterAt(x,z,seed),water,"water geometry must be reproducible from saved world seed");
   assert(Number.isFinite(water.depth)&&water.depth>=0&&water.depth<5);
   assert(Number.isFinite(waterTerrainHeight(x,z,seed)));
-  assert(Math.abs(waterTerrainHeight(x,z,seed)-(terrainHeight(x,z,seed)-water.depth))<1e-9);
+  assert(Math.abs(waterTerrainHeight(x,z,seed)-(mountainTerrainHeight(x,z,seed)-water.depth))<1e-9);
   if(water.depth>0)assert(["river","lake"].includes(water.kind));
  }
  assert.equal(waterAt(0,0,seed).depth,0,"original village stays dry across all existing seeds");
