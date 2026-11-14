@@ -27,7 +27,7 @@ try{
  });
  assert.equal(starting.job,"idle");
  await clickWorldObject(page,{stockpile:true});
- await page.locator('[data-action="village-section"][data-section="people"]').click();
+ await page.locator('nav.section-tabs [data-action="village-section"][data-section="people"]').click();
  assert((await page.locator("#panel").innerText()).includes("Unassigned"));
  await page.locator('[data-action="view-resident"][data-id="'+starting.id+'"]').click();
  await page.locator("#modal:not(.hidden)").waitFor({timeout:10000});
