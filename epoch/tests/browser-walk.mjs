@@ -290,10 +290,12 @@ try{
  assert.equal(builtHearth.hearth.lit,true,"constructed hearth flame lights after fire research");
  assert(builtHearth.hearth.glow>0,"constructed Cooking Hearth produces firelight");
  assert.equal(builtHearth.hearth.freeCampfires,0,"no duplicate legacy campfire after construction");
- assert(Math.abs(builtHearth.hearth.position.x-builtHearth.settlement.worldPlotCenters.hearth_1.x)<.01,
-   "firelight is at the stockpile-relative Cooking Hearth plot, not the old clearing");
- assert(Math.abs(builtHearth.hearth.position.z-builtHearth.settlement.worldPlotCenters.hearth_1.z)<.01,
-   "firelight follows the placed village plot");
+ const savedHearth=builtHearth.settlement.buildings.find(b=>b.kind==="hearth");
+ assert(savedHearth,"old Cooking Hearth migrated to an independent saved building record");
+ assert(Math.abs(builtHearth.hearth.position.x-savedHearth.x)<.01,
+   "firelight is at the saved Cooking Hearth position, not a preset camp");
+ assert(Math.abs(builtHearth.hearth.position.z-savedHearth.z)<.01,
+   "firelight follows the placed Cooking Hearth");
  await page.screenshot({path:path.join(output,"epoch-built-cooking-hearth.png")});
  // Separate clean browser context: test New Game > founder creation > Save > Continue.
  const newContext=await browser.newContext({viewport:{width:390,height:780},deviceScaleFactor:1});
