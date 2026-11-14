@@ -12,7 +12,9 @@ const processed=["raw_hide","leather","bone"];
 const weapons=["wood_club","stone_axe","stone_spear","sling","bow"];
 for(const id of [...core,...processed,...weapons,"arrows","fur_armor","leather_armor"])
  assert(ITEMS[id],"Missing Stone Age item: "+id);
-assert.equal(ITEM_IDS.length,20,"20 catalog entries cover 9 core resources, 3 processed, 5 weapons, arrows and 2 armor sets");
+assert.equal(ITEM_IDS.length,22,"22 catalog entries include roasted meat and berry-roasted meals in Phase 5C");
+assert(ITEMS.cooked_meat?.category==="food"&&ITEMS.berry_roast?.category==="food");
+assert(ITEMS.animal_meat?.category==="material","raw meat must require cooking");
 assert.equal(ITEM_CATEGORIES.length,5);
 assert.equal(Object.keys(EQUIPMENT_SLOTS).join(","),"weapon,body,ammo");
 assert.equal(CRAFTING_PLANS.stone_axe.available,true);
