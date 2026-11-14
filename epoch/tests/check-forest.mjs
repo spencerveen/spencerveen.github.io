@@ -51,6 +51,7 @@ class FakeMesh {
  getVerticesData(){return [0,0,0,-16,0,-16,16,0,-16,-16,0,16,16,0,16]}
  getIndices(){return [0,1,2,1,3,2]}
  updateVerticesData(){}
+ setVerticesData(kind,data){this[kind]=data}
  refreshBoundingInfo(){}
  dispose(){this.disposed=true}
 }
@@ -58,7 +59,8 @@ class FakeVertexData {
  static ComputeNormals(positions,indices,normals){
   for(let i=0;i<positions.length;i++)normals.push(0,1,0);
  }
- applyToMesh(mesh){mesh.vertices=this.positions;mesh.indices=this.indices;mesh.colors=this.colors;}
+ applyToMesh(mesh){mesh.vertices=this.positions;mesh.indices=this.indices;
+  mesh.colors=this.colors;mesh.uvs=this.uvs;}
 }
 globalThis.BABYLON={
  Vector3:class {constructor(x,y,z){this.x=x;this.y=y;this.z=z}},
@@ -68,7 +70,8 @@ globalThis.BABYLON={
   CreateSphere:(name)=>new FakeMesh(name),
   CreatePolyhedron:(name)=>new FakeMesh(name)
  },
- VertexBuffer:{PositionKind:"pos",NormalKind:"norm"},
+ VertexBuffer:{PositionKind:"pos",NormalKind:"norm",ColorKind:"color",
+  UVKind:"uv",UV2Kind:"uv2"},
  VertexData:FakeVertexData
 };
 const {ForestChunks}=await import("../js/forest-chunks.js");
