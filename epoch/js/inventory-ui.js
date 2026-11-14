@@ -97,7 +97,8 @@ export function handlePackAction(ui,button){
   if(!FOOD_EFFECTS[slot.id])return true;
   const name=item.name,eaten=ui.state.eatFood(slot.id,index);
   ui.selectedSlot=null;
-  ui.toast(eaten?"Ate 1 "+name+". Hunger and stamina restored.":
+  ui.toast(eaten?(slot.id==="berries"?"Ate 1 berry. Hunger and stamina restored.":
+   "Ate 1 "+name+". Hunger and stamina restored."):
    "Unable to eat "+name+".");
   return true;
  }

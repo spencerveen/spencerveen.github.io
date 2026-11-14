@@ -446,7 +446,8 @@ export class UI{
   if(key==="e"&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey){
    e.preventDefault();
    const eaten=this.state.quickEat();
-   this.toast(eaten?"Ate 1 "+ITEMS[eaten].name.toLowerCase()+". Hunger and stamina restored.":
+   this.toast(eaten?(eaten==="berries"?"Ate 1 wild berry. Hunger and stamina restored.":
+    "Ate 1 "+ITEMS[eaten].name.toLowerCase()+". Hunger and stamina restored."):
     "No ready-to-eat food in your backpack.");
    return;
   }
