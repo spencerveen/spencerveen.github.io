@@ -54,6 +54,7 @@ try{
   const colors=water.flatMap(c=>Array.from(c.waterMesh.getVerticesData(BABYLON.VertexBuffer.ColorKind)||[]));
   return {deep,sample,status,waterMeshes:water.length,
    waterPickable:water.some(c=>c.waterMesh.isPickable),
+   waterLayerCorrect:water.every(c=>c.waterMesh.renderingGroupId===0),
    hasWaterAlpha:colors.some((v,i)=>i%4===3&&v>.3),
    blocked:w.isBlocked(deep.x,deep.z),
    renderWaterCount:w.scene.meshes.filter(m=>m.name.startsWith("Water [")).length};
@@ -64,6 +65,7 @@ try{
  assert.equal(check.status.loaded,25);
  assert(check.waterMeshes>0,"some streamed chunks contain visible water");
  assert.equal(check.waterPickable,false,"water does not intercept world object interactions");
+ assert.equal(check.waterLayerCorrect,true,"water shares the depth buffer with trees and characters");
  assert(check.hasWaterAlpha,"water mesh uses nonzero transparency colors");
  assert.equal(check.renderWaterCount,check.waterMeshes,"water meshes do not multiply in a chunk");
 

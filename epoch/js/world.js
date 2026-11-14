@@ -6,7 +6,7 @@ import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockp
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114y";
-import {ForestChunks} from "./forest-chunks.js?v=20261114y";
+import {ForestChunks} from "./forest-chunks.js?v=20261114riverpolish1";
 import {createTribeWorld} from "./tribe-world.js?v=20261114m";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;
@@ -66,9 +66,11 @@ export class World {
    leaves:this.mat("leaves","#365c3b"),leaves2:this.mat("leaves2","#4d7850"),leafBright:this.mat("leafBright","#638455"),
    stone:this.mat("stone","#889089"),stoneDark:this.mat("stoneDark","#5b6661"),berries:this.mat("berries","#9d3832"),
    skin:this.mat("skin","#c99470"),hair:this.mat("hair","#3f3328"),cloth:this.mat("cloth","#806445"),
-   river:this.mat("river","#598d8f"),fire:this.mat("fire","#ef9c45"),flame:this.mat("flame","#f6d181"),grass:this.mat("grass","#74986b")};
-  this.m.river.alpha=.83;this.m.river.backFaceCulling=false;
-  this.m.river.emissiveColor=new B.Color3(.06,.12,.13);
+   river:this.mat("river","#4b8190"),fire:this.mat("fire","#ef9c45"),flame:this.mat("flame","#f6d181"),grass:this.mat("grass","#74986b")};
+  this.m.river.alpha=.93;this.m.river.backFaceCulling=false;
+  this.m.river.specularColor=new B.Color3(.19,.25,.27);
+  this.m.river.specularPower=48;
+  this.m.river.emissiveColor=new B.Color3(.025,.045,.05);
   this.m.fire.emissiveColor=new B.Color3(.76,.28,.04);this.m.flame.emissiveColor=new B.Color3(.95,.63,.2);
  }
  makeGround(){

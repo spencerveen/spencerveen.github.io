@@ -9,6 +9,57 @@ const V=(x,y,z)=>new B.Vector3(x,y,z);
  * 5×5 terrain meshes keep the horizons smooth; only the inner 3×3 area has
  * expensive props and wildlife. Chunks regenerate consistently from the seed.
  */
+// Construct actual shoreline geometry rather than blending a broad transparent
+// grid over dry land. This is pure data so river rendering can be unit tested.
+export function buildWaterSurface(cx,cz,sampleAt,subdivisions=32){
+ const steps=Math.max(4,Math.floor(subdivisions));
+ const spacing=CHUNK_SIZE/steps;
+ const minX=cx*CHUNK_SIZE,minZ=cz*CHUNK_SIZE;
+ const centerX=minX+CHUNK_SIZE/2,centerZ=minZ+CHUNK_SIZE/2;
+ const threshold=.025;
+ const nodes=[];
+ for(let iz=0;iz<=steps;iz++){
+  const row=[];
+  for(let ix=0;ix<=steps;ix++){
+   const wx=minX+ix*spacing,wz=minZ+iz*spacing;
+   const sample=sampleAt(wx,wz);
+   row.push({x:wx-centerX,z:wz-centerZ,
+    y:sample.surfaceY+.025,d:sample.depth});
+  }
+  nodes.push(row);
+ }
+ const positions=[],colors=[],indices=[];
+ const blend=(a,b,t)=>({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,
+  y:a.y+(b.y-a.y)*t,d:threshold});
+ const clip=(triangle)=>{
+  const polygon=[];
+  for(let i=0;i<3;i++){
+   const a=triangle[i],b=triangle[(i+1)%3];
+   const wetA=a.d>threshold,wetB=b.d>threshold;
+   if(wetA)polygon.push(a);
+   if(wetA!==wetB)polygon.push(blend(a,b,(threshold-a.d)/(b.d-a.d)));
+  }
+  if(polygon.length<3)return;
+  const base=positions.length/3;
+  for(const p of polygon){
+   const deep=Math.max(0,Math.min(1,p.d/2));
+   positions.push(p.x,p.y,p.z);
+   colors.push(1.04-deep*.28,1.06-deep*.19,1.03-deep*.04,
+    .84+deep*.13);
+  }
+  for(let i=1;i<polygon.length-1;i++)indices.push(base,base+i,base+i+1);
+ };
+ for(let iz=0;iz<steps;iz++)for(let ix=0;ix<steps;ix++){
+  const a=nodes[iz][ix],b=nodes[iz+1][ix];
+  const c=nodes[iz][ix+1],d=nodes[iz+1][ix+1];
+  // Counterclockwise from above (+Y). The same edge samples are reused on
+  // both sides of every chunk seam, including negative world coordinates.
+  clip([a,b,c]);
+  clip([c,b,d]);
+ }
+ return {positions,colors,indices};
+}
+
 export class ForestChunks{
  constructor(world,seed){
   this.world=world;this.seed=seed>>>0;
@@ -45,8 +96,9 @@ export class ForestChunks{
   for(let i=0;i<positions.length;i+=3){
    const sample=this.waterAt(x+positions[i],z+positions[i+2]);
    positions[i+1]=sample.depth>0?sample.bedY:terrainHeight(x+positions[i],z+positions[i+2],this.seed);
-   const shore=Math.max(0,1-sample.shore/3.7);
-   terrainColors.push(1+shore*.65,1+shore*.23,1-shore*.35,1);
+   const shore=Math.max(0,1-sample.shore/2.8);
+   // Warm, subdued riverbanks instead of the saturated yellow fringe.
+   terrainColors.push(1+shore*.32,1+shore*.13,1+shore*.055,1);
   }
   const normals=[];
   B.VertexData.ComputeNormals(positions,mesh.getIndices(),normals);
@@ -60,36 +112,28 @@ export class ForestChunks{
   mesh.material=world.m.earth;
   mesh.metadata={terrain:true,chunkKey:key};
   mesh.isPickable=true;
-  // A fine translucent surface follows the deterministic waterline.
-  // Transparent (alpha 0) vertices disappear outside the river or lake.
-  const waterMesh=B.MeshBuilder.CreateGround("Water ["+key+"]",
-   {width:CHUNK_SIZE,height:CHUNK_SIZE,subdivisions:32,updatable:true},scene);
-  waterMesh.position=V(x,0,z);
-  const waterPositions=waterMesh.getVerticesData(B.VertexBuffer.PositionKind);
-  const waterColors=[];
-  let wet=0;
-  for(let i=0;i<waterPositions.length;i+=3){
-   const sample=this.waterAt(x+waterPositions[i],z+waterPositions[i+2]);
-   waterPositions[i+1]=sample.surfaceY+.02;
-   const opacity=sample.depth>0?Math.min(1,sample.depth/.24):0;
-   wet+=opacity;
-   const deep=Math.min(1,sample.depth/2.5);
-   waterColors.push(.71-deep*.26,.91-deep*.12,1,opacity);
-  }
+  // Clip the water surface to the actual wet portion of each square.
+  // Triangles no longer stretch over dry land with interpolated alpha.
+  const surface=buildWaterSurface(cx,cz,(wx,wz)=>this.waterAt(wx,wz));
   let visibleWater=null;
-  if(wet>.02&&B.VertexBuffer.ColorKind&&waterMesh.setVerticesData){
-   const wn=[];
-   B.VertexData.ComputeNormals(waterPositions,waterMesh.getIndices(),wn);
-   waterMesh.updateVerticesData(B.VertexBuffer.PositionKind,waterPositions);
-   waterMesh.updateVerticesData(B.VertexBuffer.NormalKind,wn);
-   waterMesh.setVerticesData(B.VertexBuffer.ColorKind,waterColors);
-   waterMesh.useVertexColors=true;waterMesh.hasVertexAlpha=true;
-   waterMesh.refreshBoundingInfo();
+  if(surface.indices.length){
+   const waterMesh=new B.Mesh("Water ["+key+"]",scene);
+   const data=new B.VertexData();
+   data.positions=surface.positions;
+   data.indices=surface.indices;
+   data.colors=surface.colors;
+   data.normals=[];
+   B.VertexData.ComputeNormals(data.positions,data.indices,data.normals);
+   data.applyToMesh(waterMesh);
+   waterMesh.position=V(x,0,z);
+   waterMesh.useVertexColors=true;
+   waterMesh.hasVertexAlpha=true;
    waterMesh.material=world.m.river;
    waterMesh.isPickable=false;
-   waterMesh.renderingGroupId=1;
+   // Do not use renderingGroupId=1: Babylon clears the depth buffer between
+   // groups, putting translucent water in front of trees and characters.
    visibleWater=waterMesh;
-  }else waterMesh.dispose(false,false);
+  }
   this.loaded.set(key,{cx,cz,key,mesh,waterMesh:visibleWater,vegetation:[],detailed:false});
   this.created++;
  }
@@ -102,8 +146,18 @@ export class ForestChunks{
   const tribe=active?candidate:null;
   const reservation=active||relocated?candidate:null;
   const withinCamp=(x,z,extra=0)=>reservation&&Math.hypot(x-reservation.x,z-reservation.z)<TRIBE_CLEARING_RADIUS+extra;
+  const overlapsWater=(x,z,radius)=>{
+   if(this.waterAt(x,z).depth>.025)return true;
+   for(let i=0;i<8;i++){
+    const angle=i*Math.PI/4;
+    if(this.waterAt(x+Math.cos(angle)*radius,z+Math.sin(angle)*radius).depth>.025)
+     return true;
+   }
+   return false;
+  };
   for(const item of forestObjects(this.seed,cx,cz)){
-   if(withinCamp(item.x,item.z)||this.waterAt(item.x,item.z).depth>.12)continue;
+   const rootRadius=item.shape==="tree"?1.05:item.shape==="rock"?.95:.65;
+   if(withinCamp(item.x,item.z)||overlapsWater(item.x,item.z,rootRadius))continue;
    // Generated positions repeat, but harvesting changes persist by stable ID.
    // Never recreate a tree, mined rock or chopped bush that was removed.
    const status=world.getResourceStatus?.(item);

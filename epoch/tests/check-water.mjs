@@ -1,11 +1,32 @@
 import assert from "node:assert/strict";
-import {terrainHeight,STARTER_SEED,CHUNK_SIZE} from "../js/forest-generation.js";
+import {terrainHeight,STARTER_SEED,CHUNK_SIZE,chunkCoord} from "../js/forest-generation.js";
+import {buildWaterSurface} from "../js/forest-chunks.js";
 import {WATER_MODEL_VERSION,SHALLOW_LIMIT,riverCenter,riverWidth,lakeSites,waterAt,waterTerrainHeight} from "../js/water-generation.js";
 import {stockpileValidation} from "../js/stockpile.js";
 import {placementCheck} from "../js/village-placement.js";
 import {GameState} from "../js/state.js";
 
 assert.equal(WATER_MODEL_VERSION,1);
+// A real shoreline-shaped mesh must never spill a transparent quad over dry
+// ground, and unloaded chunks must not allocate invisible water surfaces.
+const drySurface=buildWaterSurface(0,0,(x,z)=>waterAt(x,z,STARTER_SEED));
+assert.equal(drySurface.indices.length,0,"starter clearing has no water surface triangles");
+const riverX=250,riverZ=riverCenter(riverX,0,STARTER_SEED);
+const riverChunk=chunkCoord(riverX,riverZ);
+const surface=buildWaterSurface(riverChunk.cx,riverChunk.cz,
+ (x,z)=>waterAt(x,z,STARTER_SEED));
+assert(surface.indices.length>0,"deep river creates rendered water triangles");
+assert.equal(surface.indices.length%3,0);
+assert.equal(surface.positions.length/3,surface.colors.length/4);
+for(let i=3;i<surface.colors.length;i+=4)
+ assert(surface.colors[i]>=.84,"shoreline mesh must not use transparent dry-land vertices");
+for(let i=0;i<surface.indices.length;i+=3){
+ const a=surface.indices[i]*3,b=surface.indices[i+1]*3,c=surface.indices[i+2]*3;
+ const wx=(surface.positions[a]+surface.positions[b]+surface.positions[c])/3+(riverChunk.cx+.5)*CHUNK_SIZE;
+ const wz=(surface.positions[a+2]+surface.positions[b+2]+surface.positions[c+2])/3+(riverChunk.cz+.5)*CHUNK_SIZE;
+ assert(waterAt(wx,wz,STARTER_SEED).depth>.001,"water triangles should remain inside wet terrain");
+}
+
 assert(SHALLOW_LIMIT>.3&&SHALLOW_LIMIT<1.3);
 for(const seed of [12000,1337,987654321,42]){
  for(let x=-400;x<=400;x+=13)for(let z=-400;z<=400;z+=17){
