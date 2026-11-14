@@ -268,6 +268,8 @@ try{
  const saved=await newPage.evaluate(()=>JSON.parse(localStorage.getItem("epoch.stoneage.slot.2")));
  assert.equal(saved.hero.name,"Mira","founder saved correctly");
  assert.equal(saved.lineage[0].name,"Mira","founder name also appears in family chronicle");
+ // New-game QA uses a narrow mobile viewport: open the game drawer first.
+ await newPage.locator("#toggle").click();
  await newPage.locator('[data-tab="dynasty"]').click();
  await newPage.locator('[data-action="save"]').click();
  assert((await newPage.locator("#toasts").innerText()).includes("Slot 2"),"save feedback identifies slot");
