@@ -442,15 +442,16 @@ export class GameState{
   this.changed();
   return true;
  }
- /** A villager completes a real work trip at the village stockpile.
-  * Validate the target again so a player harvest or another worker cannot
-  * duplicate finite resource, fish, or wildlife loot while they are away.
+ /** Claim a real resource at the work site, transferring it into a
+  * saved personal cargo manifest instead of crediting the stockpile.
+  * Double claims are rejected against current node/fish/wildlife records.
   */
- completeVillagerWork(id,task){
+ collectVillagerCargo(id,task,x=null,z=null){
   const villager=this.data.village.residents.find(p=>p.id===id);
   const pile=this.data.village.stockpile;
   if(!villager||!pile||this.data.survival.gameOver||!task||
      villager.job!==task.job)return {ok:false,reason:"Assignment changed."};
+  if(cargoCount(villager.cargo)>0)return {ok:false,reason:"Already carrying supplies."};
   let goods={},apply=null,removed=false;
   const gathering={woodcutter:"wood",stonegatherer:"stone",forager:"food"};
   if(task.kind==="resource"&&gathering[task.job]===task.resource){
