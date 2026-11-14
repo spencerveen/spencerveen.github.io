@@ -101,6 +101,12 @@ These are deliberately temporary, session-only test switches in `js/dev-cheats.j
 
 High mountains no longer receive the same density of leafy trees, berry bushes, grass tufts and deer as ordinary forest. Exposed rock is visually more convincing, while natural stone deposits are still available. Newly spawned camps also stay clear of legacy discovered tribal settlements.
 
+## Coastal beach biome and beach flint
+
+Ocean beaches now extend roughly **70–110 meters inland**, with a broader gently sloped sandy shelf continuing about **20 meters into the shallows**. The sandy band has varying seeded width, a gently irregular waterline and subtle dune-to-wet-sand coloring. Trees, large stone deposits, berry bushes, grass tufts and deer now stay beyond the beach's inland buffer (about 12m beyond the sandy transition); the coastline is open and feels like a real shore.
+
+Small low-poly **Flint Flakes** generate sparsely on dry beach sand, never underwater. They use stable seeded positions, click/E gathering, 2 flint per deposit, a small stamina cost and the normal ten-slot inventory. Harvested flint nodes permanently disappear when exhausted. Flint was already present in the Stone Age catalog, so future spearheads, arrowheads and fire-starting recipes can use the material without introducing another item type. The beach biome uses lightweight shoreline math and the existing streamed chunk system.
+
 ## Finite two-dimensional watersheds (river redesign)
 
 Rivers no longer repeat as near-parallel, endless ribbons. Seeded highland headwaters feed **finite, winding 2D river courses** with pronounced turns; two narrower tributaries join each main river and many branches travel mostly north or south before merging. Every main course terminates at the eastern ocean. Rivers narrow toward their sources and widen downstream.

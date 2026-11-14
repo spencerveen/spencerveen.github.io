@@ -34,6 +34,7 @@ jobs:
           node --check epoch/js/equipment.js
           node --check epoch/js/dev-cheats.js
           node --check epoch/js/ocean-generation.js
+          node --check epoch/js/beach-generation.js
           node --check epoch/js/water-generation.js
           node --check epoch/js/water-corridors.js
           node --check epoch/js/mountain-generation.js
@@ -87,6 +88,8 @@ jobs:
         run: node epoch/tests/check-water.mjs
       - name: Validate seeded ocean coastlines, sand, water depth and protected villages
         run: node epoch/tests/check-ocean.mjs
+      - name: Validate wide natural beaches, sparse flint and collectible depletion
+        run: node epoch/tests/check-beaches.mjs
       - name: Validate mountain ranges, foothills and protected settlements
         run: node epoch/tests/check-mountains.mjs
       - name: Validate river valleys through mountains without relocating saved water

@@ -1,5 +1,5 @@
-import {GameState} from "./state.js?v=20261114watershed4";
-import {World} from "./world.js?v=20261114watershed3";
+import {GameState} from "./state.js?v=20261114beaches1";
+import {World} from "./world.js?v=20261114beaches1";
 import {UI} from "./ui.js?v=20261114swim1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";

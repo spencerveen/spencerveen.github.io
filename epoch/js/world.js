@@ -71,7 +71,8 @@ export class World {
    leaves:this.mat("leaves","#365c3b"),leaves2:this.mat("leaves2","#4d7850"),leafBright:this.mat("leafBright","#638455"),
    stone:this.mat("stone","#889089"),stoneDark:this.mat("stoneDark","#5b6661"),berries:this.mat("berries","#9d3832"),
    skin:this.mat("skin","#c99470"),hair:this.mat("hair","#3f3328"),cloth:this.mat("cloth","#806445"),
-   river:this.mat("river","#4b8190"),fire:this.mat("fire","#ef9c45"),flame:this.mat("flame","#f6d181"),grass:this.mat("grass","#74986b")};
+   river:this.mat("river","#4b8190"),fire:this.mat("fire","#ef9c45"),flame:this.mat("flame","#f6d181"),grass:this.mat("grass","#74986b"),
+   flint:this.mat("beach flint","#626e71"),flintEdge:this.mat("flint edge","#9aa39b")};
   this.m.terrainSurface=this.mat("Layered mountain terrain","#ffffff");
   this.m.terrainSurface.specularColor=new B.Color3(.016,.017,.016);
   this.m.rockFaceDark=this.mat("Exposed mountain stone","#686d69");
@@ -109,6 +110,22 @@ export class World {
     const leaf=this.primitive("sphere","tree canopy",parent,[dx,dy,dz],[s,s*.85,s],(dx>0)?this.m.leaves2:this.m.leaves);mark(leaf);
    }
    this.obstacles.push({x,z,r:.75,chunkKey,resourceId});
+  } else if(shape==="flint"){
+   // Small angular flint fragments, not a full-sized boulder or bush.
+   // Pickable but not collidable, so shoreline exploration stays smooth.
+   const shard=B.MeshBuilder.CreatePolyhedron("beach flint shard",
+    {type:1,size:1},this.scene);
+   shard.parent=parent;
+   shard.position=V(0,.21,0);
+   shard.scaling=V(.48,.27,.37);
+   shard.rotation=V(.23,(x+z)*.17,.14);
+   shard.material=this.m.flint;mark(shard);
+   const flake=B.MeshBuilder.CreatePolyhedron("flint flake",
+    {type:2,size:1},this.scene);
+   flake.parent=parent;flake.position=V(.27,.09,.15);
+   flake.scaling=V(.23,.14,.31);
+   flake.rotation=V(.1,(x-z)*.23,.3);
+   flake.material=this.m.flintEdge;mark(flake);
   } else if(shape==="rock"){
    const stone=this.primitive("sphere","stone deposit",parent,[0,.47,0],[1.3,.9,1.15],this.m.stone);mark(stone);
    const small=this.primitive("sphere","stone shard",parent,[.56,.25,.42],[.53,.44,.62],this.m.stoneDark);mark(small);
@@ -648,7 +665,7 @@ export class World {
    const camp=[...this.tribeCamps.values()]
     .find(c=>Math.hypot(c.leader.x-p.x,c.leader.z-p.z)<TRIBE_INTERACT_RANGE);
    if(camp)this.walkToTribe(camp.tribe.id);
-   else this.onStatus("Nothing nearby","Move closer to a tree, rock, berry bush or tribal leader.");
+   else this.onStatus("Nothing nearby","Move closer to a tree, flint piece, rock, berry bush or tribal leader.");
   }else this.onStatus("Nothing nearby","Get within gathering range of a berry bush to cut it down.");
  }
  walkToResource(meta,action="gather"){

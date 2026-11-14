@@ -33,6 +33,7 @@ export function harvestAtNode(state,meta,action="gather",now=Date.now()){
  const harvesting={
   wood:{item:"wood",amount:state.data.axe?3:2,skill:"woodcutting",xp:13,label:"wood"},
   stone:{item:"stone",amount:2,skill:"mining",xp:12,label:"stone"},
+  flint:{item:"flint",amount:1,skill:"mining",xp:8,label:"flint"},
   food:{item:"berries",amount:2,skill:"foraging",xp:12,label:"wild berries"}
  }[status.kind];
  const requested=Math.min(status.remaining,harvesting.amount);

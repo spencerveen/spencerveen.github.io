@@ -5,7 +5,7 @@ export const SURVIVAL=Object.freeze({
  sprintCost:11,
  starvingStaminaMax:45,
  berryHunger:24,berryStamina:12,berryBonus:20,berryDuration:120,
- gatherCost:Object.freeze({wood:6,stone:5,food:2,cut:8}),
+ gatherCost:Object.freeze({wood:6,stone:5,flint:2,food:2,cut:8}),
  weaponSwingCost:10
 });
 export function clamp(value,min,max){return Math.min(max,Math.max(min,value))}

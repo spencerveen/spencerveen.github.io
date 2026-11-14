@@ -4,6 +4,7 @@ import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114waters
 import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114watershed3";
 import {terrainAppearanceAt,mountainOutcropSites,mountainHabitat} from "./mountain-appearance.js?v=20261114watershed3";
 import {mountainAt} from "./mountain-generation.js?v=20261114watershed3";
+import {beachAt,beachFlintSites} from "./beach-generation.js?v=20261114beaches1";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 
@@ -190,6 +191,9 @@ export class ForestChunks{
   const reservation=(active||relocated)&&dryTribe&&spaced?candidate:null;
   const withinCamp=(x,z,extra=0)=>reservation&&Math.hypot(x-reservation.x,z-reservation.z)<TRIBE_CLEARING_RADIUS+extra;
   const rawResources=forestObjects(this.seed,cx,cz);
+  // Angular flint flakes are an independent, sparse coastal resource.
+  // They share the normal harvesting, inventory and depletion machinery.
+  const flintSites=beachFlintSites(this.seed,cx,cz);
   // Bedrock is decoration, not a new harvestable stone deposit or collider.
   const outcrops=mountainOutcropSites(this.seed,cx,cz,
    (px,pz)=>this.heightAt(px,pz),(px,pz)=>this.waterAt(px,pz),
@@ -214,17 +218,22 @@ export class ForestChunks{
    }
    return false;
   };
-  for(const item of rawResources){
-   const rootRadius=item.shape==="tree"?1.05:item.shape==="rock"?.95:.65;
+  for(const item of [...rawResources,...flintSites]){
+   const rootRadius=item.shape==="tree"?1.05:item.shape==="rock"?.95:.32;
    if(withinCamp(item.x,item.z))continue;
+   const coastal=beachAt(item.x,item.z,this.seed);
+   // Keep both trunks AND large canopies clear of dunes and wet sand.
+   // Flint can occur only in the dry sandy band, not in the surf.
+   if(item.shape==="flint"&&!coastal.flintZone)continue;
+   if(item.shape!=="flint"&&coastal.vegetationClear)continue;
    const water=this.waterAt(item.x,item.z);
+   if(item.shape==="flint"&&water.depth>.025)continue;
    const habitat=mountainHabitat(mountainAt(item.x,item.z,this.seed,
     this.mountainProtectedSites,water.corridorDistance).uplift);
    if((item.shape==="tree"&&!habitat.trees)||
       (item.shape==="bush"&&!habitat.berries)||
       overlapsWater(item.x,item.z,rootRadius,water))continue;
-   // Generated positions repeat, but harvesting changes persist by stable ID.
-   // Never recreate a tree, mined rock or chopped bush that was removed.
+   // Depletion is keyed to deterministic flint/wood/stone/berry IDs.
    const status=world.getResourceStatus?.(item);
    if(status?.removed)continue;
    chunk.vegetation.push(world.decorate(item.resource,item.label,item.x,item.z,item.shape,key,item.id,status));
@@ -233,7 +242,8 @@ export class ForestChunks{
   for(let i=0;i<13;i++){
    const x=cx*CHUNK_SIZE+1+rand()*(CHUNK_SIZE-2);
    const z=cz*CHUNK_SIZE+1+rand()*(CHUNK_SIZE-2);
-   if(!validForestSite(x,z,3.7)||withinCamp(x,z))continue;
+   if(!validForestSite(x,z,3.7)||withinCamp(x,z)||
+      beachAt(x,z,this.seed).vegetationClear)continue;
    const grassWater=this.waterAt(x,z);
    if(grassWater.depth>.04||
     !mountainHabitat(mountainAt(x,z,this.seed,this.mountainProtectedSites,
@@ -245,7 +255,8 @@ export class ForestChunks{
    chunk.vegetation.push(tuft);
   }
   for(const animal of forestAnimals(this.seed,cx,cz)){
-   if(withinCamp(animal.x,animal.z,2))continue;
+   if(withinCamp(animal.x,animal.z,2)||
+      beachAt(animal.x,animal.z,this.seed).vegetationClear)continue;
    const animalWater=this.waterAt(animal.x,animal.z);
    if(animalWater.depth<.12&&
      mountainHabitat(mountainAt(animal.x,animal.z,this.seed,

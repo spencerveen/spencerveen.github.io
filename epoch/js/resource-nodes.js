@@ -7,6 +7,7 @@ export const BERRY_REGROW_MS=120000; // 2 minutes; tune with farming later.
 export const RESOURCE_NODES=Object.freeze({
  wood:Object.freeze({name:"Tree",max:12,regrowMs:0}),
  stone:Object.freeze({name:"Stone Deposit",max:12,regrowMs:0}),
+ flint:Object.freeze({name:"Beach Flint",max:2,regrowMs:0}),
  food:Object.freeze({name:"Berry Bush",max:8,regrowMs:BERRY_REGROW_MS})
 });
 export const BUSH_VINE_YIELD=3;

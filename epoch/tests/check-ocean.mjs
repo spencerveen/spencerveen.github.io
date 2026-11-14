@@ -6,7 +6,7 @@ import {buildWaterSurface} from "../js/forest-chunks.js";
 import {terrainAppearanceAt} from "../js/mountain-appearance.js";
 import {stockpileValidation} from "../js/stockpile.js";
 import {GameState} from "../js/state.js";
-assert.equal(OCEAN_MODEL_VERSION,1);
+assert.equal(OCEAN_MODEL_VERSION,2);
 for(const seed of [STARTER_SEED,42,1337,987654321]){
  assert.equal(oceanAt(0,0,seed),null,"original founding forest remains inland");
  assert.equal(waterAt(0,0,seed).depth,0);

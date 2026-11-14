@@ -13,7 +13,7 @@ export const ITEMS=Object.freeze({
  vines:{name:"Vines",icon:"🌿",category:"material",description:"Gathered from trees and berry bushes.",hint:"Flexible material for binding."},
  animal_meat:{name:"Animal Meat",icon:"🥩",category:"food",description:"Raw meat from hunting (future).",hint:"Raw food; cooking planned."},
  fur:{name:"Fur",icon:"🦬",category:"material",description:"Gathered from hunted animals (future).",hint:"Warm clothing and protection."},
- flint:{name:"Flint",icon:"💎",category:"material",description:"Found in special stone deposits (future).",hint:"Sharp edges and weapon tips."},
+ flint:{name:"Flint",icon:"💎",category:"material",description:"Collected as small flint flakes from sandy ocean beaches.",hint:"Sharp edges and weapon tips."},
  fish_meat:{name:"Fish Meat",icon:"🐟",category:"food",description:"Caught in rivers and lakes (future).",hint:"Raw fish; cooking planned."},
  feathers:{name:"Feathers",icon:"🪶",category:"material",description:"Obtained from birds (future).",hint:"Arrows and decoration."},
  raw_hide:{name:"Raw Hide",icon:"🟫",category:"material",description:"Unworked hide from hunted animals (future).",hint:"Can be processed into leather."},

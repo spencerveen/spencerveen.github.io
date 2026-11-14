@@ -5,10 +5,10 @@
  */
 import {STARTER_SEED} from "./forest-generation.js?v=20261114y";
 import {mountainTerrainHeight} from "./mountain-generation.js?v=20261114watershed3";
-export const OCEAN_MODEL_VERSION=1;
+export const OCEAN_MODEL_VERSION=2;
 export const SEA_LEVEL=.15;
 export const COAST_BASE_X=565;
-export const COAST_SHELF=96;
+export const COAST_SHELF=166;
 const clamp=t=>Math.max(0,Math.min(1,t));
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
 const mix=(a,b,t)=>a+(b-a)*t;
@@ -16,7 +16,8 @@ const mix=(a,b,t)=>a+(b-a)*t;
 export function coastlineX(z,seed=STARTER_SEED){
  const phase=((seed>>>0)%100003)*.0000432;
  return COAST_BASE_X+58*Math.sin(z/217+phase*2.1)+
-  30*Math.sin(z/67+phase*3.8)+11*Math.sin(z/28-phase*1.9);
+  30*Math.sin(z/67+phase*3.8)+11*Math.sin(z/28-phase*1.9)+
+  3.5*Math.sin(z/13.7+phase*4.2)+1.35*Math.sin(z/6.5-phase*3.4);
 }
 /** Preserve the exact historical stockpile and buildings as dry land. */
 function landSanctuary(x,z,sites=[]){
@@ -38,7 +39,10 @@ export function oceanAt(x,z,seed=STARTER_SEED,protectedSites=[],mountainSites=[]
  const protectedFraction=landSanctuary(x,z,protectedSites);
  const exposure=1-protectedFraction;
  const outToSea=Math.max(0,distance);
- const rawDepth=Math.min(14,outToSea*.165+Math.max(0,outToSea-8)*.016);
+ // Walkable sandy shallows now extend ~20m seaward before the sea floor
+ // gets gradually deeper. No abrupt cliff just past the surf.
+ const rawDepth=Math.min(14,Math.min(outToSea,20)*.04+
+  Math.max(0,outToSea-20)*.105);
  const depth=rawDepth*exposure;
  const openBed=SEA_LEVEL-rawDepth;
  // Most ocean chunks have no land and require no expensive inland river or
@@ -55,7 +59,12 @@ export function oceanAt(x,z,seed=STARTER_SEED,protectedSites=[],mountainSites=[]
  // permanent island of its old land rather than being moved or submerged.
  const groundY=distance<=0?mix(land,coastalLand,exposure):
   mix(land,openBed,exposure);
- const beach=distance<0?smooth((41+distance)/41)*exposure:0;
+ // The actual dry sand width and vegetation setback are shared with the
+ // seeded beach biome; evaluate the lightweight formula here to avoid an
+ // ocean-generation <-> beach-generation circular dependency.
+ const phase=(seed>>>0)*.000013;
+ const width=90+12*Math.sin(z/132+phase)+7*Math.sin(z/47-phase*.7);
+ const beach=distance<0?smooth((width+distance)/width)*exposure:0;
  return {distance,coastX:coast,groundY,beach,
   depth:depth>.025?depth:0,
   bedY:groundY,surfaceY:SEA_LEVEL,
