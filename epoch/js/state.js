@@ -1,6 +1,6 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
 import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeFood,FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
-import {COOKING_RECIPES,COOKING_REACH,prepareCooking} from "./cooking.js?v=20261114fish1";
+import {COOKING_RECIPES,COOKING_REACH,prepareCooking} from "./cooking.js?v=20261114fish2";
 import {newDevCheats,validDevCheat} from "./dev-cheats.js?v=20261114devpanel1";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114w";

@@ -1,5 +1,5 @@
 import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114fish1";
-import {COOKING_RECIPES} from "./cooking.js?v=20261114fish1";
+import {COOKING_RECIPES} from "./cooking.js?v=20261114fish2";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
 import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
