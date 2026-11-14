@@ -5,6 +5,7 @@ import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114watershe
 import {terrainAppearanceAt,mountainOutcropSites,mountainHabitat} from "./mountain-appearance.js?v=20261114beaches2";
 import {mountainAt} from "./mountain-generation.js?v=20261114watershed3";
 import {beachAt,beachFlintSites} from "./beach-generation.js?v=20261114beaches1";
+import {mountainFlintSites} from "./mountain-flint.js?v=20261114flint1";
 import {terrainUV,waterUV,terrainBiomeWeights} from "./terrain-textures.js?v=20261114textures1";
 import {fishSites} from "./fishing.js?v=20261114fish1";
 const B=globalThis.BABYLON;
@@ -199,13 +200,16 @@ export class ForestChunks{
   const reservation=(active||relocated)&&dryTribe&&spaced?candidate:null;
   const withinCamp=(x,z,extra=0)=>reservation&&Math.hypot(x-reservation.x,z-reservation.z)<TRIBE_CLEARING_RADIUS+extra;
   const rawResources=forestObjects(this.seed,cx,cz);
-  // Angular flint flakes are an independent, sparse coastal resource.
-  // They share the normal harvesting, inventory and depletion machinery.
-  const flintSites=beachFlintSites(this.seed,cx,cz);
-  // Bedrock is decoration, not a new harvestable stone deposit or collider.
+  // Beach and highland flakes share the same harvest and depletion rules.
+  const beachFlint=beachFlintSites(this.seed,cx,cz);
+  const mountainFlint=mountainFlintSites(this.seed,cx,cz,
+   (px,pz)=>this.waterAt(px,pz),this.mountainProtectedSites,
+   [...rawResources,...beachFlint]);
+  const flintSites=[...beachFlint,...mountainFlint];
+  // Decorative outcrops must not cover collectable flint.
   const outcrops=mountainOutcropSites(this.seed,cx,cz,
    (px,pz)=>this.heightAt(px,pz),(px,pz)=>this.waterAt(px,pz),
-   this.mountainProtectedSites,rawResources);
+   this.mountainProtectedSites,[...rawResources,...flintSites]);
   for(const site of outcrops){
    if(withinCamp(site.x,site.z,3))continue;
    const rock=B.MeshBuilder.CreatePolyhedron("Mountain outcrop ["+key+"]",
@@ -231,8 +235,8 @@ export class ForestChunks{
    if(withinCamp(item.x,item.z))continue;
    const coastal=beachAt(item.x,item.z,this.seed);
    // Keep both trunks AND large canopies clear of dunes and wet sand.
-   // Flint can occur only in the dry sandy band, not in the surf.
-   if(item.shape==="flint"&&!coastal.flintZone)continue;
+   // Beach flakes stay on dry sand; mountain flakes are validated uphill.
+   if(item.shape==="flint"&&item.habitat!=="mountain"&&!coastal.flintZone)continue;
    if(item.shape!=="flint"&&coastal.vegetationClear)continue;
    const water=this.waterAt(item.x,item.z);
    if(item.shape==="flint"&&water.depth>.025)continue;
