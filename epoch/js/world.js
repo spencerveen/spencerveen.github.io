@@ -622,7 +622,10 @@ export class World {
   }
   const focus=this.focusTarget;
   const aim=focus?V(focus.x,this.groundY(focus.x,focus.z)+1.2,focus.z):V(p.x,p.y+1.2,p.z);
-  c.setTarget(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));
+  // Never call ArcRotateCamera.setTarget every frame: it recomputes alpha/beta
+  // from the old camera position and snaps a user's orbit angle back.
+  // Move the target vector in place to retain rotation and zoom.
+  c.target.copyFrom(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));
   const t=performance.now()/1000;
   this.people.forEach(person=>person.human.animate(t+person.phase,false));
   if(this.flame?.isEnabled())this.flame.scaling.y=1.05+.12*Math.sin(t*8);

@@ -58,17 +58,6 @@ try{
 
  // The HUD must not steal mouse orbit, zoom or keyboard camera input.
  await page.locator("#scene").focus();
- await page.evaluate(()=>{
-  window.__epochCameraTrace=[];
-  const canvas=document.getElementById("scene"),w=window.__epochTestWorld;
-  for(const type of ["pointerdown","pointermove","pointerup","lostpointercapture"]){
-   canvas.addEventListener(type,e=>window.__epochCameraTrace.push({
-    type,button:e.button,buttons:e.buttons,pointerId:e.pointerId,
-    trackedId:w.cameraPointerId,dragging:w.cameraDragging,blocked:w.inputBlocked,
-    alpha:w.camera.alpha,beta:w.camera.beta
-   }));
-  }
- });
  const readCamera=()=>page.evaluate(()=>{const c=window.__epochTestWorld.camera;return {alpha:c.alpha,beta:c.beta,radius:c.radius}});
  const orbitStart=await readCamera();
  await page.mouse.move(630,460);
@@ -77,13 +66,9 @@ try{
  await page.mouse.up({button:"right"});
  await page.waitForTimeout(160);
  const orbitEnd=await readCamera();
- console.log("EPOCH CAMERA HANDLER TRACE",JSON.stringify(await page.evaluate(()=>{
-  const w=window.__epochTestWorld,canvas=document.getElementById("scene");
-  return {events:window.__epochCameraTrace,activeCamera:w.scene.activeCamera?.name,cameraName:w.camera.name,
-   alpha:w.camera.alpha,beta:w.camera.beta,dragging:w.cameraDragging,trackedId:w.cameraPointerId,
-   elementAtPoint:document.elementFromPoint(730,500)?.id,canvasInert:canvas.inert};
- })));
  assert(Math.abs(orbitEnd.alpha-orbitStart.alpha)>.03,"right mouse drag orbits the camera");
+ await page.evaluate(()=>window.__epochTestWorld.update(1/30));
+ assert(Math.abs((await readCamera()).alpha-orbitEnd.alpha)<.005,"following the player must not reset camera rotation");
  await page.mouse.wheel(0,450);
  await page.waitForTimeout(160);
  assert(Math.abs((await readCamera()).radius-orbitEnd.radius)>.1,"mouse wheel zooms the camera");
