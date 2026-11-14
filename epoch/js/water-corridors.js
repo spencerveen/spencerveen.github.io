@@ -56,7 +56,10 @@ export function lakeSites(seed,channel,section){
 /** An elongated basin with gentle, uneven banks rather than a perfect disc. */
 export function lakeShoreDistance(x,z,lake){
  const dx=x-lake.x,dz=z-lake.z;
- if(Math.abs(dx)>lake.radius*1.6||Math.abs(dz)>lake.radius*1.6)
+ // Outside the whole mountain-valley influence, the precise winding
+ // shoreline is unnecessary. Keep the inexpensive far-distance shortcut far
+ // enough away that it cannot create a visible ridge/valley discontinuity.
+ if(Math.abs(dx)>lake.radius+120||Math.abs(dz)>lake.radius+120)
   return Math.hypot(dx,dz)-lake.radius;
  const ca=Math.cos(lake.angle),sa=Math.sin(lake.angle);
  const along=dx*ca+dz*sa,across=-dx*sa+dz*ca;
