@@ -5,7 +5,7 @@ import {
 } from "../js/forest-generation.js";
 
 assert.equal(CHUNK_SIZE,32);
-assert.equal(ACTIVE_RADIUS,3);
+assert.equal(ACTIVE_RADIUS,4);
 assert.equal(DETAIL_RADIUS,2);
 assert.deepEqual(chunkCoord(-.01,-32.01),{cx:-1,cz:-2});
 assert.deepEqual(chunkCoord(0,32),{cx:0,cz:1});
@@ -90,22 +90,22 @@ const disposed=[],world={
 };
 const manager=new ForestChunks(world,1337);
 manager.update(0,0);
-assert.equal(manager.loaded.size,49,"load 7×7 visible terrain chunks");
+assert.equal(manager.loaded.size,81,"load 9×9 visible terrain chunks");
 assert.equal(manager.status.detailed,25,"detail only the inner 5×5 forest chunks");
 const counts={entities:world.entities.length,obstacles:world.obstacles.length,animals:world.animals.length};
 manager.update(1,1);
-assert.equal(manager.created,49,"same-chunk movement doesn't regenerate meshes");
-manager.update(128,0);
-assert.equal(manager.loaded.size,49,"moving away unloads distant terrain chunks");
+assert.equal(manager.created,81,"same-chunk movement doesn't regenerate meshes");
+manager.update(160,0);
+assert.equal(manager.loaded.size,81,"moving away unloads distant terrain chunks");
 assert.equal(manager.status.detailed,25,"detail window remains bounded");
 assert(manager.disposed>0&&disposed.length>0,"meshes are disposed");
-assert(manager.created>49,"new chunks appear");
+assert(manager.created>81,"new chunks appear");
 assert(!manager.loaded.has(chunkKey(-1,-1)),"faraway chunks no longer remain in memory");
 manager.update(0,0);
-assert.equal(manager.loaded.size,49);
+assert.equal(manager.loaded.size,81);
 assert.equal(manager.status.detailed,25);
 assert.deepEqual(forestObjects(1337,0,0),forestObjects(1337,0,0));
 assert.equal(world.entities.length,counts.entities,"resource meshes don't accumulate after returning home");
 assert.equal(world.obstacles.length,counts.obstacles,"colliders don't leak after streaming");
 assert.equal(world.animals.length,counts.animals,"deer don't accumulate after streaming");
-console.log("PASS seeded forest: continuous terrain, repeatable resources, 49 visible terrain chunks and 25 detailed chunks, streaming cleanup, village-safe starter");
+console.log("PASS seeded forest: continuous terrain, repeatable resources, 81 visible terrain chunks and 25 detailed chunks, streaming cleanup, village-safe starter");
