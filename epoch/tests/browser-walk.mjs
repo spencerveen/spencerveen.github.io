@@ -13,6 +13,12 @@ const browser=await chromium.launch({
 });
 try{
  const page=await browser.newPage({viewport:{width:1280,height:800},deviceScaleFactor:1});
+ // Fix the browser-test forest seed so navigation checks do not change with
+ // random terrain. Do not overwrite a save on subsequent reloads.
+ await page.addInitScript(()=>{
+  if(!localStorage.getItem("epoch.stoneage.v1"))
+   localStorage.setItem("epoch.stoneage.v1",JSON.stringify({version:1,worldSeed:1095757445}));
+ });
  const errors=[],warnings=[];
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
