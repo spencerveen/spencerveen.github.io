@@ -17,8 +17,8 @@ export function normalizeBuildings(raw,plots={},home=null){
    const id=String(data.id||"").slice(0,60);
    if(!id||usedIds.has(id))continue;
    usedIds.add(id);
-   result.push({id,kind:data.kind,x:snapGrid(Number(data.x)),
-    z:snapGrid(Number(data.z)),turn:normalizeTurn(data.turn)});
+   result.push({id,kind:data.kind,x:Number(data.x),
+    z:Number(data.z),turn:normalizeTurn(data.turn)});
   }
  }
  // Existing village saves store five fixed plot IDs, including free huts.
@@ -27,7 +27,7 @@ export function normalizeBuildings(raw,plots={},home=null){
   if(plots?.[plot.id]!==plot.kind||usedIds.has(plot.id))continue;
   const dx=home?home.x-LEGACY_HOME.x:0,dz=home?home.z-LEGACY_HOME.z:0;
   result.push({id:plot.id,kind:plot.kind,
-    x:snapGrid(plot.x+dx),z:snapGrid(plot.z+dz),
+    x:plot.x+dx,z:plot.z+dz,
     turn:normalizeTurn(plot.rotation*2/Math.PI)});
   usedIds.add(plot.id);
  }
