@@ -15,7 +15,7 @@ The environment still uses the original Epoch trees (cylindrical trunks and gree
 | Existing saves | Stable seed 12000; houses and resources preserved |
 | Biomes | Forest only |
 | Chunk size | 32 × 32 meters |
-| Visible terrain | 7 × 7 chunks (224 × 224 meters window) |
+| Visible terrain | 9 × 9 chunks (288 × 288 meters window) |
 | Detailed terrain | 5 × 5 chunks (160 × 160 meters window) |
 | Mesh resolution | 16 subdivisions per 32-meter chunk |
 | World edges | No fixed playable border while walking |
