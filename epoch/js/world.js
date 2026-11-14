@@ -7,7 +7,7 @@ import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./st
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view2";
 import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
-import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs1";
+import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs2";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114textures1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
