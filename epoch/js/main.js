@@ -48,7 +48,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
     resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
     skills:{...state.data.skills},resources:{...state.data.resources},inventory:{slots:state.data.inventory.map(slot=>slot?{...slot}:null),used:state.inventoryUsed(),unpacked:{...state.data.unpacked}},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
-    hearth:{built:!!world.hearthBuilt,visible:!!world.villagePlots.get("hearth_1")?.constructed.isEnabled(),
+    hearth:{built:!!world.hearthBuilt,visible:[...world.villageBuildings.values()].some(item=>item.entry.kind==="hearth"&&item.root.isEnabled()),
       lit:!!world.flame?.isEnabled(),glow:world.fireLight?.intensity||0,
       freeCampfires:world.scene.transformNodes.filter(n=>n.name==="campfire").length,
       position:world.fireLight?{x:world.fireLight.position.x,z:world.fireLight.position.z}:null},
