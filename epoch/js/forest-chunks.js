@@ -5,6 +5,7 @@ import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114watershe
 import {terrainAppearanceAt,mountainOutcropSites,mountainHabitat} from "./mountain-appearance.js?v=20261114beaches2";
 import {mountainAt} from "./mountain-generation.js?v=20261114watershed3";
 import {beachAt,beachFlintSites} from "./beach-generation.js?v=20261114beaches1";
+import {terrainUV,waterUV,terrainBiomeWeights} from "./terrain-textures.js?v=20261114textures1";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 
@@ -31,7 +32,7 @@ export function buildWaterSurface(cx,cz,sampleAt,subdivisions=32){
   }
   nodes.push(row);
  }
- const positions=[],colors=[],indices=[];
+ const positions=[],colors=[],uvs=[],indices=[];
  const blend=(a,b,t)=>({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,
   y:a.y+(b.y-a.y)*t,d:threshold,o:a.o+(b.o-a.o)*t});
  const clip=(triangle)=>{
@@ -47,6 +48,7 @@ export function buildWaterSurface(cx,cz,sampleAt,subdivisions=32){
   for(const p of polygon){
    const deep=Math.max(0,Math.min(1,p.d/2));
    positions.push(p.x,p.y,p.z);
+   uvs.push(...waterUV(p.x+centerX,p.z+centerZ));
    // Ocean teal in shallows fading toward deeper marine blue. One mesh and
    // material can contain both ocean and river triangles at an estuary.
    const ocean=p.o||0;
@@ -66,7 +68,7 @@ export function buildWaterSurface(cx,cz,sampleAt,subdivisions=32){
   clip([a,b,c]);
   clip([c,b,d]);
  }
- return {positions,colors,indices};
+ return {positions,colors,uvs,indices};
 }
 
 export class ForestChunks{
@@ -117,7 +119,7 @@ export class ForestChunks{
    {width:CHUNK_SIZE,height:CHUNK_SIZE,subdivisions:TERRAIN_SUBDIVISIONS,updatable:true},scene);
   mesh.position=V(x,0,z);
   const positions=mesh.getVerticesData(B.VertexBuffer.PositionKind);
-  const terrainColors=[],waterSamples=[];
+  const terrainColors=[],terrainUVs=[],biomeUVs=[],waterSamples=[];
   for(let i=0;i<positions.length;i+=3){
    const sample=this.waterAt(x+positions[i],z+positions[i+2]);
    positions[i+1]=sample.depth>0?sample.bedY:sample.surfaceY-.055;
@@ -132,9 +134,13 @@ export class ForestChunks{
    const visual=terrainAppearanceAt(wx,wz,this.seed,
     this.mountainProtectedSites,waterSamples[i/3],grade);
    terrainColors.push(...visual.color);
+   terrainUVs.push(...terrainUV(wx,wz));
+   biomeUVs.push(...terrainBiomeWeights(waterSamples[i/3],visual.rock));
   }
   mesh.updateVerticesData(B.VertexBuffer.PositionKind,positions);
   mesh.updateVerticesData(B.VertexBuffer.NormalKind,normals);
+  mesh.setVerticesData(B.VertexBuffer.UVKind,terrainUVs);
+  mesh.setVerticesData(B.VertexBuffer.UV2Kind,biomeUVs);
   if(B.VertexBuffer.ColorKind&&mesh.setVerticesData){
    mesh.setVerticesData(B.VertexBuffer.ColorKind,terrainColors);
    mesh.useVertexColors=true;
@@ -157,6 +163,7 @@ export class ForestChunks{
    data.positions=surface.positions;
    data.indices=surface.indices;
    data.colors=surface.colors;
+   data.uvs=surface.uvs;
    data.normals=[];
    B.VertexData.ComputeNormals(data.positions,data.indices,data.normals);
    data.applyToMesh(waterMesh);

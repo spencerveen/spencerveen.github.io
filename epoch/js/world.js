@@ -6,7 +6,8 @@ import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockp
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114y";
-import {ForestChunks} from "./forest-chunks.js?v=20261114beaches2";
+import {ForestChunks} from "./forest-chunks.js?v=20261114textures1";
+import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114textures1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -81,6 +82,7 @@ export class World {
   this.m.river.specularColor=new B.Color3(.19,.25,.27);
   this.m.river.specularPower=48;
   this.m.river.emissiveColor=new B.Color3(.025,.045,.05);
+  setupSurfaceTextures(B,this.scene,this.m);
   this.m.fire.emissiveColor=new B.Color3(.76,.28,.04);this.m.flame.emissiveColor=new B.Color3(.95,.63,.2);
  }
  makeGround(){
@@ -753,6 +755,12 @@ export class World {
   return path;
  }
  update(dt){
+  if(this.m.waterTexture){
+   this.m.waterTexture.uOffset=(this.m.waterTexture.uOffset+dt*.006)%1;
+   this.m.waterTexture.vOffset=(this.m.waterTexture.vOffset+dt*.003)%1;
+  }
+  if(this.m.terrainSurface?.setVector3&&this.camera)
+   this.m.terrainSurface.setVector3("cameraPosition",this.camera.position);
   if(this.inputBlocked){this.keys={};this.resetCameraKeys();this.path=[];this.target=null;this.stockpileTarget=false;}
   else if(this.placingStockpile||this.placingBuilding)this.resetCameraKeys();
   else this.updateKeyboardCamera(dt);

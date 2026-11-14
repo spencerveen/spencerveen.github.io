@@ -57,6 +57,32 @@ try{
  assert(test.offshore.oceanChunks>=20,"farther east should become entirely open sea");
  assert(test.offshoreMeshes>0&&test.someLowRes,
   "offshore water uses reduced-complexity meshes");
+ // Shared image tiles must load, animate and cover both terrain and water.
+ const textureCheck=await page.evaluate(()=>{
+  const w=window.__epochTestWorld,B=window.BABYLON;
+  const map=[...w.terrain.loaded.values()];
+  const ground=map[0].mesh,sea=map.find(c=>c.waterMesh)?.waterMesh;
+  const uv=ground.getVerticesData(B.VertexBuffer.UVKind);
+  const biome=ground.getVerticesData(B.VertexBuffer.UV2Kind);
+  const waterUV=sea?.getVerticesData(B.VertexBuffer.UVKind);
+  const start=w.m.waterTexture.uOffset;
+  w.update(.045);
+  return {grass:w.m.grassTexture.isReady(),sand:w.m.sandTexture.isReady(),
+   water:w.m.waterTexture.isReady(),
+   groundShader:ground.material===w.m.terrainSurface&&
+    w.m.terrainSurface.getClassName()==="ShaderMaterial",
+   groundEffect:w.m.terrainSurface.getEffect()?.isReady()||false,
+   waterMapped:sea?.material===w.m.river,
+   groundUV:uv?.length,biomeUV:biome?.length,waterUV:waterUV?.length,
+   drift:w.m.waterTexture.uOffset-start,
+   images:[w.m.grassTexture.url,w.m.sandTexture.url,w.m.waterTexture.url]};
+ });
+ assert(textureCheck.grass&&textureCheck.sand&&textureCheck.water,
+  "generated grass/sand/water tiles must load: "+JSON.stringify(textureCheck));
+ assert(textureCheck.groundShader&&textureCheck.groundEffect&&textureCheck.waterMapped,
+  "terrain shader and water material must render with textures: "+JSON.stringify(textureCheck));
+ assert(textureCheck.groundUV>0&&textureCheck.biomeUV>0&&textureCheck.waterUV>0);
+ assert(textureCheck.drift>0,"water UV texture drifts over time");
  // Go to a deterministic beach-flint shard and check the actual rendered
  // chunk, harvestable meshes and absence of trunks/canopies over sandy dunes.
  let piece=null;

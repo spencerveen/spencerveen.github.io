@@ -40,6 +40,7 @@ jobs:
           node --check epoch/js/mountain-generation.js
           node --check epoch/js/mountain-appearance.js
           node --check epoch/js/forest-chunks.js
+          node --check epoch/js/terrain-textures.js
       - name: Validate contextual interfaces and research/culture bootstrap
         run: node epoch/tests/check-contextual-ui.mjs
       - name: Validate compact inventory menus and village-only crafting
@@ -84,6 +85,8 @@ jobs:
         run: node epoch/tests/check-inventory.mjs
       - name: Validate seeded forest generation and chunk streaming
         run: node epoch/tests/check-forest.mjs
+      - name: Validate shared texture UVs and grass-sand shoreline masks
+        run: node epoch/tests/check-terrain-textures.mjs
       - name: Validate rivers, lakes, dry village protection and water collision
         run: node epoch/tests/check-water.mjs
       - name: Validate seeded ocean coastlines, sand, water depth and protected villages

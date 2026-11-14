@@ -101,6 +101,12 @@ These are deliberately temporary, session-only test switches in `js/dev-cheats.j
 
 High mountains no longer receive the same density of leafy trees, berry bushes, grass tufts and deer as ordinary forest. Exposed rock is visually more convincing, while natural stone deposits are still available. Newly spawned camps also stay clear of legacy discovered tribal settlements.
 
+## Generated terrain textures (grass, sand, and water)
+
+Epoch uses three texture tiles, derived from the generated grass, turquoise water, and golden sand artwork, converted into small, seam-blended WebP assets under `assets/textures/`. All 25 streamed terrain chunks share **one** two-texture Babylon shader: world-space UVs tile grass and sand without seams at chunk boundaries, and the beach mask smoothly blends between them. Existing rock colors and mountain slopes remain prominent rather than turning green. Water triangles use a **separate shared tiled water image**, subtle UV drift, existing marine-depth tinting, and alpha. Shoreline clipping, swimming collision, water depth and seed generation remain unchanged.
+
+The source images are artwork; no external texture library or network asset service is required. Three tiles use only about 7 KB combined and load from the same GitHub Pages site. Texture errors fall back to the previous vertex-colored terrain without changing gameplay.
+
 ## Coastal beach biome and beach flint
 
 Ocean beaches now extend roughly **70–110 meters inland**, with a broader gently sloped sandy shelf continuing about **20 meters into the shallows**. The sandy band has varying seeded width, a gently irregular waterline and subtle dune-to-wet-sand coloring. Trees, large stone deposits, berry bushes, grass tufts and deer now stay beyond the beach's inland buffer (about 12m beyond the sandy transition); the coastline is open and feels like a real shore.
