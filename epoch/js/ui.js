@@ -1,4 +1,4 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114b";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114h";
 import {BUILDINGS} from "./settlement.js?v=20261114b";
 import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114b";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114b";
@@ -42,15 +42,15 @@ export class UI{
  cancelPlacement(){if(this.world.placingStockpile)this.world.cancelStockpilePlacement();if(this.world.placingBuilding)this.world.cancelBuildingPlacement()}
  closePanel(){this.panelOpen=false;this.cancelPlacement();this.render();(document.querySelector('[data-tab="'+this.tab+'"]')||$("scene")).focus({preventScroll:true})}
  objective(){
-  const d=this.state.data,r=d.resources,p=d.village.stockpile;
+  const d=this.state.data,r=d.resources,p=d.village.stockpile,have=id=>this.state.researchResourceCount(id);
   if(!p)return {title:"A place to begin",description:"Choose a clearing. Your stockpile will be the heart of your village.",progress:"First stockpile · free to establish",action:"Establish camp",target:"found"};
   if(!this.hasBuilding("lore"))return {title:"Make room for discovery",description:"Deposit supplies, then build a Toolmaker's Shelter at your stockpile.",progress:p.items.wood+"/12 stored wood · "+p.items.stone+"/8 stored stone",action:"Find stockpile",target:"stockpile"};
-  if(!d.technologies.includes("fire"))return {title:"Discover the first flame",description:"Click your Toolmaker's Shelter to research Control of Fire.",progress:r.wood+"/4 wood · "+r.stone+"/2 stone · "+d.knowledge+"/3 knowledge",action:"Find toolmaker",target:"lore"};
-  if(!d.technologies.includes("tools"))return {title:"Shape your first tools",description:"Research Stone Toolmaking at your Toolmaker's Shelter.",progress:r.wood+"/5 wood · "+r.stone+"/6 stone · "+d.knowledge+"/7 knowledge",action:"Find toolmaker",target:"lore"};
+  if(!d.technologies.includes("fire"))return {title:"Discover the first flame",description:"Click your Toolmaker's Shelter to research Control of Fire.",progress:have("wood")+"/4 wood · "+have("stone")+"/2 stone · "+d.knowledge+"/3 knowledge",action:"Find toolmaker",target:"lore"};
+  if(!d.technologies.includes("tools"))return {title:"Shape your first tools",description:"Research Stone Toolmaking at your Toolmaker's Shelter.",progress:have("wood")+"/5 wood · "+have("stone")+"/6 stone · "+d.knowledge+"/7 knowledge",action:"Find toolmaker",target:"lore"};
   if(!d.axe)return {title:"A sharper start",description:"Craft a stone axe in Inventory to gather wood more efficiently.",progress:r.wood+"/2 wood · "+r.stone+"/3 stone",action:"Open Inventory",target:"pack"};
   if(!this.hasBuilding("family"))return {title:"A home for your family",description:"Build a Family Hut through your stockpile. Click the hut to open your dynasty.",progress:p.items.wood+"/10 stored wood · "+p.items.stone+"/6 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!this.hasBuilding("council"))return {title:"A place for your people",description:"Build a Council Lodge through your stockpile to begin your culture.",progress:p.items.wood+"/14 stored wood · "+p.items.stone+"/8 stored stone",action:"Find stockpile",target:"stockpile"};
-  if(!d.civics.includes("community"))return {title:"Become a community",description:"Click the Council Lodge to establish Tribal Community.",progress:r.wood+"/8 wood · "+r.food+"/6 berries · "+d.culture+"/5 culture",action:"Find council",target:"council"};
+  if(!d.civics.includes("community"))return {title:"Become a community",description:"Click the Council Lodge to establish Tribal Community.",progress:have("wood")+"/8 wood · "+have("food")+"/6 berries · "+d.culture+"/5 culture",action:"Find council",target:"council"};
   return {title:"What will you leave behind?",description:"Explore, shape your village, and visit a Family Hut to plan your legacy.",progress:"Your next chapter is yours to choose",action:"Find family hut",target:"family"};
  }
  followObjective(){
@@ -63,15 +63,15 @@ export class UI{
   let html='<p class="context-note">Your own experience, earned in the world. Traditions help you pass a portion to your descendants.</p>';
   for(const [key,name] of SKILLS){const v=skillLevel(this.state.data.skills[key]||0);html+='<div class="skill"><div class="skill-name"><span>'+name+'</span><b>Level '+v.level+'</b></div><p>'+skillNotes[key]+'</p><div class="bar" role="progressbar" aria-label="'+name+' experience" aria-valuemin="0" aria-valuemax="'+v.next+'" aria-valuenow="'+v.remaining+'"><span style="width:'+(100*v.remaining/v.next).toFixed(2)+'%"></span></div><small>'+v.remaining+' / '+v.next+' XP to next level</small></div>'}return html;
  }
- costChips(cost){return Object.entries(cost).map(([id,need])=>{const have=id==="knowledge"||id==="culture"?this.state.data[id]:this.state.inventoryCount(id);return '<span class="cost-chip '+(have>=need?"met":"missing")+'">'+names[id]+' <b>'+have+' / '+need+'</b></span>'}).join("")}
+ costChips(cost){return Object.entries(cost).map(([id,need])=>{const have=this.state.researchResourceCount(id);return '<span class="cost-chip '+(have>=need?"met":"missing")+'">'+names[id]+' <b>'+have+' / '+need+'</b></span>'}).join("")}
  trees(kind){
   const d=this.state.data,tech=kind==="tech",data=tech?TECH:CIVICS,owned=tech?d.technologies:d.civics;
-  let html='<div class="building-context"><span class="stat-pill">'+(tech?d.knowledge+" knowledge":d.culture+" culture")+'</span><p>'+(tech?"Discoveries your whole civilization will inherit.":"Traditions that connect one generation to the next.")+'</p></div><p class="context-note">Material costs come from your carried Inventory.</p><div class="research-grid">';
+  let html='<div class="building-context"><span class="stat-pill">'+(tech?d.knowledge+" knowledge":d.culture+" culture")+'</span><p>'+(tech?"Discoveries your whole civilization will inherit.":"Traditions that connect one generation to the next.")+'</p></div><p class="context-note">Material costs use your Inventory first, then your village stockpile. Knowledge and Culture points are earned separately.</p><div class="research-grid">';
   const nodes=Object.entries(data).sort(([a],[b])=>{const rank=key=>owned.includes(key)?2:this.state.eligible(kind,key)?0:1;return rank(a)-rank(b)});
   for(const [key,node] of nodes){
-   const done=owned.includes(key),eligible=this.state.eligible(kind,key),can=eligible&&this.state.enough(node.cost);
+   const done=owned.includes(key),eligible=this.state.eligible(kind,key),can=eligible&&this.state.enoughResearch(node.cost);
    const req=[...node.needs,...(node.culture||[])].map(x=>TECH[x]?.name||CIVICS[x]?.name||x);
-   const missing=Object.entries(node.cost).filter(([id,n])=>(id==="knowledge"||id==="culture"?d[id]:this.state.inventoryCount(id))<n).map(([id,n])=>{const have=id==="knowledge"||id==="culture"?d[id]:this.state.inventoryCount(id);return (n-have)+" "+names[id].toLowerCase()});
+   const missing=Object.entries(node.cost).filter(([id,n])=>this.state.researchResourceCount(id)<n).map(([id,n])=>(n-this.state.researchResourceCount(id))+" "+names[id].toLowerCase());
    html+='<article class="research-card entry '+(done?"unlocked":can?"available":"locked")+'"><div class="research-heading"><h3>'+esc(node.name)+'</h3><span class="tag">'+(done?"Discovered":eligible?"Available":"Locked")+'</span></div><p>'+esc(node.description)+'</p>';
    if(!done){if(req.length)html+='<small class="requirement-list">Requires '+esc(req.join(" · "))+'</small>';html+='<div class="research-costs cost-list">'+this.costChips(node.cost)+'</div>';if(eligible&&missing.length)html+='<small>Need '+esc(missing.join(" and "))+'</small>';html+='<button type="button" data-action="unlock" data-kind="'+kind+'" data-key="'+key+'" '+(!can?"disabled":"")+'>'+(can?(tech?"Research discovery":"Establish tradition"):!eligible?"Complete prerequisites":"More supplies needed")+'</button>'}html+='</article>';
   }return html+"</div>";
@@ -100,7 +100,7 @@ export class UI{
   const btn=e.target.closest("[data-action]");if(!btn||btn.disabled)return;const action=btn.dataset.action;let message="";
   if(handlePackAction(this,btn)||handleVillageAction(this,btn))return;
   if(action==="axe")message=this.state.craftAxe()?"Stone axe crafted. More wood with every swing.":"You need the technology and carried supplies.";
-  else if(action==="unlock"){if(!this.canUseContext(btn.dataset.kind==="tech"?"tech":"culture")){this.toast("Visit the appropriate village building to continue.");return}message=this.state.unlock(btn.dataset.kind,btn.dataset.key)?"A new chapter of knowledge begins.":"Check prerequisites and carried supplies."}
+  else if(action==="unlock"){if(!this.canUseContext(btn.dataset.kind==="tech"?"tech":"culture")){this.toast("Visit the appropriate village building to continue.");return}message=this.state.unlock(btn.dataset.kind,btn.dataset.key)?"A new chapter of knowledge begins.":"Check prerequisites, inventory and stockpile supplies."}
   else if(action==="next"){
    if(!this.canUseContext("dynasty"))return;const d=this.state.data,retained=d.civics.includes("apprenticeship")?25:d.civics.includes("oral")?15:8;
    this.showDialog("succession","Pass on your legacy",'<div class="confirm-summary"><p>'+esc(d.hero.name)+' will pass control to an 18-year-old descendant. The calendar advances 24 years.</p><p><strong>'+retained+'% of personal skill XP</strong> is retained. Your village, inventory, discoveries, traditions and world changes remain.</p></div><div class="dialog-actions"><button type="button" class="game-button alt" data-action="cancel-dialog">Keep playing</button><button type="button" data-action="confirm-next">Continue as descendant</button></div>');

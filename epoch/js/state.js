@@ -8,7 +8,7 @@ import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113k";
 import {harvestAtNode} from "./harvest.js?v=20261113k";
-import {ITEMS,INVENTORY_SLOTS,emptyInventory,emptyUnpacked,normalizeInventory,
+import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113k";
 export const SKILLS=[
@@ -144,6 +144,27 @@ export class GameState{
   }
   this.syncResources();return true;
  }
+ researchResourceCount(id){
+  // Only materials are pooled; Knowledge and Culture remain personal currencies.
+  if(id==="knowledge"||id==="culture")return this.data[id];
+  return this.inventoryCount(id)+stockpileCount(this.data.village.stockpile,id);
+ }
+ enoughResearch(cost){
+  return Object.entries(cost).every(([id,amount])=>this.researchResourceCount(id)>=amount);
+ }
+ payResearch(cost){
+  // Check the whole cost before taking anything from either source.
+  if(!this.enoughResearch(cost))return false;
+  for(const [id,amount] of Object.entries(cost)){
+   if(id==="knowledge"||id==="culture"){this.data[id]-=amount;continue}
+   const fromPack=Math.min(this.inventoryCount(id),amount);
+   if(fromPack)removeItems(this.data.inventory,id,fromPack);
+   const fromStockpile=amount-fromPack;
+   if(fromStockpile)this.data.village.stockpile.items[canonicalItem(id)]-=fromStockpile;
+  }
+  this.syncResources();
+  return true;
+ }
  gainXP(skill,amount){this.data.skills[skill]=(this.data.skills[skill]||0)+amount;this.data.knowledge+=skill==="survival"?0:1}
  gather(type){
   const gathering={
@@ -175,7 +196,7 @@ export class GameState{
  }
  unlock(kind,key){
   const node=(kind==="tech"?TECH:CIVICS)[key];
-  if(!node||!this.eligible(kind,key)||!this.pay(node.cost))return false;
+  if(!node||!this.eligible(kind,key)||!this.payResearch(node.cost))return false;
   (kind==="tech"?this.data.technologies:this.data.civics).push(key);
   this.changed(`${this.data.hero.name}'s people discovered ${node.name}.`);
   return true;

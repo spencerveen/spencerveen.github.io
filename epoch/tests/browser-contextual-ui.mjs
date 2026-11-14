@@ -11,7 +11,7 @@ const seed=12000;
 const removed=Object.fromEntries(Array.from({length:9},(_,i)=>forestObjects(seed,i%3-1,Math.floor(i/3)-1)).flat().map(o=>[o.id,{remaining:0,removed:true,regrowAt:0}]));
 const fixture={version:1,worldSeed:seed,hero:{name:"Context Founder"},knowledge:40,culture:30,
  technologies:["fire"],civics:[],skills:{woodcutting:500},resourceNodes:removed,
- inventory:[{id:"wood",qty:12},{id:"wood",qty:12},{id:"stone",qty:12},{id:"stone",qty:12},{id:"berries",qty:12},{id:"vines",qty:2},null,null,null,null],
+ inventory:[{id:"wood",qty:12},{id:"wood",qty:8},{id:"stone",qty:1},{id:"berries",qty:1},{id:"vines",qty:2},null,null,null,null,null],
  village:{population:5,plots:{},stockpile:{x:0,z:8,items:{wood:120,stone:120,berries:60,vines:20}},buildings:[
   {id:"test_home",kind:"family",x:-10,z:4,turn:0},
   {id:"test_lore",kind:"lore",x:8,z:4,turn:1},
@@ -115,15 +115,24 @@ try{
  await page.waitForFunction(()=>window.epochDebug().ui.context==="tech",null,{timeout:5000});
  assert.deepEqual(await page.evaluate(()=>({path:window.__epochTestWorld.path.length,target:window.__epochTestWorld.target})),{path:0,target:null},"opening a building cancels the previous travel and gather intent");
  assert.equal((await page.evaluate(()=>window.epochDebug().ui)).sourceBuildingId,"test_lore");
+ assert((await page.locator(".context-note").allTextContents()).some(t=>t.includes("Inventory first, then your village stockpile")),"research explains both material sources");
+ assert(await page.locator('[data-action="unlock"][data-kind="tech"][data-key="tools"]').isEnabled(),"stockpile stone enables research despite missing backpack stone");
  await page.locator('[data-action="unlock"][data-kind="tech"][data-key="tools"]').click();
  assert((await page.evaluate(()=>window.epochDebug().technologies)).includes("tools"),"Technology opens from the Toolmaker and researches normally");
+ const techFunds=await page.evaluate(()=>window.epochDebug());
+ assert.equal(techFunds.resources.stone,0,"research consumes the last carried stone");
+ assert.equal(techFunds.settlement.stockpile.items.stone,115,"remaining five stone comes from stockpile");
  await page.screenshot({animations:"disabled",path:path.join(output,"epoch-context-technology.png")});
  await page.locator("#close-panel").click();
 
  await clickWorldObject(page,{buildingId:"test_council"});
  await page.waitForFunction(()=>window.epochDebug().ui.context==="culture",null,{timeout:5000});
+ assert(await page.locator('[data-action="unlock"][data-kind="civic"][data-key="community"]').isEnabled(),"stockpile berries enable culture with one carried berry");
  await page.locator('[data-action="unlock"][data-kind="civic"][data-key="community"]').click();
  assert((await page.evaluate(()=>window.epochDebug().civics)).includes("community"),"Council Lodge opens Culture and unlocks the first civic");
+ const cultureFunds=await page.evaluate(()=>window.epochDebug());
+ assert.equal(cultureFunds.resources.food,0,"research spends the last carried berry");
+ assert.equal(cultureFunds.settlement.stockpile.items.berries,55,"culture draws remaining five berries from village storage");
  await page.screenshot({animations:"disabled",path:path.join(output,"epoch-context-culture.png")});
  await page.locator("#close-panel").click();
 

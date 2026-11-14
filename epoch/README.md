@@ -39,7 +39,7 @@ The title screen offers New Game, Continue, and three independent local save slo
 1. Choose a slot and create your founder. Use **Establish camp** on the current objective to place a free stockpile, or choose the nearby-clearing option.
 2. Gather wood and vines from trees, stone from deposits, and berries plus vines from bushes. Click the stockpile to approach it and open **Storage**. Move within 5 meters to deposit or withdraw supplies.
 3. Open the stockpile's **Build** section. Construct a **Toolmaker's Shelter** with **12 stored wood and 8 stored stone**. It requires no prior research, so Technology is reachable from a fresh game.
-4. Click the completed shelter to research **Control of Fire** and **Stone Toolmaking**. Research uses carried Inventory materials and Knowledge; keep or withdraw the required supplies. Craft a **Stone Axe** in Inventory with 2 carried wood and 3 carried stone after learning Stone Toolmaking.
+4. Click the completed shelter to research **Control of Fire** and **Stone Toolmaking**. Research uses Inventory materials first and automatically draws any shortage from the village stockpile, plus Knowledge; no manual withdrawal is needed. Craft a **Stone Axe** in Inventory with 2 carried wood and 3 carried stone after learning Stone Toolmaking.
 5. Build a **Family Hut** for 10 stored wood and 6 stored stone. It adds 3 housing capacity; click it to open Dynasty. Build a **Council Lodge** for 14 stored wood and 8 stored stone, then click it to establish traditions. The lodge requires no prior Culture unlock.
 6. After researching Control of Fire, build a **Cooking Hearth** for 6 stored wood and 5 stored stone. Its fire appears only after construction. To change generations, visit a Family Hut and choose **Plan succession**, then review and confirm the change.
 
@@ -64,7 +64,7 @@ Placement starts from a movable preview. A click or arrow adjustment pins its lo
 
 ## Inventory, resources, and world
 
-Inventory has **10 slots**, with **12 items per stack**. The stockpile holds **480 individual items** separately. Crafting, Technology, and Culture spend carried materials; village construction spends stockpiled materials. Older excess inventory is retained as recoverable supplies.
+Inventory has **10 slots**, with **12 items per stack**. The stockpile holds **480 individual items** separately. Crafting spends carried materials, while Technology and Culture use both carried Inventory and village stockpile supplies (carried items first). Knowledge and Culture points are paid separately. Village building construction still spends stockpiled materials only. Older excess inventory is retained as recoverable supplies.
 
 Trees contain 12 wood and disappear when exhausted; stone deposits contain 12 stone and do not regrow. Bushes contain 8 berries, which regrow two minutes after depletion, including while the game is closed. Clearing a bush yields 3 vines and permanently removes it. This is a world interaction, not an Inventory action. Harvested resources and removed objects persist across chunk reloads and descendants.
 
