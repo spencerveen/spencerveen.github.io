@@ -76,6 +76,10 @@ Visual rock/cliff materials, steep-slope movement restrictions, specialized wild
 
 The existing river centerlines, lake centers and world IDs remain stable. Rivers now vary gently in width at multiple scales rather than repeating a uniform ribbon. Seeded lakes retain their locations but grow into wider, elongated, subtly lobed basins with irregular natural banks; lake bottoms transition more gradually from shallow to deep. The water sampler uses a bounded 2,048-entry cache of immutable lake descriptors, reducing repeated descriptor generation during chunk meshing without changing deterministic sampling. These are still procedural waterways rather than a full solved watershed, and old stockpile/building protection snapshots remain effective.
 
+## Highland habitat cleanup
+
+Forests and berry bushes now thin out on rocky mountain heights; grassy tufts and deer likewise avoid exposed highland stone. Stone deposits remain available on rocky slopes. Seeded resource IDs and saved depletion records are unchanged. New tribes also respect the buffer around recorded historical camps when streamed, without deleting the old discovery.
+
 ## Wider-spaced tribes and natural campsites
 
 New tribes use deterministic 5×5 chunk territories rather than a 12%-per-chunk independent roll. Candidates are restricted to the center chunk, so regular settlements in adjacent territories remain at least 144m apart, with a 132m margin around the first guaranteed nearby encounter. Sites sample the center and eight points on each of two rings, 10m and 15m, to reject **any** river, lake, ocean or steep mountain intrusion across the camp clearing. New camps cannot reshape shorelines or force mountain terrain flat. Unsafe regions stay unoccupied.

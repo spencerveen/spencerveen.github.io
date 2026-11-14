@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import {CHUNK_SIZE,STARTER_SEED,chunkCoord,terrainHeight} from "../js/forest-generation.js";
 import {mountainAt,mountainTerrainHeight} from "../js/mountain-generation.js";
-import {terrainAppearanceAt,mountainOutcropSites,MOUNTAIN_VISUAL_VERSION} from "../js/mountain-appearance.js";
+import {terrainAppearanceAt,mountainOutcropSites,mountainHabitat,MOUNTAIN_VISUAL_VERSION} from "../js/mountain-appearance.js";
 import {waterAt,waterTerrainHeight} from "../js/water-generation.js";
 assert.equal(MOUNTAIN_VISUAL_VERSION,1);
+assert.deepEqual(mountainHabitat(0),{trees:true,berries:true,grass:true,animals:true});
+assert.deepEqual(mountainHabitat(18),{trees:false,berries:false,grass:false,animals:false});
+assert(mountainHabitat(18).trees===false&&mountainHabitat(18).berries===false,
+ "rocky summits no longer grow full forest canopies or berry bushes");
 const base=terrainAppearanceAt(0,0,STARTER_SEED,[],{shore:Infinity},0);
 assert.equal(base.rock,0);
 assert.equal(base.foothill,0);

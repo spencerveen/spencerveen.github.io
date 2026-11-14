@@ -97,6 +97,10 @@ During a running game, press **L** to open or close the developer panel. It cont
 
 These are deliberately temporary, session-only test switches in `js/dev-cheats.js`. They default to off every time Epoch opens, are not stored in save slots, and do not undo an already completed game-over. Players' villages, normal saves and death/permadeath rules when the toggles are off remain intact. The dev-only module, UI controls and state hooks can all be removed before release.
 
+## Highland environment cleanup
+
+High mountains no longer receive the same density of leafy trees, berry bushes, grass tufts and deer as ordinary forest. Exposed rock is visually more convincing, while natural stone deposits are still available. Newly spawned camps also stay clear of legacy discovered tribal settlements.
+
 ## World ecology cleanup — More natural water and tribes
 
 Rivers now vary in width as they meander, and seeded lakes are larger, elongated, and gently lobed rather than small circles. River centerlines, lake coordinates, and lake IDs remain stable. Lake descriptors are cached in a bounded lookup for better chunk-generation performance; no new save geometry is needed.

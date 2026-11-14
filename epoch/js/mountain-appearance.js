@@ -13,6 +13,11 @@ const FOOTHILL=[100/255,108/255,83/255];
 const ROCK=[124/255,126/255,119/255];
 const PEAK=[151/255,144/255,133/255];
 const BANK=[129/255,132/255,105/255];
+// Avoid lush forests, bright berry bushes and deer on exposed high rock.
+export function mountainHabitat(uplift){
+ return {trees:uplift<11,berries:uplift<8,grass:uplift<9,
+  animals:uplift<10};
+}
 
 /**
  * A color for each actual terrain vertex, blended by mountain relief and the
