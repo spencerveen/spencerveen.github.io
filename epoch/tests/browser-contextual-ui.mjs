@@ -101,6 +101,24 @@ try{
  assert.equal(await page.locator(".pack-slot").count(),10);
  assert.equal(await page.locator('[data-action="chop-bush"]').count(),0,"no bush-cut control in Inventory");
  assert.equal(await page.locator('[data-action="open-village"]').count(),0,"Inventory does not bypass the stockpile");
+ assert.equal(await page.locator(".pack-summary,.pack-selected,[data-action=axe]").count(),0,"no separate item-list or crafting cards in backpack");
+ assert.equal(await page.locator('.pack-slot-shell').count(),10,"inventory uses one grid of slots");
+ // Short item information is on hover; actions open next to the item.
+ await page.locator('.pack-slot[data-slot="3"]').hover();
+ assert.equal(await page.locator('#pack-hint-3').evaluate(n=>getComputedStyle(n).visibility),"visible","berry description appears on hover");
+ assert((await page.locator("#pack-hint-3").innerText()).includes("Restores 24 Hunger and 12 Stamina"));
+ await page.locator('.pack-slot[data-slot="3"]').click();
+ const foodActions=await page.locator('.pack-action-menu [data-action]').evaluateAll(nodes=>nodes.map(n=>n.dataset.action));
+ assert.deepEqual(foodActions,["eat-stack","drop-stack"],"food shows Eat first, then Discard");
+ await page.locator('.pack-slot[data-slot="3"]').click();
+ await page.locator('.pack-slot[data-slot="4"]').click();
+ assert.deepEqual(await page.locator('.pack-action-menu [data-action]').evaluateAll(nodes=>nodes.map(n=>n.dataset.action)),
+  ["drop-stack"],"materials only have Discard");
+ await page.evaluate(()=>{window.__inventoryConfirmCalls=0;window.confirm=()=>{window.__inventoryConfirmCalls++;return false}});
+ await page.locator('[data-action="drop-stack"][data-slot="4"]').click();
+ assert.equal((await page.evaluate(()=>window.epochDebug())).resources.vines,0,"discard removes that stack immediately");
+ assert.equal(await page.evaluate(()=>window.__inventoryConfirmCalls),0,"discard never prompts for confirmation");
+ assert.equal(await page.locator(".pack-action-menu").count(),0,"context menu closes after discard");
  await page.locator("#close-panel").click();
 
  // Movement is exclusively WASD. Clicking terrain never queues a route
@@ -145,6 +163,20 @@ try{
  assert.equal(techFunds.resources.stone,0,"research consumes the last carried stone");
  assert.equal(techFunds.settlement.stockpile.items.stone,115,"remaining five stone comes from stockpile");
  await page.screenshot({animations:"disabled",path:path.join(output,"epoch-context-technology.png")});
+ await page.locator("#close-panel").click();
+
+ // The Stone Axe is crafted only within Village → Craft using stored supplies.
+ await clickWorldObject(page,{stockpile:true});
+ await page.locator('nav.section-tabs [data-section="craft"]').click();
+ const craftButton=page.locator('[data-action="village-craft-axe"]');
+ assert(await craftButton.isEnabled(),"learned Stone Toolmaking and stored resources enable village crafting");
+ const beforeCraft=await page.evaluate(()=>window.epochDebug().settlement.stockpile.items);
+ await craftButton.click();
+ assert((await page.locator("#panel").innerText()).includes("crafted and equipped"));
+ const afterCraft=await page.evaluate(()=>window.epochDebug().settlement.stockpile.items);
+ assert.equal(afterCraft.wood,beforeCraft.wood-2);
+ assert.equal(afterCraft.stone,beforeCraft.stone-3);
+ assert.equal(await page.locator('[data-action="village-craft-axe"]').count(),0,"crafted equipment is not a repeatable recipe");
  await page.locator("#close-panel").click();
 
  await clickWorldObject(page,{buildingId:"test_council"});

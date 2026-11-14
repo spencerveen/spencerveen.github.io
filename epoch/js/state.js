@@ -15,7 +15,7 @@ import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  moveResidentHome,residentConnections} from "./residents.js?v=20261114u";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
- resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113k";
+ resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261114v";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
@@ -320,10 +320,17 @@ export class GameState{
   return true;
  }
  swingWeapon(){return this.spendStamina(SURVIVAL.weaponSwingCost,"attack")}
- eatBerries(){
-  if(this.data.survival.gameOver||this.inventoryCount("berries")<1)return false;
+ eatBerries(index=null){
+  if(this.data.survival.gameOver)return false;
+  if(index!==null){
+   if(!Number.isInteger(index)||index<0||index>=INVENTORY_SLOTS||
+      this.data.inventory[index]?.id!=="berries"||this.data.inventory[index].qty<1)return false;
+  }else if(this.inventoryCount("berries")<1)return false;
   if(!consumeBerries(this.data.survival))return false;
-  removeItems(this.data.inventory,"berries",1);
+  if(index!==null){
+   this.data.inventory[index].qty--;
+   if(this.data.inventory[index].qty===0)this.data.inventory[index]=null;
+  }else removeItems(this.data.inventory,"berries",1);
   this.syncResources();
   this.changed(this.data.hero.name+" ate wild berries and regained energy.");
   return true;
@@ -432,9 +439,17 @@ export class GameState{
   this.changed(`${this.data.hero.name}'s people discovered ${node.name}.`);
   return true;
  }
- craftAxe(){
-  if(this.data.axe||!this.data.technologies.includes("tools")||!this.pay({wood:2,stone:3}))return false;
-  this.data.axe=true;this.gainXP("crafting",28);this.changed(`${this.data.hero.name} crafted a stone axe.`);return true;
+ craftAxe(x,z){
+  const pile=this.data.village.stockpile,cost={wood:2,stone:3};
+  // Crafting is a physical village activity, never available remotely from
+  // the backpack. Stockpiled supplies are the crafting source of truth.
+  if(this.data.survival.gameOver||this.data.axe||
+     !this.data.technologies.includes("tools")||
+     !nearStockpile(pile,x,z)||!stockpileHas(pile,cost)||!payStockpile(pile,cost))return false;
+  this.data.axe=true;
+  this.gainXP("crafting",28);
+  this.changed(`${this.data.hero.name} crafted a stone axe at the village.`);
+  return true;
  }
  stockpileInfo(){
   const pile=this.data.village.stockpile;

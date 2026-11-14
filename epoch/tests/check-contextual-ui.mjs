@@ -35,6 +35,8 @@ assert.equal([...inventory.matchAll(/data-action="pack-slot"/g)].length,10,"Inve
 assert(!inventory.includes('data-action="chop-bush"'),"Inventory is not a world-resource interaction menu");
 assert(!inventory.includes("Cut Bush for Vines"),"Removed bush-cutting card is not presented");
 assert(!inventory.includes('data-action="open-village"'),"Inventory does not bypass the physical stockpile");
+assert(!inventory.includes("Food & Survival")&&!inventory.includes("Carried supplies")&&!inventory.includes("Inventory space"),"obsolete inventory sections have been removed");
+assert(!inventory.includes('data-action="axe"')&&!inventory.includes("Crafting"),"crafting belongs in Village, not Inventory");
 assert.equal(handlePackAction(ui,{dataset:{action:"chop-bush"}}),false,"The removed inventory action cannot trigger gathering");
 const storage=villagePanel(ui);
 assert(storage.includes('data-action="deposit-stockpile"'),"Stockpile context exposes storage controls");
@@ -46,6 +48,10 @@ const construction=villagePanel(ui);
 assert(construction.includes('data-kind="family"'),"The village can add more housing");
 assert(construction.includes("Open Technology"),"A completed research building opens its activity instead of offering a duplicate");
 assert(construction.includes("Open Culture"),"A completed culture building opens its activity instead of offering a duplicate");
+ui.villageSection="craft";
+const crafting=villagePanel(ui);
+assert(crafting.includes('data-action="village-craft-axe"'),"crafting is available at the stockpile's Craft section");
+assert(crafting.includes('data-section="craft"'));
 ui.villageSection="buildings";
 const buildings=villagePanel(ui);
 for(const entry of [lore.building,council.building,family.building])
@@ -83,7 +89,7 @@ assert.equal(game.inventoryCount("stone"),0);
 assert.equal(game.stockpileInfo().items.wood,17,"only shortfall taken from stored wood");
 assert.equal(game.stockpileInfo().items.stone,10,"only shortfall taken from stored stone");
 assert.equal(game.data.knowledge,40,"knowledge is not taken from physical storage");
-assert.equal(game.craftAxe(),false,"crafting still requires carried supplies");
+assert.equal(game.craftAxe(),false,"crafting is only available at the village stockpile");
 assert.equal(game.addResource("wood",1),1);
 assert.equal(game.addResource("berries",6),6);
 assert.equal(game.depositToStockpile("berries",5,LEGACY_HOME.x,LEGACY_HOME.z),5);

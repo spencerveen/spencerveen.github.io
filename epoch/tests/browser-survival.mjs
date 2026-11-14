@@ -27,8 +27,10 @@ try{
  assert((await page.locator("#stamina-value").innerText()).includes("/ 100"));
  assert((await page.locator("#hunger-value").innerText()).includes("%"));
  await page.locator('[data-tab="pack"]').click();
- const eat=page.locator('[data-action="eat-berries"]');
- assert(await eat.isEnabled());
+ await page.locator('.pack-slot.occupied').first().click();
+ const eat=page.locator('[data-action="eat-stack"]');
+ assert(await eat.isEnabled(),"berries offer Eat in the selected stack's menu");
+ assert((await page.locator(".pack-action-menu").innerText()).indexOf("Eat")<(await page.locator(".pack-action-menu").innerText()).indexOf("Discard"),"Eat is first");
  const before=await page.evaluate(()=>window.epochDebug());
  await eat.click();
  const after=await page.evaluate(()=>window.epochDebug());

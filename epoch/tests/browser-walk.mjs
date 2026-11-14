@@ -70,7 +70,8 @@ try{
  // Exercise the inventory UI, including ten real clickable slots.
  await page.locator('[data-tab="pack"]').click();
  assert.equal(await page.locator(".pack-slot").count(),10,"pack shows ten slots");
- assert((await page.locator("#panel").innerText()).includes("12"),"stack limit explained");
+ assert((await page.locator("#panel").innerText()).includes("0 / 10 slots"),"compact pack usage remains visible");
+ assert.equal(await page.locator(".pack-summary,.pack-selected,[data-action=axe]").count(),0,"no resource totals or crafting cards in Inventory");
  assert.equal(await page.locator('[data-action="chop-bush"]').count(),0,"Inventory has no bush-cutting control");
  await page.screenshot({animations:"disabled",path:path.join(output,"epoch-inventory-empty.png")});
  // A new village has no pre-existing 3D construction slots.

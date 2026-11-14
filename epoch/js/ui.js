@@ -1,8 +1,8 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114u";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114v";
 import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
 import {BUILDINGS} from "./settlement.js?v=20261114u";
-import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114u";
-import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114q";
+import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114v";
+import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114v";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -21,6 +21,11 @@ export class UI{
   $("close-modal").addEventListener("click",()=>this.close());
   $("modal").addEventListener("click",e=>{if(e.target===$("modal"))this.close()});
   $("panel").addEventListener("click",e=>this.handleAction(e));$("guide").addEventListener("click",e=>this.handleAction(e));
+  document.addEventListener("click",e=>{
+   if(this.panelOpen&&this.tab==="pack"&&this.selectedSlot!==null&&!e.target.closest(".pack-slot-shell")){
+    this.selectedSlot=null;this.render();
+   }
+  });
   window.addEventListener("keydown",e=>this.keydown(e));
   state.onChange=()=>{
    world.setDiscovery(state.data.technologies.includes("fire"));
@@ -208,17 +213,17 @@ export class UI{
   if(!titles[tab])return false;
   if(["tech","culture","hut","building"].includes(tab)){const b=this.state.data.village.buildings.find(b=>b.id===buildingId);if(!b||contexts[b.kind]!==tab)return false}
   if(this.modal)this.close();if(tab!=="village")this.cancelPlacement();
-  this.tab=tab;this.sourceBuildingId=buildingId;this.panelOpen=true;this.resetScroll=true;this.render();$("panel").focus({preventScroll:true});return true;
+  this.selectedSlot=null;this.tab=tab;this.sourceBuildingId=buildingId;this.panelOpen=true;this.resetScroll=true;this.render();$("panel").focus({preventScroll:true});return true;
  }
  cancelPlacement(){if(this.world.placingStockpile)this.world.cancelStockpilePlacement();if(this.world.placingBuilding)this.world.cancelBuildingPlacement()}
- closePanel(){this.panelOpen=false;this.cancelPlacement();this.render();(document.querySelector('[data-tab="'+this.tab+'"]')||$("scene")).focus({preventScroll:true})}
+ closePanel(){this.selectedSlot=null;this.panelOpen=false;this.cancelPlacement();this.render();(document.querySelector('[data-tab="'+this.tab+'"]')||$("scene")).focus({preventScroll:true})}
  objective(){
   const d=this.state.data,r=d.resources,p=d.village.stockpile,have=id=>this.state.researchResourceCount(id);
   if(!p)return {title:"A place to begin",description:"Choose a clearing. Your stockpile will be the heart of your village.",progress:"First stockpile · free to establish",action:"Establish camp",target:"found"};
   if(!this.hasBuilding("lore"))return {title:"Make room for discovery",description:"Deposit supplies, then build a Toolmaker's Shelter at your stockpile.",progress:p.items.wood+"/12 stored wood · "+p.items.stone+"/8 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!d.technologies.includes("fire"))return {title:"Discover the first flame",description:"Click your Toolmaker's Shelter to research Control of Fire.",progress:have("wood")+"/4 wood · "+have("stone")+"/2 stone · "+d.knowledge+"/3 knowledge",action:"Find toolmaker",target:"lore"};
   if(!d.technologies.includes("tools"))return {title:"Shape your first tools",description:"Research Stone Toolmaking at your Toolmaker's Shelter.",progress:have("wood")+"/5 wood · "+have("stone")+"/6 stone · "+d.knowledge+"/7 knowledge",action:"Find toolmaker",target:"lore"};
-  if(!d.axe)return {title:"A sharper start",description:"Craft a stone axe in Inventory to gather wood more efficiently.",progress:r.wood+"/2 wood · "+r.stone+"/3 stone",action:"Open Inventory",target:"pack"};
+  if(!d.axe)return {title:"A sharper start",description:"Craft a stone axe at your village stockpile, under Craft.",progress:p.items.wood+"/2 stored wood · "+p.items.stone+"/3 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!this.hasBuilding("family"))return {title:"Homes for your people",description:"Build a Hut through your stockpile. Click it to inspect the household.",progress:p.items.wood+"/10 stored wood · "+p.items.stone+"/6 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!this.hasBuilding("council"))return {title:"A place for your people",description:"Build a Council Lodge through your stockpile to begin your culture.",progress:p.items.wood+"/14 stored wood · "+p.items.stone+"/8 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!d.civics.includes("community"))return {title:"Become a community",description:"Click the Council Lodge to establish Tribal Community.",progress:have("wood")+"/8 wood · "+have("food")+"/6 berries · "+d.culture+"/5 culture",action:"Find council",target:"council"};
@@ -331,8 +336,7 @@ export class UI{
    }else this.toast("You need enough housing and full tribal trust to invite everyone.");
    return;
   }
-  if(action==="axe")message=this.state.craftAxe()?"Stone axe crafted. More wood with every swing.":"You need the technology and carried supplies.";
-  else if(action==="unlock"){if(!this.canUseContext(btn.dataset.kind==="tech"?"tech":"culture")){this.toast("Visit the appropriate village building to continue.");return}message=this.state.unlock(btn.dataset.kind,btn.dataset.key)?"A new chapter of knowledge begins.":"Check prerequisites, inventory and stockpile supplies."}
+  if(action==="unlock"){if(!this.canUseContext(btn.dataset.kind==="tech"?"tech":"culture")){this.toast("Visit the appropriate village building to continue.");return}message=this.state.unlock(btn.dataset.kind,btn.dataset.key)?"A new chapter of knowledge begins.":"Check prerequisites, inventory and stockpile supplies."}
   else if(action==="cancel-dialog"||action==="resume"){this.close();return}
   else if(action==="help"){this.help();return}
   else if(action==="save"){message=this.state.save()?"Saved in Slot "+(this.state.slot||1)+".":"Unable to save. Check this browser's storage.";if(this.modal==="menu"&&$("save-status"))$("save-status").textContent=message}
@@ -347,7 +351,7 @@ export class UI{
   ($("guide").querySelector("button:not(:disabled)")||$("close-modal")).focus({preventScroll:true});
  }
  menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
- help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Use WASD to move; clicking terrain does not move your character. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. Move people between homes with free beds from their profiles.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Hut → Housing.</strong> See its current residents and available beds. Assign successors from the People profiles.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Walk up using WASD, then click a tribal leader, resident, hut or sign (or press E near the leader) to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Walk close to a tree, rock or berry bush, then click or press E to gather. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
+ help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Use WASD to move; clicking terrain does not move your character. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills. Click inventory items for actions and hover for a short description. Craft tools under Village → Craft.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. Move people between homes with free beds from their profiles.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Hut → Housing.</strong> See its current residents and available beds. Assign successors from the People profiles.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Walk up using WASD, then click a tribal leader, resident, hut or sign (or press E near the leader) to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Walk close to a tree, rock or berry bush, then click or press E to gather. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
  close(){
   if(!this.modal||this.modal==="gameover")return;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
   const target=this.dialogReturnFocus;(target?.isConnected&&!target.closest("[inert]")?target:$("toggle")).focus({preventScroll:true});

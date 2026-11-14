@@ -30,6 +30,8 @@ jobs:
           node --check epoch/js/inventory-ui.js
       - name: Validate contextual interfaces and research/culture bootstrap
         run: node epoch/tests/check-contextual-ui.mjs
+      - name: Validate compact inventory menus and village-only crafting
+        run: node epoch/tests/check-inventory-menus.mjs
       - name: Validate civilization-based Knowledge and single-founder population
         run: node epoch/tests/check-technology-progression.mjs
       - name: Validate procedural tribes, discovery and save persistence

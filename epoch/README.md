@@ -23,13 +23,13 @@ Visit `http://127.0.0.1:8765/epoch/`. No backend is required. The current Babylo
 
 | Interface or place | What it opens |
 |---|---|
-| Inventory button / I | Ten-slot inventory, eat berries, stack inspection/discard, Stone Axe crafting |
+| Inventory button / I | Ten-slot backpack with brief item hover hints and Eat/Discard context menus |
 | Skills button / K | Six personal skill tracks and XP progress |
 | Objective → Establish camp | Free first-stockpile placement |
-| Village Stockpile | Village **Storage / Build / Buildings / People** sections |
+| Village Stockpile | Village **Storage / Build / Craft / Buildings / People** sections |
 | Toolmaker's Shelter | Technology research |
 | Council Lodge | Culture and traditions |
-| Hut | Dynasty, family chronicle, and reviewed succession |
+| Hut | Shows actual residents, available beds and villager profiles |
 | Cooking Hearth | Hearth information; cooking recipes are planned |
 | Wilderness tribal camps and leaders | Meet leaders, help with supply quests to earn Trust, and invite tribes to settle peacefully |
 | Village residents (click people or open Stockpile → People) | Inspect a villager's personal chronicle, former clanmates, housemates and housing assignment |
@@ -49,22 +49,22 @@ The title screen offers New Game, Continue, and three independent local save slo
 ## First steps
 
 1. Choose a slot and create your founder. Use **Establish camp** on the current objective to place a free stockpile, or choose the nearby-clearing option.
-2. Gather wood and vines from trees, stone from deposits, and berries plus vines from bushes. Click the stockpile to approach it and open **Storage**. Move within 5 meters to deposit or withdraw supplies.
+2. Gather wood and vines from trees, stone from deposits, and berries plus vines from bushes. Move within 5 meters of the stockpile with WASD, then click it to open **Storage** and deposit or withdraw supplies.
 3. Open the stockpile's **Build** section. Construct a **Toolmaker's Shelter** with **12 stored wood and 8 stored stone**. It requires no prior research, so Technology is reachable from a fresh game.
-4. Click the completed shelter to research **Control of Fire** and **Stone Toolmaking**. Research uses Inventory materials first and automatically draws any shortage from the village stockpile, plus Knowledge; no manual withdrawal is needed. Village founding and first-time construction now award Knowledge, and a Toolmaker's Shelter produces 1 Knowledge per active minute. Craft a **Stone Axe** in Inventory with 2 carried wood and 3 carried stone after learning Stone Toolmaking.
-5. Build a **Hut** for 10 stored wood and 6 stored stone. It adds 3 housing capacity; click it to open Dynasty. Build a **Council Lodge** for 14 stored wood and 8 stored stone, then click it to establish traditions. The lodge requires no prior Culture unlock.
-6. After researching Control of Fire, build a **Cooking Hearth** for 6 stored wood and 5 stored stone. Its fire appears only after construction. To change generations, visit a Hut and choose **Plan succession**, then review and confirm the change.
+4. Click the completed shelter to research **Control of Fire** and **Stone Toolmaking**. Research uses Inventory materials first and automatically draws any shortage from the village stockpile, plus Knowledge; no manual withdrawal is needed. Village founding and first-time construction now award Knowledge, and a Toolmaker's Shelter produces 1 Knowledge per active minute. Craft a **Stone Axe** under **Village → Craft** using **2 stored wood and 3 stored stone** after learning Stone Toolmaking.
+5. Build a **Hut** for 10 stored wood and 6 stored stone. It adds 3 housing capacity; click it to see its occupants. Build a **Council Lodge** for 14 stored wood and 8 stored stone, then click it to establish traditions. The lodge requires no prior Culture unlock.
+6. After researching Control of Fire, build a **Cooking Hearth** for 6 stored wood and 5 stored stone. Its fire appears only after construction. Leadership changes when your character dies. Name a successor from a villager's profile in **Village → People**.
 
 ## Controls and placement
 
 | Input | Action |
 |---|---|
 | WASD / Shift + WASD | Walk / sprint relative to the camera (sprinting uses Stamina) |
-| Inventory → Eat 1 berry | Restore Hunger, Stamina and a timed +20 maximum Stamina bonus |
-| Left-click ground | Auto-walk to a position |
-| Left-click resource / E nearby | Approach and gather / gather a nearby resource |
+| Click a berry stack → Eat | Restore Hunger, Stamina and a timed +20 maximum Stamina bonus |
+| Left-click ground | No movement; clicking terrain pins placement only when building |
+| Left-click resource / E nearby | Gather only when in range; walk with WASD first |
 | Shift-click berry bush / Shift + E nearby | Permanently clear a bush for vines |
-| Click a tribal leader, sign or camp shelter | Approach the tribe; bring supply requests in your backpack, earn Trust, and invite people if housing is available |
+| Click a tribal leader, sign or camp shelter | Interact after approaching manually with WASD; trust quests remain available |
 | E near a tribal leader | Open a nearby tribe encounter (if no gatherable resource takes priority) |
 | Click a named villager or overhead nameplate | Open their saved personal profile |
 | E beside a villager | Inspect the closest villager if no gatherable resource takes priority |
@@ -83,7 +83,7 @@ Placement starts from a movable preview. A click or arrow adjustment pins its lo
 
 Knowledge comes from founding the stockpile (**+3**), constructing the first of each building type (Toolmaker's Shelter **+6**, Hut **+3**, Council Lodge **+3**, Cooking Hearth **+4**), and milestones at **3 buildings (+3)**, **6 buildings (+4)**, and **10 buildings (+5)**. Repeat huts cannot repeatedly award a first-build bonus. An existing Toolmaker's Shelter generates **1 Knowledge per 60 seconds of active gameplay** until villager research assignments are available. Gathering and crafting award skill XP, not Knowledge. Culture's existing earning rules remain temporary until the villager system is built.
 
-Inventory has **10 slots**, with **12 items per stack**. The stockpile holds **480 individual items** separately. Crafting spends carried materials, while Technology and Culture use both carried Inventory and village stockpile supplies (carried items first). Knowledge and Culture points are paid separately. Village building construction still spends stockpiled materials only. Older excess inventory is retained as recoverable supplies.
+Inventory has **10 slots**, with **12 items per stack**. The stockpile holds **480 individual items** separately. The **Inventory** panel displays only the item grid and its small contextual actions: hover for a short description; click food for **Eat** then **Discard stack**, or materials for **Discard stack**. Discard removes the chosen stack immediately without confirmation. Stone Axe crafting is available only nearby under **Village → Craft**, and spends **stored stockpile materials**. Technology and Culture still use carried items and village stockpile supplies (carried first). Knowledge and Culture points are paid separately. Village building construction still spends stockpiled materials only. Older excess inventory is retained as recoverable supplies.
 
 Trees contain 12 wood and disappear when exhausted; stone deposits contain 12 stone and do not regrow. Bushes contain 8 berries, which regrow two minutes after depletion, including while the game is closed. Clearing a bush yields 3 vines and permanently removes it. This is a world interaction, not an Inventory action. Harvested resources and removed objects persist across chunk reloads and descendants.
 

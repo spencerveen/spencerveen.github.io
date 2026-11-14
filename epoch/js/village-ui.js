@@ -1,6 +1,6 @@
 import {BUILDINGS} from "./settlement.js?v=20261114u";
 import {nearStockpile,STOCKPILE_CAPACITY,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114a";
-import {ITEM_IDS,ITEMS,itemCapacity} from "./inventory.js?v=20261114a";
+import {ITEM_IDS,ITEMS,itemCapacity} from "./inventory.js?v=20261114v";
 import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
 const prereq=id=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[id]||id);
@@ -111,6 +111,26 @@ function peoplePanel(ui){
  }
  return html;
 }
+function craftPanel(ui){
+ const state=ui.state,stored=state.data.village.stockpile?.items||{};
+ const known=state.data.technologies.includes("tools"),made=!!state.data.axe,atHome=near(ui);
+ const cost={wood:2,stone:3},ready=Object.entries(cost).every(([id,n])=>(stored[id]||0)>=n);
+ let html='<p class="context-note">Craft tools using supplies stored at your village stockpile. Bring materials here and deposit them in Storage first.</p>'+
+  '<div class="entry"><div class="research-heading"><h3>🪓 Stone Axe</h3>'+
+  (made?'<span class="tag">Crafted</span>':'')+'</div>'+
+  '<p>Gather 3 wood per tree interaction instead of 2.</p>';
+ if(made){
+  html+='<p class="context-note">Your Stone Axe is crafted and equipped.</p>';
+ }else{
+  html+=requiredMaterials(cost,stored);
+  if(!known)html+='<p class="context-note">Research Stone Toolmaking at the Toolmaker\'s Shelter first.</p>';
+  else if(!atHome)html+='<p class="context-note">Move near your stockpile with WASD to craft.</p>';
+  else if(!ready)html+='<p class="context-note">Deposit the required wood and stone in village storage.</p>';
+  html+='<button type="button" data-action="village-craft-axe" '+
+   (!known||!ready||!atHome?'disabled':'')+'>Craft Stone Axe</button>';
+ }
+ return html+'</div>';
+}
 function buildPanel(ui){
  const state=ui.state,village=state.data.village,items=village.stockpile.items;
  let html='<p class="context-note">Give each part of village life a place in the world. Select a blueprint, choose its location, and build using village storage.</p><div class="village-build-catalog">';
@@ -154,9 +174,9 @@ export function villagePanel(ui){
   <small>Free to place · 2 m grid · Clear, level ground</small>
   <button type="button" data-action="place-stockpile">Choose a location</button>
   <button type="button" class="game-button alt" data-action="found-nearby-stockpile">Use a nearby clearing</button></div>`;
- const section=["storage","build","buildings","people"].includes(ui.villageSection)?ui.villageSection:"storage";
- return `<nav class="section-tabs" aria-label="Village activities">${[["storage","Storage"],["build","Build"],["buildings","Buildings"],["people","People"]].map(([id,label])=>`<button type="button" data-action="village-section" data-section="${id}" class="${section===id?"active":""}" aria-pressed="${section===id}">${label}</button>`).join("")}</nav>`+
-  (section==="build"?buildPanel(ui):section==="buildings"?buildingsPanel(ui):section==="people"?peoplePanel(ui):storagePanel(ui));
+ const section=["storage","build","craft","buildings","people"].includes(ui.villageSection)?ui.villageSection:"storage";
+ return `<nav class="section-tabs" aria-label="Village activities">${[["storage","Storage"],["build","Build"],["craft","Craft"],["buildings","Buildings"],["people","People"]].map(([id,label])=>`<button type="button" data-action="village-section" data-section="${id}" class="${section===id?"active":""}" aria-pressed="${section===id}">${label}</button>`).join("")}</nav>`+
+  (section==="build"?buildPanel(ui):section==="craft"?craftPanel(ui):section==="buildings"?buildingsPanel(ui):section==="people"?peoplePanel(ui):storagePanel(ui));
 }
 export function selectVillageBuilding(ui,id){return ui.openBuildingPanel(id)}
 export function openStockpile(ui){
@@ -171,12 +191,20 @@ export function handleVillageAction(ui,btn){
   return true;
  }
  if(action==="village-section"){
-  if(["storage","build","buildings","people"].includes(btn.dataset.section))ui.villageSection=btn.dataset.section;
+  if(["storage","build","craft","buildings","people"].includes(btn.dataset.section))ui.villageSection=btn.dataset.section;
   ui.resetScroll=true;
   ui.render();return true;
  }
  if(action==="view-resident"){
   ui.openResident(btn.dataset.id);return true;
+ }
+ if(action==="village-craft-axe"){
+  if(!near(ui)){ui.toast("Walk near your stockpile to craft.");return true}
+  const p=world.player.position;
+  ui.toast(state.craftAxe(p.x,p.z)?
+   "Stone Axe crafted. You now gather more wood per interaction.":
+   "Requires Stone Toolmaking and 2 stored wood plus 3 stored stone.");
+  return true;
  }
  if(action==="place-stockpile"){
   if(world.beginStockpilePlacement())ui.toast("Choose clear ground, then confirm your stockpile.");

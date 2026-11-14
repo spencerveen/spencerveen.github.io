@@ -6,10 +6,10 @@
 export const INVENTORY_SLOTS=10;
 export const STACK_LIMIT=12;
 export const ITEMS=Object.freeze({
- wood:{name:"Wood",icon:"🪵",description:"Gathered from forest trees."},
- stone:{name:"Stone",icon:"🪨",description:"Gathered from rocky deposits."},
- berries:{name:"Wild Berries",icon:"🫐",description:"Foraged from berry bushes. Counts as food for early recipes and research."},
- vines:{name:"Vines",icon:"🌿",description:"Gathered from trees and berry bushes. Useful for future tools and shelters."}
+ wood:{name:"Wood",icon:"🪵",description:"Gathered from forest trees.",hint:"Material for buildings and tools."},
+ stone:{name:"Stone",icon:"🪨",description:"Gathered from rocky deposits.",hint:"Material for tools and construction."},
+ berries:{name:"Wild Berries",icon:"🫐",description:"Foraged from berry bushes. Counts as food for early recipes and research.",hint:"Restores 24 Hunger and 12 Stamina."},
+ vines:{name:"Vines",icon:"🌿",description:"Gathered from trees and berry bushes. Useful for future tools and shelters.",hint:"Flexible material for crafting."}
 });
 export const ITEM_IDS=Object.freeze(Object.keys(ITEMS));
 export function canonicalItem(id){return id==="food"?"berries":id}
