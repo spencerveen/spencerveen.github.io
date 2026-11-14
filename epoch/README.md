@@ -50,12 +50,18 @@ New games start with **one resident: the founder**. Small independent tribes app
 
 The title screen offers New Game, Continue, and three independent local save slots. Founder appearance is chosen when starting a new game and cannot be edited afterward. Descendants inherit related appearance traits. There is no global Village, Technology, Culture, Dynasty, or Character tab.
 
+## Phase 5A — Primitive crafting and durability
+
+**Village Stockpile → Craft** now supports three complete recipes. A **Wooden Club** costs 3 stored Wood and is available immediately. The **Stone Axe** costs 2 stored Wood and 3 stored Stone, requiring Stone Toolmaking. The **Stone Spear** costs 2 stored Wood, 1 stored Flint and 1 stored Vines, also requiring Stone Toolmaking. Deposit gathered supplies at the village stockpile before crafting. A crafted tool equips automatically if Main Hand is empty; otherwise it enters a free backpack slot. Costs are not charged when crafting is blocked by research, distance, missing supplies, a full backpack or already owning that weapon.
+
+Crafted tools track **durability**: Club 36, Axe 45, Spear 48. Remaining condition is displayed in Inventory and persists through backpack swaps, equipped changes and reloads. A Stone Axe yields 3 Wood per tree gathering (instead of 2) and loses 1 durability on each successful chop. At zero durability it breaks and must be crafted again. Clubs and spears are equipable weapons with existing damage/reach values, but hunting, weapon swings and combat are **not yet active**; these tools don't wear until those actions exist. Crafting uses the existing Village Craft menu rather than adding a duplicate global tab.
+
 ## First steps
 
 1. Choose a slot and create your founder. Use **Establish camp** on the current objective to place a free stockpile, or choose the nearby-clearing option.
 2. Gather wood and vines from trees, stone from deposits, and berries plus vines from bushes. Move within 5 meters of the stockpile with WASD, then click it to open **Storage** and deposit or withdraw supplies.
 3. Open the stockpile's **Build** section. Construct a **Toolmaker's Shelter** with **12 stored wood and 8 stored stone**. It requires no prior research, so Technology is reachable from a fresh game.
-4. Click the completed shelter to research **Control of Fire** and **Stone Toolmaking**. Research uses Inventory materials first and automatically draws any shortage from the village stockpile, plus Knowledge; no manual withdrawal is needed. Village founding and first-time construction now award Knowledge, and a Toolmaker's Shelter produces 1 Knowledge per active minute. Craft a **Stone Axe** under **Village → Craft** using **2 stored wood and 3 stored stone** after learning Stone Toolmaking.
+4. Click the completed shelter to research **Control of Fire** and **Stone Toolmaking**. Research uses Inventory materials first and automatically draws any shortage from the village stockpile, plus Knowledge; no manual withdrawal is needed. Village founding and first-time construction now award Knowledge, and a Toolmaker's Shelter produces 1 Knowledge per active minute. Craft a **Wooden Club** from 3 stored Wood, or learn Stone Toolmaking to craft Stone Axes and Stone Spears from stored supplies.
 5. Build a **Hut** for 10 stored wood and 6 stored stone. It adds 3 housing capacity; click it to see its occupants. Build a **Council Lodge** for 14 stored wood and 8 stored stone, then click it to establish traditions. The lodge requires no prior Culture unlock.
 6. After researching Control of Fire, build a **Cooking Hearth** for 6 stored wood and 5 stored stone. Its fire appears only after construction. Leadership changes when your character dies. Name a successor from a villager's profile in **Village → People**.
 

@@ -1,6 +1,7 @@
 import {BUILDINGS} from "./settlement.js?v=20261114u";
 import {nearStockpile,STOCKPILE_CAPACITY,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114x";
-import {STOCKPILE_ITEM_IDS,ITEMS,itemCapacity} from "./inventory.js?v=20261114x";
+import {STOCKPILE_ITEM_IDS,ITEMS,itemCapacity,toolMaxDurability,toolCondition} from "./inventory.js?v=20261114craft1";
+import {CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
 const prereq=id=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[id]||id);
@@ -125,22 +126,43 @@ function peoplePanel(ui){
 }
 function craftPanel(ui){
  const state=ui.state,stored=state.data.village.stockpile?.items||{};
- const known=state.data.technologies.includes("tools"),made=!!state.data.axe,atHome=near(ui);
- const cost={wood:2,stone:3},ready=Object.entries(cost).every(([id,n])=>(stored[id]||0)>=n);
- let html='<p class="context-note">Craft tools using supplies stored at your village stockpile. Bring materials here and deposit them in Storage first.</p>'+
-  '<div class="entry"><div class="research-heading"><h3>🪓 Stone Axe</h3>'+
-  (made?'<span class="tag">Crafted</span>':'')+'</div>'+
-  '<p>Gather 3 wood per tree interaction instead of 2.</p>';
- if(made){
-  html+='<p class="context-note">Stone Axe owned. '+(state.equippedAxe()?
-   'crafted and equipped in Main Hand.':'Equip it from your backpack to gain the woodcutting bonus.')+'</p>';
- }else{
-  html+=requiredMaterials(cost,stored);
-  if(!known)html+='<p class="context-note">Research Stone Toolmaking at the Toolmaker\'s Shelter first.</p>';
-  else if(!atHome)html+='<p class="context-note">Move near your stockpile with WASD to craft.</p>';
-  else if(!ready)html+='<p class="context-note">Deposit the required wood and stone in village storage.</p>';
-  html+='<button type="button" data-action="village-craft-axe" '+
-   (!known||!ready||!atHome?'disabled':'')+'>Craft Stone Axe</button>';
+ const atHome=near(ui);
+ let html='<p class="context-note">Craft primitive tools using materials stored at your village stockpile. Deposit supplies in Storage, then return here.</p><div class="village-build-catalog">';
+ for(const id of ["wood_club","stone_axe","stone_spear"]){
+  const plan=CRAFTING_PLANS[id],def=ITEMS[id];
+  const owned=state.inventoryCount(id)>0||state.data.equipment.weapon===id;
+  const ready=Object.entries(plan.materials).every(([material,n])=>(stored[material]||0)>=n);
+  const researched=plan.requires.every(req=>state.data.technologies.includes(req));
+  const equipped=state.data.equipment.weapon===id;
+  const room=state.data.equipment.weapon===null||state.data.inventory.some(slot=>slot===null);
+  const condition=equipped?state.equippedToolCondition()?.remaining:
+   state.data.inventory.find(slot=>slot?.id===id)?.durability;
+  html+='<div class="entry village-build-card"><div class="research-heading"><h3>'+
+   def.icon+' '+esc(def.name)+'</h3><span class="tag">'+
+   (owned?'Owned':!researched?'Research needed':'Stone Age')+'</span></div>'+
+   '<p>'+esc(def.description)+'</p>'+
+   '<small class="building-purpose">'+(id==="stone_axe"?
+    'Gather 3 wood per tree visit · loses 1 durability each use':
+    id==="stone_spear"?'Long reach · hunting and combat planned':
+    'Basic melee weapon · hunting and combat planned')+'</small>';
+  if(owned){
+   html+='<p class="context-note">'+esc(def.name)+' owned. '+
+    (equipped?'crafted and equipped in Main Hand.':'Equip it from your backpack.')+
+    (toolMaxDurability(id)?' Durability '+toolCondition(id,condition)+
+     ' / '+toolMaxDurability(id)+'.':'')+'</p>';
+  }else{
+   html+=requiredMaterials(plan.materials,stored);
+   if(!researched)html+='<p class="context-note">Research Stone Toolmaking at the Toolmaker\'s Shelter first.</p>';
+   else if(!atHome)html+='<p class="context-note">Move near your stockpile with WASD to craft.</p>';
+   else if(!ready)html+='<p class="context-note">Deposit the required '+
+    (id==="stone_axe"?'wood and stone':'materials')+' in village storage.</p>';
+   else if(!room)html+='<p class="context-note">Make room in your backpack first.</p>';
+   html+='<button type="button" data-action="'+(id==="stone_axe"?
+    'village-craft-axe':'village-craft-tool')+'" data-item="'+id+'" '+
+    (!researched||!atHome||!ready||!room?'disabled':'')+
+    '>Craft '+esc(def.name)+'</button>';
+  }
+  html+='</div>';
  }
  return html+'</div>';
 }
@@ -211,12 +233,16 @@ export function handleVillageAction(ui,btn){
  if(action==="view-resident"){
   ui.openResident(btn.dataset.id);return true;
  }
- if(action==="village-craft-axe"){
+ if(action==="village-craft-axe"||action==="village-craft-tool"){
   if(!near(ui)){ui.toast("Walk near your stockpile to craft.");return true}
-  const p=world.player.position;
-  ui.toast(state.craftAxe(p.x,p.z)?
-   "Stone Axe crafted. You now gather more wood per interaction.":
-   "Requires Stone Toolmaking and 2 stored wood plus 3 stored stone.");
+  const id=action==="village-craft-axe"?"stone_axe":btn.dataset.item;
+  const plan=CRAFTING_PLANS[id];
+  if(!plan?.available)return true;
+  const pos=world.player.position;
+  const ok=state.craftTool(id,pos.x,pos.z);
+  ui.toast(ok?ITEMS[id].name+" crafted. "+(id==="stone_axe"?
+   "Equip it to gather more wood per interaction.":"Equip it from Inventory.") :
+   "Cannot craft "+ITEMS[id].name+". Check research, stored materials and backpack space.");
   return true;
  }
  if(action==="place-stockpile"){

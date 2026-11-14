@@ -1,5 +1,5 @@
-import {ITEMS,INVENTORY_SLOTS,itemStackLimit} from "./inventory.js?v=20261114beaches2";
-import {EQUIPMENT_SLOTS,equippedItem} from "./equipment.js?v=20261114x";
+import {ITEMS,INVENTORY_SLOTS,itemStackLimit,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114craft1";
+import {EQUIPMENT_SLOTS,equippedItem} from "./equipment.js?v=20261114craft1";
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 
 // Keep this as an item attribute so future food, equipment and materials can
@@ -32,7 +32,9 @@ export function inventoryPanel(ui){
    if(open){
     html+='<div class="pack-action-menu" role="menu" aria-label="Actions for '+esc(item.name)+'">'+
      '<div class="pack-action-heading">'+item.icon+' '+esc(item.name)+
-     '<small>×'+slot.qty+'</small></div>';
+     '<small>×'+slot.qty+'</small></div>'+
+      (toolMaxDurability(slot.id)?'<small class="tool-condition">Durability '+
+       toolCondition(slot.id,slot.durability)+' / '+toolMaxDurability(slot.id)+'</small>':'');
     if(slot.id==="berries")
      html+='<button type="button" role="menuitem" class="pack-action-primary" data-action="eat-stack" data-slot="'+i+'">Eat</button>';
     if(item.equipSlot)
@@ -49,7 +51,10 @@ export function inventoryPanel(ui){
   const item=equippedItem(state.data.equipment,slot);
   const definition=item&&ITEMS[item.id];
   html+='<div class="equipment-slot"><div><small>'+esc(config.name)+'</small><strong>'+
-   (definition?definition.icon+' '+esc(definition.name)+(item.qty>1?' ×'+item.qty:''):'Empty')+
+   (definition?definition.icon+' '+esc(definition.name)+(item.qty>1?' ×'+item.qty:'')+
+      (slot==="weapon"&&state.equippedToolCondition()?
+       '<small class="tool-condition"> · '+state.equippedToolCondition().remaining+
+       ' / '+state.equippedToolCondition().max+' durability</small>':''):'Empty')+
    '</strong></div>'+(definition?
     '<button type="button" data-action="unequip-item" data-equipment-slot="'+slot+'">Unequip</button>':
     '<span class="equipment-placeholder" aria-hidden="true">—</span>')+'</div>';

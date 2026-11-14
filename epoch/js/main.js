@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261114beaches2";
+import {GameState} from "./state.js?v=20261114craft1";
 import {World} from "./world.js?v=20261114textures1";
-import {UI} from "./ui.js?v=20261114beaches2";
+import {UI} from "./ui.js?v=20261114craft1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
@@ -64,7 +64,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
     resourceNodes:state.resourceStatistics(),
     resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
     skills:{...state.data.skills},resources:{...state.data.resources},inventory:{slots:state.data.inventory.map(slot=>slot?{...slot}:null),used:state.inventoryUsed(),unpacked:{...state.data.unpacked}},
-    equipment:{weapon:state.data.equipment.weapon,body:state.data.equipment.body,
+    equipment:{weapon:state.data.equipment.weapon,weaponCondition:state.equippedToolCondition(),body:state.data.equipment.body,
       ammo:state.data.equipment.ammo?{...state.data.equipment.ammo}:null},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
     tribes:{discovered:Object.entries(state.data.tribes).filter(([,r])=>r.discovered).map(([id])=>id),
