@@ -40,6 +40,8 @@ jobs:
         run: node epoch/tests/browser-tribes.mjs
       - name: Validate survival HUD, eating, sprinting and permanent death
         run: node epoch/tests/browser-survival.mjs
+      - name: Verify E quick eat and F nearby interaction shortcuts
+        run: node epoch/tests/browser-quick-eat.mjs
       - name: Verify L-key developer panel and live survival cheats
         run: node epoch/tests/browser-dev-cheats.mjs
       - name: Validate equipment controls, swaps and persistence

@@ -528,6 +528,9 @@ export class World {
   const isText=()=>["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
   window.addEventListener("keydown",e=>{
    if(this.inputBlocked||e.defaultPrevented||isText())return;const key=e.key.toLowerCase();
+   // F now performs nearby interactions. Preserve Ctrl/Cmd+F browser Find,
+   // and do not harvest repeatedly while the key is held.
+   if(key==="f"&&(e.ctrlKey||e.metaKey||e.altKey||e.repeat))return;
    // Enter activates a focused HTML button itself; do not also place a building.
    if(key==="enter"&&document.activeElement?.closest("button,a,[role='button']"))return;
    if(this.placingStockpile||this.placingBuilding){
@@ -552,7 +555,7 @@ export class World {
      this.onStatus(outcome.ok?"Construction complete":"Cannot place here",outcome.reason||"Your village has grown.");
      return;
     }
-    if(key==="e")return;
+    if(key==="f")return;
    }
    // Sample held arrow keys in the render loop, independent of OS key repeat.
    if(["arrowleft","arrowright","arrowup","arrowdown"].includes(key)&&
@@ -561,8 +564,8 @@ export class World {
     this.cameraKeys[key]=true;
     return;
    }
-   if(["w","a","s","d","shift","e"].includes(key)){e.preventDefault();this.keys[key]=true;}
-   if(key==="e")this.interactNearby(e.shiftKey?"cut":"gather");
+   if(["w","a","s","d","shift","f"].includes(key)){e.preventDefault();this.keys[key]=true;}
+   if(key==="f")this.interactNearby(e.shiftKey?"cut":"gather");
   });
   window.addEventListener("keyup",e=>{
    const key=e.key.toLowerCase();

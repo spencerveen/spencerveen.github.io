@@ -65,19 +65,24 @@ Crafted tools track **durability**: Club 36, Axe 45, Spear 48. Remaining conditi
 5. Build a **Hut** for 10 stored wood and 6 stored stone. It adds 3 housing capacity; click it to see its occupants. Build a **Council Lodge** for 14 stored wood and 8 stored stone, then click it to establish traditions. The lodge requires no prior Culture unlock.
 6. After researching Control of Fire, build a **Cooking Hearth** for 6 stored wood and 5 stored stone. Its fire appears only after construction. Leadership changes when your character dies. Name a successor from a villager's profile in **Village → People**.
 
+## Quick eat shortcut
+
+Press **E** during gameplay to eat one Wild Berry straight from the backpack, with the same Hunger (+24), Stamina (+12), and temporary maximum-Stamina bonus as clicking Eat in Inventory. The shortcut does not eat from village storage, does not work if no berries are carried, and ignores held-key repeat, text inputs, the title screen, and modal dialogs. **Nearby gathering and interaction are now F; Shift + F cuts a bush for vines.** Mouse interaction remains unchanged.
+
 ## Controls and placement
 
 | Input | Action |
 |---|---|
 | WASD / Shift + WASD | Walk / sprint relative to the camera (sprinting uses Stamina) |
-| Click a berry stack → Eat | Restore Hunger, Stamina and a timed +20 maximum Stamina bonus |
+| E (quick eat) | Instantly eat **one carried berry** to restore Hunger and Stamina; no Inventory panel needed |
+| Click a berry stack → Eat | Alternative inventory action; same food benefit |
 | Left-click ground | No movement; clicking terrain pins placement only when building |
-| Left-click resource / E nearby | Gather only when in range; walk with WASD first |
-| Shift-click berry bush / Shift + E nearby | Permanently clear a bush for vines |
+| Left-click resource / F nearby | Gather only when in range; walk with WASD first |
+| Shift-click berry bush / Shift + F nearby | Permanently clear a bush for vines |
 | Click a tribal leader, sign or camp shelter | Interact after approaching manually with WASD; trust quests remain available |
-| E near a tribal leader | Open a nearby tribe encounter (if no gatherable resource takes priority) |
+| F near a tribal leader | Open a nearby tribe encounter (if no gatherable resource takes priority) |
 | Click a named villager or overhead nameplate | Open their saved personal profile |
-| E beside a villager | Inspect the closest villager if no gatherable resource takes priority |
+| F beside a villager | Inspect the closest villager if no gatherable resource takes priority |
 | Hold arrow keys (outside build mode) | Smoothly rotate left/right or tilt up/down, easing to a stop |
 | Right mouse drag / mouse wheel | Optional camera rotation / zoom |
 | I / K | Toggle Inventory / Skills |
