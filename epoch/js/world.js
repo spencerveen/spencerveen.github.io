@@ -30,6 +30,9 @@ export class World {
   this._inputBlocked=blocked;
   if(blocked){
    this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.cameraDragging=false;
+   if(this.cameraPointerId!=null&&this.canvas.hasPointerCapture?.(this.cameraPointerId))
+    this.canvas.releasePointerCapture(this.cameraPointerId);
+   this.cameraPointerId=null;
    this.camera?.detachControl();
    if(this.camera){this.camera.inertialAlphaOffset=0;this.camera.inertialBetaOffset=0;this.camera.inertialRadiusOffset=0;}
    if(this.canvas)this.canvas.style.cursor="default";
@@ -129,12 +132,52 @@ export class World {
  makeCamera(){
   const c=new B.ArcRotateCamera("adventurer camera",-Math.PI/2,1.13,18,V(0,1,0),this.scene);
   c.lowerRadiusLimit=6;c.upperRadiusLimit=34;c.lowerBetaLimit=.48;c.upperBetaLimit=1.48;c.wheelDeltaPercentage=.016;c.panningSensibility=0;c.inertia=.72;
-  // Right-drag orbits with the mouse; left-click remains world interaction.
-  if(c.inputs.attached.pointers)c.inputs.attached.pointers.buttons=[2];
-  c.attachControl(this.canvas,true);
-  // The game's keyboard handler lets arrows orbit unless a building is being placed.
+  // Babylon's pointer input stopped responding reliably to right-drag in Chromium.
+  // Keep the ArcRotateCamera for following and projection, but own the canvas
+  // interactions so pointer input is independent of Babylon's internal listeners.
+  c.inputs.removeByType("ArcRotateCameraPointersInput");
+  c.inputs.removeByType("ArcRotateCameraMouseWheelInput");
   c.inputs.removeByType("ArcRotateCameraKeyboardMoveInput");
-  this.camera=c;this.canvas.addEventListener("contextmenu",e=>e.preventDefault());
+  this.camera=c;
+  c.attachControl(this.canvas,true);
+  this.bindCameraControls();
+ }
+ bindCameraControls(){
+  const canvas=this.canvas,camera=this.camera;
+  const finish=e=>{
+   if(this.cameraPointerId==null||e?.pointerId!==this.cameraPointerId)return;
+   const id=this.cameraPointerId;
+   this.cameraPointerId=null;this.cameraDragging=false;
+   if(canvas.hasPointerCapture?.(id))canvas.releasePointerCapture(id);
+  };
+  canvas.addEventListener("pointerdown",e=>{
+   if(this.inputBlocked||e.button!==2)return;
+   this.cameraPointerId=e.pointerId;this.cameraDragging=true;
+   this.cameraDragX=e.clientX;this.cameraDragY=e.clientY;
+   canvas.setPointerCapture?.(e.pointerId);
+   e.preventDefault();
+  });
+  canvas.addEventListener("pointermove",e=>{
+   if(this.inputBlocked||!this.cameraDragging||this.cameraPointerId!==e.pointerId)return;
+   if(!(e.buttons&2)){finish(e);return}
+   const dx=e.clientX-this.cameraDragX,dy=e.clientY-this.cameraDragY;
+   this.cameraDragX=e.clientX;this.cameraDragY=e.clientY;
+   camera.alpha-=dx*.004;
+   camera.beta=clamp(camera.beta-dy*.003,camera.lowerBetaLimit,camera.upperBetaLimit);
+   e.preventDefault();
+  });
+  canvas.addEventListener("pointerup",e=>{if(e.button===2)finish(e)});
+  canvas.addEventListener("pointercancel",finish);
+  canvas.addEventListener("lostpointercapture",e=>{
+   if(this.cameraPointerId===e.pointerId){this.cameraPointerId=null;this.cameraDragging=false}
+  });
+  canvas.addEventListener("wheel",e=>{
+   if(this.inputBlocked)return;
+   e.preventDefault();
+   const dy=e.deltaMode===1?e.deltaY*16:e.deltaMode===2?e.deltaY*canvas.clientHeight:e.deltaY;
+   camera.radius=clamp(camera.radius+dy*.012,camera.lowerRadiusLimit,camera.upperRadiusLimit);
+  },{passive:false});
+  canvas.addEventListener("contextmenu",e=>e.preventDefault());
  }
  makeAnimal(x,z,chunkKey=null){
   const node=new B.TransformNode("wandering deer",this.scene);node.position=V(x,this.groundY(x,z),z);

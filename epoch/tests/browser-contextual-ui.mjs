@@ -58,14 +58,6 @@ try{
 
  // The HUD must not steal mouse orbit, zoom or keyboard camera input.
  await page.locator("#scene").focus();
- await page.evaluate(()=>{
-  window.__epochPointerTrace=[];
-  for(const type of ["pointerdown","pointermove","pointerup"]){
-   document.getElementById("scene").addEventListener(type,e=>{
-    window.__epochPointerTrace.push({type,button:e.button,buttons:e.buttons,x:e.clientX,y:e.clientY});
-   });
-  }
- });
  const readCamera=()=>page.evaluate(()=>{const c=window.__epochTestWorld.camera;return {alpha:c.alpha,beta:c.beta,radius:c.radius}});
  const orbitStart=await readCamera();
  await page.mouse.move(630,460);
@@ -74,15 +66,6 @@ try{
  await page.mouse.up({button:"right"});
  await page.waitForTimeout(160);
  const orbitEnd=await readCamera();
- const orbitProbe=await page.evaluate(()=>{
-  const w=window.__epochTestWorld,c=w.camera,canvas=document.getElementById("scene");
-  const atPoint=document.elementFromPoint(730,500);
-  return {inputBlocked:w.inputBlocked,sceneInert:canvas.inert,elementAtPoint:atPoint?.id||atPoint?.tagName,
-   attachedInputs:Object.keys(c.inputs.attached),pointerButtons:c.inputs.attached.pointers?.buttons||null,
-   orbitOffset:c.inertialAlphaOffset,alpha:c.alpha,beta:c.beta,
-   events:window.__epochPointerTrace.slice(0,24)};
- });
- console.log("CAMERA ORBIT DIAGNOSTIC",JSON.stringify({orbitStart,orbitEnd,orbitProbe}));
  assert(Math.abs(orbitEnd.alpha-orbitStart.alpha)>.03,"right mouse drag orbits the camera");
  await page.mouse.wheel(0,450);
  await page.waitForTimeout(160);
