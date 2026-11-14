@@ -6,7 +6,7 @@ import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockp
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view2";
-import {ForestChunks} from "./forest-chunks.js?v=20261114view2";
+import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114textures1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
@@ -85,7 +85,7 @@ export class World {
    stone:this.mat("stone","#889089"),stoneDark:this.mat("stoneDark","#5b6661"),berries:this.mat("berries","#9d3832"),
    skin:this.mat("skin","#c99470"),hair:this.mat("hair","#3f3328"),cloth:this.mat("cloth","#806445"),
    river:this.mat("river","#4b8190"),fire:this.mat("fire","#ef9c45"),flame:this.mat("flame","#f6d181"),grass:this.mat("grass","#74986b"),
-   flint:this.mat("beach flint","#626e71"),flintEdge:this.mat("flint edge","#9aa39b"),
+   flint:this.mat("flint","#626e71"),flintEdge:this.mat("flint edge","#9aa39b"),
    fishBody:this.mat("silver river fish","#8bb2a1"),fishFin:this.mat("fish fins","#466b73")};
   this.m.terrainSurface=this.mat("Layered mountain terrain","#ffffff");
   this.m.terrainSurface.specularColor=new B.Color3(.016,.017,.016);
