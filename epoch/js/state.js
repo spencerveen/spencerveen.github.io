@@ -77,7 +77,7 @@ export class GameState{
   this.data.village.nextBuildingNumber=Math.max(1,
    Number(this.data.village.nextBuildingNumber)||1,
    ...this.data.village.buildings.map(b=>{
-    const m=/^building_(\\d+)$/.exec(b.id);return m?Number(m[1])+1:1;
+    const m=/^building_([0-9]+)$/.exec(b.id);return m?Number(m[1])+1:1;
    }));
   this.data.village.population=Math.max(1,
    Math.min(capacity(this.data.village),Number(this.data.village.population)||5));
