@@ -29,6 +29,8 @@ jobs:
           node --check epoch/js/harvest.js
           node --check epoch/js/inventory-ui.js
           node --check epoch/js/equipment.js
+          node --check epoch/js/water-generation.js
+          node --check epoch/js/forest-chunks.js
       - name: Validate contextual interfaces and research/culture bootstrap
         run: node epoch/tests/check-contextual-ui.mjs
       - name: Validate compact inventory menus and village-only crafting
@@ -61,6 +63,8 @@ jobs:
         run: node epoch/tests/check-inventory.mjs
       - name: Validate seeded forest generation and chunk streaming
         run: node epoch/tests/check-forest.mjs
+      - name: Validate rivers, lakes, dry village protection and water collision
+        run: node epoch/tests/check-water.mjs
       - name: Validate village and building save compatibility
         run: node epoch/tests/check-settlement.mjs
       - name: Inspect game models

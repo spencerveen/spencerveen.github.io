@@ -1,5 +1,5 @@
-import {GameState} from "./state.js?v=20261114x";
-import {World} from "./world.js?v=20261114u";
+import {GameState} from "./state.js?v=20261114y";
+import {World} from "./world.js?v=20261114y";
 import {UI} from "./ui.js?v=20261114x";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";

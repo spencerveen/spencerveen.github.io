@@ -3,7 +3,7 @@
  * Saved structures are data, not predetermined buildable plot markers.
  */
 import {BUILDINGS,PLOTS} from "./settlement.js?v=20261114b";
-import {BUILD_GRID,VILLAGE_RADIUS,LEGACY_HOME,snapGrid} from "./stockpile.js?v=20261114a";
+import {BUILD_GRID,VILLAGE_RADIUS,LEGACY_HOME,snapGrid} from "./stockpile.js?v=20261114y";
 export const BUILDING_RADIUS=Object.freeze({family:2.6,hearth:2.2,lore:2.5,council:3.3});
 export const UNIQUE_BUILDINGS=Object.freeze(["hearth","lore","council"]);
 export const normalizeTurn=n=>((Math.round(Number(n)||0)%4)+4)%4;

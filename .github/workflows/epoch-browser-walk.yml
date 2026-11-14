@@ -38,6 +38,8 @@ jobs:
         run: node epoch/tests/browser-survival.mjs
       - name: Validate equipment controls, swaps and persistence
         run: node epoch/tests/browser-equipment.mjs
+      - name: Validate water meshes, deep-water collision and chunk cleanup
+        run: node epoch/tests/browser-water.mjs
       - name: Validate natural aging, death succession, memorials and a clean HUD
         run: node epoch/tests/browser-aging.mjs
       - name: Confirm imported 3D humanoids animate in Chromium

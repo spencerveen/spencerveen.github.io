@@ -78,6 +78,11 @@ export function stockpileValidation(world,x,z){
   return {ok:false,reason:"Place the stockpile a few paces away from your character.",x:sx,z:sz};
  if(!player||Math.hypot(player.x-sx,player.z-sz)>18)
   return {ok:false,reason:"Choose ground within 18m of your adventurer.",x:sx,z:sz};
+ // Prevent founding over a lake, river or waterlogged shore.
+ for(const [dx,dz] of [[0,0],[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,2],[-2,-2],[2,-2]]){
+  if((world.terrain?.waterAt(sx+dx,sz+dz)?.depth||0)>.03)
+   return {ok:false,reason:"Choose dry ground above the shoreline.",x:sx,z:sz};
+ }
  const height=world.groundY(sx,sz);
  for(const [dx,dz] of [[0,0],[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,2],[-2,-2],[2,-2]]){
   if(Math.abs(world.groundY(sx+dx,sz+dz)-height)>.62)
