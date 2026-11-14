@@ -18,6 +18,13 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Check Epoch JavaScript module syntax
+        run: |
+          node --check epoch/js/main.js
+          node --check epoch/js/ui.js
+          node --check epoch/js/world.js
+          node --check epoch/js/village-ui.js
+          node --check epoch/js/residents.js
       - name: Validate contextual interfaces and research/culture bootstrap
         run: node epoch/tests/check-contextual-ui.mjs
       - name: Validate civilization-based Knowledge and single-founder population

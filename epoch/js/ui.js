@@ -12,7 +12,7 @@ const titles={pack:["YOUR ADVENTURER","Inventory"],skills:["LEARN BY DOING","Ski
 const skillNotes={woodcutting:"Practice by gathering wood from trees.",mining:"Practice by gathering stone from deposits.",foraging:"Practice by picking wild berries.",crafting:"Practice by crafting equipment.",construction:"Practice by constructing village buildings.",survival:"Grow through gathering and life in the wilderness."};
 export class UI{
  constructor(state,world){
-  this.state=state;this.world=world;this.tab="pack";this.panelOpen=false;this.villageSection="storage";this.sourceBuildingId=null;this.selectedBuildingId=null;this.selectedSlot=null;this.modal=null;this.activeTribeId=null;this.panelMarkup=null;
+  this.state=state;this.world=world;this.tab="pack";this.panelOpen=false;this.villageSection="storage";this.sourceBuildingId=null;this.selectedBuildingId=null;this.selectedSlot=null;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;this.panelMarkup=null;
   document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{if(this.panelOpen&&this.tab===button.dataset.tab)this.closePanel();else this.openPanel(button.dataset.tab)}));
   $("toggle").addEventListener("click",()=>this.modal?this.close():this.menu());
   $("close-panel").addEventListener("click",()=>this.closePanel());
@@ -32,6 +32,57 @@ export class UI{
  canUseContext(tab){return this.panelOpen&&this.tab===tab&&contexts[this.contextBuilding()?.kind]===tab}
  selectBuilding(id){return selectVillageBuilding(this,id)}
  openBuildingPanel(id){const b=this.state.data.village.buildings.find(b=>b.id===id);if(!b||!contexts[b.kind])return false;this.selectedBuildingId=id;return this.openPanel(contexts[b.kind],{buildingId:id})}
+ openResident(id){
+  const profile=this.state.residentProfile(id);
+  if(!profile)return false;
+  this.activeResidentId=id;
+  this.activeTribeId=null;
+  return this.renderResidentProfile(profile);
+ }
+ renderResidentProfile(profile){
+  if(!profile)return false;
+  const {resident,home,homes,connections}=profile;
+  const year=y=>y<0?Math.abs(y).toLocaleString()+" BCE":(y+1)+" CE";
+  const origin=resident.originTribeName||"the original settlement";
+  const arrival=resident.recruitment==="peaceful"?
+   "Joined peacefully from "+esc(origin):"Resident of the original settlement";
+  const role=resident.role==="formerLeader"?"Former tribal leader":"Villager";
+  const homeLabel=home?.label||"Communal camp";
+  const homesHtml=homes.map(unit=>{
+   const isCurrent=unit.id===resident.homeId,full=unit.occupied>=unit.capacity;
+   return '<div class="resident-home-choice"><span><strong>'+esc(unit.label)+'</strong><small>'+
+    unit.occupied+' / '+unit.capacity+' beds occupied</small></span>'+
+    '<button type="button" data-action="resident-home" data-id="'+esc(resident.id)+
+    '" data-home="'+esc(unit.id)+'" '+(isCurrent||full?'disabled':'')+'>'+
+    (isCurrent?'Current home':full?'Full':'Move here')+'</button></div>';
+  }).join("");
+  const connectionList=(people,empty)=>people.length?people.map(person=>
+   '<button type="button" class="resident-link" data-action="view-resident" data-id="'+esc(person.id)+'">'+
+   esc(person.name)+'</button>').join(""):'<span class="context-note">'+empty+'</span>';
+  const story=resident.memories.length?resident.memories.map(m=>
+   '<div class="timeline"><b>'+year(m.year)+'</b><span>'+esc(m.text)+'</span></div>').join(""):
+   '<p class="context-note">Their personal chronicle starts here.</p>';
+  const html='<div class="building-context"><span class="stat-pill">'+esc(role)+
+   '</span><h3>'+esc(resident.name)+'</h3><p>Age '+resident.age+' · '+arrival+'</p></div>'+
+   '<div class="entry"><h3>Life in the village</h3>'+
+   '<p><strong>Home:</strong> '+esc(homeLabel)+'</p>'+
+   '<p><strong>Status:</strong> Settled · No village job assigned</p>'+
+   '<p><strong>Joined:</strong> '+year(resident.joinedYear)+'</p>'+
+   '<p class="context-note">Work habits, happiness, loyalty and personality will be developed in later phases.</p></div>'+
+   '<h3 class="section-heading">Housing assignment</h3>'+
+   '<p class="context-note">Move this resident to an available place without exceeding its bed capacity. The founder occupies one communal camp bed.</p>'+
+   '<div class="resident-home-options">'+homesHtml+'</div>'+
+   '<h3 class="section-heading">People they know</h3>'+
+   '<div class="entry"><h3>Former clanmates</h3>'+
+   connectionList(connections.clanmates,"No other villagers from the same tribe.")+
+   '<h3>Housemates</h3>'+
+   connectionList(connections.housemates,"No other named residents share this home.")+
+   '<p class="context-note">These are known shared connections, not confirmed family relationships.</p></div>'+
+   '<h3 class="section-heading">Personal chronicle</h3>'+story+
+   '<button type="button" class="game-button alt" data-action="resume">Return to the village</button>';
+  this.showDialog("resident",resident.name,html);
+  return true;
+ }
  openStockpile(){return openStockpile(this)}
  openTribe(tribe){
   if(!tribe||!tribe.members?.length)return false;
@@ -163,6 +214,14 @@ export class UI{
  handleAction(e){
   const btn=e.target.closest("[data-action]");if(!btn||btn.disabled)return;const action=btn.dataset.action;let message="";
   if(handlePackAction(this,btn)||handleVillageAction(this,btn))return;
+  if(action==="resident-home"){
+   if(this.modal!=="resident"||btn.dataset.id!==this.activeResidentId)return;
+   if(this.state.assignResidentHome(this.activeResidentId,btn.dataset.home)){
+    this.openResident(this.activeResidentId);
+    this.toast("Home assignment saved.");
+   }else this.toast("That home has no available bed.");
+   return;
+  }
   if(action==="tribe-aid"||action==="tribe-invite"){
    const tribe=this.tribeInReach();
    if(!tribe){this.toast("Speak with the tribal leader to continue.");return}
@@ -197,14 +256,14 @@ export class UI{
  }
  showDialog(kind,title,html){
   if(!this.modal)this.dialogReturnFocus=document.activeElement;this.modal=kind;this.world.inputBlocked=true;
-  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="succession"?"ONE GENERATION TO THE NEXT":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
+  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="succession"?"ONE GENERATION TO THE NEXT":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
   for(const id of ["scene","left","hud-tools","right","toggle"])$(id).inert=true;$("toggle").setAttribute("aria-expanded","true");
   ($("guide").querySelector("button:not(:disabled)")||$("close-modal")).focus({preventScroll:true});
  }
  menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
- help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Click the ground to walk there. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, build structures, and open People to view named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. A villager's home can be changed from their profile if there is an open bed.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Family Hut → Dynasty.</strong> Follow your lineage and plan succession.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Click their people, huts or leader signs to approach and meet them. Press E near a leader to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Click a tree, rock or berry bush to gather; E gathers nearby. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
+ help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Click the ground to walk there. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. Move people between homes with free beds from their profiles.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Family Hut → Dynasty.</strong> Follow your lineage and plan succession.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Click their people, huts or leader signs to approach and meet them. Press E near a leader to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Click a tree, rock or berry bush to gather; E gathers nearby. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
  close(){
-  if(!this.modal)return;this.modal=null;this.activeTribeId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
+  if(!this.modal)return;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
   const target=this.dialogReturnFocus;(target?.isConnected&&!target.closest("[inert]")?target:$("toggle")).focus({preventScroll:true});
  }
  keydown(e){
