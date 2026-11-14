@@ -4,8 +4,8 @@ import {riverCenter,waterAt} from "../js/water-generation.js";
 import {chunkCoord} from "../js/forest-generation.js";
 import {tribeAtChunk} from "../js/tribes.js";
 const seed=12000;
-let crossing=null;
-for(let x=155;x<=420&&!crossing;x+=23){
+const crossings=[];
+for(let x=155;x<=420;x+=11){
  const z=riverCenter(x,0,seed),{cx,cz}=chunkCoord(x,z),sites=[];
  for(let dx=-5;dx<=5;dx++)for(let dz=-5;dz<=5;dz++){
   const t=tribeAtChunk(seed,cx+dx,cz+dz);
@@ -13,9 +13,9 @@ for(let x=155;x<=420&&!crossing;x+=23){
  }
  if(waterAt(x,z,seed,sites).depth>1.1&&
   waterAt(x,z-14,seed,sites).depth===0&&
-  waterAt(x,z+14,seed,sites).depth===0)crossing={x,z};
+  waterAt(x,z+14,seed,sites).depth===0)crossings.push({x,z});
 }
-assert(crossing,"a suitable river crossing exists");
+assert(crossings.length>0,"a suitable river crossing exists");
 const browser=await launchBrowser();
 try{
  const page=await browser.newPage({viewport:{width:1280,height:850},ignoreHTTPSErrors:true});
@@ -33,8 +33,22 @@ try{
  });
  await page.goto(gameUrl,{waitUntil:"domcontentloaded",timeout:45000});
  await continueGame(page);
- const crossed=await page.evaluate(({x,z})=>{
+ const crossed=await page.evaluate(crossings=>{
   const w=window.__epochTestWorld;
+  // Forest props remain solid. Select a real bank-to-bank route clear of
+  // trees/rocks so the test measures swimming, not colliding with a tree.
+  let route=null;
+  for(const candidate of crossings){
+   const {x,z}=candidate;
+   w.terrain.update(x,z);
+   let clear=true;
+   for(let dz=-14;dz<=14;dz+=.4){
+    if(w.isBlocked(x,z+dz)){clear=false;break;}
+   }
+   if(clear){route=candidate;break;}
+  }
+  if(!route)return {problem:"No obstacle-free river crossing",count:crossings.length};
+  const {x,z}=route;
   w.player.position.x=x;w.player.position.z=z-14;
   w.player.position.y=w.groundY(x,z-14);
   w.terrain.update(x,z-14);
@@ -52,10 +66,12 @@ try{
   }
   w.keys.w=false;
   return {initial,remaining:w.getVitals().stamina,z:w.player.position.z,
-   encounteredDeep,maxError,loaded:w.terrain.loaded.size,mode:w.waterMotion};
- },crossing);
- assert(crossed.encounteredDeep,"player enters river");
- assert(crossed.z>crossing.z+8,"WASD lets character cross deep water");
+   encounteredDeep,maxError,loaded:w.terrain.loaded.size,mode:w.waterMotion,
+   route,blockedAtStart:w.isBlocked(x,z-14)};
+ },crossings);
+ assert(!crossed.problem,JSON.stringify(crossed));
+ assert(crossed.encounteredDeep,"player enters river: "+JSON.stringify(crossed));
+ assert(crossed.z>crossed.route.z+8,"WASD crosses deep water: "+JSON.stringify(crossed));
  assert(crossed.remaining<crossed.initial-2,"swimming consumes stamina");
  assert(crossed.maxError<.001,"character floats at sampled waterline");
  assert.equal(crossed.loaded,25);
