@@ -107,6 +107,12 @@ The terrain now includes **seeded mountain belts and long, curving ridges** beyo
 
 This first pass concentrates on the terrain shapes. Rocky slopes, cliffs, slope-aware navigation, specialized resources, and mountain-fed water drainage are separate follow-up improvements.
 
+## Mountain waterways — Valley-carving fix
+
+Mountains now give way to wide, gently tapered valleys wherever the original seeded river or lake footprint crosses high ground. This stops rivers from running across raised rock faces without changing the saved river centerlines, widths or lake locations. The shared `water-corridors.js` module describes the original waterways independently of elevation; mountains fade out toward those corridors and rocky terrain uses the resulting lower ground. The shoreline still has natural green, stony shoulders rather than a sudden wall.
+
+This is a **terrain-aware river-valley pass**, not yet a downhill watershed or waterfall simulation: water still follows its existing seeded meanders. Original village protection, water depth/wading, and current save data remain intact. Tests cover identical channel routes, wide valleys, lake beds and seam continuity.
+
 ## Mountain implementation 2 — Rocky slopes and exposed stone
 
 Mountains now transition from forest green to subdued foothill scrub and gray-brown exposed rock as their uplift and slope steepness increase. A shared terrain-specific material uses per-vertex coloring, with weathered color bands on higher rocky faces and lighter rock highlights toward the peaks. Riverbanks retain their subtle muted transition, and old villages remain green because the previous terrain-protection snapshots are reused.

@@ -4,8 +4,15 @@
  * stays unchanged; this module adds smooth nonnegative uplift.
  */
 import {terrainHeight,STARTER_SEED} from "./forest-generation.js?v=20261114y";
+import {nearestWaterCorridor} from "./water-corridors.js?v=20261114valleys1";
 export const MOUNTAIN_MODEL_VERSION=1;
 export const MOUNTAIN_START_RADIUS=150;
+export const RIVER_VALLEY_SHOULDER=68;
+/** 0 inside the river/lake and 1 outside the broad, smooth valley floor. */
+export function riverValleyFactor(signedDistance){
+ const t=Math.max(0,Math.min(1,(signedDistance+3)/RIVER_VALLEY_SHOULDER));
+ return t*t*(3-2*t);
+}
 const clamp=t=>Math.max(0,Math.min(1,t));
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
 const hash=(x,z,seed)=>{
@@ -20,7 +27,7 @@ function noise(x,z,seed){
   lerp(hash(ix,iz+1,seed),hash(ix+1,iz+1,seed),fx),fz);
 }
 /** Broad mountain clusters with long curving ridges and gradual foothills. */
-export function mountainAt(x,z,seed=STARTER_SEED,protectedSites=[]){
+export function mountainAt(x,z,seed=STARTER_SEED,protectedSites=[],corridorDistance=null){
  if(!Number.isFinite(x)||!Number.isFinite(z))return {uplift:0,strength:0,ridge:0};
  // Every save retains its original opening clearing and nearby forest.
  const starter=smooth((Math.hypot(x+3,z+2)-MOUNTAIN_START_RADIUS)/130);
@@ -43,9 +50,16 @@ export function mountainAt(x,z,seed=STARTER_SEED,protectedSites=[]){
  const bend=24*Math.sin(along/155+(seed%311)*.018);
  const ridge=Math.pow(1-Math.abs(Math.sin((across+bend)/87)),3);
  const detail=.78+.22*noise(x/115,z/115,(seed^0x4c41594f)>>>0);
- const strength=mass*protection;
+ // The old river footprint is preserved. Instead of draping blue water over
+ // a mountainside, suppress mountain uplift through a wide rounded valley.
+ // Passing the already-calculated corridor distance avoids duplicate searches
+ // in the very dense terrain/water mesh samplers.
+ const shore=Number.isFinite(corridorDistance)?corridorDistance:
+  nearestWaterCorridor(x,z,seed).distance;
+ const valley=riverValleyFactor(shore);
+ const strength=mass*protection*valley;
  return {uplift:strength*(5+31*ridge)*detail,strength,ridge};
 }
-export function mountainTerrainHeight(x,z,seed=STARTER_SEED,protectedSites=[]){
- return terrainHeight(x,z,seed)+mountainAt(x,z,seed,protectedSites).uplift;
+export function mountainTerrainHeight(x,z,seed=STARTER_SEED,protectedSites=[],corridorDistance=null){
+ return terrainHeight(x,z,seed)+mountainAt(x,z,seed,protectedSites,corridorDistance).uplift;
 }

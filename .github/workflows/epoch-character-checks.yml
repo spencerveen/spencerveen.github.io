@@ -30,6 +30,7 @@ jobs:
           node --check epoch/js/inventory-ui.js
           node --check epoch/js/equipment.js
           node --check epoch/js/water-generation.js
+          node --check epoch/js/water-corridors.js
           node --check epoch/js/mountain-generation.js
           node --check epoch/js/mountain-appearance.js
           node --check epoch/js/forest-chunks.js
@@ -69,6 +70,8 @@ jobs:
         run: node epoch/tests/check-water.mjs
       - name: Validate mountain ranges, foothills and protected settlements
         run: node epoch/tests/check-mountains.mjs
+      - name: Validate river valleys through mountains without relocating saved water
+        run: node epoch/tests/check-river-valleys.mjs
       - name: Validate slope-driven stone colors and streamed rock outcrops
         run: node epoch/tests/check-mountain-appearance.mjs
       - name: Validate village and building save compatibility

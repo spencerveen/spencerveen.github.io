@@ -3,7 +3,7 @@
  * heightfield, collisions, collectable stone nodes, or save schema.
  */
 import {CHUNK_SIZE,STARTER_SEED,seededRandom} from "./forest-generation.js?v=20261114y";
-import {mountainAt} from "./mountain-generation.js?v=20261114mountains1";
+import {mountainAt} from "./mountain-generation.js?v=20261114valleys1";
 export const MOUNTAIN_VISUAL_VERSION=1;
 const clamp=n=>Math.max(0,Math.min(1,n));
 const smooth=n=>{n=clamp(n);return n*n*(3-2*n)};
@@ -19,7 +19,7 @@ const BANK=[129/255,132/255,105/255];
  * slope measured from its ground-mesh normal. Consistent across chunk seams.
  */
 export function terrainAppearanceAt(x,z,seed=STARTER_SEED,protectedSites=[],water=null,grade=0){
- const m=mountainAt(x,z,seed,protectedSites);
+ const m=mountainAt(x,z,seed,protectedSites,water?.corridorDistance);
  const uplift=m.uplift;
  const foothill=smooth((uplift-.5)/7);
  const steep=smooth((Math.max(0,grade)-.16)/.72);

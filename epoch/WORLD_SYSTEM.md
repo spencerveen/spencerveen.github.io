@@ -62,6 +62,12 @@ For pre-mountain save slots, the `mountainProtectedSites` array records the hist
 
 Visual rock/cliff materials, steep-slope movement restrictions, specialized wildlife and mountain resources are planned separately. Unit checks live in `tests/check-mountains.mjs`.
 
+## River corridors through mountains (valley pass)
+
+`water-corridors.js` owns the original deterministic centerline, river width, lake sites and nearest signed shoreline distance. The water mesh keeps exactly the same footprint and existing depth rules. `mountain-generation.js` uses a smooth valley mask to reduce uplift close to the channel over a broad shoulder, while leaving mountain height away from the river unchanged. This prevents the older river splines from being draped directly over a cliff or a peak. River and mountain functions share the same signed-distance sample, avoiding redundant water-path lookups in the busiest mesh-generation path.
+
+The water is not yet a hydrologically solved downhill network; source selection, proper tributaries, waterfall/fall gradients and route changes belong to a later world-generation milestone. Migration-protected settlements remain untouched.
+
 ## Rocky mountain visual pass (Implementation 2)
 
 `js/mountain-appearance.js` adds deterministic color blending for the existing terrain heightfield. Exposed stone increases with mountain uplift and the actual mesh-normal slope; high ridge faces gain subtle weathered bedding and crest highlights, with gradual green-to-rock transitions. The mesh keeps 16 subdivisions per chunk and shares a single terrain material with vertex colors. Water surfaces and river shore treatments remain separate.
