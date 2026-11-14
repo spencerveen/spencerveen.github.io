@@ -72,7 +72,9 @@ export function findVillagerWork(world,person,reserved=new Set()){
  }else if(job==="fisher"){
   for(const fish of world.fish){
    if(world.getFishCaught?.(fish.id))continue;
-   const bank=fishingBank(world,fish.site);
+   // Cache each fish's shoreline approach while its streamed node is loaded.
+   if(fish.workBank===undefined)fish.workBank=fishingBank(world,fish.site);
+   const bank=fish.workBank;
    if(!bank)continue;
    consider({id:fish.id,job,kind:"fish",x:bank.x,z:bank.z,
     chunkKey:fish.chunkKey,siteX:fish.site.x,siteZ:fish.site.z});
