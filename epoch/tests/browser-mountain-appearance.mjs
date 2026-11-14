@@ -71,7 +71,7 @@ try{
  assert(result.rockCount>0&&result.highlighted);
  assert.equal(result.rockUnpickable,true,"stone formations are decoration, not harvestable resources");
  assert.equal(result.usesLayeredMaterial,true,"terrain uses the new rocky vertex palette");
- assert.equal(result.loaded,25,"streaming stays bounded");
+ assert.equal(result.loaded,81,"streaming stays bounded");
  assert.equal(result.originalRockDisposed,true,"outcrops dispose on chunk unload");
  assert.equal(result.originalChunkUnloaded,true);
  assert.deepEqual(errors,[],"mountain meshes render without browser JavaScript exceptions");
