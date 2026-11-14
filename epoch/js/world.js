@@ -7,6 +7,7 @@ import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./st
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view2";
 import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
+import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs1";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114textures1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
@@ -23,6 +24,7 @@ export class World {
   this.onTribeDiscover=tribeHandlers.onDiscover||(()=>{});
   this.onTribeInteract=tribeHandlers.onInteract||(()=>{});
   this.onResidentSelect=tribeHandlers.onResidentSelect||(()=>{});
+  this.onVillagerWork=tribeHandlers.onVillagerWork||(()=>({ok:false}));
   this.getWildlifeStatus=tribeHandlers.getWildlifeStatus||(()=>null);
   this.onWildlifeHunt=tribeHandlers.onWildlifeHunt||(()=>({ok:false,reason:"Hunting unavailable."}));
   this.onWildlifeHarvest=tribeHandlers.onWildlifeHarvest||(()=>({ok:false,reason:"Harvest unavailable."}));
@@ -211,6 +213,7 @@ export class World {
   const homeCounts=new Map();
   this.people=residents.map((resident,i)=>{
    let person=previous.get(resident.id);
+   const oldHome=person?.homeId,oldJob=person?.job;
    if(!person){
     const profile=randomAppearance("epoch:villager:"+resident.id,resident.sex);
     const human=createQuaterniusHuman(this.scene,profile,null,resident.name);
@@ -223,8 +226,8 @@ export class World {
       if(mesh.isPickable)mesh.metadata={...(mesh.metadata||{}),residentId:resident.id};
     }).catch(error=>console.warn("Villager model could not load",error));
    }
-   // Updating assignment must move an existing model, never create a duplicate.
    person.homeId=resident.homeId;
+   person.job=resident.job||"idle";
    const home=resident.homeId||"camp";
    const index=homeCounts.get(home)||0;homeCounts.set(home,index+1);
    let x,z;
@@ -237,10 +240,98 @@ export class World {
     const point=offsets[index]||[Math.cos(index*2.4)*(7+(index%3)*2),Math.sin(index*2.4)*(7+(index%3)*2)];
     x=point[0]+camp.x-LEGACY_HOME.x;z=point[1]+camp.z-LEGACY_HOME.z;
    }
-   person.x=x;person.z=z;
-   person.human.root.position=V(x,this.groundY(x,z),z);
+   person.homeX=x;person.homeZ=z;
+   // Re-rendering UI or changing stockpile quantities must never teleport
+   // someone who is currently traveling to a work site.
+   if(!previous.has(resident.id)||oldHome!==resident.homeId){
+    person.x=x;person.z=z;
+    person.human.root.position=V(x,this.groundY(x,z),z);
+   }
+   if(!person.work||oldHome!==resident.homeId||oldJob!==person.job)
+    person.work={mode:"idle",task:null,timer:0,retry:1+(i%4)*.4,moving:false,stalled:0};
    return person;
   });
+ }
+ /** Walk workers across actual terrain without teleporting on routine saves.
+  * Short detours dodge tree trunks, stones and waterlogged ground.
+  */
+ moveVillager(person,destination,dt,stop=2.1){
+  const dx=destination.x-person.x,dz=destination.z-person.z,dist=Math.hypot(dx,dz);
+  if(dist<=stop){person.work.moving=false;return true}
+  const step=Math.min(JOB_SPEED*dt,Math.max(0,dist-stop)),heading=Math.atan2(dx,dz);
+  const candidates=[0,.42,-.42,.85,-.85,1.35,-1.35,Math.PI];
+  for(const offset of candidates){
+   const a=heading+offset,nx=person.x+Math.sin(a)*step,nz=person.z+Math.cos(a)*step;
+   if(this.isBlocked(nx,nz)||this.terrain.waterAt(nx,nz).depth>.10||
+      Math.abs(this.groundY(nx,nz)-this.groundY(person.x,person.z))>.66)continue;
+   person.x=nx;person.z=nz;
+   const root=person.human.root;
+   root.position.x=nx;root.position.z=nz;root.position.y=this.groundY(nx,nz);
+   root.rotation.y=a;
+   person.work.moving=true;person.work.stalled=0;
+   return false;
+  }
+  person.work.moving=false;person.work.stalled+=dt;
+  return false;
+ }
+ updateVillagerJobs(dt){
+  const pile=this.currentVillage?.stockpile;
+  if(!pile||this.inputBlocked)return;
+  // When the player explores beyond the streamed village, suspend local work.
+  // Workers never create distant resource nodes or generate off-screen loot.
+  if(Math.hypot(this.player.position.x-pile.x,this.player.position.z-pile.z)>100)return;
+  for(const person of this.people){
+   const work=person.work;
+   if(!work)continue;
+   work.moving=false;
+   if(person.job==="idle"){work.mode="idle";work.task=null;continue}
+   if(work.mode==="idle"){
+    work.retry-=dt;if(work.retry>0)continue;
+    const claimed=new Set(this.people.filter(p=>p!==person&&p.work?.task)
+     .map(p=>p.work.task.id));
+    const task=findVillagerWork(this,person,claimed);
+    if(!task){work.retry=5;continue}
+    work.task=task;work.mode="outbound";work.stalled=0;
+   }
+   if(work.mode==="outbound"){
+    const task=work.task;
+    if(!task){work.mode="idle";continue}
+    if(task.kind==="hunt"){
+     const animal=this.animals.find(a=>a.id===task.id&&!a.dead);
+     if(!animal){work.mode="idle";work.task=null;work.retry=3;continue}
+     task.x=animal.node.position.x;task.z=animal.node.position.z;
+    }
+    if(this.moveVillager(person,task,dt,task.kind==="fish"?1.25:2.1)){
+     work.mode="working";work.timer=JOB_WORK_SECONDS[person.job]||4;
+    }
+   }else if(work.mode==="working"){
+    work.timer-=dt;
+    if(work.timer<=0){work.mode="returning";work.stalled=0}
+   }else if(work.mode==="returning"){
+    const point={x:pile.x+2.5,z:pile.z+2.5};
+    if(this.moveVillager(person,point,dt,1.15)){
+     const task=work.task;
+     // Reset before the synchronous state callback triggers a UI/world resync.
+     work.mode="idle";work.task=null;work.retry=1.5;
+     const outcome=task?this.onVillagerWork(person.id,task):null;
+     if(outcome?.ok){
+      if(task.kind==="resource"){
+       if(outcome.removed)this.terrain.removeResource(task.id,task.chunkKey);
+       else if(task.resource==="food")this.terrain.refreshBerries();
+      }else if(task.kind==="fish"){
+       const fish=this.fish.find(f=>f.id===task.id);
+       if(fish){fish.root.dispose(false,false);this.fish=this.fish.filter(f=>f!==fish)}
+      }else if(task.kind==="hunt"){
+       const animal=this.animals.find(a=>a.id===task.id);
+       if(animal){animal.node.dispose(false,false);this.animals=this.animals.filter(a=>a!==animal)}
+      }
+     }else work.retry=outcome?.reason==="Stockpile is full."?10:3;
+    }
+   }
+   if(work.stalled>4){
+    work.mode="idle";work.task=null;work.retry=6;work.stalled=0;
+   }
+  }
  }
  makeCamera(){
   const c=new B.ArcRotateCamera("adventurer camera",-Math.PI/2,1.13,18,V(0,1,0),this.scene);
@@ -1020,6 +1111,7 @@ export class World {
   // Chunks regenerate from the seed; berry recovery is based on real elapsed
   // time even if this node wasn't loaded while the bush was growing back.
   this.terrain.update(p.x,p.z);
+  this.updateVillagerJobs(dt);
   if(!this.inputBlocked){
    for(const camp of this.tribeCamps.values()){
     const tribe=camp.tribe;
@@ -1069,7 +1161,7 @@ export class World {
   // Move the target vector in place to retain rotation and zoom.
   c.target.copyFrom(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));
   const t=performance.now()/1000;
-  this.people.forEach(person=>person.human.animate(t+person.phase,false));
+  this.people.forEach(person=>person.human.animate(t+person.phase,!!person.work?.moving));
   for(const camp of this.tribeCamps.values())
    camp.humans.forEach((human,i)=>human.animate(t+i*1.25,false));
   if(this.flame?.isEnabled())this.flame.scaling.y=1.05+.12*Math.sin(t*8);
