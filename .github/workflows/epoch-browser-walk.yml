@@ -31,6 +31,8 @@ jobs:
           node epoch/tests/check-forest.mjs
       - name: Verify assignable villager jobs, finite gathering and stockpile deliveries
         run: node epoch/tests/check-villager-jobs.mjs
+      - name: Verify real carrying, stockpile capacity, persistence and dry routes
+        run: node epoch/tests/check-villager-hauling.mjs
       - name: Install browser test dependency
         run: npm install --no-save --no-package-lock playwright@1.58.2
       - name: Launch Epoch static test server
@@ -39,6 +41,8 @@ jobs:
           sleep 1
       - name: Verify villager jobs, movement, and saved assignments in Chromium
         run: node epoch/tests/browser-villager-jobs.mjs
+      - name: Verify visible supplies travel to village storage and survive reload
+        run: node epoch/tests/browser-villager-hauling.mjs
       - name: Hunt a rabbit with H, gather its carcass with F, and reload the world
         run: node epoch/tests/browser-hunting.mjs
       - name: Cook meals at the hearth and eat them with E in Chromium
