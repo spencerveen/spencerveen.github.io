@@ -23,7 +23,7 @@ assert(game.canPlaceVillageBuilding("council",12,-10,0,world).ok,"Culture must b
 const council=game.placeVillageBuilding("council",12,-10,0,world);
 assert(council.ok,"The first culture building does not require the culture interface it provides");
 const family=game.placeVillageBuilding("family",-12,-10,0,world);
-assert(family.ok,"An ordinary hut provides housing and the home for Dynasty");
+assert(family.ok,"An ordinary Hut provides housing and household information");
 assert.equal(game.canPlaceVillageBuilding("hearth",4,4,0,world).ok,false,"The Hearth still requires Fire research");
 assert.equal(game.stockpileInfo().items.wood,24,"Interface buildings spend village wood");
 assert.equal(game.stockpileInfo().items.stone,14,"Interface buildings spend village stone");

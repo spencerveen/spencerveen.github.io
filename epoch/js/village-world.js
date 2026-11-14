@@ -1,4 +1,4 @@
-import {BUILDINGS} from "./settlement.js?v=20261114b";
+import {BUILDINGS} from "./settlement.js?v=20261114u";
 import {BUILDING_RADIUS,footprint} from "./village-placement.js?v=20261114b";
 import {BUILD_GRID,VILLAGE_RADIUS} from "./stockpile.js?v=20261114a";
 // Low-poly architectural placeholders for the first settlement-building slice.
@@ -33,8 +33,8 @@ function beam(world,parent,a,b,r,material){
 }
 function hut(world,parent,materials,large=false){
  const radius=large?2.45:1.78,roofY=large?2.25:1.93,wallHeight=large?1.75:1.35;
- const walls=obj(world,"cylinder",large?"Council Lodge walls":"Family Hut walls",parent,[0,wallHeight/2,0],null,materials.mud,{diameterBottom:radius*2,diameterTop:radius*1.88,height:wallHeight,tessellation:10});
- const thatch=obj(world,"cylinder",large?"Council Lodge thatch roof":"Family Hut thatch roof",parent,[0,roofY,0],null,large?materials.thatchDark:materials.thatch,{diameterTop:.25,diameterBottom:radius*2+1,height:1.95,tessellation:10});
+ const walls=obj(world,"cylinder",large?"Council Lodge walls":"Hut walls",parent,[0,wallHeight/2,0],null,materials.mud,{diameterBottom:radius*2,diameterTop:radius*1.88,height:wallHeight,tessellation:10});
+ const thatch=obj(world,"cylinder",large?"Council Lodge thatch roof":"Hut thatch roof",parent,[0,roofY,0],null,large?materials.thatchDark:materials.thatch,{diameterTop:.25,diameterBottom:radius*2+1,height:1.95,tessellation:10});
  // Doorway, lintel, tusk charms and roof beams help distinguish the silhouette.
  const door=obj(world,"box","dark woven doorway",parent,[0,.76,radius*.89],[.75,1.55,.08],materials.door);
  for(const x of [-.42,.42]){
@@ -153,7 +153,7 @@ function makeBuiltStructure(world,entry){
  if(kind==="council")hut(world,root,world.villageMats,true);
  if(kind==="lore")techShelter(world,root,world.villageMats);
  if(kind==="hearth")cookingStation(world,root,world.villageMats);
- const labels={family:["Dynasty","Family Hut",3.35],council:["Culture","Council Lodge",3.65],lore:["Technology","Toolmaker's Shelter",3.65],hearth:["Cooking Hearth","Village fire",2.85]};
+ const labels={family:["Housing","Hut",3.35],council:["Culture","Council Lodge",3.65],lore:["Technology","Toolmaker's Shelter",3.65],hearth:["Cooking Hearth","Village fire",2.85]};
  const label=labels[kind];
  if(label)createLabel(world,root,...label);
  // Context labels exist only on constructed buildings.

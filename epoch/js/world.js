@@ -1,10 +1,10 @@
 import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113k";
 import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113k";
-import {BUILDINGS} from "./settlement.js?v=20261114m";
+import {BUILDINGS} from "./settlement.js?v=20261114u";
 import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114b";
 import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114a";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
-import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114b";
+import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261113k";
 import {ForestChunks} from "./forest-chunks.js?v=20261114m";
 import {createTribeWorld} from "./tribe-world.js?v=20261114m";
@@ -317,19 +317,14 @@ export class World {
  walkToTribe(id){
   const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===id);
   if(!camp)return false;
-  this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.tribeTarget=null;this.focusTarget=null;this.path=[];
-  const {leader,tribe}=camp,p=this.player.position;
-  const dx=p.x-leader.x,dz=p.z-leader.z,d=Math.hypot(dx,dz);
-  if(d<TRIBE_INTERACT_RANGE){
-   this.onTribeDiscover(tribe);
-   this.onTribeInteract(tribe);return true;
+  const p=this.player.position,tribe=camp.tribe;
+  if(Math.hypot(p.x-camp.leader.x,p.z-camp.leader.z)>=TRIBE_INTERACT_RANGE){
+   this.onStatus(tribe.name,"Move closer to the tribal leader using WASD to interact.");
+   return false;
   }
-  const approach=TRIBE_INTERACT_RANGE-1.3;
-  if(!this.plan(leader.x+dx/d*approach,leader.z+dz/d*approach)){
-   this.onStatus("Cannot reach "+tribe.name,"Try approaching the camp from another direction.");return false;
-  }
-  this.tribeTarget=tribe.id;
-  this.onStatus("Approaching "+tribe.name,"Travel to the tribal leader to learn about this settlement.");
+  this.path=[];this.target=null;this.tribeTarget=null;
+  this.onTribeDiscover(tribe);
+  this.onTribeInteract(tribe);
   return true;
  }
  highlightPlot(id){}
@@ -467,18 +462,14 @@ export class World {
  }
  walkToStockpile(){
   if(!this.stockpile)return false;
-  this.focusTarget=null;
-  if(nearStockpile(this.stockpile,this.player.position.x,this.player.position.z)){
-   this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;
-   this.onOpenStockpile();return true;
+  const p=this.player.position;
+  if(!nearStockpile(this.stockpile,p.x,p.z)){
+   this.onStatus("Village stockpile","Move within reach using WASD, then click the stockpile.");
+   return false;
   }
-  const p=this.player.position,h=this.stockpile,dx=p.x-h.x,dz=p.z-h.z,len=Math.hypot(dx,dz)||1;
-  const destX=h.x+dx/len*3.4,destZ=h.z+dz/len*3.4;
-  const success=this.plan(destX,destZ);
-  if(success){this.stockpileTarget=true;this.target=null;this.plotTarget=null;
-   this.onStatus("Returning to village","Walking to the stockpile to unload supplies.");
-  }else this.onStatus("Cannot reach stockpile","Try approaching from another side.");
-  return success;
+  this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;
+  this.onOpenStockpile();
+  return true;
  }
  resetCameraKeys(){
   this.cameraKeys={};
@@ -581,16 +572,16 @@ export class World {
     const key=meta?.stockpile?"stockpile":meta?.buildingId||meta?.tribeId||meta?.residentId||null;
     this.canvas.style.cursor=key||meta?.resource?"pointer":"default";
     if(key&&key!==this.hoveredInteraction){
-     if(meta.stockpile)this.onStatus("Village stockpile","Click to open village storage and construction.");
+     if(meta.stockpile)this.onStatus("Village stockpile","Walk here with WASD, then click to open village storage.");
      else if(meta.tribeId){
       const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===meta.tribeId);
-      if(camp)this.onStatus(camp.tribe.name,"Click to approach the tribe and meet its leader.");
+      if(camp)this.onStatus(camp.tribe.name,"Walk to the tribal leader with WASD, then click to meet them.");
      }else if(meta.residentId){
       const resident=this.people.find(p=>p.id===meta.residentId);
       if(resident)this.onStatus(resident.name,"Click to see this villager's story, connections and home.");
      }else{
       const kind=meta.buildingKind;
-      const destination={lore:"Technology",council:"Culture",family:"Dynasty",hearth:"Cooking Hearth"}[kind]||"Building";
+      const destination={lore:"Technology",council:"Culture",family:"Housing",hearth:"Cooking Hearth"}[kind]||"Building";
       this.onStatus(BUILDINGS[kind]?.name||"Village building","Click to open "+destination+".");
      }
     }
@@ -607,19 +598,22 @@ export class World {
    this.tribeTarget=null;
    if(mesh?.metadata?.stockpile){this.walkToStockpile();return}
    if(mesh?.metadata?.buildingId){
+    const building=this.currentVillage?.buildings?.find(b=>b.id===mesh.metadata.buildingId);
+    const p=this.player.position;
+    if(!building||Math.hypot(p.x-building.x,p.z-building.z)>6){
+     this.onStatus(BUILDINGS[mesh.metadata.buildingKind]?.name||"Village building",
+      "Move closer with WASD, then click to interact.");
+     return;
+    }
     this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;
-    this.onPlot(mesh.metadata.buildingId);return;
+    this.onPlot(building.id);return;
    }
    if(mesh?.metadata?.resource){
     this.stockpileTarget=false;
     this.walkToResource(mesh.metadata,e.event.shiftKey?"cut":"gather");return;
    }
-   if(mesh?.metadata?.terrain){
-    this.focusTarget=null;
-    this.stockpileTarget=false;this.target=null;this.plotTarget=null;
-    this.plan(pick.pickedPoint.x,pick.pickedPoint.z);
-    this.onStatus("Traveling","Walking to the selected location.");
-   }
+   // Ground clicks do nothing outside construction placement.
+   // Player locomotion is exclusively WASD; clicking cannot queue a route.
   });
  }
  interactNearby(action="gather"){
@@ -629,6 +623,9 @@ export class World {
    .sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
   if(near)this.walkToResource(near,action);
   else if(action==="gather"){
+   if(nearStockpile(this.stockpile,p.x,p.z)){this.walkToStockpile();return}
+   const building=this.currentVillage?.buildings?.find(b=>Math.hypot(b.x-p.x,b.z-p.z)<6);
+   if(building){this.onPlot(building.id);return}
    const resident=this.people.find(person=>
     Math.hypot(person.x-p.x,person.z-p.z)<2.9);
    if(resident){this.onResidentSelect(resident.id);return}
@@ -639,22 +636,16 @@ export class World {
   }else this.onStatus("Nothing nearby","Get within gathering range of a berry bush to cut it down.");
  }
  walkToResource(meta,action="gather"){
-  this.focusTarget=null;this.tribeTarget=null;
   const status=this.getResourceStatus(meta);
-  if(status?.removed){this.onStatus("Already depleted","This resource is no longer available.");return}
-  const dist=Math.hypot(meta.x-this.player.position.x,meta.z-this.player.position.z);
-  if(dist<2.5){
-   this.target=null;this.plotTarget=null;this.path=[];
-   this.collect(meta,action);return;
+  if(status?.removed){this.onStatus("Already depleted","This resource is no longer available.");return false}
+  const p=this.player.position;
+  if(Math.hypot(meta.x-p.x,meta.z-p.z)>=2.7){
+   this.onStatus("Move closer to "+meta.label,"Use WASD to approach before gathering.");
+   return false;
   }
-  this.plotTarget=null;this.stockpileTarget=false;this.target=meta;this.targetAction=action;
-  const dx=this.player.position.x-meta.x,dz=this.player.position.z-meta.z,len=Math.hypot(dx,dz)||1;
-  if(!this.plan(meta.x+dx/len*2.05,meta.z+dz/len*2.05)){
-   this.target=null;this.onStatus("Cannot reach resource","Try approaching from another side.");return;
-  }
-  this.onStatus("Approaching "+meta.label,action==="cut"&&meta.resource==="food"?
-   "Going to chop down the bush for vines. This removes it permanently.":
-   "Gathering available materials. Shift+click a berry bush to cut it for vines.");
+  this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;
+  this.collect(meta,action);
+  return true;
  }
  collect(meta,action="gather"){
   if(this.cooldown>0)return;
@@ -739,11 +730,8 @@ export class World {
   const x=(this.keys.d?1:0)-(this.keys.a?1:0),z=(this.keys.w?1:0)-(this.keys.s?1:0);
   let direction=V(0,0,0),moving=false;
   if(x||z){this.focusTarget=null;this.path=[];this.target=null;this.tribeTarget=null;this.plotTarget=null;this.stockpileTarget=false;direction=right.scale(x).add(forward.scale(z)).normalize();moving=true;}
-  else if(this.path.length){
-   const next=this.path[0],diff=next.subtract(p);diff.y=0;
-   if(diff.length()<.25){this.path.shift();}
-   else{direction=diff.normalize();moving=true;}
-  }
+  // No click-to-move or automated path-following.
+  // Only WASD sets a movement direction.
   let running=false;
   if(moving){
    running=!!this.keys.shift && this.spendSprint(11*dt);
@@ -770,14 +758,7 @@ export class World {
      }
     }
    }
-   if(this.tribeTarget){
-    const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===this.tribeTarget);
-    if(!camp)this.tribeTarget=null;
-    else if(Math.hypot(p.x-camp.leader.x,p.z-camp.leader.z)<TRIBE_INTERACT_RANGE){
-     this.tribeTarget=null;this.path=[];
-     this.onTribeDiscover(camp.tribe);this.onTribeInteract(camp.tribe);
-    }
-   }
+
   }
   this.berryClock+=dt;
   if(this.berryClock>=2){this.berryClock=0;this.terrain.refreshBerries()}
@@ -790,11 +771,6 @@ export class World {
   // Drive authored movement clips with a continuous clock; pressing Shift
   // switches the player to the jogging loop without resetting progression.
   this.character?.animate(performance.now()/1000,moving,running);
-  if(this.target && Math.hypot(this.target.x-p.x,this.target.z-p.z)<2.55){const target=this.target,action=this.targetAction;this.target=null;this.path=[];this.collect(target,action)}
-  if(this.stockpileTarget&&this.stockpile
-    &&nearStockpile(this.stockpile,p.x,p.z)){
-   this.stockpileTarget=false;this.path=[];this.onOpenStockpile();
-  }
   const focus=this.focusTarget;
   const aim=focus?V(focus.x,this.groundY(focus.x,focus.z)+1.2,focus.z):V(p.x,p.y+1.2,p.z);
   // Never call ArcRotateCamera.setTarget every frame: it recomputes alpha/beta

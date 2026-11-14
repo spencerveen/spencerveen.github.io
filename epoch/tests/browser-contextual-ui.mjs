@@ -103,6 +103,27 @@ try{
  assert.equal(await page.locator('[data-action="open-village"]').count(),0,"Inventory does not bypass the stockpile");
  await page.locator("#close-panel").click();
 
+ // Movement is exclusively WASD. Clicking terrain never queues a route
+ // or displaces the player, even when the character is idle.
+ const beforeGround=await page.evaluate(()=>({pos:{...window.epochDebug().position},path:window.__epochTestWorld.path.length}));
+ await page.mouse.click(720,610);
+ await page.evaluate(()=>window.__epochTestWorld.update(1/30));
+ const afterGround=await page.evaluate(()=>({pos:window.epochDebug().position,path:window.__epochTestWorld.path.length}));
+ assert.deepEqual(afterGround.pos,beforeGround.pos,"clicking terrain cannot move the character");
+ assert.equal(afterGround.path,0,"ground clicks cannot queue travel");
+ // Clicking a building from far away cannot auto-walk or open its interface.
+ await clickWorldObject(page,{buildingId:"test_lore",beforeClick:async current=>{
+  await current.evaluate(()=>{
+   const w=window.__epochTestWorld,b=w.currentVillage.buildings.find(b=>b.id==="test_lore");
+   w.player.position.x=b.x+22;w.player.position.z=b.z+22;
+   w.player.position.y=w.groundY(w.player.position.x,w.player.position.z);
+   w.path=[];
+  });
+ }});
+ const distant=await page.evaluate(()=>({ui:window.epochDebug().ui,pos:window.epochDebug().position,path:window.__epochTestWorld.path.length}));
+ assert.equal(distant.ui.panelOpen,false,"distant building clicks require manually approaching with WASD");
+ assert.equal(distant.path,0,"distant building clicks do not create a path");
+
  // Click actual world meshes: no UI method or mutation hook opens these panels.
  await clickWorldObject(page,{buildingId:"test_lore",beforeClick:async current=>{
   const queued=await current.evaluate(()=>{
@@ -138,18 +159,30 @@ try{
  await page.locator("#close-panel").click();
 
  await clickWorldObject(page,{buildingId:"test_home"});
- await page.waitForFunction(()=>window.epochDebug().ui.context==="dynasty",null,{timeout:5000});
+ await page.waitForFunction(()=>window.epochDebug().ui.context==="hut",null,{timeout:5000});
  const generation=await page.evaluate(()=>window.epochDebug().generation);
- await page.locator('[data-action="next"]').click();
- assert(await page.locator("#modal").isVisible(),"succession asks before replacing the character");
+ assert((await page.locator("#panel").innerText()).includes("Who lives here?"),"Hut opens the household panel");
+ assert((await page.locator("#panel").innerText()).includes("Unoccupied Hut"),"vacant huts explain how to assign residents");
+ assert.equal(await page.locator('[data-action="next"],[data-action="confirm-next"]').count(),0,"a hut has no manual death or succession action");
  assert.equal(await page.evaluate(()=>window.epochDebug().generation),generation);
- await page.locator('[data-action="cancel-dialog"]').click();
- assert.equal(await page.evaluate(()=>window.epochDebug().generation),generation,"cancel preserves the current generation");
- await page.locator('[data-action="next"]').click();
- await page.locator('[data-action="confirm-next"]').click();
- assert.equal(await page.evaluate(()=>window.epochDebug().generation),generation+1,"confirm advances the dynasty once");
- assert.equal((await page.evaluate(()=>window.epochDebug().settlement.buildings)).length,4,"succession preserves the physical village");
- await page.screenshot({animations:"disabled",path:path.join(output,"epoch-context-dynasty.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-context-hut.png")});
+ await page.locator("#close-panel").click();
+ // Assign a real existing villager to the Hut using the People profile.
+ await clickWorldObject(page,{stockpile:true});
+ await page.locator('nav.section-tabs [data-section="people"]').click();
+ const firstResident=await page.locator('[data-action="view-resident"]').first().getAttribute("data-id");
+ const residentName=await page.locator('[data-action="view-resident"]').first().locator("..").locator("h3").innerText();
+ await page.locator('[data-action="view-resident"]').first().click();
+ await page.locator('[data-action="resident-home"][data-home="test_home"]').click();
+ await page.locator("#close-modal").click();
+ await page.locator("#close-panel").click();
+ await clickWorldObject(page,{buildingId:"test_home"});
+ const household=await page.locator("#panel").innerText();
+ assert(household.includes(residentName),"Hut lists its actual assigned villager");
+ assert(household.includes("1 / 3"),"Hut occupancy reflects real residents");
+ assert(await page.locator('[data-action="view-resident"][data-id="'+firstResident+'"]').isVisible(),"household offers a resident profile");
+ assert.equal(await page.locator('[data-action="next"],[data-action="confirm-next"]').count(),0);
+ assert.equal(await page.evaluate(()=>window.epochDebug().generation),generation,"visiting homes cannot advance generations");
  await page.locator("#close-panel").click();
 
  // Help and menu are available independently of the village buildings.
@@ -230,6 +263,6 @@ try{
   await page.locator("#close-panel").click();
  }
  assert.deepEqual(errors,[],"contextual UI flows have no page errors");
- console.log("BROWSER CONTEXT PASS",JSON.stringify({globalTabs:2,buildingInterfaces:["technology","culture","dynasty"],stockpileTransfers:true,successionConfirmation:true,modalInputIsolation:true,pinnedPlacement:true,titleFocus:true,creatorFocus:true,panelFocus:true,queuedTravelCancelled:true,mobileWidths:[768,390,320]}));
+ console.log("BROWSER CONTEXT PASS",JSON.stringify({globalTabs:2,buildingInterfaces:["technology","culture","hut"],stockpileTransfers:true,noManualSuccession:true,modalInputIsolation:true,pinnedPlacement:true,titleFocus:true,creatorFocus:true,panelFocus:true,queuedTravelCancelled:true,mobileWidths:[768,390,320]}));
 }catch(error){console.error("Contextual UI regression failed:",error);throw error}
 finally{await browser.close()}

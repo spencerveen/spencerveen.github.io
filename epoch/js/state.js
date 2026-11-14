@@ -1,7 +1,7 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
 import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeBerries} from "./survival.js?v=20261114s";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
-import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114m";
+import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114u";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
@@ -12,7 +12,7 @@ import {harvestAtNode} from "./harvest.js?v=20261114q";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114m";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
- moveResidentHome,residentConnections} from "./residents.js?v=20261114n";
+ moveResidentHome,residentConnections} from "./residents.js?v=20261114u";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113k";

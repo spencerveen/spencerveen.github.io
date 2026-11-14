@@ -46,6 +46,18 @@ export async function finishWalking(page){
 export async function clickWorldObject(page,{stockpile=false,buildingId=null,tribeId=null,residentId=null,beforeClick=null}={}){
  await page.evaluate(({stockpile,buildingId,tribeId,residentId})=>{
   const w=window.__epochTestWorld;
+  // Browser tests deliberately stage the player beside the object to model
+  // having walked up with WASD. The game itself never teleports or auto-walks.
+  const target=stockpile?w.stockpile:
+   tribeId?[...w.tribeCamps.values()].find(c=>c.tribe.id===tribeId)?.leader:
+   residentId?w.people.find(p=>p.id===residentId):
+   w.currentVillage?.buildings?.find(b=>b.id===buildingId);
+  if(target){
+   w.player.position.x=target.x+2.9;
+   w.player.position.z=target.z+2.9;
+   w.player.position.y=w.groundY(w.player.position.x,w.player.position.z);
+   w.terrain.update(w.player.position.x,w.player.position.z);
+  }
   if(stockpile)w.focusStockpile?.();
   else if(tribeId)w.focusTribe?.(tribeId);
   else if(residentId)w.focusResident?.(residentId);

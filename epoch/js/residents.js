@@ -2,7 +2,7 @@
  * Persisted village resident identities, home assignments and life events.
  * Relationships in Phase 3 are factual shared histories, not invented kinship.
  */
-import {BUILDINGS,VILLAGE_START_CAPACITY} from "./settlement.js?v=20261114n";
+import {BUILDINGS,VILLAGE_START_CAPACITY} from "./settlement.js?v=20261114u";
 
 export const CAMP_HOME="camp";
 export const CAMP_RESIDENT_BEDS=VILLAGE_START_CAPACITY-1; // Founder uses one of five camp places.
@@ -58,7 +58,7 @@ export function housingUnits(village){
  for(const building of village?.buildings||[]){
   if(building.kind!=="family")continue;
   index++;
-  homes.push({id:building.id,label:"Family Hut "+index,capacity:BUILDINGS.family.capacity,
+  homes.push({id:building.id,label:"Hut "+index,capacity:BUILDINGS.family.capacity,
    x:building.x,z:building.z});
  }
  const residents=village?.residents||[];

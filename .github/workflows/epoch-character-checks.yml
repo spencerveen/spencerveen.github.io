@@ -38,6 +38,8 @@ jobs:
         run: node epoch/tests/check-recruitment.mjs
       - name: Validate individual resident profiles, housing and legacy migrations
         run: node epoch/tests/check-residents.mjs
+      - name: Validate Hut household views and no manual succession
+        run: node epoch/tests/check-huts.mjs
       - name: Validate hunger, stamina, berries, injuries and survivor succession
         run: node epoch/tests/check-survival.mjs
       - name: Validate title save slots, migration and character creation locks

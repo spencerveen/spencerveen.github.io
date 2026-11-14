@@ -1,14 +1,14 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114n";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114u";
 import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
-import {BUILDINGS} from "./settlement.js?v=20261114b";
-import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114n";
+import {BUILDINGS} from "./settlement.js?v=20261114u";
+import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114u";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114q";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
 const names={wood:"Wood",stone:"Stone",food:"Berries",vines:"Vines",knowledge:"Knowledge",culture:"Culture"};
-const contexts={lore:"tech",council:"culture",family:"dynasty",hearth:"building"};
-const titles={pack:["YOUR ADVENTURER","Inventory"],skills:["LEARN BY DOING","Skills"],village:["YOUR HOME BASE","Village stockpile"],tech:["TOOLMAKER'S SHELTER","Technology"],culture:["COUNCIL LODGE","Culture"],dynasty:["FAMILY HUT","Your dynasty"],building:["AROUND THE HEARTH","Cooking Hearth"]};
+const contexts={lore:"tech",council:"culture",family:"hut",hearth:"building"};
+const titles={pack:["YOUR ADVENTURER","Inventory"],skills:["LEARN BY DOING","Skills"],village:["YOUR HOME BASE","Village stockpile"],tech:["TOOLMAKER'S SHELTER","Technology"],culture:["COUNCIL LODGE","Culture"],hut:["HUT","Household"],building:["AROUND THE HEARTH","Cooking Hearth"]};
 const skillNotes={woodcutting:"Practice by gathering wood from trees.",mining:"Practice by gathering stone from deposits.",foraging:"Practice by picking wild berries.",crafting:"Practice by crafting equipment.",construction:"Practice by constructing village buildings.",survival:"Grow through gathering and life in the wilderness."};
 export class UI{
  constructor(state,world){
@@ -175,7 +175,7 @@ export class UI{
     '<p>'+esc(leader.name)+' now trusts you enough to relocate their entire tribe. The old camp will be dismantled and its people will become permanent residents.</p>'+
     '<p class="context-note">Free housing '+space+' · Arriving '+tribe.population+'. '+
     (!this.state.data.village.stockpile?"Establish your village stockpile before inviting anyone.":
-     !housing?"Build more Family Huts to make room for the entire tribe.":"Your village has room for everyone.")+'</p>'+
+     !housing?"Build more Huts to make room for the entire tribe.":"Your village has room for everyone.")+'</p>'+
     '<button type="button" data-action="tribe-invite" '+
     (!housing||!this.state.data.village.stockpile?"disabled":"")+
     '>Welcome '+tribe.population+' villagers</button></div>';
@@ -206,7 +206,7 @@ export class UI{
  openFounding(){return !this.state.data.village.stockpile&&this.openPanel("village")}
  openPanel(tab,{buildingId=null}={}){
   if(!titles[tab])return false;
-  if(["tech","culture","dynasty","building"].includes(tab)){const b=this.state.data.village.buildings.find(b=>b.id===buildingId);if(!b||contexts[b.kind]!==tab)return false}
+  if(["tech","culture","hut","building"].includes(tab)){const b=this.state.data.village.buildings.find(b=>b.id===buildingId);if(!b||contexts[b.kind]!==tab)return false}
   if(this.modal)this.close();if(tab!=="village")this.cancelPlacement();
   this.tab=tab;this.sourceBuildingId=buildingId;this.panelOpen=true;this.resetScroll=true;this.render();$("panel").focus({preventScroll:true});return true;
  }
@@ -219,10 +219,10 @@ export class UI{
   if(!d.technologies.includes("fire"))return {title:"Discover the first flame",description:"Click your Toolmaker's Shelter to research Control of Fire.",progress:have("wood")+"/4 wood · "+have("stone")+"/2 stone · "+d.knowledge+"/3 knowledge",action:"Find toolmaker",target:"lore"};
   if(!d.technologies.includes("tools"))return {title:"Shape your first tools",description:"Research Stone Toolmaking at your Toolmaker's Shelter.",progress:have("wood")+"/5 wood · "+have("stone")+"/6 stone · "+d.knowledge+"/7 knowledge",action:"Find toolmaker",target:"lore"};
   if(!d.axe)return {title:"A sharper start",description:"Craft a stone axe in Inventory to gather wood more efficiently.",progress:r.wood+"/2 wood · "+r.stone+"/3 stone",action:"Open Inventory",target:"pack"};
-  if(!this.hasBuilding("family"))return {title:"A home for your family",description:"Build a Family Hut through your stockpile. Click the hut to open your dynasty.",progress:p.items.wood+"/10 stored wood · "+p.items.stone+"/6 stored stone",action:"Find stockpile",target:"stockpile"};
+  if(!this.hasBuilding("family"))return {title:"Homes for your people",description:"Build a Hut through your stockpile. Click it to inspect the household.",progress:p.items.wood+"/10 stored wood · "+p.items.stone+"/6 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!this.hasBuilding("council"))return {title:"A place for your people",description:"Build a Council Lodge through your stockpile to begin your culture.",progress:p.items.wood+"/14 stored wood · "+p.items.stone+"/8 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!d.civics.includes("community"))return {title:"Become a community",description:"Click the Council Lodge to establish Tribal Community.",progress:have("wood")+"/8 wood · "+have("food")+"/6 berries · "+d.culture+"/5 culture",action:"Find council",target:"council"};
-  return {title:"What will you leave behind?",description:"Explore, shape your village, and visit a Family Hut to plan your legacy.",progress:"Your next chapter is yours to choose",action:"Find family hut",target:"family"};
+  return {title:"A village worth building",description:"Explore the wilderness, welcome new people, and build Huts for your growing community.",progress:"Your next chapter is yours to choose",action:"Find hut",target:"family"};
  }
  followObjective(){
   const target=this.objective().target;if(target==="found"){this.openFounding();return}if(target==="pack"){this.openPanel("pack");return}
@@ -247,17 +247,30 @@ export class UI{
    if(!done){if(req.length)html+='<small class="requirement-list">Requires '+esc(req.join(" · "))+'</small>';html+='<div class="research-costs cost-list">'+this.costChips(node.cost)+'</div>';if(eligible&&missing.length)html+='<small>Need '+esc(missing.join(" and "))+'</small>';html+='<button type="button" data-action="unlock" data-kind="'+kind+'" data-key="'+key+'" '+(!can?"disabled":"")+'>'+(can?(tech?"Research discovery":"Establish tradition"):!eligible?"Complete prerequisites":"More supplies needed")+'</button>'}html+='</article>';
   }return html+"</div>";
  }
- dynasty(){
-  const d=this.state.data,retained=d.civics.includes("apprenticeship")?25:d.civics.includes("oral")?15:8;
-  let html='<div class="dynasty-summary"><span class="kicker">YOUR FAMILY, YOUR LEGACY</span><h3>'+esc(d.hero.name)+'</h3><p>Age '+d.hero.age+' · Generation '+roman(d.generation)+'</p><span class="stat-pill">'+retained+'% skill XP inherited</span></div><div class="entry"><h3>The next generation</h3><p>Your descendant inherits this world, its buildings, supplies, discoveries and traditions. Personal skills begin with '+retained+'% of your experience.</p><button type="button" data-action="next">Plan succession →</button><small>You will review the change before continuing.</small></div><h3 class="section-heading">Family chronicle</h3>';
-  for(const g of [...d.lineage].reverse())html+='<div class="timeline"><b>'+esc(g.name)+' · Generation '+roman(g.gen)+'</b><span>'+esc(g.role)+' · '+Math.abs(g.start).toLocaleString()+' '+(g.start<0?"BCE":"CE")+'</span></div>';
-  const named=d.village.residents.find(r=>r.id===d.successorId);
-  html='<div class="entry"><h3>Successor upon death</h3><p>'+
-   (named?esc(named.name)+' will inherit leadership when you die.':
-    d.village.residents.length?'No successor named. A random surviving villager will take control.':
-    'Your founder is alone. If your character dies, the game ends.')+
-   '</p><small>Set a successor through Stockpile → People → View profile.</small></div>'+html;
-  html+='<h3 class="section-heading">Recent history</h3>';for(const item of d.history.slice(0,6))html+='<div class="timeline"><span>'+esc(item)+'</span></div>';return html;
+ hut(){
+  const building=this.contextBuilding();
+  if(!building||building.kind!=="family")return '<p class="context-note">This Hut is unavailable.</p>';
+  const unit=this.state.villageHousing().find(home=>home.id===building.id);
+  if(!unit)return '<p class="context-note">This Hut has no housing record.</p>';
+  const residents=(this.state.data.village.residents||[]).filter(p=>p.homeId===building.id);
+  let html='<div class="building-context"><span class="stat-pill">Village housing</span>'+
+   '<h3>'+esc(unit.label)+'</h3><p>A home for up to '+unit.capacity+' villagers.</p></div>'+
+   '<div class="village-population"><div><small>OCCUPIED BEDS</small><strong>'+
+   unit.occupied+' / '+unit.capacity+'</strong></div><span>'+
+   (unit.capacity-unit.occupied)+' available</span></div>'+
+   '<h3 class="section-heading">Who lives here?</h3>';
+  if(!residents.length)html+='<div class="entry"><h3>Unoccupied Hut</h3><p>No one has moved into this home yet. Assign villagers from the People section of your village stockpile.</p></div>';
+  for(const person of residents){
+   const description=person.originTribeName?
+    'From '+esc(person.originTribeName):'Longtime village resident';
+   html+='<div class="entry resident-row"><div><h3>'+esc(person.name)+'</h3>'+
+    '<p>Age '+person.age+' · '+(person.role==="formerLeader"?'Former tribal leader':'Villager')+
+    '</p><small>'+description+'</small></div>'+
+    '<button type="button" data-action="view-resident" data-id="'+esc(person.id)+
+    '">View profile</button></div>';
+  }
+  html+='<p class="context-note">To assign or move someone into this Hut, open Stockpile → People and select their profile. Designate future leaders from villager profiles; leadership changes happen when the current character dies.</p>';
+  return html;
  }
  building(){const def=BUILDINGS[this.contextBuilding()?.kind];return '<div class="building-context"><span class="stat-pill">Village gathering place</span><h3>'+esc(def?.name||"Village building")+'</h3><p>'+esc(def?.description||"")+'</p></div><p class="context-note">Cooking recipes are a future milestone. Your built hearth and fire are saved with this village.</p>'}
  render(){
@@ -271,7 +284,7 @@ export class UI{
   document.querySelectorAll("[data-tab]").forEach(n=>{const active=this.panelOpen&&n.dataset.tab===this.tab;n.classList.toggle("active",active);n.setAttribute("aria-expanded",String(active))});
   const modeChanged=placing!==this.lastPlacing;this.lastPlacing=placing;
   const panel=$("panel"),active=document.activeElement,hadFocus=panel.contains(active),focusData=hadFocus&&active!==panel?{...active.dataset}:null;
-  const html=this.tab==="pack"?this.pack():this.tab==="skills"?this.skills():this.tab==="village"?villagePanel(this):this.tab==="tech"?this.trees("tech"):this.tab==="culture"?this.trees("civic"):this.tab==="dynasty"?this.dynasty():this.building();
+  const html=this.tab==="pack"?this.pack():this.tab==="skills"?this.skills():this.tab==="village"?villagePanel(this):this.tab==="tech"?this.trees("tech"):this.tab==="culture"?this.trees("civic"):this.tab==="hut"?this.hut():this.building();
   if(this.panelMarkup!==html){const scroll=this.resetScroll||modeChanged?0:panel.scrollTop;panel.innerHTML=html;this.panelMarkup=html;panel.scrollTop=scroll;if(hadFocus){const candidate=focusData&&[...panel.querySelectorAll("button,input,select")].find(n=>Object.entries(focusData).every(([k,v])=>n.dataset[k]===v));(candidate&&!candidate.disabled?candidate:panel).focus({preventScroll:true})}}else if(this.resetScroll||modeChanged)panel.scrollTop=0;this.resetScroll=false;
  }
  handleAction(e){
@@ -320,10 +333,6 @@ export class UI{
   }
   if(action==="axe")message=this.state.craftAxe()?"Stone axe crafted. More wood with every swing.":"You need the technology and carried supplies.";
   else if(action==="unlock"){if(!this.canUseContext(btn.dataset.kind==="tech"?"tech":"culture")){this.toast("Visit the appropriate village building to continue.");return}message=this.state.unlock(btn.dataset.kind,btn.dataset.key)?"A new chapter of knowledge begins.":"Check prerequisites, inventory and stockpile supplies."}
-  else if(action==="next"){
-   if(!this.canUseContext("dynasty"))return;const d=this.state.data,retained=d.civics.includes("apprenticeship")?25:d.civics.includes("oral")?15:8;
-   this.showDialog("succession","Pass on your legacy",'<div class="confirm-summary"><p>'+esc(d.hero.name)+' will pass control to an 18-year-old descendant. The calendar advances 24 years.</p><p><strong>'+retained+'% of personal skill XP</strong> is retained. Your village, inventory, discoveries, traditions and world changes remain.</p></div><div class="dialog-actions"><button type="button" class="game-button alt" data-action="cancel-dialog">Keep playing</button><button type="button" data-action="confirm-next">Continue as descendant</button></div>');
-  }else if(action==="confirm-next"){if(this.modal!=="succession"||!this.canUseContext("dynasty"))return;const name=this.state.nextGeneration();this.close();message="Your legacy continues with "+name+"."}
   else if(action==="cancel-dialog"||action==="resume"){this.close();return}
   else if(action==="help"){this.help();return}
   else if(action==="save"){message=this.state.save()?"Saved in Slot "+(this.state.slot||1)+".":"Unable to save. Check this browser's storage.";if(this.modal==="menu"&&$("save-status"))$("save-status").textContent=message}
@@ -332,13 +341,13 @@ export class UI{
  }
  showDialog(kind,title,html){
   if(!this.modal)this.dialogReturnFocus=document.activeElement;this.modal=kind;this.world.inputBlocked=true;
-  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="succession"?"ONE GENERATION TO THE NEXT":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":kind==="death"?"A LIFE ENDS, A LEADER RISES":kind==="gameover"?"THE END OF A CIVILIZATION":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
+  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":kind==="death"?"A LIFE ENDS, A LEADER RISES":kind==="gameover"?"THE END OF A CIVILIZATION":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
   $("modal").classList.toggle("is-game-over",kind==="gameover");
   for(const id of ["scene","left","hud-tools","right","toggle"])$(id).inert=true;$("toggle").setAttribute("aria-expanded","true");
   ($("guide").querySelector("button:not(:disabled)")||$("close-modal")).focus({preventScroll:true});
  }
  menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
- help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Click the ground to walk there. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. Move people between homes with free beds from their profiles.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Family Hut → Dynasty.</strong> Follow your lineage and plan succession.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Click their people, huts or leader signs to approach and meet them. Press E near a leader to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Click a tree, rock or berry bush to gather; E gathers nearby. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
+ help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Use WASD to move; clicking terrain does not move your character. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. Move people between homes with free beds from their profiles.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Hut → Housing.</strong> See its current residents and available beds. Assign successors from the People profiles.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Walk up using WASD, then click a tribal leader, resident, hut or sign (or press E near the leader) to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Walk close to a tree, rock or berry bush, then click or press E to gather. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
  close(){
   if(!this.modal||this.modal==="gameover")return;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
   const target=this.dialogReturnFocus;(target?.isConnected&&!target.closest("[inert]")?target:$("toggle")).focus({preventScroll:true});
