@@ -1,5 +1,5 @@
 import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113n";
-import {villagePanel,selectVillagePlot,openStockpile,handleVillageAction} from "./village-ui.js?v=20261113m";
+import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114a";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261113m";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
@@ -8,7 +8,7 @@ const icons={wood:"🪵",stone:"🪨",food:"🫐",vines:"🌿"};
 const names={wood:"Wood",stone:"Stone",food:"Wild Berries",vines:"Vines",knowledge:"Knowledge",culture:"Culture"};
 export class UI{
  constructor(state,world){
-  this.state=state;this.world=world;this.tab="pack";this.selectedPlot="family_1";this.selectedSlot=null;
+  this.state=state;this.world=world;this.tab="pack";this.selectedBuildingId=null;this.selectedSlot=null;
   document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{
    this.tab=button.dataset.tab;
    this.render();
@@ -22,8 +22,8 @@ export class UI{
   $("modal").addEventListener("click",e=>{if(e.target===$("modal"))this.close()});
   window.addEventListener("keydown",e=>{if(e.key==="Escape")this.close()});
   $("panel").addEventListener("click",e=>this.handleAction(e));
-  state.onChange=()=>{this.world.setDiscovery(state.data.technologies.includes("fire"));this.world.syncVillage(state.data.village);this.world.highlightPlot(this.selectedPlot);this.world.applyAppearance(state.data.hero.appearance);this.render()};
-  this.world.setDiscovery(state.data.technologies.includes("fire"));this.world.syncVillage(state.data.village);this.world.highlightPlot(this.selectedPlot);
+  state.onChange=()=>{this.world.setDiscovery(state.data.technologies.includes("fire"));this.world.syncVillage(state.data.village);this.world.applyAppearance(state.data.hero.appearance);this.render()};
+  this.world.setDiscovery(state.data.technologies.includes("fire"));this.world.syncVillage(state.data.village);
   this.world.applyAppearance(state.data.hero.appearance);
   this.render();
  }
@@ -32,7 +32,7 @@ export class UI{
   setTimeout(()=>{n.classList.add("fade");setTimeout(()=>n.remove(),500)},3000);
  }
  status(title,detail){$("action").textContent=title;$("details").textContent=detail}
- selectPlot(id){selectVillagePlot(this,id)}
+ selectBuilding(id){selectVillageBuilding(this,id)}
  openStockpile(){openStockpile(this)}
  objective(){
   const d=this.state.data,r=d.resources;
@@ -91,7 +91,7 @@ export class UI{
   const d=this.state.data,o=this.objective();
   $("year").textContent=this.state.formatYear();$("generation").textContent="GEN "+roman(d.generation);
   $("ancestor-name").textContent=d.hero.name;$("ancestor-age").textContent="Age "+d.hero.age+" · "+(d.generation===1?"Founder":"Descendant");
-  $("settlement-status").textContent=d.village.stockpile?`${d.village.population}/${this.state.villageCapacity()} villagers · ${Object.keys(d.village.plots).length} built · Stockpile ${this.state.stockpileInfo().used}`:"Unfounded village · Choose a stockpile location";
+  $("settlement-status").textContent=d.village.stockpile?`${d.village.population}/${this.state.villageCapacity()} villagers · ${d.village.buildings.length} built · Stockpile ${this.state.stockpileInfo().used}`:"Unfounded village · Choose a stockpile location";
   $("science").textContent=d.knowledge;$("culture").textContent=d.culture;
   $("objective-title").textContent=o.title;$("objective-description").textContent=o.description;$("objective-progress").textContent=o.progress;
   document.querySelectorAll("[data-tab]").forEach(node=>{const active=node.dataset.tab===this.tab;node.classList.toggle("active",active);node.setAttribute("aria-selected",String(active))});
@@ -116,7 +116,7 @@ export class UI{
   $("guide").innerHTML=`<p><strong>Explore:</strong> WASD to walk, Shift to sprint, right-click and drag to orbit the camera, and scroll to zoom. Left-click the ground for automatic pathfinding.</p>
   <p><strong>Gather:</strong> Trees run out of wood and fall. Stone deposits disappear after being mined out. Berry bushes grow back their fruit two minutes after they have been harvested clean. You can permanently cut a bush down for three vines with <strong>Shift+click</strong>, <strong>Shift+E</strong> near it, or the Pack button. All resources remain limited by your ten-slot inventory (12 per stack).</p>
   <p><strong>Progress:</strong> Unlock Fire and Stone Toolmaking under Tech, then craft an axe in the Pack. Use the Village tab to build your first huts.</p>
-  <p><strong>Village:</strong> Open Village and place your founding stockpile on clear ground. Return to it with resources and deposit them into village storage. Village structures use those deposited materials and the five starter building sites appear around your stockpile. Each Family Hut provides room for three more villagers.</p>
+  <p><strong>Village:</strong> Open Village and move the first Stockpile preview with on-screen arrows or by clicking the ground. Confirm its location to found your village. Deposit resources there, then choose any building from the Construction catalog. Move its preview along the 2-meter grid with arrow keys or the on-screen arrows, rotate with R, and confirm. No preset building plots exist. Family Huts each add room for three people.</p>
   <p><strong>Character:</strong> Choose your founder’s name and appearance only when starting a New Game. Existing characters cannot be edited. Descendants are generated naturally.</p>
   <p><strong>Descendants:</strong> In the Dynasty tab, continue as a new generation. Civilization-wide achievements and buildings remain, while personal skills partly transfer.</p>
   <p><strong>Saving:</strong> Three browser-local save slots are available from the title screen. Progress autosaves, and Save &amp; Return to Title is available in the Dynasty tab. Existing progress is imported to Slot 1.</p>
