@@ -15,7 +15,7 @@ export const SKILLS=[
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
 ];
 export const TECH={
- fire:{name:"Control of Fire",description:"Use fuel and stone to establish a permanent campfire. The first step toward civilization.",cost:{wood:4,stone:2,knowledge:3},needs:[]},
+ fire:{name:"Control of Fire",description:"Learn to start and tend fire. Unlocks construction of the village Cooking Hearth; no campfire is built automatically.",cost:{wood:4,stone:2,knowledge:3},needs:[]},
  tools:{name:"Stone Toolmaking",description:"Shape stone tools and craft your first proper axe.",cost:{wood:5,stone:6,knowledge:7},needs:["fire"]},
  farming:{name:"Early Agriculture",description:"Experiment with growing food and preparing permanent farmland. A preview of our next age.",cost:{food:10,stone:5,knowledge:18},needs:["tools"],culture:["community"]}
 };
