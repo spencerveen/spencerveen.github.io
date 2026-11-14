@@ -76,10 +76,24 @@ function cookingStation(world,parent,m){
   const z=(i-1)*.28;
   obj(world,"box","hanging cooking hook",parent,[z*.5,1.42,z],[.075,.9,.08],m.stoneDark);
  }
+ // The campfire is part of the *constructed* Cooking Hearth. An empty
+ // blueprint never contains logs, fire stones or an active fire source.
  for(let i=0;i<11;i++){
   const a=2*Math.PI*i/11;
-  obj(world,"sphere","additional hearth stones",parent,[Math.cos(a)*1.45,.15,Math.sin(a)*1.45],[.48,.27,.4],m.stone);
+  obj(world,"sphere","hearth ring stone",parent,[Math.cos(a)*1.45,.15,Math.sin(a)*1.45],[.48,.27,.4],m.stone);
  }
+ for(let i=0;i<3;i++){
+  const log=obj(world,"cylinder","hearth firewood",parent,[0,.23,0],[.23,1.55,.23],m.wood);
+  log.rotation.z=Math.PI/2;
+  log.rotation.y=i*Math.PI*2/3;
+ }
+ world.flame=obj(world,"sphere","hearth flame",parent,[0,.70,0],[.58,1.04,.58],world.m.fire);
+ world.flame.isPickable=false;
+ world.flame.setEnabled(false);
+ world.fireLight=new B.PointLight("built cooking hearth glow",V(0,0,0),world.scene);
+ world.fireLight.intensity=0;
+ world.fireLight.diffuse=new B.Color3(1,.58,.2);
+ world.fireLight.range=10;
 }
 function createLabel(world,parent,label,m){
  // A readable floating marker to identify the 3D construction location.
@@ -154,6 +168,13 @@ export function syncVillageWorld(world,village){
   if(built && plot.kind!=="hearth")
    world.obstacles.push({x:site.x,z:site.z,r:plot.kind==="council"?2.6:2.0,plotId:plot.id});
  }
+ const hearth=world.villagePlots.get("hearth_1");
+ world.hearthBuilt=!!hearth?.built;
+ if(hearth&&world.fireLight){
+  const x=hearth.plot.x,z=hearth.plot.z;
+  world.fireLight.position=V(x,world.groundY(x,z)+1.12,z);
+ }
+ world.updateHearthFire();
 }
 export function highlightVillagePlot(world,id){
  for(const item of world.villagePlots?.values()||[]){
