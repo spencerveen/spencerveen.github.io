@@ -4,7 +4,8 @@ import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
 import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
 import {BUILDINGS} from "./settlement.js?v=20261114cook1";
-import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114fish1";
+import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114jobs1";
+import {VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs1";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114fish1";
 import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
 const $=id=>document.getElementById(id);
@@ -133,9 +134,15 @@ export class UI{
    '</span><h3>'+esc(resident.name)+'</h3><p>Age '+resident.age+' · '+arrival+'</p></div>'+
    '<div class="entry"><h3>Life in the village</h3>'+
    '<p><strong>Home:</strong> '+esc(homeLabel)+'</p>'+
-   '<p><strong>Status:</strong> Settled · No village job assigned</p>'+
+   '<p><strong>Job:</strong> '+esc(VILLAGER_JOBS[resident.job]?.name||"Unassigned")+'.</p>'+
    '<p><strong>Joined:</strong> '+year(resident.joinedYear)+'</p>'+
-   '<p class="context-note">Work habits, happiness, loyalty and personality will be developed in later phases.</p></div>'+
+   '<p class="context-note">Assigned workers visit available resources within 56m of the stockpile and return with supplies. Rest, hunger and happiness come in later phases.</p></div>'+
+   '<h3 class="section-heading">Work assignment</h3>'+
+   '<p class="context-note">Choose a Stone Age profession. Unassigned villagers remain at home.</p>'+
+   '<div class="resident-job-options">'+Object.entries(VILLAGER_JOBS).map(([id,job])=>
+    '<button type="button" data-action="resident-job" data-id="'+esc(resident.id)+
+    '" data-job="'+id+'" class="'+(resident.job===id?"active":"")+'" '+
+    (resident.job===id?'aria-pressed="true"':'aria-pressed="false"')+'>'+esc(job.name)+'</button>').join("")+'</div>'+
    '<div class="entry"><h3>Leadership</h3><p>'+
    (selected?esc(resident.name)+' is your designated successor.':
     'If your character dies, a named successor takes control. Without one, a surviving villager is chosen randomly.')+'</p>'+
@@ -207,7 +214,7 @@ export class UI{
    '"><span style="width:'+trust+'%"></span></div>'+
    '<small>Helping the tribe earns trust. Three unique requests can establish a peaceful alliance.</small></div>'+
    interaction+'<h3 class="section-heading">People of '+esc(tribe.name)+'</h3>'+members+
-   '<p class="context-note">Peaceful recruitment only. Combat, loyalty and villager jobs are planned for later phases.</p>'+
+   '<p class="context-note">Peaceful recruitment only. Invited villagers can be given jobs through Village → People.</p>'+
    '<button type="button" class="game-button alt" data-action="resume">Return to the wilderness</button>';
   this.showDialog("tribe",tribe.name,html);
   return true;
@@ -365,6 +372,14 @@ export class UI{
     this.openResident(this.activeResidentId);
     this.toast(id?"A successor has been named.":"Successor designation cleared.");
    }
+   return;
+  }
+  if(action==="resident-job"){
+   if(this.modal!=="resident"||btn.dataset.id!==this.activeResidentId)return;
+   if(this.state.assignResidentJob(this.activeResidentId,btn.dataset.job)){
+    this.openResident(this.activeResidentId);
+    this.toast("Work assignment saved.");
+   }else this.toast("That assignment could not be changed.");
    return;
   }
   if(action==="resident-home"){
