@@ -463,12 +463,12 @@ export class GameState{
    removed=status.remaining===amount&&task.resource!=="food";
    apply=()=>recordResourceNode(this.data.resourceNodes,status,status.remaining-amount);
   }else if(task.kind==="fish"&&task.job==="fisher"){
-   if(typeof task.id!=="string"||!/^fish:-?\\d+,-?\\d+:\\d+$/.test(task.id)||
+   if(typeof task.id!=="string"||!/^fish:-?\d+,-?\d+:\d+$/.test(task.id)||
       this.data.fishCatches[task.id])return {ok:false,reason:"Fish already caught."};
    goods={fish_meat:1};
    apply=()=>{this.data.fishCatches[task.id]=true;removed=true};
   }else if(task.kind==="hunt"&&task.job==="hunter"){
-   if(typeof task.id!=="string"||!/^wildlife:[-\\w:,]+$/.test(task.id)||
+   if(typeof task.id!=="string"||!/^wildlife:[-\w:,]+$/.test(task.id)||
       !["deer","rabbit"].includes(task.species))return {ok:false};
    const animal={id:task.id,species:task.species},status=this.wildlifeStatus(animal);
    if(!status||status.dead||status.looted)return {ok:false,reason:"Animal unavailable."};
