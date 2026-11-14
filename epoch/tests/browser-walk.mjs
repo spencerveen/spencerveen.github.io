@@ -37,7 +37,7 @@ try{
    && s.npcAttachments?.length===0;
  },{timeout:45000});
  const idle=await page.evaluate(()=>window.epochDebug());
- assert.equal(idle.forest.loaded,25,"25 terrain chunks surround the player");
+ assert.equal(idle.forest.loaded,81,"81 terrain chunks surround the player");
  assert.equal(idle.forest.detailed,9,"only nine nearby chunks contain forest meshes");
  assert(idle.forest.resources>=12,"the forest should provide gathering resources");
  assert(idle.forest.animals>=1,"deer still inhabit the forest");
@@ -141,8 +141,8 @@ try{
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.stockpile?.placed===true,null,{timeout:45000});
  const reloadedForest=await page.evaluate(()=>window.epochDebug().forest);
  assert.equal(reloadedForest.seed,idle.forest.seed,"reloading must preserve the world seed");
- assert.equal(reloadedForest.loaded,25,"reload recreates exactly 25 visible terrain chunks");
- assert.equal(reloadedForest.detailed,9,"reload keeps detailed forest meshes bounded");
+ assert.equal(reloadedForest.loaded,81,"reload recreates exactly 81 visible terrain chunks");
+ assert.equal(reloadedForest.detailed,25,"reload keeps detailed forest meshes bounded");
  assert.equal(reloadedForest.resources,idle.forest.resources-7,"felled tree and exhausted rock meshes do not respawn after reload");
  const nodes=await page.evaluate(()=>window.epochDebug().resourceNodes);
  assert.equal(nodes.removed,2,"two persistently removed resource nodes");
