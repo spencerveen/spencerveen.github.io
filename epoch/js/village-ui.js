@@ -4,6 +4,7 @@ import {STOCKPILE_ITEM_IDS,ITEMS,itemCapacity,toolMaxDurability,toolCondition} f
 import {CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 import {VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
+import {cargoLabel} from "./villager-hauling.js?v=20261114haul1";
 const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
 const prereq=id=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[id]||id);
 const near=ui=>nearStockpile(ui.state.data.village.stockpile,ui.world.player.position.x,ui.world.player.position.z);
@@ -61,8 +62,11 @@ const placementPanel=(candidate,stockpile,ui)=>{
 };
 function storagePanel(ui){
  const state=ui.state,pile=state.data.village.stockpile,storage=state.stockpileInfo(),atHome=near(ui);
+ const hauling=state.villageHaulingStatus();
  let html=`<div class="pack-capacity"><span>Village storage</span><strong>${storage.used} / ${STOCKPILE_CAPACITY}</strong></div>
-  <p class="context-note">Bring gathered materials here. All village buildings use these stored supplies.</p>
+  <p class="context-note">Only delivered materials can be used for construction. Workers physically haul harvested supplies back to this store.</p>
+  <div class="haul-snapshot"><span>Worker cargo in transit</span><strong>${hauling.inTransit} items</strong></div>
+  ${hauling.carriers.length?'<p class="context-note">'+hauling.carriers.map(p=>esc(p.name)+": "+esc(cargoLabel(p.items))).join(" · ")+'</p>':""}
   <div class="stockpile-primary-actions">
    <button type="button" data-action="deposit-all-stockpile" ${!atHome||state.inventoryUsed()===0||storage.used>=STOCKPILE_CAPACITY?"disabled":""}>Deposit all materials</button>
    ${!atHome?'<p class="context-note">Move closer with WASD to use storage.</p>':""}
@@ -70,12 +74,12 @@ function storagePanel(ui){
   <div class="stockpile-resource-list">`;
  for(const id of STOCKPILE_ITEM_IDS.filter(id=>
   ["wood","stone","berries","vines"].includes(id)||
-  state.inventoryCount(id)>0||(storage.items[id]||0)>0)){
+  state.inventoryCount(id)>0||(storage.items[id]||0)>0||(hauling.byItem[id]||0)>0)){
   const carried=state.inventoryCount(id),stored=storage.items[id]||0;
   const deposit=Math.min(12,carried,STOCKPILE_CAPACITY-storage.used);
   const take=Math.min(12,stored,itemCapacity(state.data.inventory,id));
   html+=`<div class="stockpile-resource-row"><span>${ITEMS[id].icon} ${esc(ITEMS[id].name)}</span>
-   <span class="stockpile-balance">Stored <b>${stored}</b> · Carried <b>${carried}</b></span>
+   <span class="stockpile-balance">Stored <b>${stored}</b> · Workers carrying <b>${hauling.byItem[id]||0}</b> · Your pack <b>${carried}</b></span>
    <div class="stockpile-actions">
     <button type="button" data-action="deposit-stockpile" data-item="${id}" ${!atHome||deposit<=0?"disabled":""}>Deposit ${deposit>0?deposit:12}</button>
     <button type="button" class="game-button alt" data-action="withdraw-stockpile" data-item="${id}" ${!atHome||take<=0?"disabled":""}>Take ${take>0?take:12}</button>
@@ -94,7 +98,7 @@ function peoplePanel(ui){
  let html='<div class="village-population"><div><small>SETTLEMENT POPULATION</small><strong>'+
   state.data.village.population+' / '+state.villageCapacity()+
   '</strong></div><span>'+people.length+' other residents · '+people.filter(p=>p.job&&p.job!=="idle").length+' workers</span></div>'+
-  '<p class="context-note">Assign jobs through individual profiles. Villagers travel to nearby work sites and bring gathered supplies back to your stockpile.</p>'+
+  '<p class="context-note">Give villagers jobs in their profiles. Watch them travel, collect, and carry real supplies back to the stockpile. Carried supplies survive reloads.</p>'+
   '<h3 class="section-heading">Housing</h3>';
  for(const h of homes){
   html+='<div class="timeline"><b>'+esc(h.label)+'</b><span>'+
@@ -109,8 +113,14 @@ function peoplePanel(ui){
  for(const person of people){
   const home=homes.find(h=>h.id===person.homeId);
   const source=person.originTribeName||"Original settler";
+  const actor=ui.world.people.find(p=>p.id===person.id);
+  const mode=actor?.work?.mode||"idle";
+  const status={idle:"At home",outbound:"Traveling to work",working:"Gathering",
+   returning:"Carrying supplies home",waiting:"Waiting to unload",stuck:"Seeking a safe route"}[mode]||"At home";
+  const load=cargoLabel(person.cargo);
+  const workNote=load?" · Carrying "+esc(load):" · "+status;
   html+='<div class="entry resident-row"><div><h3>'+esc(person.name)+'</h3><p>Age '+person.age+
-   ' · '+esc(home?.label||"Communal camp")+'</p><small>'+esc(VILLAGER_JOBS[person.job]?.name||"Unassigned")+' · '+
+   ' · '+esc(home?.label||"Communal camp")+'</p><small>'+esc(VILLAGER_JOBS[person.job]?.name||"Unassigned")+workNote+' · '+
    (person.recruitment==="peaceful"?"Welcomed from "+esc(source):"Longtime villager")+
    '</small></div><button type="button" data-action="view-resident" data-id="'+esc(person.id)+'">View profile</button></div>';
  }
