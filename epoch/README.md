@@ -107,6 +107,12 @@ The terrain now includes **seeded mountain belts and long, curving ridges** beyo
 
 This first pass concentrates on the terrain shapes. Rocky slopes, cliffs, slope-aware navigation, specialized resources, and mountain-fed water drainage are separate follow-up improvements.
 
+## Mountain implementation 2 — Rocky slopes and exposed stone
+
+Mountains now transition from forest green to subdued foothill scrub and gray-brown exposed rock as their uplift and slope steepness increase. A shared terrain-specific material uses per-vertex coloring, with weathered color bands on higher rocky faces and lighter rock highlights toward the peaks. Riverbanks retain their subtle muted transition, and old villages remain green because the previous terrain-protection snapshots are reused.
+
+In the nine detailed terrain chunks nearest the player, a few low-poly **decorative bedrock outcrops** appear on steep, dry mountain ground. They are seed-based, not collectable stone deposits, have no collision or harvest interaction, and disappear when their chunks unload. This pass **does not change mountain heights, village positions, water boundaries, movement rules or saves**. Navigable mountain passes and steep-slope collision are planned in the next implementation.
+
 ## Inventory, resources, and world
 
 Knowledge comes from founding the stockpile (**+3**), constructing the first of each building type (Toolmaker's Shelter **+6**, Hut **+3**, Council Lodge **+3**, Cooking Hearth **+4**), and milestones at **3 buildings (+3)**, **6 buildings (+4)**, and **10 buildings (+5)**. Repeat huts cannot repeatedly award a first-build bonus. An existing Toolmaker's Shelter generates **1 Knowledge per 60 seconds of active gameplay** until villager research assignments are available. Gathering and crafting award skill XP, not Knowledge. Culture's existing earning rules remain temporary until the villager system is built.

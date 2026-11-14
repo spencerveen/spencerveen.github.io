@@ -2,6 +2,7 @@ import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeigh
  forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261114y";
 import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114mountains1";
 import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114m";
+import {terrainAppearanceAt,mountainOutcropSites} from "./mountain-appearance.js?v=20261114mountainlooks2";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 
@@ -98,16 +99,22 @@ export class ForestChunks{
    {width:CHUNK_SIZE,height:CHUNK_SIZE,subdivisions:TERRAIN_SUBDIVISIONS,updatable:true},scene);
   mesh.position=V(x,0,z);
   const positions=mesh.getVerticesData(B.VertexBuffer.PositionKind);
-  const terrainColors=[];
+  const terrainColors=[],waterSamples=[];
   for(let i=0;i<positions.length;i+=3){
    const sample=this.waterAt(x+positions[i],z+positions[i+2]);
    positions[i+1]=sample.depth>0?sample.bedY:sample.surfaceY-.055;
-   const shore=Math.max(0,1-sample.shore/2.8);
-   // Warm, subdued riverbanks instead of the saturated yellow fringe.
-   terrainColors.push(1+shore*.32,1+shore*.13,1+shore*.055,1);
+   waterSamples.push(sample);
   }
   const normals=[];
   B.VertexData.ComputeNormals(positions,mesh.getIndices(),normals);
+  for(let i=0;i<positions.length;i+=3){
+   const nx=normals[i]||0,ny=normals[i+1]??1,nz=normals[i+2]||0;
+   const grade=Math.hypot(nx,nz)/Math.max(.08,Math.abs(ny));
+   const wx=x+positions[i],wz=z+positions[i+2];
+   const visual=terrainAppearanceAt(wx,wz,this.seed,
+    this.mountainProtectedSites,waterSamples[i/3],grade);
+   terrainColors.push(...visual.color);
+  }
   mesh.updateVerticesData(B.VertexBuffer.PositionKind,positions);
   mesh.updateVerticesData(B.VertexBuffer.NormalKind,normals);
   if(B.VertexBuffer.ColorKind&&mesh.setVerticesData){
@@ -115,7 +122,7 @@ export class ForestChunks{
    mesh.useVertexColors=true;
   }
   mesh.refreshBoundingInfo();
-  mesh.material=world.m.earth;
+  mesh.material=world.m.terrainSurface||world.m.earth;
   mesh.metadata={terrain:true,chunkKey:key};
   mesh.isPickable=true;
   // Clip the water surface to the actual wet portion of each square.
@@ -152,6 +159,22 @@ export class ForestChunks{
   const tribe=active?candidate:null;
   const reservation=active||relocated?candidate:null;
   const withinCamp=(x,z,extra=0)=>reservation&&Math.hypot(x-reservation.x,z-reservation.z)<TRIBE_CLEARING_RADIUS+extra;
+  const rawResources=forestObjects(this.seed,cx,cz);
+  // Bedrock is decoration, not a new harvestable stone deposit or collider.
+  const outcrops=mountainOutcropSites(this.seed,cx,cz,
+   (px,pz)=>this.heightAt(px,pz),(px,pz)=>this.waterAt(px,pz),
+   this.mountainProtectedSites,rawResources);
+  for(const site of outcrops){
+   if(withinCamp(site.x,site.z,3))continue;
+   const rock=B.MeshBuilder.CreatePolyhedron("Mountain outcrop ["+key+"]",
+    {type:2,size:1},scene);
+   rock.position=V(site.x,site.y,site.z);
+   rock.scaling=V(site.width,site.height,site.depth);
+   rock.rotation=V(site.pitch,site.yaw,site.roll);
+   rock.material=site.material?world.m.rockFaceLight:world.m.rockFaceDark;
+   rock.isPickable=false;
+   chunk.vegetation.push(rock);
+  }
   const overlapsWater=(x,z,radius)=>{
    if(this.waterAt(x,z).depth>.025)return true;
    for(let i=0;i<8;i++){
@@ -161,7 +184,7 @@ export class ForestChunks{
    }
    return false;
   };
-  for(const item of forestObjects(this.seed,cx,cz)){
+  for(const item of rawResources){
    const rootRadius=item.shape==="tree"?1.05:item.shape==="rock"?.95:.65;
    if(withinCamp(item.x,item.z)||overlapsWater(item.x,item.z,rootRadius))continue;
    // Generated positions repeat, but harvesting changes persist by stable ID.

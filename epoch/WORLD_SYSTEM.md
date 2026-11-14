@@ -62,6 +62,14 @@ For pre-mountain save slots, the `mountainProtectedSites` array records the hist
 
 Visual rock/cliff materials, steep-slope movement restrictions, specialized wildlife and mountain resources are planned separately. Unit checks live in `tests/check-mountains.mjs`.
 
+## Rocky mountain visual pass (Implementation 2)
+
+`js/mountain-appearance.js` adds deterministic color blending for the existing terrain heightfield. Exposed stone increases with mountain uplift and the actual mesh-normal slope; high ridge faces gain subtle weathered bedding and crest highlights, with gradual green-to-rock transitions. The mesh keeps 16 subdivisions per chunk and shares a single terrain material with vertex colors. Water surfaces and river shore treatments remain separate.
+
+The nearby detailed 3×3 terrain window also contains occasional seed-based faceted bedrock outcrops. These visuals are deliberately non-interactive: they do not consume stockpile materials, create harvest nodes, affect building placement, or change movement. They stream and dispose using the existing chunk lifecycle. Mountain geometry, world seeds, save records, and one-time building protection areas are unchanged.
+
+Pure logic and rendering checks are in `tests/check-mountain-appearance.mjs`. Steep-slope movement rules, mountain traversal and new resources are intentionally deferred to later phases.
+
 ## Planned future world improvements
 
 1. **Performance profiling:** mesh instancing, worker-based chunk generation, and asynchronous chunk-load pacing

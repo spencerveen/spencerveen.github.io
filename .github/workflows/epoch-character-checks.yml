@@ -31,6 +31,7 @@ jobs:
           node --check epoch/js/equipment.js
           node --check epoch/js/water-generation.js
           node --check epoch/js/mountain-generation.js
+          node --check epoch/js/mountain-appearance.js
           node --check epoch/js/forest-chunks.js
       - name: Validate contextual interfaces and research/culture bootstrap
         run: node epoch/tests/check-contextual-ui.mjs
@@ -68,6 +69,8 @@ jobs:
         run: node epoch/tests/check-water.mjs
       - name: Validate mountain ranges, foothills and protected settlements
         run: node epoch/tests/check-mountains.mjs
+      - name: Validate slope-driven stone colors and streamed rock outcrops
+        run: node epoch/tests/check-mountain-appearance.mjs
       - name: Validate village and building save compatibility
         run: node epoch/tests/check-settlement.mjs
       - name: Inspect game models

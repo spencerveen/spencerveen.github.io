@@ -65,7 +65,8 @@ globalThis.BABYLON={
  Mesh:FakeMesh,
  MeshBuilder:{
   CreateGround:(name)=>new FakeMesh(name),
-  CreateSphere:(name)=>new FakeMesh(name)
+  CreateSphere:(name)=>new FakeMesh(name),
+  CreatePolyhedron:(name)=>new FakeMesh(name)
  },
  VertexBuffer:{PositionKind:"pos",NormalKind:"norm"},
  VertexData:FakeVertexData

@@ -6,7 +6,7 @@ import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockp
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114y";
-import {ForestChunks} from "./forest-chunks.js?v=20261114mountains1";
+import {ForestChunks} from "./forest-chunks.js?v=20261114mountainlooks2";
 import {createTribeWorld} from "./tribe-world.js?v=20261114m";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;
@@ -68,6 +68,10 @@ export class World {
    stone:this.mat("stone","#889089"),stoneDark:this.mat("stoneDark","#5b6661"),berries:this.mat("berries","#9d3832"),
    skin:this.mat("skin","#c99470"),hair:this.mat("hair","#3f3328"),cloth:this.mat("cloth","#806445"),
    river:this.mat("river","#4b8190"),fire:this.mat("fire","#ef9c45"),flame:this.mat("flame","#f6d181"),grass:this.mat("grass","#74986b")};
+  this.m.terrainSurface=this.mat("Layered mountain terrain","#ffffff");
+  this.m.terrainSurface.specularColor=new B.Color3(.016,.017,.016);
+  this.m.rockFaceDark=this.mat("Exposed mountain stone","#686d69");
+  this.m.rockFaceLight=this.mat("Weathered highland stone","#89877e");
   this.m.river.alpha=.93;this.m.river.backFaceCulling=false;
   this.m.river.specularColor=new B.Color3(.19,.25,.27);
   this.m.river.specularPower=48;
