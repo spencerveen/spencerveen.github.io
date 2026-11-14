@@ -51,7 +51,8 @@ The title screen offers New Game, Continue, and three independent local save slo
 | Left-click ground | Auto-walk to a position |
 | Left-click resource / E nearby | Approach and gather / gather a nearby resource |
 | Shift-click berry bush / Shift + E nearby | Permanently clear a bush for vines |
-| Right mouse drag / mouse wheel | Rotate / zoom the camera |
+| Hold arrow keys (outside build mode) | Smoothly rotate left/right or tilt up/down, easing to a stop |
+| Right mouse drag / mouse wheel | Optional camera rotation / zoom |
 | I / K | Toggle Inventory / Skills |
 | Escape / game-menu button | Close the active panel or dialog, or open the game menu |
 | Ground click during placement | Pin the stockpile or building preview |

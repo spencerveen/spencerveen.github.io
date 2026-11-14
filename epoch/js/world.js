@@ -15,6 +15,7 @@ export class World {
   this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;this.getResourceStatus=getResourceStatus;this.onFoundStockpile=onFoundStockpile;this.onOpenStockpile=onOpenStockpile;this.onBuild=onBuild;this.getBuildStatus=getBuildStatus;this.onPlacementChange=onPlacementChange;this.worldSeed=seed>>>0;
   this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onBuildingSelect;this.placingBuilding=null;this.buildingCandidate=null;this.village=null;this.placingStockpile=false;this.stockpileTarget=false;this.stockpile=null;this.stockpileCandidate=null;this.homePositionKey=null;
   this._inputBlocked=false;this.placementPinned=false;this.cameraDragging=false;this.focusTarget=null;
+  this.cameraKeys={};this.cameraOrbitVelocity={horizontal:0,vertical:0};
   this.stockpileInRange=undefined;this.onInteractionRangeChange=()=>{};this.hoveredInteraction=null;
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
@@ -29,7 +30,7 @@ export class World {
   if(blocked===this._inputBlocked)return;
   this._inputBlocked=blocked;
   if(blocked){
-   this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.cameraDragging=false;
+   this.keys={};this.resetCameraKeys();this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.cameraDragging=false;
    if(this.cameraPointerId!=null&&this.canvas.hasPointerCapture?.(this.cameraPointerId))
     this.canvas.releasePointerCapture(this.cameraPointerId);
    this.cameraPointerId=null;
@@ -250,6 +251,7 @@ export class World {
  beginStockpilePlacement(){
   if(this.stockpile)return false;
   this.cancelBuildingPlacement();
+  this.resetCameraKeys();
   this.placingStockpile=true;this.placementPinned=false;this.focusTarget=null;this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.path=[];
   const initial=this.findSuggestedStockpileSite();
   const p=this.player.position;
@@ -314,6 +316,7 @@ export class World {
  beginBuildingPlacement(kind,village){
   if(!BUILDINGS[kind]||!village?.stockpile)return false;
   this.cancelStockpilePlacement();
+  this.resetCameraKeys();
   this.placingBuilding=kind;this.village=village;this.placementPinned=false;this.focusTarget={x:village.stockpile.x,z:village.stockpile.z};this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.path=[];
   const start=choosePlacement(village,this,kind);
   this.previewBuildingAt(start?.x??village.stockpile.x+8,start?.z??village.stockpile.z+8,0);
@@ -373,6 +376,24 @@ export class World {
   }else this.onStatus("Cannot reach stockpile","Try approaching from another side.");
   return success;
  }
+ resetCameraKeys(){
+  this.cameraKeys={};
+  this.cameraOrbitVelocity.horizontal=0;
+  this.cameraOrbitVelocity.vertical=0;
+ }
+ updateKeyboardCamera(dt){
+  // Hold-to-orbit with frame-based easing instead of stepped key-repeat motion.
+  const keys=this.cameraKeys,v=this.cameraOrbitVelocity;
+  const x=(keys.arrowright?1:0)-(keys.arrowleft?1:0);
+  const y=(keys.arrowdown?1:0)-(keys.arrowup?1:0);
+  const blend=1-Math.exp(-dt*((x||y)?10:14));
+  v.horizontal+=(x*1.55-v.horizontal)*blend;
+  v.vertical+=(y*1.10-v.vertical)*blend;
+  if(Math.abs(v.horizontal)<.0001)v.horizontal=0;
+  if(Math.abs(v.vertical)<.0001)v.vertical=0;
+  this.camera.alpha+=v.horizontal*dt;
+  this.camera.beta=clamp(this.camera.beta+v.vertical*dt,this.camera.lowerBetaLimit,this.camera.upperBetaLimit);
+ }
  bindInput(){
   const isText=()=>["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
   window.addEventListener("keydown",e=>{
@@ -403,20 +424,25 @@ export class World {
     }
     if(key==="e")return;
    }
-   // Keep keyboard camera orbit during exploration without stealing arrow keys
-   // from placement controls, text fields or focused interface buttons.
-   const orbit={arrowleft:[-.11,0],arrowright:[.11,0],arrowup:[0,-.08],arrowdown:[0,.08]}[key];
-   if(orbit&&(document.activeElement===this.canvas||document.activeElement===document.body)){
+   // Sample held arrow keys in the render loop, independent of OS key repeat.
+   if(["arrowleft","arrowright","arrowup","arrowdown"].includes(key)&&
+     (document.activeElement===this.canvas||document.activeElement===document.body)){
     e.preventDefault();
-    this.camera.alpha+=orbit[0];
-    this.camera.beta=clamp(this.camera.beta+orbit[1],this.camera.lowerBetaLimit,this.camera.upperBetaLimit);
+    this.cameraKeys[key]=true;
     return;
    }
    if(["w","a","s","d","shift","e"].includes(key)){e.preventDefault();this.keys[key]=true;}
    if(key==="e")this.interactNearby(e.shiftKey?"cut":"gather");
   });
-  window.addEventListener("keyup",e=>{this.keys[e.key.toLowerCase()]=false});
-  window.addEventListener("blur",()=>{this.keys={};this.cameraDragging=false});
+  window.addEventListener("keyup",e=>{
+   const key=e.key.toLowerCase();
+   this.keys[key]=false;
+   if(key in this.cameraKeys)this.cameraKeys[key]=false;
+  });
+  window.addEventListener("blur",()=>{this.keys={};this.resetCameraKeys();this.cameraDragging=false});
+  window.addEventListener("focusin",e=>{
+   if(e.target!==this.canvas&&e.target!==document.body)this.cameraKeys={};
+  });
   window.addEventListener("pointerup",e=>{if(e.button===2)this.cameraDragging=false});
   this.scene.onPointerObservable.add(e=>{
    if(this.inputBlocked)return;
@@ -579,7 +605,9 @@ export class World {
   return path;
  }
  update(dt){
-  if(this.inputBlocked){this.keys={};this.path=[];this.target=null;this.stockpileTarget=false;}
+  if(this.inputBlocked){this.keys={};this.resetCameraKeys();this.path=[];this.target=null;this.stockpileTarget=false;}
+  else if(this.placingStockpile||this.placingBuilding)this.resetCameraKeys();
+  else this.updateKeyboardCamera(dt);
   this.cooldown=Math.max(0,this.cooldown-dt);
   const p=this.player.position,c=this.camera;
   const forward=V(-Math.cos(c.alpha),0,-Math.sin(c.alpha)),right=V(forward.z,0,-forward.x);

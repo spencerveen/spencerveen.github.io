@@ -72,9 +72,29 @@ try{
  await page.mouse.wheel(0,450);
  await page.waitForTimeout(160);
  assert(Math.abs((await readCamera()).radius-orbitEnd.radius)>.1,"mouse wheel zooms the camera");
- const arrowStart=await readCamera();
- await page.keyboard.press("ArrowRight");
- assert(Math.abs((await readCamera()).alpha-arrowStart.alpha)>.05,"arrow key orbit remains available outside build mode");
+ await page.keyboard.down("ArrowRight");
+ const arrowMotion=await page.evaluate(()=>{
+  const w=window.__epochTestWorld,positions=[];
+  w.cameraOrbitVelocity.horizontal=0;
+  const before=w.camera.alpha;
+  for(let i=0;i<28;i++){w.update(1/60);positions.push(w.camera.alpha)}
+  return {before,positions};
+ });
+ await page.keyboard.up("ArrowRight");
+ const firstStep=arrowMotion.positions[0]-arrowMotion.before;
+ const middleStep=arrowMotion.positions[13]-arrowMotion.positions[12];
+ assert(firstStep>0&&middleStep>firstStep*2,"held arrow smoothly accelerates");
+ assert(arrowMotion.positions.at(-1)-arrowMotion.before>.3,"held arrow continuously rotates");
+ const afterRelease=await readCamera();
+ await page.evaluate(()=>{const w=window.__epochTestWorld;for(let i=0;i<60;i++)w.update(1/60)});
+ assert((await readCamera()).alpha>afterRelease.alpha,"camera eases to a stop");
+ assert(Math.abs(await page.evaluate(()=>window.__epochTestWorld.cameraOrbitVelocity.horizontal))<.001,"camera stops drifting");
+ const tiltStart=(await readCamera()).beta;
+ await page.keyboard.down("ArrowUp");
+ await page.evaluate(()=>{const w=window.__epochTestWorld;for(let i=0;i<22;i++)w.update(1/60)});
+ await page.keyboard.up("ArrowUp");
+ assert((await readCamera()).beta<tiltStart-.07,"arrow up smoothly tilts");
+ await page.evaluate(()=>{const w=window.__epochTestWorld;for(let i=0;i<50;i++)w.update(1/60)});
 
  await page.locator('[data-tab="pack"]').click();
  assert.equal(await page.locator(".pack-slot").count(),10);
@@ -161,6 +181,12 @@ try{
  await page.mouse.click(450,650);
  const pinned=await page.evaluate(()=>({candidate:{...window.epochDebug().settlement.buildingCandidate},pinned:window.__epochTestWorld.placementPinned}));
  assert(pinned.pinned,"a terrain click pins the selected placement");
+ const buildAngle=(await readCamera()).alpha,buildX=await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate.x);
+ await page.keyboard.down("ArrowRight");
+ await page.evaluate(()=>{const w=window.__epochTestWorld;for(let i=0;i<15;i++)w.update(1/60)});
+ await page.keyboard.up("ArrowRight");
+ assert.equal((await readCamera()).alpha,buildAngle,"grid arrows do not rotate the camera");
+ assert.equal(await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate.x),buildX+2,"grid arrows still move one cell");
  await page.mouse.move(550,700);
  assert.deepEqual(await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate),pinned.candidate,"moving toward controls preserves the clicked location");
  await page.mouse.down({button:"right"});await page.mouse.move(620,620,{steps:5});await page.mouse.up({button:"right"});
