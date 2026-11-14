@@ -35,7 +35,7 @@ for(const seed of seeds){
   assert.equal(new Set(tribe.members.map(m=>m.id)).size,tribe.population);
   assert(tribe.members.every(m=>m.x!==undefined&&m.z!==undefined&&Number.isFinite(m.age)));
  }
- assert(ids.size>3&&ids.size<50,"small tribes are scattered rather than overwhelming the forest");
+ assert(ids.size>2&&ids.size<30,"widely spaced tribes are scattered rather than overwhelming the forest");
 }
 assert.notDeepEqual(tribeAtChunk(1337,...starterTribeChunk(1337)),
                     tribeAtChunk(12000,...starterTribeChunk(12000)),
@@ -48,7 +48,7 @@ assert.equal(game.discoverTribe({...t,id:"tribe:999,999"}),false,"spoofed tribe 
 assert(game.discoverTribe(t),"approaching a valid site records discovery");
 assert.equal(game.discoverTribe(t),false,"discovery is awarded only once");
 assert.deepEqual(game.tribeRecord(t.id),{status:"active",discovered:true,discoveredYear:-12000,
- trust:t.disposition==="peaceful"?20:t.disposition==="neutral"?10:0,completed:0});
+ trust:t.disposition==="peaceful"?20:t.disposition==="neutral"?10:0,completed:0,placementVersion:2});
 assert.equal(game.data.village.population,1,"discovering a tribe never grants free villagers");
 assert.equal(game.data.knowledge,0,"discovering does not mint Knowledge");
 assert.equal(game.data.culture,0,"discovering does not mint Culture");
@@ -78,6 +78,7 @@ const contaminated=normalizeTribeRecords({
 assert.equal(Object.keys(contaminated).length,2,"invalid or non-tribe records are ignored");
 assert.equal(contaminated["tribe:1,2"].status,"active","unknown status is normalized safely");
 assert.equal(contaminated["tribe:3,-4"].discoveredYear,null);
+assert.equal(contaminated["tribe:3,-4"].placementVersion,1,"old tribe records preserve legacy placement");
 const legacy={version:1,hero:{name:"Legacy"},worldSeed:12000,village:{population:5,plots:{},buildings:[]},knowledge:11,culture:2};
 saves.set("epoch.stoneage.slot.2",JSON.stringify(legacy));
 const migrated=new GameState({slot:2});

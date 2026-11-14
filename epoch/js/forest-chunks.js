@@ -1,6 +1,6 @@
 import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeight,
  forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261114y";
-import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114ocean1";
+import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114ecology2";
 import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114ecology1";
 import {terrainAppearanceAt,mountainOutcropSites} from "./mountain-appearance.js?v=20261114valleys1";
 const B=globalThis.BABYLON;

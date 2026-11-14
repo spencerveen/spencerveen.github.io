@@ -97,6 +97,14 @@ During a running game, press **L** to open or close the developer panel. It cont
 
 These are deliberately temporary, session-only test switches in `js/dev-cheats.js`. They default to off every time Epoch opens, are not stored in save slots, and do not undo an already completed game-over. Players' villages, normal saves and death/permadeath rules when the toggles are off remain intact. The dev-only module, UI controls and state hooks can all be removed before release.
 
+## World ecology cleanup — More natural water and tribes
+
+Rivers now vary in width as they meander, and seeded lakes are larger, elongated, and gently lobed rather than small circles. River centerlines, lake coordinates, and lake IDs remain stable. Lake descriptors are cached in a bounded lookup for better chunk-generation performance; no new save geometry is needed.
+
+New tribes have genuinely suitable dry, mostly flat land across the **entire camp footprint** (including a 15m margin), and won't generate in rivers, lakes, oceans or high mountain terrain. New settlements use a sparse 160m seeded territory grid: two regular territories are separated by at least 144m, and the guaranteed nearby starter tribe is at least 132m from a regular territory. Unsuitable territories remain empty instead of reshaping terrain into artificial flat islands.
+
+Previously discovered or recruited tribes preserve their saved IDs, population, members, trust, quests and original campsite positions using a backward-compatible `placementVersion` record. Only these historical sites retain former terrain-protection rules. New camps never flatten mountains or suppress waterways.
+
 ## Swimming pose polish — No more T-posing
 
 Swim strokes now start from the Quaternius **bent-arm jogging skeleton poses** instead of replacing rotations with the straight-arm binding pose. Small procedural shoulder paddles, elbow bends, and alternating kicks layer over the animation. Treading water uses the authored idle pose and subtle sculling, not the T-pose. Moving swimmers lie mostly prone with their chest nearer the surface, while resting/exhausted swimmers transition upright so their head remains above the water. Transitions to land walk/run are preserved.

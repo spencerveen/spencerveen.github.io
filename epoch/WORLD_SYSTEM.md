@@ -76,6 +76,12 @@ Visual rock/cliff materials, steep-slope movement restrictions, specialized wild
 
 The existing river centerlines, lake centers and world IDs remain stable. Rivers now vary gently in width at multiple scales rather than repeating a uniform ribbon. Seeded lakes retain their locations but grow into wider, elongated, subtly lobed basins with irregular natural banks; lake bottoms transition more gradually from shallow to deep. The water sampler uses a bounded 2,048-entry cache of immutable lake descriptors, reducing repeated descriptor generation during chunk meshing without changing deterministic sampling. These are still procedural waterways rather than a full solved watershed, and old stockpile/building protection snapshots remain effective.
 
+## Wider-spaced tribes and natural campsites
+
+New tribes use deterministic 5×5 chunk territories rather than a 12%-per-chunk independent roll. Candidates are restricted to the center chunk, so regular settlements in adjacent territories remain at least 144m apart, with a 132m margin around the first guaranteed nearby encounter. Sites sample the center and eight points on each of two rings, 10m and 15m, to reject **any** river, lake, ocean or steep mountain intrusion across the camp clearing. New camps cannot reshape shorelines or force mountain terrain flat. Unsafe regions stay unoccupied.
+
+Previously recorded camps retain exactly their legacy seed layout and member identities via a backwards-compatible `placementVersion` field. Historic camps alone receive their previous local terrain protection. Cached candidate sites and the absence of 121 new-tribe protections per streaming refresh reduce generation overhead.
+
 ## River corridors through mountains (valley pass)
 
 `water-corridors.js` owns the original deterministic centerline, river width, lake sites and nearest signed shoreline distance. The water mesh keeps exactly the same footprint and existing depth rules. `mountain-generation.js` uses a smooth valley mask to reduce uplift close to the channel over a broad shoulder, while leaving mountain height away from the river unchanged. This prevents the older river splines from being draped directly over a cliff or a peak. River and mountain functions share the same signed-distance sample, avoiding redundant water-path lookups in the busiest mesh-generation path.

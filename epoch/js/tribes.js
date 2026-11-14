@@ -4,7 +4,7 @@
  * Only discoveries and later outcomes need persistent records.
  */
 import {CHUNK_SIZE,seededRandom,terrainHeight,chunkKey} from "./forest-generation.js?v=20261113k";
-import {waterAt} from "./water-generation.js?v=20261114ecology1";
+import {waterAt} from "./water-generation.js?v=20261114ecology2";
 import {mountainAt} from "./mountain-generation.js?v=20261114valleys1";
 
 export const TRIBE_CLEARING_RADIUS=9.5;
