@@ -35,12 +35,29 @@ save/reload and leadership succession.
 - Unassigning a villager sends them toward their home. Saved housing changes
   still update the NPC's home location.
 
-## Planned follow-ups
+## Phase 6B: Real resource transportation (implemented)
 
-Phase 6B can add persistent personal cargo, dedicated hauling routes,
-better navigation around major rivers, and multi-stockpile logistics. Phase 6C
-will add daily needs, work shifts, food consumption and sleep. Phase 6D can
-introduce work speed, equipment prerequisites and specialized village buildings.
+- Materials now leave their source **when gathered**, not on arrival.
+- Every resident has a saved eight-item cargo manifest and a last known work
+  position. Incomplete trips survive reloading without duping resources.
+- A low-poly bundle/basket on the villager's back visibly changes with its
+  materials (timber, stone, berries, fish or hunting supplies).
+- Workers seek dry, collision-free paths and make bounded A* detours around
+  rocks, trees, buildings and water. They never teleport across rivers.
+- Distinct stockpile receiving spots help reduce crowding. A villager deposits
+  when it physically reaches the village; partial space means partial delivery.
+  The rest of the load remains held until storage has room.
+- Reassignments, founder succession, and natural aging preserve or settle
+  outstanding loads rather than duplicating saved cargo.
+- Village Storage separately shows materials on hand versus in transit.
+  People and individual profiles display current work activity and load.
+- Workers still operate only while the home village is in the streamed area.
+  Pathfinding is local and never generates unloaded terrain.
 
-Automated checks: `tests/check-villager-jobs.mjs` and
-`tests/browser-villager-jobs.mjs`.
+Phase 6C will introduce daily schedules, meals, rest and seasonal needs.
+Phase 6D can bring carts, specialist hauling/storage buildings, additional
+stockpiles, production efficiency, advanced tools and more complex logistics.
+
+Automated checks: `tests/check-villager-jobs.mjs`,
+`tests/check-villager-hauling.mjs`, `tests/browser-villager-jobs.mjs`,
+and `tests/browser-villager-hauling.mjs`.
