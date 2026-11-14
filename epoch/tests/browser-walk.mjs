@@ -167,6 +167,8 @@ try{
  await page.screenshot({path:path.join(output,"epoch-first-family-hut.png")});
  // Responsive regression: the nav header cannot collapse under long content,
  // and switching tabs must never dismiss the mobile drawer.
+ await page.locator("#right").evaluate(el=>el.classList.remove("open"));
+ await page.locator("#toggle").evaluate(el=>el.setAttribute("aria-expanded","false"));
  for(const [width,height] of [[600,850],[390,740],[320,640]]){
   await page.setViewportSize({width,height});
   await page.locator("#toggle").click();
