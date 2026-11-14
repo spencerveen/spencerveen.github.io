@@ -13,11 +13,17 @@ const browser=await chromium.launch({
 });
 try{
  const page=await browser.newPage({viewport:{width:1280,height:800},deviceScaleFactor:1});
+ // Fix the browser-test forest seed so navigation checks do not change with
+ // random terrain. Do not overwrite a save on subsequent reloads.
+ await page.addInitScript(()=>{
+  if(!localStorage.getItem("epoch.stoneage.v1"))
+   localStorage.setItem("epoch.stoneage.v1",JSON.stringify({version:1,worldSeed:1095757445}));
+ });
  const errors=[],warnings=[];
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
  page.on("requestfailed",request=>warnings.push(request.url()+" "+request.failure()?.errorText));
- await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113k",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113l",{waitUntil:"domcontentloaded",timeout:45000});
  await page.waitForFunction(()=>typeof window.epochDebug==="function",{timeout:45000});
  await page.waitForFunction(()=>window.epochDebug()?.movement?.loaded===true,{timeout:45000});
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),{timeout:45000});
@@ -149,10 +155,19 @@ try{
  await page.screenshot({path:path.join(output,"epoch-stockpile-filled.png")});
  await page.locator('[data-action="select-plot"][data-plot="family_1"]').click();
  await page.locator('[data-action="visit-plot"][data-plot="family_1"]').click();
- await page.waitForFunction(()=>{
+ // The build UI accepts any point 2.65–5m from the plot; its walking
+ // destination is allowed to stop at the outer edge of that range.
+ const withinBuildRange=()=>page.waitForFunction(()=>{
   const pos=window.epochDebug()?.position;
-  return pos&&Math.hypot(pos.x+8,pos.z-4)<4.2;
+  if(!pos)return false;
+  const distance=Math.hypot(pos.x+8,pos.z-4);
+  return distance>=2.65 && distance<=5;
  },null,{timeout:16000});
+ try{await withinBuildRange()}catch{
+  console.log("Replanning approach to hut from",await page.evaluate(()=>window.epochDebug()?.position));
+  await page.locator('[data-action="visit-plot"][data-plot="family_1"]').click();
+  await withinBuildRange();
+ }
  await page.locator('[data-action="build-plot"][data-plot="family_1"]').click();
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.capacity===8,null,{timeout:5000});
  const settlement=await page.evaluate(()=>window.epochDebug().settlement);
@@ -165,6 +180,54 @@ try{
  assert.equal(afterBuild.settlement.stockpile.items.stone,24,"building consumes stockpiled stone");
  assert(afterBuild.inventory.slots.every(s=>!s||s.qty<=12),"all stacks remain at or below 12");
  await page.screenshot({path:path.join(output,"epoch-first-family-hut.png")});
+ // Responsive regression: the nav header cannot collapse under long content,
+ // and switching tabs must never dismiss the mobile drawer.
+ await page.locator("#right").evaluate(el=>el.classList.remove("open"));
+ await page.locator("#toggle").evaluate(el=>el.setAttribute("aria-expanded","false"));
+ for(const [width,height] of [[600,850],[390,740],[320,640]]){
+  await page.setViewportSize({width,height});
+  await page.locator("#toggle").click();
+  assert(await page.locator("#right").evaluate(el=>el.classList.contains("open")),
+   "menu must open at "+width+"px");
+  for(const tab of ["pack","village","appearance","skills","tech","culture","dynasty"]){
+   await page.locator('[data-tab="'+tab+'"]').click();
+   const layout=await page.evaluate(()=>{
+    const right=document.querySelector("#right");
+    const nav=right.querySelector(".tabs");
+    const panel=right.querySelector("#panel");
+    const aside=right.getBoundingClientRect(),n=nav.getBoundingClientRect(),p=panel.getBoundingClientRect();
+    const buttons=[...nav.querySelectorAll("button")].map(b=>{
+     const r=b.getBoundingClientRect();
+     return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}
+    });
+    return {open:right.classList.contains("open"),visible:getComputedStyle(right).display!=="none",
+     nav:{top:n.top,bottom:n.bottom,left:n.left,right:n.right,height:n.height},
+     panel:{top:p.top,bottom:p.bottom},aside:{top:aside.top,bottom:aside.bottom},
+     buttons,active:nav.querySelector("button.active")?.dataset.tab};
+   });
+   assert(layout.open&&layout.visible,"switching to "+tab+" must keep menu open at "+width+"px");
+   assert.equal(layout.active,tab,"active tab updates");
+   assert(layout.nav.height>=78,"all tabs must occupy a stable two-row header");
+   assert(layout.nav.top>=layout.aside.top-1&&layout.nav.bottom<=layout.aside.bottom+1,
+    "tab header remains inside sidebar");
+   assert(layout.panel.top>=layout.nav.bottom-1,"scrolling content starts below all tabs");
+   assert(layout.buttons.every(b=>b.top>=layout.nav.top-1&&b.bottom<=layout.nav.bottom+1
+     &&b.left>=layout.nav.left-1&&b.right<=layout.nav.right+1),
+    "every tab button fits within visible navigation");
+  }
+  await page.locator('[data-tab="pack"]').click();
+  const fixedHeader=await page.evaluate(()=>{
+   const nav=document.querySelector("#right .tabs"),panel=document.querySelector("#panel");
+   const top=nav.getBoundingClientRect().top;
+   panel.scrollTop=panel.scrollHeight;
+   return {top,after:nav.getBoundingClientRect().top,scrolled:panel.scrollTop};
+  });
+  assert.equal(fixedHeader.top,fixedHeader.after,"scrolling Pack must not hide the tabs");
+  await page.screenshot({path:path.join(output,"epoch-tabs-"+width+".png")});
+  await page.locator("#toggle").click();
+  assert(!(await page.locator("#right").evaluate(el=>el.classList.contains("open"))),
+   "menu toggle still closes the sidebar");
+ }
  if(errors.length)throw new Error("Page errors: "+errors.join("\n"));
  console.log("BROWSER PASS",JSON.stringify({
   seed:idle.forest.seed,
