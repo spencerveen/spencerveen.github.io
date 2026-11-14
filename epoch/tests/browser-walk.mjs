@@ -237,6 +237,49 @@ try{
   assert(!(await page.locator("#right").evaluate(el=>el.classList.contains("open"))),
    "menu toggle still closes the sidebar");
  }
+ // Separate clean browser context: test New Game > founder creation > Save > Continue.
+ const newContext=await browser.newContext({viewport:{width:390,height:780},deviceScaleFactor:1});
+ const newPage=await newContext.newPage();
+ const creatorErrors=[];
+ newPage.on("pageerror",error=>creatorErrors.push(String(error)));
+ await newPage.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113m-new",{waitUntil:"domcontentloaded",timeout:45000});
+ await newPage.locator('[data-menu="new"]').waitFor({timeout:45000});
+ assert(await newPage.locator('[data-menu="continue"]').isDisabled(),"clean browser has no Continue game");
+ assert.equal(await newPage.locator(".epoch-save-card").count(),3,"three slots in title menu");
+ await newPage.screenshot({path:path.join(output,"epoch-title-screen.png")});
+ await newPage.locator('[data-menu="new"]').click();
+ assert.equal(await newPage.locator(".epoch-save-card").count(),3,"new game chooses among three save slots");
+ await newPage.locator('[data-menu="pick-new"][data-slot="2"]').click();
+ assert(await newPage.locator("#founder-name").isVisible(),"character creator appears for New Game");
+ await newPage.locator("#founder-name").fill("Mira");
+ await newPage.locator('[data-menu="appearance"][data-field="sex"][data-dir="1"]').click();
+ await newPage.locator('[data-menu="appearance"][data-field="hairStyle"][data-dir="1"]').click();
+ await newPage.locator('[data-menu="appearance"][data-field="skin"][data-dir="1"]').click();
+ assert.equal(await newPage.locator("#founder-name").inputValue(),"Mira","name survives picker updates");
+ await newPage.screenshot({path:path.join(output,"epoch-founder-creator.png")});
+ await newPage.locator('[data-menu="begin"]').click();
+ await newPage.waitForFunction(()=>window.epochDebug()?.slot===2,null,{timeout:45000});
+ const created=await newPage.evaluate(()=>window.epochDebug());
+ assert.equal(created.heroName,"Mira");
+ assert.equal(created.appearance.sex,"female");
+ assert.equal(created.appearance.hairStyle,1);
+ assert.equal(created.appearance.skin,3);
+ assert.equal(await newPage.locator('[data-tab="appearance"]').count(),0,"no mid-life appearance editor");
+ const saved=await newPage.evaluate(()=>JSON.parse(localStorage.getItem("epoch.stoneage.slot.2")));
+ assert.equal(saved.hero.name,"Mira","founder saved correctly");
+ assert.equal(saved.lineage[0].name,"Mira","founder name also appears in family chronicle");
+ await newPage.locator('[data-tab="dynasty"]').click();
+ await newPage.locator('[data-action="save"]').click();
+ assert((await newPage.locator("#toasts").innerText()).includes("Slot 2"),"save feedback identifies slot");
+ await newPage.locator('[data-action="title"]').click();
+ await newPage.locator('[data-menu="continue"]').waitFor({timeout:45000});
+ assert(await newPage.locator("#start-screen").isVisible(),"Save & Return opens title screen");
+ await newPage.locator('[data-menu="continue"]').click();
+ await newPage.waitForFunction(()=>window.epochDebug()?.heroName==="Mira",null,{timeout:45000});
+ assert.equal((await newPage.evaluate(()=>window.epochDebug())).slot,2,"Continue resumes most recent slot");
+ assert.equal(await newPage.locator('[data-tab="appearance"]').count(),0);
+ assert.deepEqual(creatorErrors,[],"new-game and Continue flows have no script errors");
+ await newContext.close();
  if(errors.length)throw new Error("Page errors: "+errors.join("\n"));
  console.log("BROWSER PASS",JSON.stringify({
   seed:idle.forest.seed,
