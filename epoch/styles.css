@@ -477,6 +477,10 @@ body > footer { position: absolute; left: 20px; bottom: 18px; z-index: 4; displa
 .resident-row > div { min-width:0; }
 .resident-row button { flex:0 0 auto; min-height:40px; padding:8px 11px; font-size:12px; }
 .resident-home-options { display:grid; gap:8px; margin-bottom:14px; }
+.resident-job-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:0 0 18px; }
+.resident-job-options button { min-height:40px; font-size:12px; padding:8px 10px; border:1px solid #c3bb8a50; background:#c4b98312; color:#e6e1ca; }
+.resident-job-options button.active { border-color:#d0bf88; background:#b198543d; color:#fff0c4; }
+@media(max-width:420px) { .resident-job-options {grid-template-columns:1fr;} }
 .resident-home-choice { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid #c3bb8a3c; border-radius:8px; background:#c4b9830b; }
 .resident-home-choice span { display:flex; flex-direction:column; gap:4px; }
 .resident-home-choice strong { font-size:13px; color:#f0e6d0; }
