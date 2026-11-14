@@ -13,6 +13,7 @@ import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
 import {WILDLIFE,animalMotion,WILDLIFE_ATTACK_COOLDOWN,
  BOAR_ATTACK_COOLDOWN,HUNT_DISTANCE_BUFFER} from "./hunting.js?v=20261114hunt1";
+import {FISH_SPEAR_REACH} from "./fishing.js?v=20261114fish1";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -26,6 +27,8 @@ export class World {
   this.onWildlifeHunt=tribeHandlers.onWildlifeHunt||(()=>({ok:false,reason:"Hunting unavailable."}));
   this.onWildlifeHarvest=tribeHandlers.onWildlifeHarvest||(()=>({ok:false,reason:"Harvest unavailable."}));
   this.onWildlifeDamage=tribeHandlers.onWildlifeDamage||(()=>false);
+  this.getFishCaught=tribeHandlers.getFishCaught||(()=>false);
+  this.onFishCatch=tribeHandlers.onFishCatch||(()=>({ok:false,reason:"Fishing unavailable."}));
   this.spendSprint=tribeHandlers.spendSprint||(()=>true);
   this.spendSwim=tribeHandlers.spendSwim||tribeHandlers.spendSprint||(()=>true);
   this.getVitals=tribeHandlers.getVitals||(()=>({health:100,gameOver:false}));
@@ -37,7 +40,7 @@ export class World {
   this.mountainSafeSites=tribeHandlers.getMountainSafeSites?.()||[];
   this.oceanSafeSites=tribeHandlers.getOceanSafeSites?.()||[];
   this.discoveredTribes=new Set();this.tribeTarget=null;
-  this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onBuildingSelect;this.placingBuilding=null;this.buildingCandidate=null;this.village=null;this.placingStockpile=false;this.stockpileTarget=false;this.stockpile=null;this.stockpileCandidate=null;this.homePositionKey=null;
+  this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.fish=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onBuildingSelect;this.placingBuilding=null;this.buildingCandidate=null;this.village=null;this.placingStockpile=false;this.stockpileTarget=false;this.stockpile=null;this.stockpileCandidate=null;this.homePositionKey=null;
   this._inputBlocked=false;this.placementPinned=false;this.cameraDragging=false;this.focusTarget=null;
   this.cameraKeys={};this.cameraOrbitVelocity={horizontal:0,vertical:0};
   this.stockpileInRange=undefined;this.onInteractionRangeChange=()=>{};this.hoveredInteraction=null;this.waterNoticeCooldown=0;
@@ -80,7 +83,8 @@ export class World {
    stone:this.mat("stone","#889089"),stoneDark:this.mat("stoneDark","#5b6661"),berries:this.mat("berries","#9d3832"),
    skin:this.mat("skin","#c99470"),hair:this.mat("hair","#3f3328"),cloth:this.mat("cloth","#806445"),
    river:this.mat("river","#4b8190"),fire:this.mat("fire","#ef9c45"),flame:this.mat("flame","#f6d181"),grass:this.mat("grass","#74986b"),
-   flint:this.mat("beach flint","#626e71"),flintEdge:this.mat("flint edge","#9aa39b")};
+   flint:this.mat("beach flint","#626e71"),flintEdge:this.mat("flint edge","#9aa39b"),
+   fishBody:this.mat("silver river fish","#8bb2a1"),fishFin:this.mat("fish fins","#466b73")};
   this.m.terrainSurface=this.mat("Layered mountain terrain","#ffffff");
   this.m.terrainSurface.specularColor=new B.Color3(.016,.017,.016);
   this.m.rockFaceDark=this.mat("Exposed mountain stone","#686d69");
@@ -286,6 +290,58 @@ export class World {
   },{passive:false});
   canvas.addEventListener("contextmenu",e=>e.preventDefault());
  }
+ makeFish(site,ownerChunk){
+  if(!site||this.getFishCaught(site.id))return null;
+  const root=new B.TransformNode("Fish "+site.kind+" "+site.id,this.scene);
+  const water=this.terrain.waterAt(site.x,site.z);
+  if(water.depth<.24)return null;
+  // Keep the silhouette just above the mostly opaque water material. The
+  // small vertical bob reads as fish swimming at the surface, not flying.
+  root.position=V(site.x,water.surfaceY+.10,site.z);
+  root.rotation.y=(site.x+site.z)*.31;
+  const mark=(mesh)=>{
+   mesh.metadata={fishId:site.id,fishKind:site.kind};
+   mesh.isPickable=true;return mesh;
+  };
+  mark(this.primitive("sphere","Swimming fish body",root,[0,0,0],
+   [.70,.23,.34],this.m.fishBody));
+  mark(this.primitive("sphere","Swimming fish head",root,[0,.01,.29],
+   [.29,.19,.28],this.m.fishBody));
+  const tail=mark(this.primitive("sphere","Swimming fish tail",root,[0,0,-.49],
+   [.46,.10,.31],this.m.fishFin));
+  mark(this.primitive("sphere","Swimming fish dorsal fin",root,[0,.15,-.06],
+   [.13,.25,.25],this.m.fishFin));
+  const fish={id:site.id,site,root,tail,chunkKey:ownerChunk,phase:site.x*.13+site.z*.21};
+  this.fish.push(fish);
+  return root;
+ }
+ nearbyFish(reach=FISH_SPEAR_REACH+.2){
+  const p=this.player.position;
+  return this.fish.filter(f=>Math.hypot(f.root.position.x-p.x,
+   f.root.position.z-p.z)<=reach).sort((a,b)=>
+   Math.hypot(a.root.position.x-p.x,a.root.position.z-p.z)-
+   Math.hypot(b.root.position.x-p.x,b.root.position.z-p.z))[0]||null;
+ }
+ catchFish(fish){
+  if(!fish)return false;
+  const player=this.player.position;
+  const distance=Math.hypot(fish.root.position.x-player.x,
+   fish.root.position.z-player.z);
+  if(distance>FISH_SPEAR_REACH){
+   this.onStatus("Move closer","Approach the shallow water with WASD before spear fishing.");
+   return false;
+  }
+  if(this.huntCooldown>0)return false;
+  const sample=this.terrain.waterAt(fish.root.position.x,fish.root.position.z);
+  if(sample.depth<.2){this.onStatus("No fish here","Fish need shallow water.");return false;}
+  const result=this.onFishCatch(fish.site);
+  this.onStatus(result.ok?"Fish caught":"Cannot fish",result.reason);
+  if(!result.ok)return false;
+  this.huntCooldown=WILDLIFE_ATTACK_COOLDOWN;
+  fish.root.dispose(false,false);
+  this.fish=this.fish.filter(f=>f!==fish);
+  return true;
+ }
  makeAnimal(x,z,chunkKey=null,definition={}){
   const species=WILDLIFE[definition.species]?definition.species:"deer";
   const id=definition.id||("wildlife:"+chunkKey+":"+Math.round(x*100)+":"+Math.round(z*100));
@@ -361,10 +417,15 @@ export class World {
   return !!result.ok;
  }
  huntNearest(){
-  const animal=this.nearbyAnimal(false,3.8);
+  const animal=this.nearbyAnimal(false,3.8),fish=this.nearbyFish();
+  const player=this.player.position;
+  if(fish&&(!animal||
+   Math.hypot(fish.root.position.x-player.x,fish.root.position.z-player.z)<
+   Math.hypot(animal.node.position.x-player.x,animal.node.position.z-player.z)))
+   return this.catchFish(fish);
   if(animal)return this.huntAnimal(animal);
-  this.onStatus("No wildlife nearby",
-   "Move within weapon reach of a deer, rabbit or boar, then press H.");
+  this.onStatus("No hunting or fishing target",
+   "Approach wildlife with a weapon or shallow-water fish with a Stone Spear, then press H.");
   return false;
  }
  harvestWildlife(animal){
@@ -702,13 +763,17 @@ export class World {
    if(e.type===B.PointerEventTypes.POINTERMOVE){
     const meta=pick?.pickedMesh?.metadata;
     const key=meta?.stockpile?"stockpile":meta?.buildingId||meta?.tribeId||
-     meta?.residentId||meta?.animalId||null;
+     meta?.residentId||meta?.animalId||meta?.fishId||null;
     this.canvas.style.cursor=key||meta?.resource?"pointer":"default";
     if(key&&key!==this.hoveredInteraction){
      if(meta.stockpile)this.onStatus("Village stockpile","Walk here with WASD, then click to open village storage.");
      else if(meta.tribeId){
       const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===meta.tribeId);
       if(camp)this.onStatus(camp.tribe.name,"Walk to the tribal leader with WASD, then click to meet them.");
+     }else if(meta.fishId){
+      this.onStatus("Fish in the shallows","Equip a Stone Spear and press H or click the fish to catch it.");
+     }else if(meta.animalId){
+      this.onStatus("Wildlife nearby","Equip a hunting weapon; press H or click to attack.");
      }else if(meta.residentId){
       const resident=this.people.find(p=>p.id===meta.residentId);
       if(resident)this.onStatus(resident.name,"Click to see this villager's story, connections and home.");
@@ -723,6 +788,11 @@ export class World {
    if(e.type!==B.PointerEventTypes.POINTERPICK||e.event?.button!==0)return;
    if(!pick?.hit)return;
    const mesh=pick.pickedMesh;
+   if(mesh?.metadata?.fishId){
+    const fish=this.fish.find(f=>f.id===mesh.metadata.fishId);
+    if(fish)this.catchFish(fish);
+    return;
+   }
    if(mesh?.metadata?.animalId){
     const animal=this.animals.find(a=>a.id===mesh.metadata.animalId);
     if(animal){if(animal.dead)this.harvestWildlife(animal);else this.huntAnimal(animal);}
@@ -1001,6 +1071,20 @@ export class World {
   for(const camp of this.tribeCamps.values())
    camp.humans.forEach((human,i)=>human.animate(t+i*1.25,false));
   if(this.flame?.isEnabled())this.flame.scaling.y=1.05+.12*Math.sin(t*8);
+  // Fish swim visibly in the shallows, staying inside their saved water site.
+  // Movement remains render-only; stable catch IDs never depend on time.
+  if(!this.inputBlocked){
+   for(const f of this.fish){
+    const phase=t*.8+f.phase;
+    const offsetX=.23*Math.sin(phase),offsetZ=.23*Math.cos(phase*.8);
+    f.root.position.x=f.site.x+offsetX;
+    f.root.position.z=f.site.z+offsetZ;
+    f.root.position.y=this.terrain.waterAt(f.site.x,f.site.z).surfaceY+
+     .10+.024*Math.sin(t*2.3+f.phase);
+    f.root.rotation.y=.5*Math.sin(phase);
+    f.tail.rotation.y=.24*Math.sin(t*7+f.phase);
+   }
+  }
   // Behavior is local and deterministic in each loaded wildlife territory.
   // Fleeing animals avoid water and blocked props; boars defend themselves
   // after being attacked and can injure an unprepared hunter.

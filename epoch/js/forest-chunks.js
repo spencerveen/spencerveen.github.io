@@ -6,6 +6,7 @@ import {terrainAppearanceAt,mountainOutcropSites,mountainHabitat} from "./mounta
 import {mountainAt} from "./mountain-generation.js?v=20261114watershed3";
 import {beachAt,beachFlintSites} from "./beach-generation.js?v=20261114beaches1";
 import {terrainUV,waterUV,terrainBiomeWeights} from "./terrain-textures.js?v=20261114textures1";
+import {fishSites} from "./fishing.js?v=20261114fish1";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 
@@ -271,6 +272,10 @@ export class ForestChunks{
       this.mountainProtectedSites,animalWater.corridorDistance).uplift).animals)
     world.makeAnimal(animal.x,animal.z,key,animal);
   }
+  for(const site of fishSites(this.seed,cx,cz,(wx,wz)=>this.waterAt(wx,wz))){
+   if(world.getFishCaught?.(site.id))continue;
+   world.makeFish?.(site,key);
+  }
   if(tribe)world.spawnTribeCamp(tribe,key);
   else if(relocated&&dryTribe)world.spawnAbandonedTribeCamp?.(candidate,key);
   chunk.detailed=true;
@@ -290,6 +295,9 @@ export class ForestChunks{
   for(const animal of world.animals.filter(a=>a.chunkKey===key))
    animal.node.dispose(false,false);
   world.animals=world.animals.filter(a=>a.chunkKey!==key);
+  for(const fish of world.fish.filter(f=>f.chunkKey===key))
+   fish.root.dispose(false,false);
+  world.fish=world.fish.filter(f=>f.chunkKey!==key);
   chunk.detailed=false;
  }
  /** Remove a felled tree, exhausted rock or cut-down bush immediately. */
