@@ -11,7 +11,7 @@ import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113k";
 import {harvestAtNode} from "./harvest.js?v=20261114x";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
- TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114ecology3";
+ TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  moveResidentHome,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
  NATURAL_DEATH_AGE} from "./residents.js?v=20261114w";

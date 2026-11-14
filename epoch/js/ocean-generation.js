@@ -4,7 +4,7 @@
  * Geometry remains a deterministic function of absolute world coordinates.
  */
 import {STARTER_SEED} from "./forest-generation.js?v=20261114y";
-import {mountainTerrainHeight} from "./mountain-generation.js?v=20261114ecology3";
+import {mountainTerrainHeight} from "./mountain-generation.js?v=20261114watershed3";
 export const OCEAN_MODEL_VERSION=1;
 export const SEA_LEVEL=.15;
 export const COAST_BASE_X=565;

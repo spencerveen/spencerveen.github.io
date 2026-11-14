@@ -1,9 +1,9 @@
 import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeight,
  forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261114y";
-import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114ecology3";
-import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114ecology3";
-import {terrainAppearanceAt,mountainOutcropSites,mountainHabitat} from "./mountain-appearance.js?v=20261114habitats1";
-import {mountainAt} from "./mountain-generation.js?v=20261114ecology3";
+import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114watershed3";
+import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114watershed3";
+import {terrainAppearanceAt,mountainOutcropSites,mountainHabitat} from "./mountain-appearance.js?v=20261114watershed3";
+import {mountainAt} from "./mountain-generation.js?v=20261114watershed3";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 

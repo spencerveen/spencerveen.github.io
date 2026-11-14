@@ -3,7 +3,7 @@
  * heightfield, collisions, collectable stone nodes, or save schema.
  */
 import {CHUNK_SIZE,STARTER_SEED,seededRandom} from "./forest-generation.js?v=20261114y";
-import {mountainAt} from "./mountain-generation.js?v=20261114ecology3";
+import {mountainAt} from "./mountain-generation.js?v=20261114watershed3";
 export const MOUNTAIN_VISUAL_VERSION=1;
 const clamp=n=>Math.max(0,Math.min(1,n));
 const smooth=n=>{n=clamp(n);return n*n*(3-2*n)};

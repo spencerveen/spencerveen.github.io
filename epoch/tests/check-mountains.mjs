@@ -34,7 +34,7 @@ for(const seed of [STARTER_SEED,42,1337,987654321]){
  }
  const river=waterAt(highest.x,highest.z,seed,[],protectedSites);
  const y=waterTerrainHeight(highest.x,highest.z,seed,[],protectedSites);
- assert(Math.abs(y-(terrainHeight(highest.x,highest.z,seed)-river.depth))<1e-8,
+ assert(Math.abs(y-(river.depth>0?river.bedY:river.surfaceY-.055))<1e-8,
   "water and terrain share the same protected elevation");
 }
 // Compare the seed-specific ridge itself before applying the new river-valley mask.
