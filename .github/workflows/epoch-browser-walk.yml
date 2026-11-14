@@ -29,6 +29,8 @@ jobs:
           node epoch/tests/check-mountain-flint.mjs
           node epoch/tests/check-beaches.mjs
           node epoch/tests/check-forest.mjs
+      - name: Verify assignable villager jobs, finite gathering and stockpile deliveries
+        run: node epoch/tests/check-villager-jobs.mjs
       - name: Install browser test dependency
         run: npm install --no-save --no-package-lock playwright@1.58.2
       - name: Launch Epoch static test server
