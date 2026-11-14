@@ -35,7 +35,7 @@ for(const seed of [12000,42,1337,987654321]){
  assert.equal(water.surfaceY-.055,terrainHeight(x,z,seed),
   "water surface lies on the low valley floor instead of atop the peak");
  // Preserve the shape of the existing river and its wading restrictions.
- assert.equal(water.kind,"river");
+ assert(["river","lake"].includes(water.kind),"the original river corridor may widen into a lake");
  assert.equal(water.passable,false);
  assert.equal(waterTerrainHeight(x,z,seed),water.bedY);
  assert.equal(water.corridorDistance,nearestWaterCorridor(x,z,seed).distance);

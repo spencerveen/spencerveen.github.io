@@ -6,7 +6,7 @@ import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockp
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114y";
-import {ForestChunks} from "./forest-chunks.js?v=20261114mountainlooks2";
+import {ForestChunks} from "./forest-chunks.js?v=20261114valleys1";
 import {createTribeWorld} from "./tribe-world.js?v=20261114m";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;

@@ -37,7 +37,8 @@ for(const seed of [STARTER_SEED,42,1337,987654321]){
  assert(Math.abs(y-(terrainHeight(highest.x,highest.z,seed)-river.depth))<1e-8,
   "water and terrain share the same protected elevation");
 }
-assert.notEqual(mountainAt(822,-511,1337).uplift,mountainAt(822,-511,1338).uplift);
+// Compare the seed-specific ridge itself before applying the new river-valley mask.
+assert.notEqual(mountainAt(822,-511,1337,[],1000).uplift,mountainAt(822,-511,1338,[],1000).uplift);
 assert.equal(mountainAt(Infinity,0).uplift,0);
 const saves=new Map();
 globalThis.localStorage={getItem:k=>saves.get(k)||null,setItem:(k,v)=>saves.set(k,v),
