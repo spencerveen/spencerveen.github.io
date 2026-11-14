@@ -103,7 +103,7 @@ try{
  assert.equal(await page.locator('[data-action="tribe-aid"]').count(),0,"no more requests after sufficient trust");
  assert(await page.locator('[data-action="tribe-invite"]').isEnabled(),"housing admits the whole tribe");
  await page.locator('[data-action="tribe-invite"]').click();
- assert((await page.locator("#guide").innerText()).includes("new residents"),"relocation has a visible outcome");
+ assert((await page.locator("#guide").innerText()).includes("villagers have settled peacefully"),"relocation has a visible outcome");
  const settled=await page.evaluate(()=>window.epochDebug());
  assert.equal(settled.settlement.population,1+tribe.population,"the tribe joins the player's village");
  assert.equal(settled.settlement.residents.length,tribe.population,"each recruit has an individual saved identity");
