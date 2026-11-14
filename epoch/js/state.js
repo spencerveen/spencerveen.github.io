@@ -519,6 +519,10 @@ export class GameState{
   * collect and deliver functions separately, after physical travel.
   */
  completeVillagerWork(id,task){
+  // The previous API completed both legs immediately; keep its full-store
+  // rejection for migrated test callers, without changing physical hauling.
+  if(!this.data.village.stockpile||stockpileSpace(this.data.village.stockpile)===0)
+   return {ok:false,reason:"Stockpile is full."};
   const pick=this.collectVillagerCargo(id,task);
   if(!pick.ok)return pick;
   const drop=this.deliverVillagerCargo(id);
