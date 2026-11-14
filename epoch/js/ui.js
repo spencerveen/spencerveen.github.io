@@ -1,7 +1,6 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113k";
-import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,EYE_COLORS,OUTFITS} from "./characters.js?v=20261113k";
-import {villagePanel,selectVillagePlot,openStockpile,handleVillageAction} from "./village-ui.js?v=20261113k";
-import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261113k";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261113m";
+import {villagePanel,selectVillagePlot,openStockpile,handleVillageAction} from "./village-ui.js?v=20261113m";
+import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261113m";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -49,27 +48,6 @@ export class UI{
   return Object.entries(cost).map(([name,n])=>`${names[name]||name}: ${n}`).join(" · ");
  }
  pack(){return inventoryPanel(this)}
- appearance(){
-  const d=this.state.data,p=d.hero.appearance;
-  const choices=[
-   ["sex","Body template",p.sex==="male"?"Male":"Female"],
-   ["hairStyle","Hairstyle",HAIR_STYLES[p.hairStyle].name],
-   ["hairColor","Hair color",HAIR_COLORS[p.hairColor].name],
-   ["skin","Skin tone","Tone "+(p.skin+1)],
-   ["beard","Facial hair",p.beard>0?"Beard":"None"],
-   ["height","Height",Math.round(p.height*100)+"%"],
-   ["build","Build",Math.round(p.build*100)+"%"]
-  ];
-  let html=`<div class="panel-title"><h2>Appearance</h2><small>${esc(d.hero.name)}</small></div>`;
-  html+=`<p class="info">Every descendant and villager is generated from the same modular human model. Change your adventurer's appearance here and watch the 3D world update instantly.</p>`;
-  for(const [field,label,value] of choices){
-   if(field==="beard"&&p.sex==="female")continue;
-   const color=field==="hairColor"?HAIR_COLORS[p.hairColor].hex:field==="skin"?SKIN_TONES[p.skin]:field==="eyes"?EYE_COLORS[p.eyes]:null;
-   html+=`<div class="appearance-picker"><span>${label}</span><div><button data-action="looks" data-field="${field}" data-dir="-1" aria-label="Previous ${label}">‹</button><b>${color?`<i class="swatch" style="background:${color}"></i>`:""}${esc(value)}</b><button data-action="looks" data-field="${field}" data-dir="1" aria-label="Next ${label}">›</button></div></div>`;
-  }
-  html+=`<p class="info">Real Quaternius rigged meshes are used for characters and hair. Body size, selected hair and skin colors carry into descendants with some variation. More outfit and eye-color choices will arrive with the clothing system.</p>`;
-  return html;
- }
  skills(){
   const d=this.state.data;let html=`<div class="panel-title"><h2>Skills</h2><small>Learn by doing</small></div><p class="info">Personal skills grow with practice. A portion of experience is passed to each descendant through mentorship.</p>`;
   for(const [key,name] of SKILLS){
@@ -101,7 +79,12 @@ export class UI{
   }
   html+=`<h3 style="font:500 20px Georgia,serif">Recorded History</h3>`;
   for(const item of d.history.slice(0,9))html+=`<div class="timeline"><span>${esc(item)}</span></div>`;
-  html+=`<button class="game-button alt" data-action="reset">Reset demo save</button>`;
+  html+=`<div class="entry"><h3>Current Adventurer</h3>
+   <p><strong>${esc(d.hero.name)}</strong> · Age ${d.hero.age} · ${d.generation===1?"Founder":"Descendant"}.</p>
+   <p>Appearance is chosen when the game begins. Your character's body and features cannot be changed after birth; descendants inherit traits with variation.</p></div>`;
+  html+=`<div class="entry"><h3>Save &amp; Exit</h3><p>Slot ${this.state.slot||1} · Your world is saved automatically as you play. Return to the title screen to continue or manage your saves.</p>
+   <button data-action="save">Save Game</button>
+   <button class="game-button alt" data-action="title">Save &amp; Return to Title</button></div>`;
   return html;
  }
  render(){
@@ -112,26 +95,20 @@ export class UI{
   $("science").textContent=d.knowledge;$("culture").textContent=d.culture;
   $("objective-title").textContent=o.title;$("objective-description").textContent=o.description;$("objective-progress").textContent=o.progress;
   document.querySelectorAll("[data-tab]").forEach(node=>{const active=node.dataset.tab===this.tab;node.classList.toggle("active",active);node.setAttribute("aria-selected",String(active))});
-  $("panel").innerHTML=this.tab==="pack"?this.pack():this.tab==="village"?villagePanel(this):this.tab==="appearance"?this.appearance():this.tab==="skills"?this.skills():this.tab==="tech"?this.trees("tech"):this.tab==="culture"?this.trees("civic"):this.dynasty();
+  $("panel").innerHTML=this.tab==="pack"?this.pack():this.tab==="village"?villagePanel(this):this.tab==="skills"?this.skills():this.tab==="tech"?this.trees("tech"):this.tab==="culture"?this.trees("civic"):this.dynasty();
  }
  handleAction(e){
   const btn=e.target.closest("[data-action]");if(!btn)return;
   const action=btn.dataset.action;let message="";
   if(handlePackAction(this,btn))return;
   if(handleVillageAction(this,btn))return;
-  if(action==="looks"){
-   const p=this.state.data.hero.appearance,f=btn.dataset.field,dir=Number(btn.dataset.dir)===-1?-1:1;
-   const count={hairStyle:HAIR_STYLES.length,hairColor:HAIR_COLORS.length,skin:SKIN_TONES.length,eyes:EYE_COLORS.length,beard:4,outfit:OUTFITS.length};
-   if(f==="sex")this.state.setAppearance({sex:p.sex==="male"?"female":"male"});
-   else if(f==="beard")this.state.setAppearance({beard:p.beard>0?0:1});
-   else if(f==="height"||f==="build")this.state.setAppearance({[f]:Math.max(f==="height"?.87:.84,Math.min(f==="height"?1.13:1.18,Math.round((p[f]+dir*.03)*100)/100))});
-   else if(Object.hasOwn(count,f))this.state.setAppearance({[f]:(p[f]+dir+count[f])%count[f]});
-  }
-  else if(action==="axe")message=this.state.craftAxe()?"Stone axe crafted! Woodcutting is faster.":"Not enough resources.";
+  if(action==="axe")message=this.state.craftAxe()?"Stone axe crafted! Woodcutting is faster.":"Not enough resources.";
   else if(action==="unlock"){const ok=this.state.unlock(btn.dataset.kind,btn.dataset.key);message=ok?"Discovery completed!":"Discovery requirements are not met."}
   else if(action==="next"){const name=this.state.nextGeneration();message="A new generation begins: "+name;}
-  else if(action==="reset"){
-   if(window.confirm("Reset all Epoch Stone Age prototype progress? This cannot be undone.")){this.state.reset();this.world.player.position.x=0;this.world.player.position.z=0;this.world.setWorldSeed(this.state.data.worldSeed);this.world.path=[];this.world.target=null;this.world.plotTarget=null;message="A new world and history begin."}
+  else if(action==="save")message=this.state.save()?"Game saved to Slot "+(this.state.slot||1)+".":"Unable to save. Check browser storage permissions.";
+  else if(action==="title"){
+   if(this.state.save())window.location.reload();
+   else message="Unable to save. Staying in your current game.";
   }
   if(message)this.toast(message);
  }
@@ -140,9 +117,9 @@ export class UI{
   <p><strong>Gather:</strong> Trees run out of wood and fall. Stone deposits disappear after being mined out. Berry bushes grow back their fruit two minutes after they have been harvested clean. You can permanently cut a bush down for three vines with <strong>Shift+click</strong>, <strong>Shift+E</strong> near it, or the Pack button. All resources remain limited by your ten-slot inventory (12 per stack).</p>
   <p><strong>Progress:</strong> Unlock Fire and Stone Toolmaking under Tech, then craft an axe in the Pack. Use the Village tab to build your first huts.</p>
   <p><strong>Village:</strong> Open Village and place your founding stockpile on clear ground. Return to it with resources and deposit them into village storage. Village structures use those deposited materials and the five starter building sites appear around your stockpile. Each Family Hut provides room for three more villagers.</p>
-  <p><strong>Character:</strong> Open the Character tab to change the base body, hair, colors, clothing, and facial hair. NPCs use the same modular system, and descendants inherit traits with variation.</p>
+  <p><strong>Character:</strong> Choose your founder’s name and appearance only when starting a New Game. Existing characters cannot be edited. Descendants are generated naturally.</p>
   <p><strong>Descendants:</strong> In the Dynasty tab, continue as a new generation. Civilization-wide achievements and buildings remain, while personal skills partly transfer.</p>
-  <p><strong>Saving:</strong> Your progress is stored locally in this browser. No account or online multiplayer is included in this prototype.</p>
+  <p><strong>Saving:</strong> Three browser-local save slots are available from the title screen. Progress autosaves, and Save &amp; Return to Title is available in the Dynasty tab. Existing progress is imported to Slot 1.</p>
   <p><strong>Prototype limitations:</strong> Wildlife is ambient; combat, NPC diplomacy, realistic family relationships, additional ages and advanced animations are planned for later milestones.</p>`;
   $("modal").classList.remove("hidden");
  }

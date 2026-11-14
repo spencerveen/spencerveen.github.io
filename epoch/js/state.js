@@ -1,4 +1,5 @@
-import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113k";
+import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113m";
+import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261113k";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
@@ -23,22 +24,28 @@ export const CIVICS={
  oral:{name:"Oral Tradition",description:"Teach descendants more of the skills learned by their ancestors.",cost:{food:8,culture:10},needs:["community"]},
  apprenticeship:{name:"Apprenticeship",description:"Create a tradition of mentorship across generations.",cost:{food:12,wood:8,culture:18},needs:["oral"]}
 };
-const KEY="epoch.stoneage.v1";
-const fresh=()=>({
- version:1,year:-12000,calendarProgress:0,generation:1,worldSeed:Math.floor(Math.random()*0x7fffffff)+1,hero:{name:"Aren",age:18,appearance:founderAppearance()},
+const fresh=(founder=null)=>{
+ const appearance=normalizeAppearance(founder?.appearance||founderAppearance());
+ const name=String(founder?.name||"Aren").trim().slice(0,24)||"Aren";
+ return {
+ version:1,year:-12000,calendarProgress:0,generation:1,worldSeed:Math.floor(Math.random()*0x7fffffff)+1,hero:{name,age:18,appearance},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
- lineage:[{name:"Aren",gen:1,start:-12000,role:"Founder",appearance:founderAppearance()}],
- history:["The wanderer Aren entered a quiet clearing in a vast prehistoric wilderness."]
-});
+ lineage:[{name,gen:1,start:-12000,role:"Founder",appearance:{...appearance}}],
+ history:["The wanderer "+name+" entered a quiet clearing in a vast prehistoric wilderness."]
+ };
+};
 export function threshold(level){return Math.round(35*level**1.65)}
 export function skillLevel(xp){let level=1,remaining=xp;while(level<99 && remaining>=threshold(level)){remaining-=threshold(level);level++}return {level,remaining,next:threshold(level)}}
 export class GameState{
- constructor(){
+ constructor(options={}){
+  const selected=typeof options==="number"?{slot:options}:options||{};
+  this.slot=selected.slot===undefined?null:selected.slot;
+  this.storageKey=this.slot===null?LEGACY_KEY:saveSlotKey(this.slot);
   let data=null;
-  try { data=JSON.parse(localStorage.getItem(KEY)||"null"); }catch{}
-  const base=fresh();
+  if(!selected.newGame)try{data=JSON.parse(localStorage.getItem(this.storageKey)||"null")}catch{}
+  const base=fresh(selected.newGame?selected.founder:null);
   this.data=data && data.version===1?{...base,...data,
    hero:{...base.hero,...data.hero},resources:{...base.resources,...data.resources},
    skills:{...base.skills,...data.skills}}:base;
@@ -83,7 +90,13 @@ export class GameState{
   this.onChange=()=>{};
   this.lastSave=0;
  }
- save(){try{localStorage.setItem(KEY,JSON.stringify(this.data))}catch(e){console.warn("Save unavailable",e)}}
+ save(){
+  try{
+   this.data.lastSavedAt=Date.now();
+   localStorage.setItem(this.storageKey,JSON.stringify(this.data));
+   return true;
+  }catch(e){console.warn("Save unavailable",e);return false}
+ }
  changed(message){if(message)this.data.history.unshift(message);this.data.history=this.data.history.slice(0,80);this.save();this.onChange();}
  syncResources(){
   // Legacy/UI tech APIs continue to read resources.food as Wild Berries.
@@ -224,10 +237,6 @@ export class GameState{
  }
  villageCapacity(){return capacity(this.data.village)}
  buildShelter(){return this.buildVillagePlot("family_1")}
- setAppearance(patch){
-  this.data.hero.appearance=normalizeAppearance({...this.data.hero.appearance,...patch});
-  this.changed();
- }
  nextGeneration(){
   const old=this.data.hero;
   const names=["Eira","Torin","Mara","Kellan","Sera","Darin","Elowen","Cai","Nessa","Roran"];
@@ -245,5 +254,10 @@ export class GameState{
   if(d.calendarProgress>=1){d.calendarProgress-=1;d.year++;d.hero.age++;this.changed(`${d.hero.name} celebrates another year of life.`)}
  }
  formatYear(){return this.data.year<0?`${Math.abs(this.data.year).toLocaleString()} BCE`:`${this.data.year+1} CE`}
- reset(){localStorage.removeItem(KEY);this.data=fresh();this.changed()}
+ reset(){
+  // Only the active save can be reset, never other slots. New Game should
+  // normally be created from the title screen after user confirmation.
+  localStorage.removeItem(this.storageKey);
+  this.data=fresh();this.changed();
+ }
 }

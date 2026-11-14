@@ -11,6 +11,8 @@ on:
       - 'epoch/js/locomotion.js'
       - 'epoch/js/settlement.js'
       - 'epoch/js/stockpile.js'
+      - 'epoch/js/save-slots.js'
+      - 'epoch/js/title-screen.js'
       - 'epoch/js/stockpile-world.js'
       - 'epoch/js/inventory.js'
       - 'epoch/js/resource-nodes.js'
@@ -32,6 +34,8 @@ on:
       - 'epoch/js/locomotion.js'
       - 'epoch/js/settlement.js'
       - 'epoch/js/stockpile.js'
+      - 'epoch/js/save-slots.js'
+      - 'epoch/js/title-screen.js'
       - 'epoch/js/stockpile-world.js'
       - 'epoch/js/inventory.js'
       - 'epoch/js/resource-nodes.js'
@@ -49,6 +53,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Validate title save slots, migration and character creation locks
+        run: node epoch/tests/check-save-slots.mjs
       - name: Validate permanent resource depletion and berry regeneration
         run: node epoch/tests/check-resource-nodes.mjs
       - name: Validate village founding and stockpile logistics
