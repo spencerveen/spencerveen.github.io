@@ -45,7 +45,7 @@ try{
  await equip(3);
  info=await page.evaluate(()=>window.epochDebug());
  assert.equal(info.equipment.weapon,"stone_spear","swapped weapon is now held");
- assert.deepEqual(info.inventory.slots[3],{id:"wood_club",qty:1},"previous weapon appears in the freed slot");
+ assert.deepEqual(info.inventory.slots[3],{id:"wood_club",qty:1,durability:36},"previous weapon appears in the freed slot");
  assert.equal(info.inventory.used,2,"swapping weapons does not change backpack slot count");
  assert((await page.locator(".equipment-slot").first().innerText()).includes("Stone Spear"));
  await page.locator('[data-action="unequip-item"][data-equipment-slot="body"]').click();

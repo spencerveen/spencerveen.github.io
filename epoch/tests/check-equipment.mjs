@@ -16,8 +16,10 @@ assert.equal(ITEM_IDS.length,20,"20 catalog entries cover 9 core resources, 3 pr
 assert.equal(ITEM_CATEGORIES.length,5);
 assert.equal(Object.keys(EQUIPMENT_SLOTS).join(","),"weapon,body,ammo");
 assert.equal(CRAFTING_PLANS.stone_axe.available,true);
-assert(Object.entries(CRAFTING_PLANS).filter(([id])=>id!=="stone_axe").every(([,r])=>!r.available),
- "only the existing stone axe is craftable in 4B.1");
+assert(CRAFTING_PLANS.wood_club.available&&CRAFTING_PLANS.stone_spear.available);
+assert(Object.entries(CRAFTING_PLANS).filter(([id])=>
+ !["stone_axe","wood_club","stone_spear"].includes(id)).every(([,r])=>!r.available),
+ "bow, sling and armor remain future crafting phases");
 assert(!STOCKPILE_ITEM_IDS.includes("fur_armor"));
 assert(!STOCKPILE_ITEM_IDS.includes("stone_axe"));
 assert(STOCKPILE_ITEM_IDS.includes("animal_meat")&&STOCKPILE_ITEM_IDS.includes("arrows"));
@@ -89,7 +91,7 @@ assert.equal(full.data.equipment.weapon,"wood_club");
 full.data.inventory[2]={id:"stone_spear",qty:1};
 assert(full.equipFromPack(2),"swapping uses the item slot even if the backpack is full");
 assert.equal(full.data.equipment.weapon,"stone_spear");
-assert.deepEqual(full.data.inventory[2],{id:"wood_club",qty:1});
+assert.deepEqual(full.data.inventory[2],{id:"wood_club",qty:1,durability:36});
 
 const legacy={version:1,worldSeed:12000,axe:true,technologies:["fire","tools"],
  hero:{name:"Old Lumberjack"},village:{population:1,buildings:[],plots:{}}};
@@ -127,6 +129,7 @@ crafted.data.village.stockpile.items.wood=10;
 crafted.data.village.stockpile.items.stone=10;
 assert(crafted.craftAxe(LEGACY_HOME.x,LEGACY_HOME.z));
 assert.equal(crafted.data.equipment.weapon,"stone_axe");
+assert.equal(crafted.equippedToolCondition().remaining,45);
 assert(crafted.equippedAxe());
 assert.equal(crafted.data.village.stockpile.items.wood,8);
 assert.equal(crafted.data.village.stockpile.items.stone,7);

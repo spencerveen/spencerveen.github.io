@@ -44,6 +44,8 @@ jobs:
         run: node epoch/tests/browser-dev-cheats.mjs
       - name: Validate equipment controls, swaps and persistence
         run: node epoch/tests/browser-equipment.mjs
+      - name: Craft a club, axe and spear in the stockpile interface
+        run: node epoch/tests/browser-crafting.mjs
       - name: Validate water meshes, deep-water collision and chunk cleanup
         run: node epoch/tests/browser-water.mjs
       - name: Inspect exposed mountain rock and vegetation streaming in Chromium

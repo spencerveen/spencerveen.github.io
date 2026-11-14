@@ -47,6 +47,8 @@ jobs:
         run: node epoch/tests/check-inventory-menus.mjs
       - name: Validate Stone Age catalog, equipment, swaps and save migration
         run: node epoch/tests/check-equipment.mjs
+      - name: Validate Phase 5A crafting, durability, failed transactions and saves
+        run: node epoch/tests/check-crafting.mjs
       - name: Validate civilization-based Knowledge and single-founder population
         run: node epoch/tests/check-technology-progression.mjs
       - name: Validate procedural tribes, discovery and save persistence
