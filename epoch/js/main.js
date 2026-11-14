@@ -1,7 +1,7 @@
-import {GameState} from "./state.js?v=20261114q";
+import {GameState} from "./state.js?v=20261114r";
 import {World} from "./world.js?v=20261114q";
 import {UI} from "./ui.js?v=20261114q";
-import {TitleScreen} from "./title-screen.js?v=20261114b";
+import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
 // Load the 3D game ONLY when a save is selected or a new founder is created.

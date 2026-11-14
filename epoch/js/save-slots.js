@@ -27,6 +27,7 @@ export function saveSummary(slot){
  return {slot,empty:false,hero:typeof data.hero.name==="string"?data.hero.name:"Unnamed",
   generation:Number(data.generation)||1,year:Number(data.year)||-12000,
   lastSavedAt,worldSeed:data.worldSeed??null,
+  ended:data.survival?.gameOver===true,
   houses:Object.keys(data.village?.plots||{}).length};
 }
 export function allSaveSummaries(){

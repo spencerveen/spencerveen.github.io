@@ -373,7 +373,9 @@ export class GameState{
   this.data.lineage.push({name:chosen.name,gen:this.data.generation,start:this.data.year,
    role:named?"Named successor":"Chosen by the survivors",
    sourceResidentId:chosen.id,appearance:{...this.data.hero.appearance}});
-  v.health=75;v.stamina=Math.min(80,maxStamina(v));v.gameOver=false;
+  // The new leader brings their own health and needs, not the previous
+  // character's exhaustion, starvation or temporary meal effects.
+  v.health=75;v.hunger=80;v.foodSeconds=0;v.stamina=80;v.gameOver=false;
   this.data.lastDeath={id:eventId,oldName,successorName:chosen.name,reason,year:this.data.year,gameOver:false};
   this.changed(oldName+" died from "+reason+". "+chosen.name+" now leads the village.");
   return true;
@@ -536,6 +538,7 @@ export class GameState{
   this.data.skills=Object.fromEntries(SKILLS.map(([id])=>[id,Math.round(this.data.skills[id]*inherited)]));
   this.data.generation++;this.data.year+=24;this.data.calendarProgress=0;
   this.data.hero={name,age:18,appearance:descendantAppearance(old.appearance,this.data.generation)};
+  this.data.survival={...freshSurvival(),deathCount:this.data.survival.deathCount};
   this.data.lineage.push({name,gen:this.data.generation,start:this.data.year,role:"Descendant of "+old.name,appearance:this.data.hero.appearance});
   this.changed(`${old.name}'s legacy passes to ${name}, generation ${this.data.generation}.`);
   return name;

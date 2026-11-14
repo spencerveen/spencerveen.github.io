@@ -1,4 +1,4 @@
-import {MAX_SAVE_SLOTS,allSaveSummaries,mostRecentSave,removeSlot,migrateLegacySave} from "./save-slots.js?v=20261113m";
+import {MAX_SAVE_SLOTS,allSaveSummaries,mostRecentSave,removeSlot,migrateLegacySave} from "./save-slots.js?v=20261114r";
 import {HAIR_STYLES,HAIR_COLORS,SKIN_TONES,normalizeAppearance,founderAppearance} from "./characters.js?v=20261113m";
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const yearText=n=>Number(n)<0?Math.abs(n).toLocaleString()+" BCE":(Number(n)+1)+" CE";
@@ -56,7 +56,7 @@ export class TitleScreen {
   return `<div class="epoch-title-heading"><span class="kicker">THE FIRST CHAPTER</span><h1>Before the Dawn</h1>
    <p>The story of civilization starts with one life. What will your people become?</p></div>
    <div class="epoch-title-buttons">
-    <button data-menu="continue" class="epoch-title-primary" ${latest?"":"disabled"}>Continue${latest?" · "+esc(latest.hero):""}</button>
+    <button data-menu="continue" class="epoch-title-primary" ${latest?"":"disabled"}>Continue${latest?" · "+esc(latest.hero)+(latest.ended?" (Ended)":""):""}</button>
     <button data-menu="new" class="epoch-title-secondary">New Game</button>
    </div>
    <section class="epoch-save-section" aria-label="Saved games"><div class="epoch-save-heading"><h2>Saved Worlds</h2><span>${saves.filter(s=>!s.empty).length} / ${MAX_SAVE_SLOTS} slots</span></div>
@@ -71,9 +71,9 @@ export class TitleScreen {
    </div>`;
   return `<div class="epoch-save-card"><div><b>Slot ${s.slot} · ${esc(s.hero)}</b>
    <small>Generation ${s.generation} · ${yearText(s.year)} · ${s.houses} ${noun(s.houses,"structure")}</small>
-   <small>Saved ${esc(dateText(s.lastSavedAt))}</small></div>
+   <small>Saved ${esc(dateText(s.lastSavedAt))}${s.ended?" · Civilization ended":""}</small></div>
    <div class="epoch-save-actions">${choose?`<button data-menu="pick-new" data-slot="${s.slot}">Replace</button>`:
-     `<button data-menu="load" data-slot="${s.slot}">Load</button><button class="epoch-delete" data-menu="delete" data-slot="${s.slot}" aria-label="Delete slot ${s.slot}">Delete</button>`}</div>
+     `<button data-menu="load" data-slot="${s.slot}">${s.ended?"View Ending":"Load"}</button><button class="epoch-delete" data-menu="delete" data-slot="${s.slot}" aria-label="Delete slot ${s.slot}">Delete</button>`}</div>
    </div>`;
  }
  choose(){

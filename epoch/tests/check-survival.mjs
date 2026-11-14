@@ -90,6 +90,8 @@ assert.equal(nominated.data.survival.gameOver,false);
 assert.equal(nominated.data.hero.name,picked.name);
 assert.equal(nominated.data.hero.sourceResidentId,picked.id);
 assert.equal(nominated.data.survival.health,75);
+assert.equal(nominated.data.survival.hunger,80,"successors start with their own hunger instead of inheriting the dead hero's needs");
+assert.equal(nominated.data.survival.foodSeconds,0);
 assert.equal(nominated.data.generation,2);
 assert.equal(nominated.data.village.population,4,"the new leader is no longer counted twice");
 assert.equal(nominated.data.village.residents.length,3);
