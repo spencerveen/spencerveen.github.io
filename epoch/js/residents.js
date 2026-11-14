@@ -4,6 +4,7 @@
  */
 import {BUILDINGS,VILLAGE_START_CAPACITY} from "./settlement.js?v=20261114u";
 import {validVillagerJob,VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
+import {normalizeCargo,normalizeHaulPosition,transferCargo} from "./villager-hauling.js?v=20261114haul1";
 
 export const NATURAL_DEATH_AGE=100;
 export const DECEASED_HISTORY_LIMIT=100;
@@ -23,7 +24,7 @@ export function legacyResidents(count){
   name:LEGACY[i]?.[0]||"Settler "+(i+2),
   sex:LEGACY[i]?.[1]||(i%2?"male":"female"),
   age:24+i%18,originTribeId:null,recruitment:"legacy",role:"resident",
-  joinedYear:-12000,homeId:null,job:"idle",memories:[]
+  joinedYear:-12000,homeId:null,job:"idle",cargo:{},haulPosition:null,memories:[]
  }));
 }
 export function normalizeResidents(raw,max=100){
@@ -50,7 +51,8 @@ export function normalizeResidents(raw,max=100){
    originTribeName:fromTribe?text(resident.originTribeName,80):"",
    recruitment,role:fromTribe&&(resident.role==="leader"||id.endsWith(":member:0"))?"formerLeader":"resident",
    joinedYear:year,homeId:rememberedHome,
-   job:validVillagerJob(resident.job)?resident.job:"idle",memories
+   job:validVillagerJob(resident.job)?resident.job:"idle",
+   cargo:normalizeCargo(resident.cargo),haulPosition:normalizeHaulPosition(resident.haulPosition),memories
   });
   if(result.length>=Math.max(0,max))break;
  }
@@ -139,6 +141,7 @@ export function ageVillageResidents(village,years,year){
  for(const person of village.residents){
   person.age=Math.max(1,Math.floor(person.age)+years);
   if(person.age>=NATURAL_DEATH_AGE){
+   if(village.stockpile)transferCargo(person.cargo,village.stockpile);
    deceased.push({id:person.id,name:person.name,age:NATURAL_DEATH_AGE,
     year:safeYear(year),cause:"old age"});
   }else living.push(person);
