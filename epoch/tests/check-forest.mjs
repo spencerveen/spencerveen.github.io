@@ -76,7 +76,7 @@ globalThis.BABYLON={
 };
 const {ForestChunks}=await import("../js/forest-chunks.js");
 const disposed=[],world={
- scene:{},entities:[],obstacles:[],animals:[],m:{earth:{},grass:{}},
+ scene:{},entities:[],obstacles:[],animals:[],fish:[],m:{earth:{},grass:{}},
  decorate(resource,label,x,z,shape,key){
   const node={name:label,disposed:false,dispose(){this.disposed=true;disposed.push(label)}};
   this.entities.push({x,z,chunkKey:key});
