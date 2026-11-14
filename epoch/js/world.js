@@ -838,10 +838,14 @@ export class World {
    const root=this.character.root;
    const t=performance.now()/1000;
    const blend=Math.min(1,Math.max(0,dt)*7);
-   const height=deep?.85+.045*Math.sin(t*3.4):0;
+   const swimmingNow=deep&&this.waterMotion==="swimming";
+   // Swimming is mostly prone with chest just below the waterline. When
+   // floating or exhausted, tread upright with the head above the surface.
+   const height=deep?(swimmingNow?.59:-.25)+.025*Math.sin(t*(swimmingNow?4:2.1)):0;
+   const lean=deep?(swimmingNow?1.12:.16):0;
    root.position.y+=(height-root.position.y)*blend;
-   root.position.z+=((deep?-.45:0)-root.position.z)*blend;
-   root.rotation.x+=((deep?1.18:0)-root.rotation.x)*blend;
+   root.position.z+=((swimmingNow?-.18:0)-root.position.z)*blend;
+   root.rotation.x+=(lean-root.rotation.x)*blend;
   }
   const atStockpile=nearStockpile(this.stockpile,p.x,p.z);
   if(atStockpile!==this.stockpileInRange){

@@ -93,15 +93,20 @@ try{
   const delta=Math.abs(a.x-b.x)+Math.abs(a.y-b.y)+Math.abs(a.z-b.z)+Math.abs(a.w-b.w);
   w.update(.045);
   const floating=w.character.animationStatus().mode;
+  const treadLean=w.character.root.rotation.x;
+  const treadHeight=w.character.root.position.y;
   w.player.position.x=0;w.player.position.z=0;
   w.player.position.y=w.groundY(0,0);
   w.terrain.update(0,0);
   w.update(.045);
-  return {delta,floating,land:w.character.animationStatus().mode};
+  return {delta,floating,treadLean,treadHeight,
+   land:w.character.animationStatus().mode};
  },crossed.route);
  assert(!animation.problem,JSON.stringify(animation));
  assert(animation.delta>.04,"arms perform distinct crawl strokes: "+JSON.stringify(animation));
  assert.equal(animation.floating,"float","resting afloat uses a separate float clip");
+ assert(animation.treadLean<1.12,
+  "floating should stop lying prone and begin transitioning to upright treading");
  assert.equal(animation.land,"idle","walking out of water restores land animation");
  assert.deepEqual(errors,[]);
  console.log("PASS browser swimming: river crossing, stamina, 3D crawl strokes, float and shore transitions");

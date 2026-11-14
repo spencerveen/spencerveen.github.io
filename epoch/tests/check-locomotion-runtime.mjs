@@ -85,6 +85,18 @@ const rightStart=rightArm.rotationQuaternion.clone();
 controller.update(102.26,"swim");
 controller.update(102.52,"swim");
 const strokeAfter=upper.rotationQuaternion.clone();
+// Keep the moving pose anchored to the authored run clip, not the T-pose.
+// Shoulder rotation should be much closer to the run animation than to the
+// skeleton's straight-armed rest pose.
+const source=data.clips.run.tracks.find(track=>track.name==="upperarm_l"&&track.path==="rotation");
+const sourceRest=new Quaternion(...source.rest);
+const sourcePose=new Quaternion(...source.values[0]);
+const angular=(a,b)=>{
+ const dot=Math.abs(a.x*b.x+a.y*b.y+a.z*b.z+a.w*b.w);
+ return 2*Math.acos(Math.min(1,dot));
+};
+assert(angular(strokeAfter,sourcePose)<angular(strokeAfter,sourceRest),
+ "swimming shoulder must follow the bent authored pose, not rest/T-pose");
 assert(changed(strokeStart,strokeAfter)>.055,"front crawl strokes animate shoulder joints");
 assert(changed(rightStart,rightArm.rotationQuaternion)>.055,"both arms paddle in swim mode");
 assert.equal(controller.mode,"swim");

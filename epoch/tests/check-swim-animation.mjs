@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {SWIM_STROKE_VERSION,SWIM_CYCLE,FLOAT_CYCLE,swimJointPose} from "../js/swim-animation.js";
-assert.equal(SWIM_STROKE_VERSION,1);
+assert.equal(SWIM_STROKE_VERSION,2);
 assert(SWIM_CYCLE<FLOAT_CYCLE);
 assert.equal(swimJointPose("upperarm_l",0,"idle"),null);
 assert.equal(swimJointPose("irrelevant",0,"swim"),null);
@@ -18,10 +18,10 @@ for(const mode of ["swim","float"]){
 const arm=(name,t)=>swimJointPose(name,t,"swim");
 const left0=arm("upperarm_l",0),leftHalf=arm("upperarm_l",SWIM_CYCLE/2);
 const right0=arm("upperarm_r",0);
-assert(Math.abs(left0.pitch-leftHalf.pitch)>.6,"arm reaches and pulls through the water");
-assert(Math.abs(left0.pitch-right0.pitch)>.6,"front crawl shoulders alternate, not mirror stroke");
+assert(Math.abs(left0.pitch-leftHalf.pitch)>.3,"arm reaches and pulls through the water");
+assert(Math.abs(left0.pitch-right0.pitch)>.3,"front crawl shoulders alternate, not mirror stroke");
 assert(Math.abs(swimJointPose("thigh_l",0,"swim").pitch-
- swimJointPose("thigh_l",SWIM_CYCLE/4,"swim").pitch)>.12,"legs kick");
+ swimJointPose("thigh_l",SWIM_CYCLE/4,"swim").pitch)>.1,"legs kick");
 assert.notDeepEqual(swimJointPose("upperarm_l",0,"float"),
  swimJointPose("upperarm_l",0,"swim"),"floating is distinct from moving strokes");
 const first=swimJointPose("upperarm_l",0,"swim");

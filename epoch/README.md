@@ -97,6 +97,10 @@ During a running game, press **L** to open or close the developer panel. It cont
 
 These are deliberately temporary, session-only test switches in `js/dev-cheats.js`. They default to off every time Epoch opens, are not stored in save slots, and do not undo an already completed game-over. Players' villages, normal saves and death/permadeath rules when the toggles are off remain intact. The dev-only module, UI controls and state hooks can all be removed before release.
 
+## Swimming pose polish — No more T-posing
+
+Swim strokes now start from the Quaternius **bent-arm jogging skeleton poses** instead of replacing rotations with the straight-arm binding pose. Small procedural shoulder paddles, elbow bends, and alternating kicks layer over the animation. Treading water uses the authored idle pose and subtle sculling, not the T-pose. Moving swimmers lie mostly prone with their chest nearer the surface, while resting/exhausted swimmers transition upright so their head remains above the water. Transitions to land walk/run are preserved.
+
 ## Animated swimming and floating
 
 The real Quaternius humanoid now has **procedural skeletal swimming**: alternating arm pulls, bent elbows, fluttering leg kicks, and subtle torso movement while crossing rivers, lakes, or ocean. Releasing WASD switches to a slower treading/float animation, including when exhausted. Pressing Shift increases the stroke rhythm for fast swimming. The avatar's visual root leans into a mostly horizontal floating position above the water surface, with smooth transitions when entering or leaving water. Animated hair, accessories and the existing glTF rig stay attached.
