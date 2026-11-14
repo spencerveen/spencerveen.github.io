@@ -17,13 +17,19 @@ try{
  // random terrain. Do not overwrite a save on subsequent reloads.
  await page.addInitScript(()=>{
   if(!localStorage.getItem("epoch.stoneage.v1"))
-   localStorage.setItem("epoch.stoneage.v1",JSON.stringify({version:1,worldSeed:1095757445}));
+   localStorage.setItem("epoch.stoneage.v1",JSON.stringify({version:1,worldSeed:1095757445,hero:{name:"Test Founder"}}));
  });
  const errors=[],warnings=[];
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
  page.on("requestfailed",request=>warnings.push(request.url()+" "+request.failure()?.errorText));
- await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113l",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261113m",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.locator('[data-menu="continue"]').waitFor({timeout:45000});
+ assert(await page.locator("#start-screen").isVisible(),"title screen appears before world loads");
+ assert.equal(await page.locator('[data-tab="appearance"]').count(),0,"no in-game character customization tab");
+ assert.equal(await page.evaluate(()=>typeof window.epochDebug),"undefined","3D world is deferred until loading a save");
+ assert((await page.locator("#start-screen").innerText()).includes("Legacy Ada")===false,"title uses actual migrated save data");
+ await page.locator('[data-menu="continue"]').click();
  await page.waitForFunction(()=>typeof window.epochDebug==="function",{timeout:45000});
  await page.waitForFunction(()=>window.epochDebug()?.movement?.loaded===true,{timeout:45000});
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),{timeout:45000});
@@ -96,7 +102,7 @@ try{
  const emptyBush=starterObjects.find(o=>o.resource==="food");
  assert(removedTree&&removedStone&&emptyBush,"test forest contains all three node types");
  await page.addInitScript(({treeId,stoneId,bushId})=>{
-  const key="epoch.stoneage.v1",saved=JSON.parse(localStorage.getItem(key)||"{}");
+  const key="epoch.stoneage.slot.1",saved=JSON.parse(localStorage.getItem(key)||"{}");
   saved.version=1;
   saved.resourceNodes={
    [treeId]:{remaining:0,removed:true,regrowAt:0},
@@ -118,6 +124,9 @@ try{
   localStorage.setItem(key,JSON.stringify(saved));
  },{treeId:removedTree.id,stoneId:removedStone.id,bushId:emptyBush.id});
  await page.reload({waitUntil:"domcontentloaded"});
+ await page.locator('[data-menu="continue"]').waitFor({timeout:45000});
+ assert(await page.locator("#start-screen").isVisible(),"reloading returns to title");
+ await page.locator('[data-menu="continue"]').click();
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.worldPlots===5,null,{timeout:45000});
  const reloadedForest=await page.evaluate(()=>window.epochDebug().forest);
  assert.equal(reloadedForest.seed,idle.forest.seed,"reloading must preserve the world seed");
@@ -189,7 +198,7 @@ try{
   await page.locator("#toggle").click();
   assert(await page.locator("#right").evaluate(el=>el.classList.contains("open")),
    "menu must open at "+width+"px");
-  for(const tab of ["pack","village","appearance","skills","tech","culture","dynasty"]){
+  for(const tab of ["pack","village","skills","tech","culture","dynasty"]){
    await page.locator('[data-tab="'+tab+'"]').click();
    const layout=await page.evaluate(()=>{
     const right=document.querySelector("#right");
