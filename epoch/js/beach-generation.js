@@ -5,6 +5,7 @@
  */
 import {STARTER_SEED,CHUNK_SIZE,seededRandom} from "./forest-generation.js?v=20261114y";
 import {coastlineX} from "./ocean-generation.js?v=20261114beaches1";
+import {waterAt} from "./water-generation.js?v=20261114beaches1";
 export const BEACH_MODEL_VERSION=1;
 export const BEACH_TREE_BUFFER=12;
 const clamp=t=>Math.max(0,Math.min(1,t));
@@ -30,6 +31,9 @@ export function beachFlintSites(seed,cx,cz){
   const z=cz*CHUNK_SIZE+2+rng()*(CHUNK_SIZE-4);
   const b=beachAt(x,z,seed);
   if(!b.flintZone||b.sand<.08)continue;
+  // Mouths of rivers and their lake edges can cut across sandy beaches.
+  // Spawn only on genuinely dry terrain, not in an overlapping waterway.
+  if(waterAt(x,z,seed).depth>.025)continue;
   if(result.some(p=>Math.hypot(p.x-x,p.z-z)<7))continue;
   result.push({id:"flint:"+Math.round(x*100)+":"+Math.round(z*100),
    resource:"flint",label:"Beach Flint",shape:"flint",x,z});
