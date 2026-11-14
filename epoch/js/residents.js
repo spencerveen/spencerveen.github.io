@@ -3,6 +3,7 @@
  * Relationships in Phase 3 are factual shared histories, not invented kinship.
  */
 import {BUILDINGS,VILLAGE_START_CAPACITY} from "./settlement.js?v=20261114u";
+import {validVillagerJob,VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs1";
 
 export const NATURAL_DEATH_AGE=100;
 export const DECEASED_HISTORY_LIMIT=100;
@@ -22,7 +23,7 @@ export function legacyResidents(count){
   name:LEGACY[i]?.[0]||"Settler "+(i+2),
   sex:LEGACY[i]?.[1]||(i%2?"male":"female"),
   age:24+i%18,originTribeId:null,recruitment:"legacy",role:"resident",
-  joinedYear:-12000,homeId:null,memories:[]
+  joinedYear:-12000,homeId:null,job:"idle",memories:[]
  }));
 }
 export function normalizeResidents(raw,max=100){
@@ -48,7 +49,8 @@ export function normalizeResidents(raw,max=100){
    originTribeId:fromTribe?id.slice(0,id.indexOf(":member:")):null,
    originTribeName:fromTribe?text(resident.originTribeName,80):"",
    recruitment,role:fromTribe&&(resident.role==="leader"||id.endsWith(":member:0"))?"formerLeader":"resident",
-   joinedYear:year,homeId:rememberedHome,memories
+   joinedYear:year,homeId:rememberedHome,
+   job:validVillagerJob(resident.job)?resident.job:"idle",memories
   });
   if(result.length>=Math.max(0,max))break;
  }
@@ -93,6 +95,17 @@ export function moveResidentHome(village,id,newHomeId,year){
  const note="Moved from "+oldName+" to "+unit.label+".";
  resident.memories.push({year:safeYear(year),text:note});
  resident.memories=resident.memories.slice(-16);
+ return true;
+}
+export function assignResidentJob(village,id,job,year){
+ if(!validVillagerJob(job))return false;
+ const person=(village?.residents||[]).find(r=>r.id===id);
+ if(!person||person.job===job)return false;
+ person.job=job;
+ person.memories.push({year:safeYear(year),
+  text:job==="idle"?"Stopped working and returned to village life.":
+   "Began working as "+VILLAGER_JOBS[job].name.toLowerCase()+"."});
+ person.memories=person.memories.slice(-16);
  return true;
 }
 export function residentConnections(village,id){
