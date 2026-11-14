@@ -76,7 +76,7 @@ try{
  assert(crossed.z>crossed.route.z+8,"WASD crosses deep water: "+JSON.stringify(crossed));
  assert(crossed.remaining<crossed.initial-2,"swimming consumes stamina");
  assert(crossed.maxError<.001,"character floats at sampled waterline");
- assert.equal(crossed.loaded,25);
+ assert.equal(crossed.loaded,81);
  const animation=await page.evaluate(({x,z})=>{
   const w=window.__epochTestWorld;
   w.player.position.x=x;w.player.position.z=z;
