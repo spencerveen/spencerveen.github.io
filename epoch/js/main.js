@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261114v";
+import {GameState} from "./state.js?v=20261114w";
 import {World} from "./world.js?v=20261114u";
-import {UI} from "./ui.js?v=20261114v";
+import {UI} from "./ui.js?v=20261114w";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
@@ -51,7 +51,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
   }).catch(error=>{console.error("Epoch character load error:",error);reveal();});
   // Expose a read-only inspection aid for development without exposing mutation methods.
   Object.defineProperty(globalThis,"epochDebug",{value:()=>({
-    slot:state.slot,heroName:state.data.hero.name,year:state.formatYear(),generation:state.data.generation,
+    slot:state.slot,heroName:state.data.hero.name,heroAge:state.data.hero.age,year:state.formatYear(),generation:state.data.generation,
     survival:state.survivalStatus(),successorId:state.data.successorId,
     lastDeath:state.data.lastDeath?{...state.data.lastDeath}:null,
     ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal,activeResidentId:ui.activeResidentId},
@@ -71,6 +71,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
       position:world.fireLight?{x:world.fireLight.position.x,z:world.fireLight.position.z}:null},
     settlement:{plots:{...state.data.village.plots},population:state.data.village.population,capacity:state.villageCapacity(),
       residents:(state.data.village.residents||[]).map(v=>({...v})),
+      deceased:(state.data.village.deceased||[]).map(v=>({...v})),
       housing:state.villageHousing(),
       people:world.people.map(p=>({id:p.id,name:p.name,homeId:p.homeId,x:p.x,z:p.z})),
       buildings:state.data.village.buildings.map(b=>({...b})),

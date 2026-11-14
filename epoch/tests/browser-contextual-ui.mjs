@@ -241,6 +241,12 @@ try{
 
  await clickWorldObject(page,{stockpile:true});
  await page.waitForFunction(()=>window.epochDebug().ui.context==="village",null,{timeout:5000});
+ assert(await page.locator("#objective-guide").isHidden(),"finished village no longer displays the old chapter prompt");
+ assert.equal(await page.locator("#survival-hud .survival-stat").count(),3,"only three survival bars remain");
+ await page.locator('nav.section-tabs [data-section="people"]').click();
+ const peopleText=await page.locator("#panel").innerText();
+ assert(peopleText.includes("Context Founder")&&peopleText.includes("Age 18"),"the leader's name and age live in People");
+ await page.locator('nav.section-tabs [data-section="storage"]').click();
  const deposit=page.locator('[data-action="deposit-stockpile"][data-item="wood"]');
  assert.equal(await deposit.isDisabled(),false,"stockpile opens with working resource transfers");
  await page.locator("#panel").focus();

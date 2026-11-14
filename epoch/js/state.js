@@ -1,7 +1,7 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
 import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeBerries} from "./survival.js?v=20261114s";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
-import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114u";
+import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114w";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
@@ -12,7 +12,8 @@ import {harvestAtNode} from "./harvest.js?v=20261114q";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114m";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
- moveResidentHome,residentConnections} from "./residents.js?v=20261114u";
+ moveResidentHome,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
+ NATURAL_DEATH_AGE} from "./residents.js?v=20261114w";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261114v";
@@ -98,6 +99,7 @@ export class GameState{
   const previousResidents=Array.isArray(data?.village?.residents)?
    data.village.residents:legacyResidents(previousPopulation-1);
   this.data.village.residents=normalizeResidents(previousResidents,capacity(this.data.village)-1);
+  this.data.village.deceased=normalizeDeceasedResidents(data?.village?.deceased);
   for(const resident of this.data.village.residents){
    if(resident.originTribeId&&!resident.originTribeName){
     const coordinates=resident.originTribeId.slice(6).split(",").map(Number);
@@ -299,6 +301,14 @@ export class GameState{
    connections:residentConnections(this.data.village,id)
   };
  }
+ ageResidents(years=1){
+  const d=this.data,deaths=ageVillageResidents(d.village,years,d.year);
+  if(deaths.length){
+   d.village.population=d.village.residents.length+1;
+   if(deaths.some(p=>p.id===d.successorId))d.successorId=null;
+  }
+  return deaths;
+ }
  villageHousing(){return housingUnits(this.data.village)}
  assignResidentHome(id,homeId){
   const changed=moveResidentHome(this.data.village,id,homeId,this.data.year);
@@ -355,6 +365,10 @@ export class GameState{
  heroDies(reason="a fatal injury"){
   const v=this.data.survival;
   if(v.gameOver||v.health>0)return false;
+  // A deceased or already 100-year-old villager cannot become the next leader.
+  const agedOut=this.ageResidents(0);
+  if(agedOut.length)this.data.history.unshift(
+   agedOut.map(p=>p.name).join(", ")+" died of old age.");
   const oldName=this.data.hero.name,roster=this.data.village.residents;
   const named=roster.find(r=>r.id===this.data.successorId);
   const chosen=named||roster[Math.floor(Math.random()*roster.length)]||null;
@@ -552,6 +566,9 @@ export class GameState{
   const inherited=this.data.civics.includes("apprenticeship")?.25:this.data.civics.includes("oral")?.15:.08;
   this.data.skills=Object.fromEntries(SKILLS.map(([id])=>[id,Math.round(this.data.skills[id]*inherited)]));
   this.data.generation++;this.data.year+=24;this.data.calendarProgress=0;
+  const agedOut=this.ageResidents(24);
+  if(agedOut.length)this.data.history.unshift(
+   agedOut.map(p=>p.name).join(", ")+" died of old age.");
   this.data.hero={name,age:18,appearance:descendantAppearance(old.appearance,this.data.generation)};
   this.data.survival={...freshSurvival(),deathCount:this.data.survival.deathCount};
   this.data.lineage.push({name,gen:this.data.generation,start:this.data.year,role:"Descendant of "+old.name,appearance:this.data.hero.appearance});
@@ -561,6 +578,13 @@ export class GameState{
  advance(dt){
   const d=this.data,seconds=Math.max(0,Math.min(dt,5));
   if(d.survival.gameOver)return;
+  // Older saves may contain an already-100-year-old leader. Resolve that on
+  // their first live tick instead of allowing an immortal founder.
+  if(d.hero.age>=NATURAL_DEATH_AGE){
+   d.survival.health=0;
+   this.heroDies("old age");
+   return;
+  }
   const survivalChanged=advanceVitals(d.survival,seconds,this.sprintedThisTick);
   this.sprintedThisTick=false;
   if(survivalChanged){
@@ -580,7 +604,20 @@ export class GameState{
     this.changed("The Toolmaker's Shelter produced "+gained+" Knowledge.");
    }
   }
-  if(d.calendarProgress>=1){d.calendarProgress-=1;d.year++;d.hero.age++;this.changed(`${d.hero.name} celebrates another year of life.`)}
+  if(d.calendarProgress>=1){
+   d.calendarProgress-=1;d.year++;
+   const deceased=this.ageResidents(1);
+   const memorial=deceased.length?
+    " "+deceased.map(p=>p.name).join(", ")+" died of old age.":"";
+   d.hero.age++;
+   if(d.hero.age>=NATURAL_DEATH_AGE){
+    if(memorial)d.history.unshift(memorial.trim());
+    d.survival.health=0;
+    this.heroDies("old age");
+    return;
+   }
+   this.changed(`${d.hero.name} celebrates another year of life.`+memorial);
+  }
  }
  formatYear(){return this.data.year<0?`${Math.abs(this.data.year).toLocaleString()} BCE`:`${this.data.year+1} CE`}
  reset(){

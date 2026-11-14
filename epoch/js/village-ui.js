@@ -98,8 +98,9 @@ function peoplePanel(ui){
    ' resident beds occupied</span></div>';
  }
  html+='<h3 class="section-heading">Village residents</h3>'+
-  '<div class="entry"><h3>'+esc(state.data.hero.name)+'</h3><p>Village leader · Generation '+
-  state.data.generation+' · Communal camp</p><small>The active character you control.</small></div>';
+  '<div class="entry resident-row"><div><h3>'+esc(state.data.hero.name)+'</h3><p>Age '+
+  state.data.hero.age+' · Village leader · Generation '+state.data.generation+
+  '</p><small>Communal camp · The character you control</small></div><span class="tag">You</span></div>';
  if(!people.length)html+='<p class="context-note">Your founder is alone. Befriend a wilderness tribe to invite your first neighbors.</p>';
  for(const person of people){
   const home=homes.find(h=>h.id===person.homeId);
@@ -108,6 +109,15 @@ function peoplePanel(ui){
    ' · '+esc(home?.label||"Communal camp")+'</p><small>'+
    (person.recruitment==="peaceful"?"Welcomed from "+esc(source):"Longtime villager")+
    '</small></div><button type="button" data-action="view-resident" data-id="'+esc(person.id)+'">View profile</button></div>';
+ }
+ const remembered=(state.data.village.deceased||[]);
+ if(remembered.length){
+  html+='<details class="resident-memorial"><summary>Remembered villagers ('+remembered.length+')</summary>';
+  for(const person of remembered.slice(-5).reverse())
+   html+='<div class="timeline"><b>'+esc(person.name)+'</b><span>Died of old age at 100 · '+
+    (person.year<0?Math.abs(person.year).toLocaleString()+" BCE":(person.year+1)+" CE")+
+    '</span></div>';
+  html+='</details>';
  }
  return html;
 }

@@ -96,6 +96,8 @@ try{
  const founding=await page.evaluate(()=>window.epochDebug().settlement);
  assert.equal(founding.stockpile.used,0,"stockpile starts with no materials");
  assert.equal(founding.population,1,"stockpile founding does not summon residents");
+ assert(await page.locator("#objective-guide").isHidden(),"the introductory chapter prompt disappears when the village is founded");
+ assert.equal(await page.locator("#survival-hud .survival-stat").count(),3,"post-founding HUD only displays Health, Stamina and Hunger");
  assert.equal((await page.evaluate(()=>window.epochDebug())).villagerCount,0,"the founder remains alone after setting camp");
  assert.equal(founding.renderedBuildings,0,"founding stockpile creates no empty building rings");
  assert(founding.hasGrid,"construction grid is available on demand");

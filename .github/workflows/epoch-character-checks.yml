@@ -44,6 +44,8 @@ jobs:
         run: node epoch/tests/check-huts.mjs
       - name: Validate hunger, stamina, berries, injuries and survivor succession
         run: node epoch/tests/check-survival.mjs
+      - name: Validate annual villager aging, natural death and succession at age 100
+        run: node epoch/tests/check-aging.mjs
       - name: Validate title save slots, migration and character creation locks
         run: node epoch/tests/check-save-slots.mjs
       - name: Validate permanent resource depletion and berry regeneration

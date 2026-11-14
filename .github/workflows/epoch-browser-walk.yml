@@ -36,6 +36,8 @@ jobs:
         run: node epoch/tests/browser-tribes.mjs
       - name: Validate survival HUD, eating, sprinting and permanent death
         run: node epoch/tests/browser-survival.mjs
+      - name: Validate natural aging, death succession, memorials and a clean HUD
+        run: node epoch/tests/browser-aging.mjs
       - name: Confirm imported 3D humanoids animate in Chromium
         run: node epoch/tests/browser-walk.mjs
       - name: Preserve screenshots and server logs

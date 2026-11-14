@@ -1,7 +1,7 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114v";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114w";
 import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
 import {BUILDINGS} from "./settlement.js?v=20261114u";
-import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114v";
+import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114w";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114v";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
@@ -52,11 +52,13 @@ export class UI{
   meter("health",s.health,100,Math.ceil(s.health)+" / 100");
   meter("stamina",s.stamina,s.maxStamina,Math.floor(s.stamina)+" / "+s.maxStamina);
   meter("hunger",s.hunger,100,Math.ceil(s.hunger)+"%");
-  document.getElementById("food-effect").textContent=s.foodSeconds>0?
-   "🫐 Berry boost · +20 max Stamina · "+Math.ceil(s.foodSeconds)+"s left":
-   s.hunger<=0?"Starving: stamina capped at 45. Eat to recover.":
-   s.hunger<25?"Hungry: slower stamina recovery. Eat wild berries.":
-   "Eat berries from Inventory for temporary extra stamina";
+  // Food buffs remain accessible on hover, without clutter beneath Hunger.
+  document.getElementById("stamina-value").title=s.foodSeconds>0?
+   "Berry boost: +20 maximum Stamina for "+Math.ceil(s.foodSeconds)+" more seconds.":
+   s.hunger<=0?"Starving: maximum Stamina reduced to 45.":"";
+  document.getElementById("hunger-value").title=s.hunger<=0?
+   "Starving: stamina regenerates slowly. Eat berries to recover.":
+   s.hunger<25?"Hungry: stamina regeneration is reduced.":"";
   document.body.classList.toggle("survival-critical",s.health<25);
   document.body.classList.toggle("survival-starving",s.hunger<=0);
   document.body.classList.toggle("epoch-game-over",s.gameOver);
@@ -223,7 +225,6 @@ export class UI{
   if(!this.hasBuilding("lore"))return {title:"Make room for discovery",description:"Deposit supplies, then build a Toolmaker's Shelter at your stockpile.",progress:p.items.wood+"/12 stored wood · "+p.items.stone+"/8 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!d.technologies.includes("fire"))return {title:"Discover the first flame",description:"Click your Toolmaker's Shelter to research Control of Fire.",progress:have("wood")+"/4 wood · "+have("stone")+"/2 stone · "+d.knowledge+"/3 knowledge",action:"Find toolmaker",target:"lore"};
   if(!d.technologies.includes("tools"))return {title:"Shape your first tools",description:"Research Stone Toolmaking at your Toolmaker's Shelter.",progress:have("wood")+"/5 wood · "+have("stone")+"/6 stone · "+d.knowledge+"/7 knowledge",action:"Find toolmaker",target:"lore"};
-  if(!d.axe)return {title:"A sharper start",description:"Craft a stone axe at your village stockpile, under Craft.",progress:p.items.wood+"/2 stored wood · "+p.items.stone+"/3 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!this.hasBuilding("family"))return {title:"Homes for your people",description:"Build a Hut through your stockpile. Click it to inspect the household.",progress:p.items.wood+"/10 stored wood · "+p.items.stone+"/6 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!this.hasBuilding("council"))return {title:"A place for your people",description:"Build a Council Lodge through your stockpile to begin your culture.",progress:p.items.wood+"/14 stored wood · "+p.items.stone+"/8 stored stone",action:"Find stockpile",target:"stockpile"};
   if(!d.civics.includes("community"))return {title:"Become a community",description:"Click the Council Lodge to establish Tribal Community.",progress:have("wood")+"/8 wood · "+have("food")+"/6 berries · "+d.culture+"/5 culture",action:"Find council",target:"council"};
@@ -280,8 +281,11 @@ export class UI{
  building(){const def=BUILDINGS[this.contextBuilding()?.kind];return '<div class="building-context"><span class="stat-pill">Village gathering place</span><h3>'+esc(def?.name||"Village building")+'</h3><p>'+esc(def?.description||"")+'</p></div><p class="context-note">Cooking recipes are a future milestone. Your built hearth and fire are saved with this village.</p>'}
  render(){
   const d=this.state.data,o=this.objective(),placing=!!(this.world.placingStockpile||this.world.placingBuilding);
+  // After founding, the top-left surface becomes a simple survival-only HUD.
+  $("objective-guide").hidden=!!d.village.stockpile;
+  document.body.classList.toggle("village-established",!!d.village.stockpile);
   this.renderVitals();
-  $("year").textContent=this.state.formatYear();$("generation").textContent="GEN "+roman(d.generation);$("ancestor-name").textContent=d.hero.name;$("ancestor-age").textContent="Age "+d.hero.age+" · "+(d.generation===1?"Founder":"Descendant");$("settlement-status").textContent=d.village.stockpile?d.village.population+"/"+this.state.villageCapacity()+" villagers · "+d.village.buildings.length+" buildings":"The beginning of your story";
+  $("year").textContent=this.state.formatYear();$("generation").textContent="GEN "+roman(d.generation);
   $("science").textContent=d.knowledge;$("culture").textContent=d.culture;$("objective-title").textContent=o.title;$("objective-description").textContent=o.description;$("objective-progress").textContent=o.progress;$("objective-action").textContent=o.action;
   document.body.classList.toggle("is-panel-open",this.panelOpen);document.body.classList.toggle("is-placing",placing);
   const right=$("right");right.classList.toggle("open",this.panelOpen);right.classList.toggle("placing",placing);right.dataset.context=this.tab;right.setAttribute("aria-hidden",String(!this.panelOpen));right.inert=!this.panelOpen||!!this.modal;

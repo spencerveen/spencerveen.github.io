@@ -38,7 +38,10 @@ try{
  assert(after.survival.hunger>before.survival.hunger,"berries satisfy hunger");
  assert(after.survival.stamina>before.survival.stamina,"berries replenish stamina");
  assert.equal(after.survival.maxStamina,120,"berries temporarily increase stamina capacity");
- assert((await page.locator("#food-effect").innerText()).includes("Berry boost"));
+ assert.equal(await page.locator("#food-effect,#ancestor-name,#ancestor-age,#settlement-status").count(),0,
+  "extra text and founder identity are removed from the survival HUD");
+ assert((await page.locator("#stamina-value").getAttribute("title")).includes("Berry boost"),
+  "timed food benefit remains accessible on hover");
  assert((await page.locator("#stamina-value").innerText()).includes("/ 120"));
  await page.locator('[data-tab="pack"]').click();
  // Shift + W in the live world spends stamina for as long as sprint is held.

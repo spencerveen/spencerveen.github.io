@@ -47,10 +47,6 @@ body > header { position: absolute; inset: 0 0 auto; z-index: 5; display: flex; 
 .objective-bottom { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 #objective-progress { color: #d0c49e; font-size: 12px; line-height: 1.5; }
 #objective-action { min-height: 40px; padding: 8px 13px; border: 1px solid #cdb37c65; border-radius: 8px; background: #d1b578; color: #172319; font-size: 12px; font-weight: 750; }
-.hero-chip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 9px; margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--edge); font-size: 12px; }
-.hero-chip #ancestor-name { color: #e6e9db; font-weight: 650; }
-.hero-chip #ancestor-age { color: var(--muted); font-size: 11px; }
-#settlement-status { display: block; margin-top: 7px; color: #9caf99; font-size: 11px; line-height: 1.4; }
 
 /* Only Inventory and Skills are global interfaces. */
 .hud-tools { position: absolute; right: 20px; bottom: 18px; z-index: 6; display: flex; gap: 8px; padding: 6px; border: 1px solid #c0d0b634; border-radius: 14px; background: #0e1d16ed; box-shadow: 0 10px 30px #06120c38; backdrop-filter: blur(16px); }
@@ -501,9 +497,30 @@ body > footer { position: absolute; left: 20px; bottom: 18px; z-index: 4; displa
 #health-bar{background:linear-gradient(90deg,#9a343a,#cf6c58)}
 #stamina-bar{background:linear-gradient(90deg,#ab8634,#dec36e)}
 #hunger-bar{background:linear-gradient(90deg,#568b5b,#8bbe76)}
-.survival-food-effect{font-size:10px;color:#b4c6a5;line-height:1.45}
 body.survival-critical #health-value{color:#f4a4a4}
 body.survival-starving #hunger-value{color:#f3bd87}
 body.epoch-game-over #scene{filter:grayscale(.8) brightness(.65)}
 #modal.is-game-over #close-modal{display:none}
 @media(max-height:690px){#left{max-height:calc(100dvh - 185px);overflow:auto;scrollbar-width:thin}}
+
+
+/* The tutorial prompt is only needed before the first village stockpile. */
+#objective-guide[hidden] { display:none!important; }
+body.village-established #left {
+ width:234px;
+ padding:14px 15px;
+ background:linear-gradient(145deg,#17291ff2,#0c1d15f2);
+ border-color:#b5c7a535;
+ box-shadow:0 9px 24px #04130b36;
+}
+body.village-established #left .survival-hud {
+ margin:0;padding:0;border:0;gap:12px;
+}
+body.village-established #left .survival-stat {gap:5px 8px}
+body.village-established #left .survival-bar {height:7px}
+.resident-memorial {margin:16px 0 0;padding:12px;border:1px solid #a8b68c35;border-radius:9px;background:#b0a16809}
+.resident-memorial summary {color:#c9d4b5;cursor:pointer;font-size:12px;font-weight:650}
+.resident-memorial .timeline {font-size:12px;margin:12px 0 0}
+@media (max-width:700px){
+ body.village-established #left {width:min(235px,calc(100vw - 24px));padding:11px 13px}
+}

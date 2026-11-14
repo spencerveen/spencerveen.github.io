@@ -4,6 +4,8 @@
  */
 import {BUILDINGS,VILLAGE_START_CAPACITY} from "./settlement.js?v=20261114u";
 
+export const NATURAL_DEATH_AGE=100;
+export const DECEASED_HISTORY_LIMIT=100;
 export const CAMP_HOME="camp";
 export const CAMP_RESIDENT_BEDS=VILLAGE_START_CAPACITY-1; // Founder uses one of five camp places.
 const LEGACY=[["Tala","female"],["Bren","male"],["Kira","female"],["Oren","male"]];
@@ -101,4 +103,34 @@ export function residentConnections(village,id){
   clanmates:person.originTribeId?others.filter(r=>r.originTribeId===person.originTribeId):[],
   housemates:others.filter(r=>r.homeId===person.homeId)
  };
+}
+
+/** Persist a bounded memorial without keeping deceased people in live housing. */
+export function normalizeDeceasedResidents(raw){
+ if(!Array.isArray(raw))return [];
+ const seen=new Set(),result=[];
+ for(const record of raw.slice(-DECEASED_HISTORY_LIMIT)){
+  if(!record||typeof record!=="object"||Array.isArray(record))continue;
+  const id=text(record.id,110),name=text(record.name,60);
+  if(!VALID_ID.test(id)||!name||seen.has(id))continue;
+  seen.add(id);
+  result.push({id,name,age:NATURAL_DEATH_AGE,
+   year:safeYear(record.year),cause:"old age"});
+ }
+ return result;
+}
+/** Advance everyone on the same calendar, vacating beds at their 100th year. */
+export function ageVillageResidents(village,years,year){
+ if(!village||!Array.isArray(village.residents)||!Number.isSafeInteger(years)||years<0)return [];
+ const deceased=[],living=[];
+ for(const person of village.residents){
+  person.age=Math.max(1,Math.floor(person.age)+years);
+  if(person.age>=NATURAL_DEATH_AGE){
+   deceased.push({id:person.id,name:person.name,age:NATURAL_DEATH_AGE,
+    year:safeYear(year),cause:"old age"});
+  }else living.push(person);
+ }
+ village.residents=living;
+ village.deceased=normalizeDeceasedResidents([...(village.deceased||[]),...deceased]);
+ return deceased;
 }
