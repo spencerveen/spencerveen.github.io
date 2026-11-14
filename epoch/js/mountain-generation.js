@@ -4,7 +4,7 @@
  * stays unchanged; this module adds smooth nonnegative uplift.
  */
 import {terrainHeight,STARTER_SEED} from "./forest-generation.js?v=20261114y";
-import {nearestWaterCorridor} from "./water-corridors.js?v=20261114valleys1";
+import {nearestWaterCorridor} from "./water-corridors.js?v=20261114ecology2";
 export const MOUNTAIN_MODEL_VERSION=1;
 export const MOUNTAIN_START_RADIUS=150;
 export const RIVER_VALLEY_SHOULDER=68;

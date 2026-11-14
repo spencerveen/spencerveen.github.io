@@ -6,10 +6,10 @@ import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockp
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114y";
-import {ForestChunks} from "./forest-chunks.js?v=20261114ecology2";
-import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114swim1";
-import {createTribeWorld} from "./tribe-world.js?v=20261114m";
-import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114ecology1";
+import {ForestChunks} from "./forest-chunks.js?v=20261114ecology3";
+import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114ecology3";
+import {createTribeWorld} from "./tribe-world.js?v=20261114ecology3";
+import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114ecology3";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));

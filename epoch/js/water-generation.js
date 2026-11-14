@@ -4,9 +4,9 @@
  * across all seams and survive save/reload without saving geometry.
  */
 import {STARTER_SEED} from "./forest-generation.js?v=20261114y";
-import {mountainTerrainHeight} from "./mountain-generation.js?v=20261114valleys1";
+import {mountainTerrainHeight} from "./mountain-generation.js?v=20261114ecology3";
 import {nearestWaterCorridor} from "./water-corridors.js?v=20261114ecology2";
-import {oceanAt,SEA_LEVEL} from "./ocean-generation.js?v=20261114ocean1";
+import {oceanAt,SEA_LEVEL} from "./ocean-generation.js?v=20261114ecology3";
 export {riverCenter,riverWidth,lakeSites} from "./water-corridors.js?v=20261114ecology2";
 export const WATER_MODEL_VERSION=1;
 export const SHALLOW_LIMIT=.85;
