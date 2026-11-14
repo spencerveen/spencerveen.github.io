@@ -9,8 +9,8 @@ import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
  depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261114fish1";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
-import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261114beaches2";
-import {harvestAtNode} from "./harvest.js?v=20261114craft1";
+import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261114flint1";
+import {harvestAtNode} from "./harvest.js?v=20261114flint1";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
