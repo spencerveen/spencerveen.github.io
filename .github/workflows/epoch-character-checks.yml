@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate contextual interfaces and research/culture bootstrap
         run: node epoch/tests/check-contextual-ui.mjs
+      - name: Validate civilization-based Knowledge and single-founder population
+        run: node epoch/tests/check-technology-progression.mjs
       - name: Validate title save slots, migration and character creation locks
         run: node epoch/tests/check-save-slots.mjs
       - name: Validate permanent resource depletion and berry regeneration

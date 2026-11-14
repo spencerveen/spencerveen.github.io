@@ -20,6 +20,13 @@ export const TECH={
  tools:{name:"Stone Toolmaking",description:"Shape stone tools and craft your first proper axe.",cost:{wood:5,stone:6,knowledge:7},needs:["fire"]},
  farming:{name:"Early Agriculture",description:"Experiment with growing food and preparing permanent farmland. A preview of our next age.",cost:{food:10,stone:5,knowledge:18},needs:["tools"],culture:["community"]}
 };
+// First discoveries and meaningful construction milestones generate Knowledge.
+export const KNOWLEDGE_REWARDS=Object.freeze({
+ stockpile:3,
+ first:Object.freeze({lore:6,family:3,council:3,hearth:4}),
+ milestones:Object.freeze({3:3,6:4,10:5})
+});
+export const RESEARCH_SECONDS_PER_KNOWLEDGE=60;
 export const CIVICS={
  community:{name:"Tribal Community",description:"Establish common responsibilities and organize a small settlement.",cost:{wood:8,food:6,culture:5},needs:[]},
  oral:{name:"Oral Tradition",description:"Teach descendants more of the skills learned by their ancestors.",cost:{food:8,culture:10},needs:["community"]},
@@ -33,6 +40,7 @@ const fresh=(founder=null)=>{
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
+ knowledgeClaims:[],researchSeconds:0,
  lineage:[{name,gen:1,start:-12000,role:"Founder",appearance:{...appearance}}],
  history:["The wanderer "+name+" entered a quiet clearing in a vast prehistoric wilderness."]
  };
@@ -80,7 +88,21 @@ export class GameState{
     const m=/^building_([0-9]+)$/.exec(b.id);return m?Number(m[1])+1:1;
    }));
   this.data.village.population=Math.max(1,
-   Math.min(capacity(this.data.village),Number(this.data.village.population)||5));
+   Math.min(capacity(this.data.village),Number(this.data.village.population)||1));
+  // Legacy villages keep previously achieved progress; they must not receive
+  // retroactive first-build bonuses when the new progression system loads.
+  if(Array.isArray(data?.knowledgeClaims)){
+   this.data.knowledgeClaims=[...new Set(data.knowledgeClaims.filter(key=>typeof key==="string"))];
+  }else if(data?.version===1){
+   const kinds=new Set(this.data.village.buildings.map(b=>b.kind));
+   this.data.knowledgeClaims=[
+    ...(this.data.village.stockpile?["stockpile"]:[]),
+    ...[...kinds].filter(k=>k in KNOWLEDGE_REWARDS.first).map(k=>"first:"+k),
+    ...Object.keys(KNOWLEDGE_REWARDS.milestones).filter(n=>this.data.village.buildings.length>=Number(n)).map(n=>"buildings:"+n)
+   ];
+  }else this.data.knowledgeClaims=[];
+  this.data.researchSeconds=Number.isFinite(Number(data?.researchSeconds))?
+   Math.max(0,Math.min(RESEARCH_SECONDS_PER_KNOWLEDGE-.001,Number(data.researchSeconds))):0;
   // Old saves tracked boundless counters. Pack as much as possible into ten
   // 12-item slots, and retain any remainder as recoverable migration supplies.
   // Never silently delete a veteran player's existing wood/stone/berries.
@@ -165,7 +187,23 @@ export class GameState{
   this.syncResources();
   return true;
  }
- gainXP(skill,amount){this.data.skills[skill]=(this.data.skills[skill]||0)+amount;this.data.knowledge+=skill==="survival"?0:1}
+ gainXP(skill,amount){this.data.skills[skill]=(this.data.skills[skill]||0)+amount}
+ awardKnowledge(claim,amount){
+  if(this.data.knowledgeClaims.includes(claim)||amount<=0)return 0;
+  this.data.knowledgeClaims.push(claim);
+  this.data.knowledge+=amount;
+  return amount;
+ }
+ constructionKnowledge(kind){
+  const count=this.data.village.buildings.length;
+  let gained=this.awardKnowledge("first:"+kind,KNOWLEDGE_REWARDS.first[kind]||0);
+  for(const [threshold,bonus] of Object.entries(KNOWLEDGE_REWARDS.milestones))
+   if(count>=Number(threshold))gained+=this.awardKnowledge("buildings:"+threshold,bonus);
+  return gained;
+ }
+ researchRate(){
+  return this.data.village.stockpile?.x!==undefined&&this.data.village.buildings.some(b=>b.kind==="lore")?1:0;
+ }
  gather(type){
   const gathering={
    wood:{name:"wood",skill:"woodcutting",amount:this.data.axe?3:2,xp:13},
@@ -215,7 +253,8 @@ export class GameState{
   if(this.data.village.stockpile||!Number.isFinite(Number(x))||!Number.isFinite(Number(z)))return false;
   this.data.village.stockpile=createStockpile(x,z);
   if(!this.data.village.stockpile)return false;
-  this.changed(`${this.data.hero.name} founded the village and raised its first stockpile.`);
+  const earned=this.awardKnowledge("stockpile",KNOWLEDGE_REWARDS.stockpile);
+  this.changed(`${this.data.hero.name} founded the village and raised its first stockpile.`+(earned?` +${earned} Knowledge.`:""));
   return true;
  }
  depositToStockpile(id,amount,x,z){
@@ -264,7 +303,8 @@ export class GameState{
   village.buildings.push(entry);
   if(kind==="family")this.data.shelter=true;
   this.gainXP("construction",kind==="family"?55:65);
-  this.changed(this.data.hero.name+"'s village built a "+blueprint.name+".");
+  const earned=this.constructionKnowledge(kind);
+  this.changed(this.data.hero.name+"'s village built a "+blueprint.name+"."+(earned?" +"+earned+" Knowledge.":""));
   return {ok:true,building:entry};
  }
  canBuildPlot(id){
@@ -310,7 +350,19 @@ export class GameState{
   return name;
  }
  advance(dt){
-  const d=this.data;d.calendarProgress+=Math.min(dt,5)/90;
+  const d=this.data,seconds=Math.max(0,Math.min(dt,5));
+  d.calendarProgress+=seconds/90;
+  // An operational shelter slowly generates Knowledge during active play.
+  // Villager assignments and offline research are future mechanics.
+  if(this.researchRate()){
+   d.researchSeconds+=seconds;
+   if(d.researchSeconds>=RESEARCH_SECONDS_PER_KNOWLEDGE){
+    const gained=Math.floor(d.researchSeconds/RESEARCH_SECONDS_PER_KNOWLEDGE);
+    d.researchSeconds-=gained*RESEARCH_SECONDS_PER_KNOWLEDGE;
+    d.knowledge+=gained;
+    this.changed("The Toolmaker's Shelter produced "+gained+" Knowledge.");
+   }
+  }
   if(d.calendarProgress>=1){d.calendarProgress-=1;d.year++;d.hero.age++;this.changed(`${d.hero.name} celebrates another year of life.`)}
  }
  formatYear(){return this.data.year<0?`${Math.abs(this.data.year).toLocaleString()} BCE`:`${this.data.year+1} CE`}

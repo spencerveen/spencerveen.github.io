@@ -34,8 +34,7 @@ try{
   const s=window.epochDebug();
   return !!s?.hairAttachment?.hairAttached
    && !!s.hairAttachment.beardAttached
-   && s.npcAttachments?.length===4
-   && s.npcAttachments.every(n=>n?.headFound && (!n.hairExpected||n.hairAttached) && (!n.beardExpected||n.beardAttached));
+   && s.npcAttachments?.length===0;
  },{timeout:45000});
  const idle=await page.evaluate(()=>window.epochDebug());
  assert.equal(idle.forest.loaded,25,"25 terrain chunks surround the player");
@@ -48,7 +47,8 @@ try{
  assert(idle.movement.matchedBones>=60,"should animate at least 60 Quaternius joints");
  assert(idle.hairAttachment.headFound && idle.hairAttachment.hairAttached,"player hair must be parented to the animated Head");
  assert(idle.hairAttachment.beardAttached,"player beard must follow the Head");
- assert(idle.npcAttachments.every(n=>n.headFound && (!n.hairExpected||n.hairAttached) && (!n.beardExpected||n.beardAttached)),"villager hair must attach to their own Head");
+ assert.equal(idle.villagerCount,0,"new founders should not spawn phantom villagers");
+ assert.equal(idle.settlement.population,1,"a new game starts with the founder alone");
  assert.equal(idle.movement.mode,"idle","should start in idle stance");
  await page.screenshot({animations:"disabled",path:path.join(output,"epoch-idle.png")});
  await page.keyboard.down("w");
@@ -77,7 +77,8 @@ try{
  const status=await page.evaluate(()=>window.epochDebug());
  assert.equal(status.settlement.renderedBuildings,0,"new world must not render unbuilt village sites");
  assert.deepEqual(status.settlement.buildings,[],"new world has no built structures");
- assert.equal(status.settlement.capacity,5,"village starts with five residents");
+ assert.equal(status.settlement.capacity,5,"starter camp has room for future residents");
+ assert.equal(status.settlement.population,1,"village starts with only its founder");
  await page.locator('#objective-action').click();
  assert.equal(status.settlement.stockpile.placed,false,"no auto-created stockpile");
  await page.locator('[data-action="place-stockpile"]').click();
@@ -93,6 +94,8 @@ try{
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.stockpile?.placed===true,null,{timeout:7000});
  const founding=await page.evaluate(()=>window.epochDebug().settlement);
  assert.equal(founding.stockpile.used,0,"stockpile starts with no materials");
+ assert.equal(founding.population,1,"stockpile founding does not summon residents");
+ assert.equal((await page.evaluate(()=>window.epochDebug())).villagerCount,0,"the founder remains alone after setting camp");
  assert.equal(founding.renderedBuildings,0,"founding stockpile creates no empty building rings");
  assert(founding.hasGrid,"construction grid is available on demand");
  assert.equal(founding.gridVisible,false,"construction grid remains hidden normally");

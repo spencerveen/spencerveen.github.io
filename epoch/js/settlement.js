@@ -15,7 +15,7 @@ export const PLOTS=[
  {id:"council_1",kind:"council",x:1,z:-13,rotation:-.3}
 ];
 export const PLOT_BY_ID=Object.fromEntries(PLOTS.map(plot=>[plot.id,plot]));
-export const VILLAGE_START_POPULATION=5; // Player and four existing settlement NPCs.
+export const VILLAGE_START_POPULATION=1; // The founder starts alone; recruitment comes later.
 export const VILLAGE_START_CAPACITY=5;   // Temporary sleeping places around camp.
 export function emptyVillage(){return {plots:{},buildings:[],nextBuildingNumber:1,population:VILLAGE_START_POPULATION,stockpile:null}}
 /** Keep plot IDs stable, but move their starter blueprint with the home base. */

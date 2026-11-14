@@ -54,6 +54,7 @@ try{
  await continueGame(page,{model:true});
  await page.waitForFunction(()=>!!window.epochDebug().ui,null,{timeout:10000});
  assert.equal((await page.evaluate(()=>window.epochDebug().ui)).panelOpen,false,"exploration begins without an open panel");
+ assert.equal((await page.evaluate(()=>window.epochDebug())).villagerCount,4,"legacy village population of five still renders four residents beyond the player");
  assert.deepEqual(await page.locator("[data-tab]").evaluateAll(nodes=>nodes.map(n=>n.dataset.tab)),["pack","skills"],"only Inventory and Skills are global tabs");
 
  // The HUD must not steal mouse orbit, zoom or keyboard camera input.

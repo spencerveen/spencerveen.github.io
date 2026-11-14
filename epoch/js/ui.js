@@ -1,4 +1,4 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114h";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114j";
 import {BUILDINGS} from "./settlement.js?v=20261114b";
 import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114b";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114b";
@@ -66,7 +66,7 @@ export class UI{
  costChips(cost){return Object.entries(cost).map(([id,need])=>{const have=this.state.researchResourceCount(id);return '<span class="cost-chip '+(have>=need?"met":"missing")+'">'+names[id]+' <b>'+have+' / '+need+'</b></span>'}).join("")}
  trees(kind){
   const d=this.state.data,tech=kind==="tech",data=tech?TECH:CIVICS,owned=tech?d.technologies:d.civics;
-  let html='<div class="building-context"><span class="stat-pill">'+(tech?d.knowledge+" knowledge":d.culture+" culture")+'</span><p>'+(tech?"Discoveries your whole civilization will inherit.":"Traditions that connect one generation to the next.")+'</p></div><p class="context-note">Material costs use your Inventory first, then your village stockpile. Knowledge and Culture points are earned separately.</p><div class="research-grid">';
+  let html='<div class="building-context"><span class="stat-pill">'+(tech?d.knowledge+" knowledge":d.culture+" culture")+'</span><p>'+(tech?"Discoveries your whole civilization will inherit.":"Traditions that connect one generation to the next.")+'</p></div><p class="context-note">'+(tech?"Gain Knowledge by founding a village, constructing new building types and reaching building milestones. Your Toolmaker\'s Shelter also generates 1 Knowledge per minute of active play. Gathering earns skill XP, not Knowledge. ":"Culture progression is unchanged while future population mechanics are developed. ")+'Material costs use Inventory first, then your village stockpile.</p><div class="research-grid">';
   const nodes=Object.entries(data).sort(([a],[b])=>{const rank=key=>owned.includes(key)?2:this.state.eligible(kind,key)?0:1;return rank(a)-rank(b)});
   for(const [key,node] of nodes){
    const done=owned.includes(key),eligible=this.state.eligible(kind,key),can=eligible&&this.state.enoughResearch(node.cost);

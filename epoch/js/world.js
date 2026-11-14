@@ -116,19 +116,34 @@ export class World {
   this.appearanceKey=key;
  }
  makeVillagers(){
-  const villagers=[
+  // A new game has no strangers wandering around: only save-backed residents
+  // are instantiated, excluding the player character.
+  this.people=[];
+ }
+ syncVillagers(population){
+  const others=Math.max(0,Math.min(24,Math.floor(Number(population)||1)-1));
+  const initial=[
    {name:"Tala",sex:"female",x:-5,z:7},
    {name:"Bren",sex:"male",x:-10,z:-5},
    {name:"Kira",sex:"female",x:6,z:10},
    {name:"Oren",sex:"male",x:13,z:-5}
   ];
-  this.people=villagers.map((person,i)=>{
+  while(this.people.length>others)this.people.pop().human.dispose();
+  while(this.people.length<others){
+   const i=this.people.length;
+   const person=initial[i]||{name:"Settler "+(i+2),sex:i%2?"male":"female",
+    x:Math.cos(i*2.4)*(7+(i%3)*2),z:Math.sin(i*2.4)*(7+(i%3)*2)};
    const profile=randomAppearance("epoch:tribe:"+person.name,person.sex);
    const human=createQuaterniusHuman(this.scene,profile,null,person.name);
-   human.root.position=V(person.x,this.groundY(person.x,person.z),person.z);
    human.root.rotation.y=i*1.55;
-   return {...person,profile,human,phase:i*2.6};
-  });
+   this.people.push({...person,profile,human,phase:i*2.6});
+  }
+  const home=this.currentVillage?.stockpile||LEGACY_HOME;
+  const dx=home.x-LEGACY_HOME.x,dz=home.z-LEGACY_HOME.z;
+  for(const person of this.people){
+   const x=person.x+dx,z=person.z+dz;
+   person.human.root.position=V(x,this.groundY(x,z),z);
+  }
  }
  makeCamera(){
   const c=new B.ArcRotateCamera("adventurer camera",-Math.PI/2,1.13,18,V(0,1,0),this.scene);
@@ -218,15 +233,7 @@ export class World {
   syncStockpileWorld(this,pile);
   this.obstacles=this.obstacles.filter(o=>!o.stockpile);
   if(pile)this.obstacles.push({x:pile.x,z:pile.z,r:1.65,stockpile:true});
-  const key=pile?pile.x+","+pile.z:"unfounded";
-  if(key===this.homePositionKey)return;
-  this.homePositionKey=key;
-  const base=pile||LEGACY_HOME;
-  const dx=base.x-LEGACY_HOME.x,dz=base.z-LEGACY_HOME.z;
-  for(const person of this.people||[]){
-   const x=person.x+dx,z=person.z+dz;
-   person.human.root.position=V(x,this.groundY(x,z),z);
-  }
+  this.syncVillagers(village?.population??1);
  }
  highlightPlot(id){}
  focusBuilding(id){
