@@ -1,11 +1,21 @@
 import assert from "node:assert/strict";
 import {launchBrowser,gameUrl,continueGame} from "./browser-helpers.mjs";
 import {riverCenter,waterAt} from "../js/water-generation.js";
+import {chunkCoord} from "../js/forest-generation.js";
+import {tribeAtChunk} from "../js/tribes.js";
 const seed=12000;
 const options=[];
 for(let x=155;x<=420;x+=23)for(const channel of [-2,-1,0,1,2]){
  const z=riverCenter(x,channel,seed);
- if(waterAt(x,z,seed).depth>1.1)options.push({x,z});
+ const {cx,cz}=chunkCoord(x,z);
+ const campSites=[];
+ for(let dx=-5;dx<=5;dx++)for(let dz=-5;dz<=5;dz++){
+  const tribe=tribeAtChunk(seed,cx+dx,cz+dz);
+  if(tribe)campSites.push({x:tribe.x,z:tribe.z,radius:10});
+ }
+ // Streaming protects historic tribal camps from flooding. Choose water
+ // that stays deep after those protection sites are loaded for the chunk.
+ if(waterAt(x,z,seed,campSites).depth>1.1)options.push({x,z});
 }
 const browser=await launchBrowser();
 try{
