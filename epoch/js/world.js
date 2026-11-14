@@ -127,8 +127,8 @@ export class World {
    this.obstacles.push({x,z,r:.75,chunkKey,resourceId});
   } else if(shape==="flint"){
    // Small angular flint fragments, not a full-sized boulder or bush.
-   // Pickable but not collidable, so shoreline exploration stays smooth.
-   const shard=B.MeshBuilder.CreatePolyhedron("beach flint shard",
+   // Pickable but not collidable, so coast and mountain exploration stay smooth.
+   const shard=B.MeshBuilder.CreatePolyhedron("flint shard",
     {type:1,size:1},this.scene);
    shard.parent=parent;
    shard.position=V(0,.21,0);
