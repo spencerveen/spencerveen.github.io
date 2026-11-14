@@ -16,7 +16,8 @@ import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  NATURAL_DEATH_AGE} from "./residents.js?v=20261114w";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
- resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261114v";
+ resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261114x";
+import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack} from "./equipment.js?v=20261114x";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
@@ -44,7 +45,8 @@ const fresh=(founder=null)=>{
  return {
  version:1,year:-12000,calendarProgress:0,generation:1,worldSeed:Math.floor(Math.random()*0x7fffffff)+1,hero:{name,age:18,appearance},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
- resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),resourceNodes:{},knowledge:0,culture:0,
+ resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),
+ equipment:emptyEquipment(),resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
  knowledgeClaims:[],researchSeconds:0,tribes:{},
  survival:freshSurvival(),successorId:null,lastDeath:null,
@@ -150,6 +152,8 @@ export class GameState{
    this.data.inventory=migration.slots;
    this.data.unpacked=migration.unpacked;
   }
+  this.data.equipment=normalizeEquipment(data?.equipment,!!data?.axe);
+  this.syncAxeOwnership();
   this.syncResources();
   // Untouched procedural nodes are implicit. Save only modified resource IDs.
   this.data.resourceNodes=data?.resourceNodes&&typeof data.resourceNodes==="object"
@@ -172,6 +176,25 @@ export class GameState{
   // Inventory slots are the only source of truth for material quantities.
   this.data.resources=resourceTotals(this.data.inventory);
  }
+ syncAxeOwnership(){
+  // Legacy axe flag remains only for old saves and compatibility. Actual
+  // woodcutting benefit depends on the equipped main-hand tool.
+  this.data.axe=this.data.equipment?.weapon==="stone_axe"||
+   countItem(this.data.inventory,"stone_axe")>0;
+ }
+ equippedAxe(){return this.data.equipment?.weapon==="stone_axe"}
+ equipFromPack(index){
+  if(this.data.survival.gameOver||!equipFromBackpack(this.data.inventory,this.data.equipment,index))return false;
+  this.syncAxeOwnership();
+  this.changed();
+  return true;
+ }
+ unequip(slot){
+  if(this.data.survival.gameOver||!unequipToBackpack(this.data.inventory,this.data.equipment,slot))return false;
+  this.syncAxeOwnership();
+  this.changed();
+  return true;
+ }
  inventoryUsed(){return occupiedSlots(this.data.inventory)}
  inventoryCount(id){return countItem(this.data.inventory,id)}
  inventoryUnpacked(){return unpackedCount(this.data.unpacked)}
@@ -188,6 +211,7 @@ export class GameState{
   if(!Number.isInteger(index)||index<0||index>=INVENTORY_SLOTS)return false;
   if(!this.data.inventory[index])return false;
   this.data.inventory[index]=null;
+  this.syncAxeOwnership();
   this.syncResources();this.changed();
   return true;
  }
@@ -420,7 +444,7 @@ export class GameState{
  }
  gather(type){
   const gathering={
-   wood:{name:"wood",skill:"woodcutting",amount:this.data.axe?3:2,xp:13},
+   wood:{name:"wood",skill:"woodcutting",amount:this.equippedAxe()?3:2,xp:13},
    stone:{name:"stone",skill:"mining",amount:2,xp:12},
    food:{name:"wild berries",skill:"foraging",amount:2,xp:12}
   };
@@ -455,12 +479,17 @@ export class GameState{
  }
  craftAxe(x,z){
   const pile=this.data.village.stockpile,cost={wood:2,stone:3};
-  // Crafting is a physical village activity, never available remotely from
-  // the backpack. Stockpiled supplies are the crafting source of truth.
+  // Crafting happens at the stockpile; it must not duplicate an owned axe or
+  // consume materials when there is no space for the new item.
   if(this.data.survival.gameOver||this.data.axe||
      !this.data.technologies.includes("tools")||
-     !nearStockpile(pile,x,z)||!stockpileHas(pile,cost)||!payStockpile(pile,cost))return false;
-  this.data.axe=true;
+     !nearStockpile(pile,x,z)||!stockpileHas(pile,cost)||
+     (this.data.equipment.weapon!==null&&
+      !this.data.inventory.some(item=>item===null)))return false;
+  if(!payStockpile(pile,cost))return false;
+  if(this.data.equipment.weapon===null)this.data.equipment.weapon="stone_axe";
+  else addItems(this.data.inventory,"stone_axe",1);
+  this.syncAxeOwnership();
   this.gainXP("crafting",28);
   this.changed(`${this.data.hero.name} crafted a stone axe at the village.`);
   return true;
