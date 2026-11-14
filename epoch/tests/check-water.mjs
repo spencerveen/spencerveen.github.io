@@ -80,7 +80,7 @@ for(let x=190;x<560;x+=7){
  if(inner.depth>1&&bank.depth>0&&bank.depth<SHALLOW_LIMIT){crossing=bank;deep=inner;break}
 }
 assert(crossing?.passable&&crossing.shallow,"shallows support wading");
-assert.equal(deep?.passable,false,"deep water blocks walking until swimming exists");
+assert.equal(deep?.passable,false,"deep water remains classified as swimming depth");
 assert.equal(waterAt(NaN,0).depth,0,"invalid coordinates never crash water generation");
 
 const dryWorld={player:{position:{x:0,z:0}},groundY:()=>.18,obstacles:[],

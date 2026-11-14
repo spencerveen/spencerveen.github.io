@@ -72,6 +72,10 @@ For pre-mountain save slots, the `mountainProtectedSites` array records the hist
 
 Visual rock/cliff materials, steep-slope movement restrictions, specialized wildlife and mountain resources are planned separately. Unit checks live in `tests/check-mountains.mjs`.
 
+## Geography cleanup — Riverbanks and lake basins
+
+The existing river centerlines, lake centers and world IDs remain stable. Rivers now vary gently in width at multiple scales rather than repeating a uniform ribbon. Seeded lakes retain their locations but grow into wider, elongated, subtly lobed basins with irregular natural banks; lake bottoms transition more gradually from shallow to deep. The water sampler uses a bounded 2,048-entry cache of immutable lake descriptors, reducing repeated descriptor generation during chunk meshing without changing deterministic sampling. These are still procedural waterways rather than a full solved watershed, and old stockpile/building protection snapshots remain effective.
+
 ## River corridors through mountains (valley pass)
 
 `water-corridors.js` owns the original deterministic centerline, river width, lake sites and nearest signed shoreline distance. The water mesh keeps exactly the same footprint and existing depth rules. `mountain-generation.js` uses a smooth valley mask to reduce uplift close to the channel over a broad shoulder, while leaving mountain height away from the river unchanged. This prevents the older river splines from being draped directly over a cliff or a peak. River and mountain functions share the same signed-distance sample, avoiding redundant water-path lookups in the busiest mesh-generation path.

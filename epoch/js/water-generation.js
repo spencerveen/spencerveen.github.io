@@ -31,7 +31,7 @@ export function waterAt(x,z,seed=STARTER_SEED,protectedSites=[],mountainProtecte
   protection=Math.min(protection,smooth((Math.hypot(x-site.x,z-site.z)-radius)/11));
  }
  const inside=Math.max(0,-best);
- const raw=inside>0?(kind==="lake"?(.18+2.25*smooth(inside/5)):(.15+1.5*smooth(inside/2.8))):0;
+ const raw=inside>0?(kind==="lake"?(.15+2.5*smooth(inside/7.2)):(.12+1.65*smooth(inside/3.7))):0;
  const depth=raw*protection;
  const base=ocean?ocean.groundY:mountainTerrainHeight(x,z,seed,mountainProtectedSites,best);
  return {kind:depth>.02?kind:"land",depth:depth>.02?depth:0,

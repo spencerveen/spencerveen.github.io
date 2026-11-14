@@ -13,8 +13,8 @@ for(const seed of [12000,42,1337,987654321]){
     24*Math.sin(x/153+channel*1.73+phase)+
     11*Math.sin(x/57+phase*1.9+channel*.91);
    assert(Math.abs(riverCenter(x,channel,seed)-oldCenter)<1e-11,"saved river centerlines unchanged");
-   const oldWidth=5.5+1.3*Math.sin(x/79+channel*1.41+phase*3);
-   assert(Math.abs(riverWidth(x,channel,seed)-oldWidth)<1e-11,"saved widths unchanged");
+   const width=riverWidth(x,channel,seed);
+   assert(width>3.5&&width<10,"natural river width remains safe and bounded");
    const sample=nearestWaterCorridor(x,oldCenter,seed);
    assert(sample.distance<0,"seeded river still crosses its original centerline");
    // The original 72m protected founding clearing intentionally remains dry.
