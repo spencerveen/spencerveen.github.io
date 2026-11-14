@@ -50,6 +50,7 @@ export function advanceVitals(vitals,seconds,sprinting=false){
 export const FOOD_EFFECTS=Object.freeze({
  berries:Object.freeze({hunger:SURVIVAL.berryHunger,stamina:SURVIVAL.berryStamina,health:0,berryBoost:true}),
  cooked_meat:Object.freeze({hunger:38,stamina:16,health:6,berryBoost:false}),
+ cooked_fish:Object.freeze({hunger:31,stamina:18,health:4,berryBoost:false}),
  berry_roast:Object.freeze({hunger:52,stamina:20,health:10,berryBoost:true})
 });
 export function consumeFood(vitals,id){

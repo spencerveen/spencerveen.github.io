@@ -21,9 +21,10 @@ import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normali
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114craft1";
 import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack,CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261114hunt1";
+import {FISH_STAMINA_COST,FISH_CATCH_AMOUNT,normalizeFishCatches} from "./fishing.js?v=20261114fish1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
-  ["crafting","Crafting"],["cooking","Cooking"],["construction","Construction"],["survival","Survival"]
+  ["crafting","Crafting"],["cooking","Cooking"],["fishing","Fishing"],["construction","Construction"],["survival","Survival"]
 ];
 export const TECH={
  fire:{name:"Control of Fire",description:"Learn to start and tend fire. Unlocks construction of the village Cooking Hearth; no campfire is built automatically.",cost:{wood:4,stone:2,knowledge:3},needs:[]},
@@ -49,7 +50,7 @@ const fresh=(founder=null)=>{
  version:1,year:-12000,calendarProgress:0,generation:1,worldSeed:Math.floor(Math.random()*0x7fffffff)+1,hero:{name,age:18,appearance},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),
- equipment:emptyEquipment(),weaponCondition:null,resourceNodes:{},wildlife:{},knowledge:0,culture:0,
+ equipment:emptyEquipment(),weaponCondition:null,resourceNodes:{},wildlife:{},fishCatches:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
  knowledgeClaims:[],researchSeconds:0,tribes:{},waterProtectedSites:[],mountainProtectedSites:[],oceanProtectedSites:[],watershedProtectedSites:[],
  survival:freshSurvival(),successorId:null,lastDeath:null,
@@ -218,6 +219,7 @@ export class GameState{
   this.data.resourceNodes=data?.resourceNodes&&typeof data.resourceNodes==="object"
    &&!Array.isArray(data.resourceNodes)?{...data.resourceNodes}:{};
   this.data.wildlife=normalizeWildlife(data?.wildlife);
+  this.data.fishCatches=normalizeFishCatches(data?.fishCatches);
   // Temporary development switches stay in memory, never in browser saves.
   this.devCheats=newDevCheats();
   this.onChange=()=>{};
@@ -491,7 +493,7 @@ export class GameState{
  }
  eatBerries(index=null){return this.eatFood("berries",index)}
  quickEat(){
-  for(const id of ["berry_roast","cooked_meat","berries"])
+  for(const id of ["berry_roast","cooked_meat","cooked_fish","berries"])
    if(this.inventoryCount(id)>0&&this.eatFood(id))return id;
   return null;
  }
@@ -595,6 +597,32 @@ export class GameState{
   if(type==="wood"&&this.equippedAxe())this.wearEquippedTool();
   this.changed();
   return {label:`+${gained} ${info.name}${vines?" · +"+vines+" vines":""}${gained<info.amount?" (pack nearly full)":""}`,type,added:gained,vines};
+ }
+ fishCaught(id){return this.data.fishCatches[id]===true}
+ catchFish(site){
+  if(!site?.id||!/^fish:-?\d+,-?\d+:\d+$/.test(site.id))
+   return {ok:false,reason:"No valid fishing target."};
+  if(this.data.survival.gameOver)return {ok:false,reason:"Cannot fish while incapacitated."};
+  if(this.fishCaught(site.id))return {ok:false,reason:"These fish have already been caught."};
+  if(this.data.equipment.weapon!=="stone_spear")
+   return {ok:false,reason:"Equip a Stone Spear to catch fish in the shallows."};
+  if(!this.canSpendStamina(FISH_STAMINA_COST))
+   return {ok:false,reason:"Too exhausted to spear fish. Rest first."};
+  const inventory=this.data.inventory.map(s=>s?{...s}:null);
+  if(addItems(inventory,"fish_meat",FISH_CATCH_AMOUNT)!==FISH_CATCH_AMOUNT)
+   return {ok:false,reason:"Backpack full. Make room before fishing."};
+  if(!this.spendStamina(FISH_STAMINA_COST,"fishing"))
+   return {ok:false,reason:"Not enough Stamina to fish."};
+  this.data.inventory=inventory;
+  this.data.fishCatches[site.id]=true;
+  const worn=this.wearEquippedTool(1);
+  this.syncResources();
+  this.gainXP("fishing",18);
+  this.gainXP("survival",4);
+  this.changed(this.data.hero.name+" caught a fish with a stone spear.");
+  return {ok:true,reason:"Caught +"+FISH_CATCH_AMOUNT+" Fish Meat."+
+   (worn?.broken?" Your Stone Spear broke.":" Cook it at a Cooking Hearth."),
+   amount:FISH_CATCH_AMOUNT,broken:!!worn?.broken};
  }
  wildlifeStatus(animal){
   const record=animal?.id&&this.data.wildlife[animal.id];

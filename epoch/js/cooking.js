@@ -6,13 +6,15 @@
 import {addItems,removeItems,countItem,canonicalItem} from "./inventory.js?v=20261114cook1";
 import {stockpileCount} from "./stockpile.js?v=20261114cook1";
 
-export const COOKING_VERSION=1;
+export const COOKING_VERSION=2;
 export const COOKING_REACH=6;
 export const COOKING_RECIPES=Object.freeze({
  roasted_meat:Object.freeze({name:"Roasted Meat",description:"Slow-roast hunted meat above a wood fire.",
   cost:Object.freeze({animal_meat:2,wood:1}),output:Object.freeze({id:"cooked_meat",qty:2}),xp:22}),
  berry_roast:Object.freeze({name:"Berry-Roasted Meat",description:"Roast meat with wild berries for a more nourishing meal.",
-  cost:Object.freeze({animal_meat:1,berries:2,wood:1}),output:Object.freeze({id:"berry_roast",qty:1}),xp:28})
+  cost:Object.freeze({animal_meat:1,berries:2,wood:1}),output:Object.freeze({id:"berry_roast",qty:1}),xp:28}),
+ cooked_fish:Object.freeze({name:"Roasted Fish",description:"Roast your fresh catch on the communal fire.",
+  cost:Object.freeze({fish_meat:2,wood:1}),output:Object.freeze({id:"cooked_fish",qty:2}),xp:23})
 });
 export function prepareCooking(recipeId,inventory,pile){
  const recipe=COOKING_RECIPES[recipeId];
