@@ -105,13 +105,13 @@ High mountains no longer receive the same density of leafy trees, berry bushes, 
 
 Rivers no longer repeat as near-parallel, endless ribbons. Seeded highland headwaters feed **finite, winding 2D river courses** with pronounced turns; two narrower tributaries join each main river and many branches travel mostly north or south before merging. Every main course terminates at the eastern ocean. Rivers narrow toward their sources and widen downstream.
 
-**Large lakes are now uncommon** (roughly one in three broad catchments), instead of appearing every few hundred meters. Their positions follow river bends and their broad shores are irregular. The entire network is cached and spatially indexed by 96m cells to keep terrain streaming fast; it is still reproducible from your existing world seed. New rivers may cross different wilderness terrain than before, so the old save-protection system continues to keep completed villages dry. Existing tribe records remain intact, and unsafe undiscovered camps are filtered by the tribe placement checks.
+**Large lakes are now uncommon** (roughly one in three broad catchments), instead of appearing every few hundred meters. Their positions follow river bends and their broad shores are irregular. The entire network is cached and spatially indexed by 96m cells to keep terrain streaming fast; it is still reproducible from your existing world seed. New rivers may cross different wilderness terrain than before. A **one-time watershed migration** captures existing stockpiles and all current buildings, including huts constructed since the earlier water update, so those settlements remain dry. Existing tribe records remain intact, and unsafe undiscovered camps are filtered by the tribe placement checks.
 
 This is a procedural branching watershed with highland-selected sources, **not yet a physically solved downhill flow simulation**. A later hydrology pass can model precise drainage gradients, currents and waterfalls.
 
 ## World ecology cleanup — More natural water and tribes
 
-Rivers now vary in width as they meander, and seeded lakes are larger, elongated, and gently lobed rather than small circles. River centerlines, lake coordinates, and lake IDs remain stable. Lake descriptors are cached in a bounded lookup for better chunk-generation performance; no new save geometry is needed.
+Rivers now vary in width as they meander, and seeded lakes are larger, elongated, and gently lobed rather than small circles. This earlier lake expansion was superseded by Watershed v2 above, which changes river courses and makes large lakes occasional. Water geometry is still seed-generated, not stored in saves.
 
 New tribes have genuinely suitable dry, mostly flat land across the **entire camp footprint** (including a 15m margin), and won't generate in rivers, lakes, oceans or high mountain terrain. New settlements use a sparse 160m seeded territory grid: two regular territories are separated by at least 144m, and the guaranteed nearby starter tribe is at least 132m from a regular territory. Unsuitable territories remain empty instead of reshaping terrain into artificial flat islands.
 
@@ -159,9 +159,9 @@ This first pass concentrates on the terrain shapes. Rocky slopes, cliffs, slope-
 
 ## Mountain waterways — Valley-carving fix
 
-Mountains now give way to wide, gently tapered valleys wherever the original seeded river or lake footprint crosses high ground. This stops rivers from running across raised rock faces without changing the saved river centerlines, widths or lake locations. The shared `water-corridors.js` module describes the original waterways independently of elevation; mountains fade out toward those corridors and rocky terrain uses the resulting lower ground. The shoreline still has natural green, stony shoulders rather than a sudden wall.
+Mountains give way to wide, gently tapered valleys wherever the active river or lake footprint crosses high ground. Watershed v2 now replaces the original centerlines, so these valleys follow the new network. The shared `water-corridors.js` module describes the original waterways independently of elevation; mountains fade out toward those corridors and rocky terrain uses the resulting lower ground. The shoreline still has natural green, stony shoulders rather than a sudden wall.
 
-This is a **terrain-aware river-valley pass**, not yet a downhill watershed or waterfall simulation: water still follows its existing seeded meanders. Original village protection, water depth/wading, and current save data remain intact. Tests cover identical channel routes, wide valleys, lake beds and seam continuity.
+This is a **terrain-aware river-valley pass**, not yet a downhill watershed or waterfall simulation. Protected villages, swimming depth rules, and chunk continuity remain intact under the newer network.
 
 ## Mountain implementation 2 — Rocky slopes and exposed stone
 

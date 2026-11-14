@@ -49,7 +49,7 @@ const fresh=(founder=null)=>{
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),
  equipment:emptyEquipment(),resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
- knowledgeClaims:[],researchSeconds:0,tribes:{},waterProtectedSites:[],mountainProtectedSites:[],oceanProtectedSites:[],
+ knowledgeClaims:[],researchSeconds:0,tribes:{},waterProtectedSites:[],mountainProtectedSites:[],oceanProtectedSites:[],watershedProtectedSites:[],
  survival:freshSurvival(),successorId:null,lastDeath:null,
  lineage:[{name,gen:1,start:-12000,role:"Founder",appearance:{...appearance}}],
  history:["The wanderer "+name+" entered a quiet clearing in a vast prehistoric wilderness."]
@@ -130,6 +130,20 @@ export class GameState{
     ...this.data.village.buildings.map(b=>({x:b.x,z:b.z,radius:8}))
    ].slice(0,120);
   }else this.data.waterProtectedSites=[];
+  // Watershed v2 changes wilderness river routes. Capture every building
+  // that already exists in a pre-redesign save, including additions built
+  // AFTER the old water migration. Never update this when new huts are built.
+  if(Array.isArray(data?.watershedProtectedSites)){
+   this.data.watershedProtectedSites=data.watershedProtectedSites.slice(0,120).filter(p=>
+    p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Number.isFinite(p.radius)&&
+    p.radius>=3&&p.radius<=60).map(p=>({x:p.x,z:p.z,radius:p.radius}));
+  }else if(data?.version===1){
+   this.data.watershedProtectedSites=[
+    ...(this.data.village.stockpile?[{x:this.data.village.stockpile.x,
+      z:this.data.village.stockpile.z,radius:34}]:[]),
+    ...this.data.village.buildings.map(b=>({x:b.x,z:b.z,radius:10}))
+   ].slice(0,120);
+  }else this.data.watershedProtectedSites=[];
   // One-time mountain migration protects the ORIGINAL saved construction
   // elevations. Additional buildings must never reshape an existing ridge.
   if(Array.isArray(data?.mountainProtectedSites)){

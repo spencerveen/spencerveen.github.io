@@ -4,6 +4,7 @@ import {WATERSHED_VERSION,BASIN_SPACING,watershedAtBand,nearestWaterCorridor,
 import {waterAt,waterTerrainHeight} from "../js/water-generation.js";
 import {coastlineX} from "../js/ocean-generation.js";
 import {CHUNK_SIZE} from "../js/forest-generation.js";
+import {GameState} from "../js/state.js";
 assert.equal(WATERSHED_VERSION,2);
 assert(BASIN_SPACING>=600);
 for(const seed of [12000,42,1337,987654321]){
@@ -59,4 +60,29 @@ for(const seed of [12000,42,1337,987654321]){
  }
  assert(riverWidth(0,0,seed)>1);
 }
-console.log("PASS 2D watershed networks: finite sources, coastal mouths, north/south tributaries, joins, sparse lakes, seeded seams");
+// Simulate a village constructed after the older water migration. The new
+// one-time watershed migration must keep those new huts dry too.
+const old=new Map();
+globalThis.localStorage={getItem:k=>old.get(k)||null,
+ setItem:(k,v)=>old.set(k,v),removeItem:k=>old.delete(k)};
+const home=watershedAtBand(12000,0).routes[0].points[80];
+assert(home,"has a river sample for historic hut protection");
+old.set("epoch.stoneage.slot.1",JSON.stringify({version:1,worldSeed:12000,
+ waterProtectedSites:[{x:0,z:0,radius:34}],
+ hero:{name:"Watershed Veteran"},village:{stockpile:{x:0,z:0,items:{}},
+ buildings:[{id:"hut_before_redesign",kind:"family",x:home.x,z:home.z}],plots:{}}}));
+const migrated=new GameState({slot:1});
+assert(migrated.data.watershedProtectedSites.some(p=>p.x===home.x&&p.z===home.z),
+ "the new river migration also protects later-built huts");
+assert.equal(waterAt(home.x,home.z,12000,
+ [...migrated.data.waterProtectedSites,...migrated.data.watershedProtectedSites]).depth,0);
+migrated.save();
+const continued=new GameState({slot:1});
+assert.deepEqual(continued.data.watershedProtectedSites,migrated.data.watershedProtectedSites);
+continued.data.village.buildings.push({id:"new_hut",kind:"family",x:home.x+120,z:home.z});
+continued.save();
+assert.deepEqual(new GameState({slot:1}).data.watershedProtectedSites,
+ migrated.data.watershedProtectedSites,"later construction cannot move rivers");
+const fresh=new GameState({slot:2,newGame:true});
+assert.deepEqual(fresh.data.watershedProtectedSites,[]);
+console.log("PASS 2D watershed networks: finite sources, coastal mouths, north/south tributaries, joins, sparse lakes, seeded seams and old villages");
