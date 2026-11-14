@@ -286,35 +286,61 @@ export class World {
   const isText=()=>["INPUT","TEXTAREA"].includes(document.activeElement?.tagName);
   window.addEventListener("keydown",e=>{
    if(isText())return;const key=e.key.toLowerCase();
+   if(this.placingStockpile||this.placingBuilding){
+    const delta={arrowleft:[-1,0],arrowright:[1,0],arrowup:[0,-1],arrowdown:[0,1]}[key];
+    if(delta){
+     e.preventDefault();
+     if(this.placingStockpile)this.nudgeStockpile(...delta);
+     else this.nudgeBuilding(...delta);
+     return;
+    }
+    if(key==="r"&&this.placingBuilding){e.preventDefault();this.rotateBuilding();return}
+    if(key==="escape"){
+     e.preventDefault();
+     if(this.placingStockpile)this.cancelStockpilePlacement();
+     else this.cancelBuildingPlacement();
+     this.onStatus("Build mode closed","Select a building from the Village panel.");
+     return;
+    }
+    if(key==="enter"){
+     e.preventDefault();
+     const outcome=this.placingStockpile?this.confirmStockpilePlacement():this.confirmBuildingPlacement();
+     this.onStatus(outcome.ok?"Construction complete":"Cannot place here",outcome.reason||"Your village has grown.");
+     return;
+    }
+    if(key==="e")return;
+   }
    if(["w","a","s","d","shift","e"].includes(key)){e.preventDefault();this.keys[key]=true;}
-   if(key==="escape"&&this.placingStockpile)this.cancelStockpilePlacement();
    if(key==="e")this.interactNearby(e.shiftKey?"cut":"gather");
   });
   window.addEventListener("keyup",e=>{this.keys[e.key.toLowerCase()]=false});
   window.addEventListener("blur",()=>{this.keys={}});
   this.scene.onPointerObservable.add(e=>{
    const pick=e.pickInfo;
-   if(this.placingStockpile){
-    if(e.type===B.PointerEventTypes.POINTERMOVE&&pick?.hit&&pick.pickedMesh?.metadata?.terrain)
-     this.previewStockpileAt(pick.pickedPoint.x,pick.pickedPoint.z);
-    if(e.type===B.PointerEventTypes.POINTERPICK&&e.event.button===0){
-     if(!pick?.hit||!pick.pickedMesh?.metadata?.terrain){
-      this.onStatus("Choose open ground","Click a terrain tile to found your village.");return;
-     }
-     const spot=this.previewStockpileAt(pick.pickedPoint.x,pick.pickedPoint.z);
-     if(!spot?.ok){this.onStatus("Stockpile cannot go here",spot?.reason||"Choose another spot.");return}
-     if(this.onFoundStockpile(spot.x,spot.z)){
-      this.cancelStockpilePlacement();
-      this.onStatus("Village founded","Your stockpile is established! Return with gathered resources.");
+   if(this.placingStockpile||this.placingBuilding){
+    if(e.type===B.PointerEventTypes.POINTERMOVE||
+      (e.type===B.PointerEventTypes.POINTERPICK&&e.event?.button===0)){
+     // Always select the ground beneath scenery, even when a nearby tree,
+     // player or ghost overlaps the frontmost cursor hit.
+     const ground=this.scene.pick(this.scene.pointerX,this.scene.pointerY,
+      mesh=>!!mesh?.metadata?.terrain);
+     if(ground?.hit&&ground.pickedPoint){
+      const x=ground.pickedPoint.x,z=ground.pickedPoint.z;
+      const candidate=this.placingStockpile?this.previewStockpileAt(x,z):
+       this.previewBuildingAt(x,z);
+      if(e.type===B.PointerEventTypes.POINTERPICK)
+       this.onStatus(candidate?.ok?"Position selected":"Site blocked",
+        (candidate?.reason||"Move the preview")+
+        ". Confirm in the Village panel, or nudge with the arrows.");
      }
     }
     return;
    }
-   if(e.type!==B.PointerEventTypes.POINTERPICK||e.event.button!==0)return;
+   if(e.type!==B.PointerEventTypes.POINTERPICK||e.event?.button!==0)return;
    if(!pick?.hit)return;
    const mesh=pick.pickedMesh;
    if(mesh?.metadata?.stockpile){this.walkToStockpile();return}
-   if(mesh?.metadata?.plotId){this.walkToPlot(mesh.metadata.plotId);return}
+   if(mesh?.metadata?.buildingId){this.onPlot(mesh.metadata.buildingId);return}
    if(mesh?.metadata?.resource){
     this.stockpileTarget=false;
     this.walkToResource(mesh.metadata,e.event.shiftKey?"cut":"gather");return;
@@ -458,9 +484,6 @@ export class World {
   if(this.stockpileTarget&&this.stockpile
     &&nearStockpile(this.stockpile,p.x,p.z)){
    this.stockpileTarget=false;this.path=[];this.onOpenStockpile();
-  }
-  if(this.plotTarget && this.distanceToPlot(this.plotTarget)<4.2){
-   const id=this.plotTarget;this.plotTarget=null;this.path=[];this.onPlot(id);
   }
   const aim=V(p.x,p.y+1.2,p.z);
   c.setTarget(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));
