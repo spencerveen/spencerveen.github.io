@@ -3,15 +3,14 @@ const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;","
 export function inventoryPanel(ui){
  const state=ui.state,d=state.data;
  const used=state.inventoryUsed(),unpacked=state.inventoryUnpacked();
- let html=`<div class="panel-title"><h2>Wayfarer's Pack</h2><small>${used} / ${INVENTORY_SLOTS} slots used</small></div>`;
- html+=`<p class="info">Your starting pack has <b>10 spaces</b>. Wood, stone, wild berries and vines stack to <b>${STACK_LIMIT} per space</b>. More than ${STACK_LIMIT} of one item starts another stack.</p>`;
- html+=`<div class="pack-capacity"><span>Carried stacks</span><strong>${used} / ${INVENTORY_SLOTS}</strong></div>`;
+ let html=`<div class="inventory-toolbar"><span>Carried supplies</span><small>${STACK_LIMIT} items per stack</small></div>`;
+ html+=`<div class="pack-capacity"><span>Inventory space</span><strong>${used} / ${INVENTORY_SLOTS}</strong></div>`;
  html+=`<div class="pack-slot-grid" role="group" aria-label="Ten slot inventory">`;
  for(let i=0;i<INVENTORY_SLOTS;i++){
   const slot=d.inventory[i],item=slot&&ITEMS[slot.id];
   const chosen=ui.selectedSlot===i;
-  html+=`<button type="button" class="pack-slot ${slot?"occupied":"empty"} ${chosen?"selected":""}" data-action="pack-slot" data-slot="${i}" aria-label="Slot ${i+1}: ${item?item.name+" "+slot.qty+" of "+STACK_LIMIT:"Empty"}" title="${item?esc(item.name)+" ("+slot.qty+"/"+STACK_LIMIT+")":"Empty slot"}">
-   ${item?`<span class="pack-item-icon">${item.icon}</span><span class="pack-quantity">${slot.qty}</span>`:`<span class="pack-empty">+</span>`}
+  html+=`<button type="button" class="pack-slot ${slot?"occupied":"empty"} ${chosen?"selected":""}" data-action="pack-slot" data-slot="${i}" aria-pressed="${chosen}" aria-label="Slot ${i+1}: ${item?item.name+" "+slot.qty+" of "+STACK_LIMIT:"Empty"}" title="${item?esc(item.name)+" ("+slot.qty+"/"+STACK_LIMIT+")":"Empty slot"}">
+   ${item?`<span class="pack-item-icon">${item.icon}</span><span class="pack-quantity">${slot.qty}</span>`:`<span class="pack-empty" aria-hidden="true">·</span>`}
    <span class="pack-number">${i+1}</span>
   </button>`;
  }
@@ -24,14 +23,26 @@ export function inventoryPanel(ui){
  html+=`<div class="pack-summary">`;
  for(const id of ITEM_IDS)html+=`<span>${ITEMS[id].icon} ${esc(ITEMS[id].name)} <b>${state.inventoryCount(id)}</b></span>`;
  html+=`</div>`;
- if(used>=INVENTORY_SLOTS)html+=`<p class="info pack-warning">Pack full. Spend resources or discard a stack to make room for more.</p>`;
+ if(used>=INVENTORY_SLOTS)html+=`<p class="info pack-warning">Inventory full. Deposit supplies at your stockpile or discard a stack to free space.</p>`;
  if(unpacked){
-  html+=`<div class="entry pack-legacy"><h3>Unpacked supplies from your old save</h3><p>${unpacked} previously collected resources could not fit inside your new ten-slot pack. None were deleted. Free some slots, then retrieve them.</p><small>${ITEM_IDS.filter(id=>d.unpacked[id]>0).map(id=>esc(ITEMS[id].name)+": "+d.unpacked[id]).join(" · ")}</small><button type="button" data-action="retrieve-supplies">Retrieve available supplies</button></div>`;
+  html+=`<div class="entry pack-legacy"><h3>Saved supplies</h3><p>${unpacked} items from your earlier save are safely stored outside this inventory. Free a slot to retrieve them.</p><small>${ITEM_IDS.filter(id=>d.unpacked[id]>0).map(id=>esc(ITEMS[id].name)+": "+d.unpacked[id]).join(" · ")}</small><button type="button" data-action="retrieve-supplies">Retrieve supplies</button></div>`;
  }
- html+=`<p class="info">Trees and stones eventually run out and disappear. Berry bushes lose their fruit after repeated harvests, then regrow berries after two minutes. <b>Shift+click</b> a berry bush (or Shift+E nearby) to chop it down for three vines. Chopped bushes do not regrow.</p>`;
- html+=`<div class="entry"><h3>🌿 Cut Bush for Vines</h3><p>Move close to a berry bush, then cut it down. This gives 3 vines and permanently removes the bush.</p><button type="button" data-action="chop-bush">Chop nearby berry bush</button></div>`;
- html+=`<div class="entry"><h3>🪓 Stone Axe</h3><p>${d.axe?"Equipped. Harvest 3 wood rather than 2 per tree interaction.":"A better tool for woodcutting. Requires the Stone Toolmaking technology."}</p><small>2 wood · 3 stone</small><button data-action="axe" ${d.axe||!d.technologies.includes("tools")||!state.enough({wood:2,stone:3})?"disabled":""}>${d.axe?"Already crafted":"Craft axe"}</button></div>`;
- html+=`<div class="entry"><h3>🏕 Village Construction</h3><p>Build Family Huts, a Cooking Hearth, the Toolmaker’s Shelter and a Council Lodge using carried resources.</p><button data-action="open-village">Open Village →</button></div>`;
+ const toolsKnown=d.technologies.includes("tools"),axeCost={wood:2,stone:3};
+ const missing=Object.entries(axeCost).filter(([id,needed])=>state.inventoryCount(id)<needed);
+ html+=`<div class="panel-title"><h3>Crafting</h3><small>Uses carried supplies</small></div>`;
+ html+=`<div class="entry"><h3>🪓 Stone Axe ${d.axe?'<span class="tag">Equipped</span>':""}</h3><p>Gather 3 wood per interaction instead of 2.</p>`;
+ if(!d.axe){
+  html+='<div class="cost-list" aria-label="Stone axe inventory requirements">';
+  for(const [id,needed] of Object.entries(axeCost)){
+   const have=state.inventoryCount(id);
+   html+=`<span class="cost-chip ${have>=needed?"met":"missing"}">${ITEMS[id].icon} ${esc(ITEMS[id].name)} <b>${have} / ${needed}</b></span>`;
+  }
+  html+='</div>';
+  if(!toolsKnown)html+='<p class="context-note">Research Stone Toolmaking at your Toolmaker’s Shelter first.</p>';
+  else if(missing.length)html+=`<p class="context-note">Need ${missing.map(([id,needed])=>(needed-state.inventoryCount(id))+" more "+ITEMS[id].name.toLowerCase()).join(" and ")} in your inventory.</p>`;
+  html+=`<button type="button" data-action="axe" ${!toolsKnown||missing.length?"disabled":""}>${!toolsKnown?"Stone Toolmaking required":"Craft stone axe"}</button>`;
+ }
+ html+='</div><p class="context-note">Village construction uses supplies stored at your stockpile.</p>';
  return html;
 }
 export function handlePackAction(ui,button){
@@ -52,17 +63,13 @@ export function handlePackAction(ui,button){
   if(!window.confirm(`Discard ${slot.qty} ${item.name}? You cannot undo this.`))return true;
   if(ui.state.discardStack(idx)){
    ui.selectedSlot=null;
-   ui.toast(`Dropped ${slot.qty} ${item.name}.`);
+   ui.toast(`Discarded ${slot.qty} ${item.name}.`);
   }
-  return true;
- }
- if(action==="chop-bush"){
-  ui.world.interactNearby("cut");
   return true;
  }
  if(action==="retrieve-supplies"){
   const recovered=ui.state.retrieveLegacySupplies();
-  ui.toast(recovered?`Retrieved ${recovered} supplies into your pack.`:"No pack space available.");
+  ui.toast(recovered?`Retrieved ${recovered} supplies into your inventory.`:"No inventory space available.");
   return true;
  }
  return false;

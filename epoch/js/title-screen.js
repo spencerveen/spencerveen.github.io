@@ -15,6 +15,7 @@ export class TitleScreen {
   this.slot=null;
   this.name="Aren";
   this.appearance=founderAppearance();
+  this.backgroundInert=new Map([...document.body.children].filter(node=>node!==this.root&&node.id!=="loading").map(node=>[node,node.inert]));
   this.imported=migrateLegacySave();
   this.root.addEventListener("click",e=>this.click(e));
   this.root.addEventListener("input",e=>{
@@ -29,8 +30,14 @@ export class TitleScreen {
  hide(){
   this.root.classList.add("hidden");
   this.root.setAttribute("aria-hidden","true");
+  this.root.inert=true;
+  for(const [node,inert] of this.backgroundInert)node.inert=inert;
+  document.getElementById("scene")?.focus({preventScroll:true});
  }
  render(){
+  const active=document.activeElement,focus=this.root.contains(active)?{id:active.id,...active.dataset}:null;
+  for(const node of this.backgroundInert.keys())node.inert=true;
+  this.root.inert=false;
   this.root.classList.remove("hidden");
   this.root.removeAttribute("aria-hidden");
   const body=this.view==="creator"?this.creator():this.view==="choose"?this.choose():this.title();
@@ -40,6 +47,9 @@ export class TitleScreen {
    ${this.error?`<p class="epoch-title-error" role="alert">${esc(this.error)}</p>`:""}
    <p class="epoch-local-notice">Pre-alpha · Saves are stored in this browser on this device. Clearing site data or using another browser will not transfer your progress.</p>
    </div>`;
+  const targets=[...this.root.querySelectorAll("button:not(:disabled),input")];
+  const restored=focus&&targets.find(node=>focus.id?node.id===focus.id:Object.entries(focus).filter(([key])=>key!=="id").every(([key,value])=>node.dataset[key]===value));
+  (restored||targets[0])?.focus({preventScroll:true});
  }
  title(){
   const latest=mostRecentSave(),saves=allSaveSummaries();

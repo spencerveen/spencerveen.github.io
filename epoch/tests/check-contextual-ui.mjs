@@ -1,0 +1,66 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import {fileURLToPath} from "node:url";
+import {GameState} from "../js/state.js";
+import {inventoryPanel,handlePackAction} from "../js/inventory-ui.js";
+import {villagePanel,selectVillageBuilding,openStockpile} from "../js/village-ui.js";
+import {LEGACY_HOME} from "../js/stockpile.js";
+
+const saved=new Map();
+globalThis.localStorage={getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)};
+const game=new GameState({slot:1,newGame:true,founder:{name:"Context Founder"}});
+const world={groundY:()=>.18,obstacles:[],player:{position:{...LEGACY_HOME}},placingStockpile:false,placingBuilding:null};
+assert(game.foundStockpile(LEGACY_HOME.x,LEGACY_HOME.z));
+assert.equal(game.addResource("wood",60),60);
+assert.equal(game.addResource("stone",36),36);
+assert.equal(game.depositAllToStockpile(LEGACY_HOME.x,LEGACY_HOME.z),96);
+assert.deepEqual(game.data.technologies,[]);
+assert.deepEqual(game.data.civics,[]);
+assert(game.canPlaceVillageBuilding("lore",-10,4,0,world).ok,"Research must be reachable before learning any technology");
+const lore=game.placeVillageBuilding("lore",-10,4,0,world);
+assert(lore.ok,"The first research building can be built from gathered and deposited supplies");
+assert(game.canPlaceVillageBuilding("council",12,-10,0,world).ok,"Culture must be reachable before learning any civic");
+const council=game.placeVillageBuilding("council",12,-10,0,world);
+assert(council.ok,"The first culture building does not require the culture interface it provides");
+const family=game.placeVillageBuilding("family",-12,-10,0,world);
+assert(family.ok,"An ordinary hut provides housing and the home for Dynasty");
+assert.equal(game.canPlaceVillageBuilding("hearth",4,4,0,world).ok,false,"The Hearth still requires Fire research");
+assert.equal(game.stockpileInfo().items.wood,24,"Interface buildings spend village wood");
+assert.equal(game.stockpileInfo().items.stone,14,"Interface buildings spend village stone");
+assert.equal(game.villageCapacity(),8);
+
+const ui={state:game,world,selectedSlot:null,selectedBuildingId:null,villageSection:"storage",render(){},toast(){}};
+const inventory=inventoryPanel(ui);
+assert.equal([...inventory.matchAll(/data-action="pack-slot"/g)].length,10,"Inventory retains all ten interactive slots");
+assert(!inventory.includes('data-action="chop-bush"'),"Inventory is not a world-resource interaction menu");
+assert(!inventory.includes("Cut Bush for Vines"),"Removed bush-cutting card is not presented");
+assert(!inventory.includes('data-action="open-village"'),"Inventory does not bypass the physical stockpile");
+assert.equal(handlePackAction(ui,{dataset:{action:"chop-bush"}}),false,"The removed inventory action cannot trigger gathering");
+const storage=villagePanel(ui);
+assert(storage.includes('data-action="deposit-stockpile"'),"Stockpile context exposes storage controls");
+assert(storage.includes('data-action="village-section"'),"Village tasks have local sections instead of global tabs");
+ui.villageSection="build";
+const construction=villagePanel(ui);
+assert(construction.includes('data-kind="family"'),"The village can add more housing");
+assert(construction.includes("Open Technology"),"A completed research building opens its activity instead of offering a duplicate");
+assert(construction.includes("Open Culture"),"A completed culture building opens its activity instead of offering a duplicate");
+ui.villageSection="buildings";
+const buildings=villagePanel(ui);
+for(const entry of [lore.building,council.building,family.building])
+ assert(buildings.includes('data-id="'+entry.id+'"'),"Built structures remain selectable");
+
+const opened=[];
+ui.openPanel=(tab,options)=>opened.push({tab,options});
+ui.openBuildingPanel=id=>opened.push({buildingId:id});
+for(const entry of [lore.building,council.building,family.building])selectVillageBuilding(ui,entry.id);
+assert.deepEqual(opened.map(call=>call.buildingId),[lore.building.id,council.building.id,family.building.id],"Constructed-building actions dispatch the selected physical structure");
+openStockpile(ui);
+assert.equal(opened.at(-1).tab,"village","Stockpile interaction opens the village context");
+assert.equal(ui.villageSection,"storage","A fresh stockpile interaction starts with stored supplies");
+
+const html=fs.readFileSync(fileURLToPath(new URL("../index.html",import.meta.url)),"utf8");
+assert.deepEqual([...html.matchAll(/data-tab="([^"]+)"/g)].map(match=>match[1]).sort(),["pack","skills"],"Only Inventory and Skills are globally available tabs");
+game.save();
+const reload=new GameState({slot:1});
+assert.deepEqual(reload.data.village.buildings,game.data.village.buildings,"Context buildings remain available after reload");
+console.log("PASS contextual UI: research/culture bootstrap, stockpile-funded buildings, clean inventory, physical context dispatch, two global tabs and persisted access");

@@ -3,10 +3,12 @@ name: Epoch browser movement QA
 on:
   pull_request:
     paths:
-      - 'epoch/js/**'
-      - 'epoch/assets/animations/**'
-      - 'epoch/tests/browser-walk.mjs'
-      - 'epoch/index.html'
+      - 'epoch/**'
+      - '.github/workflows/epoch-browser-walk.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'epoch/**'
       - '.github/workflows/epoch-browser-walk.yml'
   workflow_dispatch:
 
@@ -30,6 +32,8 @@ jobs:
           sleep 1
       - name: Confirm imported 3D humanoids animate in Chromium
         run: node epoch/tests/browser-walk.mjs
+      - name: Validate building-driven interfaces and responsive controls
+        run: node epoch/tests/browser-contextual-ui.mjs
       - name: Preserve screenshots and server logs
         if: always()
         uses: actions/upload-artifact@v4

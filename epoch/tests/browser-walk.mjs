@@ -2,17 +2,14 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {chromium} from "playwright";
+import {launchBrowser,gameUrl,continueGame,clickWorldObject} from "./browser-helpers.mjs";
 import {forestObjects} from "../js/forest-generation.js";
 
 const output=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"artifacts");
 fs.mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({
- channel:"chrome",headless:true,
- args:["--no-sandbox","--use-gl=angle","--use-angle=swiftshader","--enable-webgl","--disable-dev-shm-usage"]
-});
+const browser=await launchBrowser();
 try{
- const page=await browser.newPage({viewport:{width:1280,height:800},deviceScaleFactor:1});
+ const page=await browser.newPage({viewport:{width:1280,height:800},deviceScaleFactor:1,ignoreHTTPSErrors:true});
  // Fix the browser-test forest seed so navigation checks do not change with
  // random terrain. Do not overwrite a save on subsequent reloads.
  await page.addInitScript(()=>{
@@ -23,13 +20,13 @@ try{
  page.on("pageerror",error=>errors.push(error.stack||String(error)));
  page.on("console",msg=>{if(msg.type()==="error")warnings.push(msg.text())});
  page.on("requestfailed",request=>warnings.push(request.url()+" "+request.failure()?.errorText));
- await page.goto("http://127.0.0.1:8765/epoch/?browser-test=20261114a",{waitUntil:"domcontentloaded",timeout:45000});
+ await page.goto(gameUrl,{waitUntil:"domcontentloaded",timeout:45000});
  await page.locator('[data-menu="continue"]').waitFor({timeout:45000});
  assert(await page.locator("#start-screen").isVisible(),"title screen appears before world loads");
  assert.equal(await page.locator('[data-tab="appearance"]').count(),0,"no in-game character customization tab");
  assert.equal(await page.evaluate(()=>typeof window.epochDebug),"undefined","3D world is deferred until loading a save");
  assert((await page.locator("#start-screen").innerText()).includes("Legacy Ada")===false,"title uses actual migrated save data");
- await page.locator('[data-menu="continue"]').click();
+ await continueGame(page,{model:true});
  await page.waitForFunction(()=>typeof window.epochDebug==="function",{timeout:45000});
  await page.waitForFunction(()=>window.epochDebug()?.movement?.loaded===true,{timeout:45000});
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),{timeout:45000});
@@ -53,34 +50,35 @@ try{
  assert(idle.hairAttachment.beardAttached,"player beard must follow the Head");
  assert(idle.npcAttachments.every(n=>n.headFound && (!n.hairExpected||n.hairAttached) && (!n.beardExpected||n.beardAttached)),"villager hair must attach to their own Head");
  assert.equal(idle.movement.mode,"idle","should start in idle stance");
- await page.screenshot({path:path.join(output,"epoch-idle.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-idle.png")});
  await page.keyboard.down("w");
  await page.waitForFunction(()=>window.epochDebug()?.movement?.mode==="walk",{timeout:7000});
  await page.waitForTimeout(650);
  const walk=await page.evaluate(()=>window.epochDebug());
  assert(walk.hairAttachment.hairAttached && walk.hairAttachment.beardAttached,"hair and beard must stay head-attached while walking");
- await page.screenshot({path:path.join(output,"epoch-walk.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-walk.png")});
  assert(Math.hypot(walk.position.x-idle.position.x,walk.position.z-idle.position.z)>.25,"player should physically move in world");
  await page.keyboard.down("Shift");
  await page.waitForFunction(()=>window.epochDebug()?.movement?.mode==="run",{timeout:7000});
  await page.waitForTimeout(300);
  const run=await page.evaluate(()=>window.epochDebug());
  assert(run.hairAttachment.hairAttached && run.hairAttachment.beardAttached,"hair and beard must remain attached during jogging");
- await page.screenshot({path:path.join(output,"epoch-jog.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-jog.png")});
  await page.keyboard.up("Shift");await page.keyboard.up("w");
  await page.waitForFunction(()=>window.epochDebug()?.movement?.mode==="idle",{timeout:7000});
- await page.screenshot({path:path.join(output,"epoch-idle-after-walk.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-idle-after-walk.png")});
  // Exercise the inventory UI, including ten real clickable slots.
  await page.locator('[data-tab="pack"]').click();
  assert.equal(await page.locator(".pack-slot").count(),10,"pack shows ten slots");
- assert((await page.locator("#panel").innerText()).includes("12 per space"),"stack limit explained");
- await page.screenshot({path:path.join(output,"epoch-inventory-empty.png")});
+ assert((await page.locator("#panel").innerText()).includes("12"),"stack limit explained");
+ assert.equal(await page.locator('[data-action="chop-bush"]').count(),0,"Inventory has no bush-cutting control");
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-inventory-empty.png")});
  // A new village has no pre-existing 3D construction slots.
  const status=await page.evaluate(()=>window.epochDebug());
  assert.equal(status.settlement.renderedBuildings,0,"new world must not render unbuilt village sites");
  assert.deepEqual(status.settlement.buildings,[],"new world has no built structures");
  assert.equal(status.settlement.capacity,5,"village starts with five residents");
- await page.locator('[data-tab="village"]').click();
+ await page.locator('#objective-action').click();
  assert.equal(status.settlement.stockpile.placed,false,"no auto-created stockpile");
  await page.locator('[data-action="place-stockpile"]').click();
  const initialPreview=await page.evaluate(()=>window.epochDebug().settlement);
@@ -99,7 +97,7 @@ try{
  assert(founding.hasGrid,"construction grid is available on demand");
  assert.equal(founding.gridVisible,false,"construction grid remains hidden normally");
  assert.equal(await page.locator('[data-action="select-plot"]').count(),0,"old fixed plot selector is gone");
- await page.screenshot({path:path.join(output,"epoch-stockpile-free-grid.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-stockpile-free-grid.png")});
  // Test actual construction through the public UI and click-to-walk workflow.
  // Before a reload, Epoch's pagehide handler saves the old in-memory state.
  // Seed the fresh document on its next load instead of writing too early.
@@ -133,7 +131,7 @@ try{
  await page.reload({waitUntil:"domcontentloaded"});
  await page.locator('[data-menu="continue"]').waitFor({timeout:45000});
  assert(await page.locator("#start-screen").isVisible(),"reloading returns to title");
- await page.locator('[data-menu="continue"]').click();
+ await continueGame(page);
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.stockpile?.placed===true,null,{timeout:45000});
  const reloadedForest=await page.evaluate(()=>window.epochDebug().forest);
  assert.equal(reloadedForest.seed,idle.forest.seed,"reloading must preserve the world seed");
@@ -150,12 +148,12 @@ try{
  assert.equal(loadedResources.vines,1,"vines persist");
  await page.locator('[data-tab="pack"]').click();
  assert.equal(await page.locator(".pack-slot.occupied").count(),9,"nine distinct stacks visible after load");
- await page.screenshot({path:path.join(output,"epoch-inventory-filled.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-inventory-filled.png")});
  await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),null,{timeout:45000});
- await page.locator('[data-tab="village"]').click();
+ await page.locator('#close-panel').click();
  const stockpileBefore=await page.evaluate(()=>window.epochDebug().settlement.stockpile);
  assert.equal(stockpileBefore.used,0,"stored resources are independent of backpack");
- await page.locator('[data-action="return-stockpile"]').click();
+ await clickWorldObject(page,{stockpile:true});
  await page.waitForFunction(()=>{
   const s=window.epochDebug();
   return s?.settlement?.stockpile?.placed&&Math.hypot(s.position.x-s.settlement.stockpile.x,s.position.z-s.settlement.stockpile.z)<5;
@@ -168,7 +166,8 @@ try{
  assert.equal(stored.settlement.stockpile.items.berries,2);
  assert.equal(stored.settlement.stockpile.items.vines,1);
  assert.equal(stored.inventory.used,0,"backpack empties after dropping supplies at home");
- await page.screenshot({path:path.join(output,"epoch-stockpile-filled.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-stockpile-filled.png")});
+ await page.locator('[data-action="village-section"][data-section="build"]').click();
  await page.locator('[data-action="start-building"][data-kind="family"]').click();
  const buildingPreview=await page.evaluate(()=>window.epochDebug().settlement);
  assert.equal(buildingPreview.placingBuilding,"family","choosing a hut starts building mode");
@@ -182,7 +181,7 @@ try{
  const moved=await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate);
  assert.equal(moved.x,rotated.x+2,"arrow control moves hut one cell");
  await page.locator('[data-action="grid-nudge"][data-dx="-1"]').click();
- await page.screenshot({path:path.join(output,"epoch-village-building-preview.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-village-building-preview.png")});
  await page.locator('[data-action="confirm-building"]').click();
  await page.waitForFunction(()=>window.epochDebug()?.settlement?.capacity===8,null,{timeout:7000});
  const settlement=await page.evaluate(()=>window.epochDebug().settlement);
@@ -200,55 +199,39 @@ try{
  assert.equal(afterBuild.settlement.stockpile.items.wood,34,"hut uses ten stockpiled wood");
  assert.equal(afterBuild.settlement.stockpile.items.stone,24,"hut uses six stockpiled stone");
  assert(afterBuild.inventory.slots.every(s=>!s||s.qty<=12),"inventory remains stack-limited");
- await page.screenshot({path:path.join(output,"epoch-first-family-hut.png")});
- // Responsive regression: the nav header cannot collapse under long content,
- // and switching tabs must never dismiss the mobile drawer.
- await page.locator("#right").evaluate(el=>el.classList.remove("open"));
- await page.locator("#toggle").evaluate(el=>el.setAttribute("aria-expanded","false"));
- for(const [width,height] of [[600,850],[390,740],[320,640]]){
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-first-family-hut.png")});
+ // The two personal controls stay usable while contextual sheets preserve the world.
+ await page.locator("#close-panel").click();
+ for(const [width,height] of [[768,1024],[600,850],[390,740],[320,640]]){
   await page.setViewportSize({width,height});
-  await page.locator("#toggle").click();
-  assert(await page.locator("#right").evaluate(el=>el.classList.contains("open")),
-   "menu must open at "+width+"px");
-  for(const tab of ["pack","village","skills","tech","culture","dynasty"]){
+  assert.deepEqual(await page.locator("#hud-tools [data-tab]").evaluateAll(nodes=>nodes.map(n=>n.dataset.tab)),["pack","skills"],"only Inventory and Skills are global tabs");
+  for(const tab of ["pack","skills"]){
    await page.locator('[data-tab="'+tab+'"]').click();
    const layout=await page.evaluate(()=>{
-    const right=document.querySelector("#right");
-    const nav=right.querySelector(".tabs");
-    const panel=right.querySelector("#panel");
-    const aside=right.getBoundingClientRect(),n=nav.getBoundingClientRect(),p=panel.getBoundingClientRect();
-    const buttons=[...nav.querySelectorAll("button")].map(b=>{
-     const r=b.getBoundingClientRect();
-     return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}
-    });
-    return {open:right.classList.contains("open"),visible:getComputedStyle(right).display!=="none",
-     nav:{top:n.top,bottom:n.bottom,left:n.left,right:n.right,height:n.height},
-     panel:{top:p.top,bottom:p.bottom},aside:{top:aside.top,bottom:aside.bottom},
-     buttons,active:nav.querySelector("button.active")?.dataset.tab};
+    const right=document.querySelector("#right"),dock=document.querySelector("#hud-tools");
+    const r=right.getBoundingClientRect(),d=dock.getBoundingClientRect(),h=right.querySelector(".context-heading").getBoundingClientRect();
+    return {open:right.classList.contains("open"),visible:getComputedStyle(right).display!=="none",active:dock.querySelector("button.active")?.dataset.tab,
+     panel:{top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height},heading:{top:h.top,bottom:h.bottom},dock:{top:d.top,bottom:d.bottom},viewport:{width:innerWidth,height:innerHeight}};
    });
-   assert(layout.open&&layout.visible,"switching to "+tab+" must keep menu open at "+width+"px");
-   assert.equal(layout.active,tab,"active tab updates");
-   assert(layout.nav.height>=78,"all tabs must occupy a stable two-row header");
-   assert(layout.nav.top>=layout.aside.top-1&&layout.nav.bottom<=layout.aside.bottom+1,
-    "tab header remains inside sidebar");
-   assert(layout.panel.top>=layout.nav.bottom-1,"scrolling content starts below all tabs");
-   assert(layout.buttons.every(b=>b.top>=layout.nav.top-1&&b.bottom<=layout.nav.bottom+1
-     &&b.left>=layout.nav.left-1&&b.right<=layout.nav.right+1),
-    "every tab button fits within visible navigation");
+   assert(layout.open&&layout.visible,"personal panel opens at "+width+"px");
+   assert.equal(layout.active,tab,"active personal tab updates");
+   assert(layout.panel.left>=0&&layout.panel.right<=width+1,"panel fits the viewport");
+   assert(layout.panel.top>=0&&layout.panel.bottom<=height+1,"panel remains on screen");
+   assert(layout.dock.bottom<=height+1,"personal controls remain visible");
+   assert(layout.panel.top>height*.15||layout.panel.left>width*.35,"context panel leaves a substantial world area visible");
   }
   await page.locator('[data-tab="pack"]').click();
   const fixedHeader=await page.evaluate(()=>{
-   const nav=document.querySelector("#right .tabs"),panel=document.querySelector("#panel");
-   const top=nav.getBoundingClientRect().top;
-   panel.scrollTop=panel.scrollHeight;
-   return {top,after:nav.getBoundingClientRect().top,scrolled:panel.scrollTop};
+   const header=document.querySelector("#right .context-heading"),panel=document.querySelector("#panel");
+   const top=header.getBoundingClientRect().top;panel.scrollTop=panel.scrollHeight;
+   return {top,after:header.getBoundingClientRect().top};
   });
-  assert.equal(fixedHeader.top,fixedHeader.after,"scrolling Pack must not hide the tabs");
-  await page.screenshot({path:path.join(output,"epoch-tabs-"+width+".png")});
-  await page.locator("#toggle").click();
-  assert(!(await page.locator("#right").evaluate(el=>el.classList.contains("open"))),
-   "menu toggle still closes the sidebar");
+  assert.equal(fixedHeader.top,fixedHeader.after,"scrolling Inventory preserves the close/header controls");
+  await page.screenshot({animations:"disabled",path:path.join(output,"epoch-tabs-"+width+".png")});
+  await page.locator("#close-panel").click();
+  assert(!(await page.locator("#right").evaluate(el=>el.classList.contains("open"))),"close control dismisses the contextual panel");
  }
+ await page.setViewportSize({width:1280,height:800});
  // The old ambient campfire must never exist. Researching Fire alone
  // unlocks construction, not an instant campfire in the world.
  assert.equal(idle.hearth.built,false,"no Cooking Hearth exists at game start");
@@ -271,7 +254,7 @@ try{
  });
  const loadHeathFixture=async ()=>{
   await page.reload({waitUntil:"domcontentloaded"});
-  await page.locator('[data-menu="continue"]').click();
+  await continueGame(page);
   await page.waitForFunction(()=>!!window.epochDebug()?.hearth,null,{timeout:45000});
   await page.waitForFunction(()=>document.querySelector("#loading")?.classList.contains("hidden"),null,{timeout:45000});
   return page.evaluate(()=>window.epochDebug());
@@ -296,17 +279,17 @@ try{
    "firelight is at the saved Cooking Hearth position, not a preset camp");
  assert(Math.abs(builtHearth.hearth.position.z-savedHearth.z)<.01,
    "firelight follows the placed Cooking Hearth");
- await page.screenshot({path:path.join(output,"epoch-built-cooking-hearth.png")});
+ await page.screenshot({animations:"disabled",path:path.join(output,"epoch-built-cooking-hearth.png")});
  // Separate clean browser context: test New Game > founder creation > Save > Continue.
- const newContext=await browser.newContext({viewport:{width:390,height:780},deviceScaleFactor:1});
+ const newContext=await browser.newContext({viewport:{width:390,height:780},deviceScaleFactor:1,ignoreHTTPSErrors:true});
  const newPage=await newContext.newPage();
  const creatorErrors=[];
  newPage.on("pageerror",error=>creatorErrors.push(String(error)));
- await newPage.goto("http://127.0.0.1:8765/epoch/?browser-test=20261114a-new",{waitUntil:"domcontentloaded",timeout:45000});
+ await newPage.goto(gameUrl,{waitUntil:"domcontentloaded",timeout:45000});
  await newPage.locator('[data-menu="new"]').waitFor({timeout:45000});
  assert(await newPage.locator('[data-menu="continue"]').isDisabled(),"clean browser has no Continue game");
  assert.equal(await newPage.locator(".epoch-save-card").count(),3,"three slots in title menu");
- await newPage.screenshot({path:path.join(output,"epoch-title-screen.png")});
+ await newPage.screenshot({animations:"disabled",path:path.join(output,"epoch-title-screen.png")});
  await newPage.locator('[data-menu="new"]').click();
  assert.equal(await newPage.locator(".epoch-save-card").count(),3,"new game chooses among three save slots");
  await newPage.locator('[data-menu="pick-new"][data-slot="2"]').click();
@@ -316,7 +299,7 @@ try{
  await newPage.locator('[data-menu="appearance"][data-field="hairStyle"][data-dir="1"]').click();
  await newPage.locator('[data-menu="appearance"][data-field="skin"][data-dir="1"]').click();
  assert.equal(await newPage.locator("#founder-name").inputValue(),"Mira","name survives picker updates");
- await newPage.screenshot({path:path.join(output,"epoch-founder-creator.png")});
+ await newPage.screenshot({animations:"disabled",path:path.join(output,"epoch-founder-creator.png")});
  await newPage.locator('[data-menu="begin"]').click();
  await newPage.waitForFunction(()=>window.epochDebug()?.slot===2,null,{timeout:45000});
  const created=await newPage.evaluate(()=>window.epochDebug());
@@ -328,11 +311,11 @@ try{
  const saved=await newPage.evaluate(()=>JSON.parse(localStorage.getItem("epoch.stoneage.slot.2")));
  assert.equal(saved.hero.name,"Mira","founder saved correctly");
  assert.equal(saved.lineage[0].name,"Mira","founder name also appears in family chronicle");
- // New-game QA uses a narrow mobile viewport: open the game drawer first.
+ // Saving and returning to title remain available before any Family Hut exists.
  await newPage.locator("#toggle").click();
- await newPage.locator('[data-tab="dynasty"]').click();
  await newPage.locator('[data-action="save"]').click();
  assert((await newPage.locator("#toasts").innerText()).includes("Slot 2"),"save feedback identifies slot");
+ if(!(await newPage.locator('[data-action="title"]').isVisible()))await newPage.locator("#toggle").click();
  await newPage.locator('[data-action="title"]').click();
  await newPage.locator('[data-menu="continue"]').waitFor({timeout:45000});
  assert(await newPage.locator("#start-screen").isVisible(),"Save & Return opens title screen");

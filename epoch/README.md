@@ -1,116 +1,86 @@
 # Epoch — Dawn of the First Tribe
 
-**Status:** Playable Stone Age foundation / pre-alpha.  
-**Website path:** `/epoch/` once merged into the site's main branch.  
+**Status:** Playable Stone Age foundation / pre-alpha.
+
+**Static site path:** `/epoch/`
+
 **Design:** [GAME_DESIGN.md](./GAME_DESIGN.md)
 
-Epoch is a first-person-in-history (third-person camera) browser RPG about learning personal skills, researching civilization technologies and culture, and passing control to your descendants across generations.
+Epoch is a third-person browser RPG about gathering, founding a village, discovering technologies and traditions, and passing control to descendants. Village activities open from buildings in the world. **Inventory** and **Skills** are the only global gameplay tabs.
 
-## Play
-Open `index.html` via a local HTTP server or deploy the `epoch/` folder under a static website. An internet connection is required for the experimental Babylon.js CDN dependency. No backend is required.
+## Play locally
 
-If you have Python installed, run from the **site repository root**:
+Serve the site repository root over HTTP; opening `index.html` directly with `file://` is not supported by the JavaScript module setup.
 
 ```bash
-python -m http.server 8000
+python -m http.server 8765 --bind 127.0.0.1
 ```
 
-Then visit `http://localhost:8000/epoch/`. A direct `file://` open is not recommended because the game uses JavaScript modules.
+Visit `http://127.0.0.1:8765/epoch/`. No backend is required. The current Babylon.js engine and loader use a public CDN, so an internet connection is needed.
 
-**World generation:** 32-meter chunks; 5×5 nearby terrain meshes; detailed forest, berry bushes, stone and deer inside a 3×3 neighborhood. It is one forest biome for now. Read [WORLD_SYSTEM.md](./WORLD_SYSTEM.md) for design, seed persistence and current limitations.
+## Find activities in the world
 
-### Controls
+| Interface or place | What it opens |
+|---|---|
+| Inventory button / I | Ten-slot inventory, stack inspection/discard, Stone Axe crafting |
+| Skills button / K | Six personal skill tracks and XP progress |
+| Objective → Establish camp | Free first-stockpile placement |
+| Village Stockpile | Village **Storage / Build / Buildings** sections |
+| Toolmaker's Shelter | Technology research |
+| Council Lodge | Culture and traditions |
+| Family Hut | Dynasty, family chronicle, and reviewed succession |
+| Cooking Hearth | Hearth information; cooking recipes are planned |
+| Game menu | Save game, Help, and Save & return to title |
+
+The title screen offers New Game, Continue, and three independent local save slots. Founder appearance is chosen when starting a new game and cannot be edited afterward. Descendants inherit related appearance traits. There is no global Village, Technology, Culture, Dynasty, or Character tab.
+
+## First steps
+
+1. Choose a slot and create your founder. Use **Establish camp** on the current objective to place a free stockpile, or choose the nearby-clearing option.
+2. Gather wood and vines from trees, stone from deposits, and berries plus vines from bushes. Click the stockpile to approach it and open **Storage**. Move within 5 meters to deposit or withdraw supplies.
+3. Open the stockpile's **Build** section. Construct a **Toolmaker's Shelter** with **12 stored wood and 8 stored stone**. It requires no prior research, so Technology is reachable from a fresh game.
+4. Click the completed shelter to research **Control of Fire** and **Stone Toolmaking**. Research uses carried Inventory materials and Knowledge; keep or withdraw the required supplies. Craft a **Stone Axe** in Inventory with 2 carried wood and 3 carried stone after learning Stone Toolmaking.
+5. Build a **Family Hut** for 10 stored wood and 6 stored stone. It adds 3 housing capacity; click it to open Dynasty. Build a **Council Lodge** for 14 stored wood and 8 stored stone, then click it to establish traditions. The lodge requires no prior Culture unlock.
+6. After researching Control of Fire, build a **Cooking Hearth** for 6 stored wood and 5 stored stone. Its fire appears only after construction. To change generations, visit a Family Hut and choose **Plan succession**, then review and confirm the change.
+
+## Controls and placement
+
 | Input | Action |
 |---|---|
-| W A S D | Move relative to camera |
-| Shift + WASD | Sprint |
-| Left-click ground | Auto-walk to position using grid pathfinding |
-| Left-click tree, rock or bush | Walk into range and gather |
-| E | Gather nearest reachable resource |
-| Right mouse drag | Rotate camera |
-| Mouse wheel | Zoom camera |
+| WASD / Shift + WASD | Walk / sprint relative to the camera |
+| Left-click ground | Auto-walk to a position |
+| Left-click resource / E nearby | Approach and gather / gather a nearby resource |
+| Shift-click berry bush / Shift + E nearby | Permanently clear a bush for vines |
+| Right mouse drag / mouse wheel | Rotate / zoom the camera |
+| I / K | Toggle Inventory / Skills |
+| Escape / game-menu button | Close the active panel or dialog, or open the game menu |
+| Ground click during placement | Pin the stockpile or building preview |
+| Arrow keys / on-screen arrows | Move the preview one 2-meter grid cell and pin it |
+| R during building placement | Rotate the building preview 90 degrees |
+| Confirm placement / Enter | Confirm a valid placement |
 
-## First objectives
-1. Gather wood and vines from trees, stone from deposits, and wild berries plus vines from bushes. Manage your 10-slot pack (12 items per stack).
-2. Research **Control of Fire** in the Tech tab.
-3. Research **Stone Toolmaking**, then craft a **Stone Axe** in Pack.
-4. Open **Village**, walk to a build plot, and construct a **Family Hut** to add room for 3 villagers.
-5. Construct a **Cooking Hearth**, **Toolmaker’s Shelter**, and **Council Lodge** as their prerequisites become available.
-5. Gather berries to earn Culture, then unlock **Tribal Community** and **Oral Tradition**.
-6. Open the **Dynasty** tab and continue playing as a descendant; your civilization persists.
+Placement starts from a movable preview. A click or arrow adjustment pins its location; rotating the camera does not move it. Village buildings use stored materials and must fit inside the stockpile's 24-meter territory, with clear, sufficiently level ground. Completed buildings retain their coordinates and rotation. Moving, rotating, or demolishing already-built structures is not implemented.
 
-## What's implemented
-- A seeded, smooth, continuously streamed forest biome with terrain chunks, original trees, stone deposits, berry bushes and deer; real Quaternius CC0 characters and four villagers
-- Keyboard and click movement, camera controls, and dynamically bounded A* navigation across chunk borders
-- A proper 10-slot personal inventory: wood, stone, wild berries and vines stack to 12 each; trees and bushes supply vines
-- Woodcutting, mining and berry foraging, with XP and leveling for six initial skills
-- Inventory-backed resource costs, technology and civic prerequisites; legacy resources migrate without loss
-- Campfire, stone axe, and a five-plot village with Family Huts, Cooking Hearth, Toolmaker’s Shelter, and Council Lodge
-- Each Family Hut expands population capacity by 3; cooking, research, and culture building bonuses come later
-- A prototype succession mechanic with partial skill-XP inheritance and inherited appearance traits
-- Persistent procedural world seed (same terrain and resource locations across reloads and descendants)
-- Character appearance editor (male/female body templates; six hairstyles, six hair colors, skin and eye colors, outfits, facial hair and proportions)
-- Versioned local save in the browser's `localStorage`
+## Inventory, resources, and world
 
-## Not yet implemented
-Combat, active enemies, hostile animals, hunting, NPC conversations/AI, rival civilizations, diplomacy, real family/children mechanics, polished Blender-skinned armature rigs and advanced authored animation clips, additional historical ages, multiplayer, accounts and synced saves.
+Inventory has **10 slots**, with **12 items per stack**. The stockpile holds **480 individual items** separately. Crafting, Technology, and Culture spend carried materials; village construction spends stockpiled materials. Older excess inventory is retained as recoverable supplies.
 
-## Files
-```
-epoch/
-  index.html
-  styles.css
-  js/
-    main.js
-    state.js
-    world.js
-    ui.js
-    characters.js
-    character-models.js
-  assets/
-    characters/
-      human_male.glb
-      human_female.glb
-  tools/
-    build-avatar-glb.js
-    open_models_in_blender.py
-  CHARACTER_SYSTEM.md
-  GAME_DESIGN.md
-  README.md
-```
+Trees contain 12 wood and disappear when exhausted; stone deposits contain 12 stone and do not regrow. Bushes contain 8 berries, which regrow two minutes after depletion, including while the game is closed. Clearing a bush yields 3 vines and permanently removes it. This is a world interaction, not an Inventory action. Harvested resources and removed objects persist across chunk reloads and descendants.
 
-## Production readiness
-This is a vertical slice, not a finished game. Babylon.js explicitly recommends **not** using its public CDN for production; when we're ready to publish widely, pin the version, bundle it locally, and build a real test pipeline. Epoch now loads Quaternius's genuinely skinned and weighted male and female humanoids by default, including source hairstyle meshes. The previous original experimental GLB assets remain as emergency fallback. Quaternius assets have a real rig but the game's walk/idle animation still needs refinement. Stone Age clothing is the next visual milestone. Desktop play is the current target; touch controls need work.
+The saved seed generates one forest biome in 32-meter chunks: 25 terrain chunks remain nearby, with scenery and wildlife in the inner nine. Resources are finite, while untouched regions regenerate from the seed. Deer are ambient wildlife. See [RESOURCE_DEPLETION.md](./RESOURCE_DEPLETION.md) and [VILLAGE_SYSTEM.md](./VILLAGE_SYSTEM.md) for details.
 
-## Save format
-Local storage key: `epoch.stoneage.v1`. This pre-alpha format can change, so saves aren't yet guaranteed across breaking updates. Reset is available in the Dynasty panel, with a confirmation.
+## Saves
+
+The three browser-local slots use `epoch.stoneage.slot.1`, `.2`, and `.3`. The previous `epoch.stoneage.v1` save is preserved as the one-time migration source; it is copied into an empty Slot 1. Existing completed villages and resource depletion are retained.
+
+Progress autosaves after state changes. The game menu also offers **Save game** and **Save & return to title**. Slot deletion or replacement requires confirmation. Saves do not transfer between browsers or devices, and clearing site data removes them. The pre-alpha save format can change across future updates.
+
+## Current limits and assets
+
+Housing capacity increases immediately, but new settlers, household assignment, worker jobs, cooking, combat, hunting, NPC conversations, rival civilizations, additional ages, multiplayer, accounts, and synced saves are not implemented. Research and Culture are functional building activities; automatic building production bonuses remain planned. Desktop play is the main target, with responsive panels and on-screen placement controls; complete touch movement still needs work.
+
+Characters use Quaternius Universal Base Characters Standard **CC0** assets with real skinned rigs, separate hairstyles, and authored idle/walk/run clips. Source credit, license, pinned import revision, and rebuild instructions are in [assets/characters/QUATERNIUS.md](./assets/characters/QUATERNIUS.md). Previous original GLBs remain as fallback art. Stone Age clothing and animation polish are future visual work; the founder creator currently uses a stylized reference portrait.
+
+Automated state/model checks and Chromium smoke tests exist under `tests/` and `.github/workflows/`. Wider production use still needs pinned or locally bundled Babylon dependencies, performance profiling, and broader device testing.
 
 © 2026. Original Epoch prototype, built as an AI-assisted creative software project.
-
-## Character system
-See [CHARACTER_SYSTEM.md](./CHARACTER_SYSTEM.md) for editable appearance profiles, inheritance rules and the GLB asset workflow and Blender import instructions. Use the **Character** tab to customize the player model; changing descendants generates a related but distinct appearance.
-
-## Licensed Quaternius character pipeline
-The default humans use Quaternius Universal Base Characters (free Standard CC0). Source: https://quaternius.com/packs/universalbasecharacters.html . Import provenance, author credit, selected hairstyles and source revision are documented in assets/characters/QUATERNIUS.md. Rebuild via node epoch/tools/import-quaternius.mjs.
-
-## Settlement building
-The **Village** tab has five buildable plots in the Stone Age clearing: two Family Huts (+3 people capacity each), a Cooking Hearth, a Toolmaker's Shelter, and a Council Lodge. Click a plot to approach it and use the Village panel to construct it. Resource costs and technology/culture prerequisites apply; older shelter saves migrate automatically. Other building production bonuses, growing population and freely placed buildings will be future work. See [VILLAGE_SYSTEM.md](./VILLAGE_SYSTEM.md) for full rules and ideas.
-
-## Depletable forest resources
-
-Trees now contain a finite amount of wood and fall when exhausted; rock deposits disappear after they have been mined out. Berry bushes remain standing after their eight berries run out and regenerate berries after two minutes. Shift+click a bush (or Shift+E nearby, or use the Pack button) to chop it down permanently for three vines. Depletion is saved per world object, so unloading/reloading chunks or starting a new generation does not magically restore felled trees or stones. For mechanics and limits see [RESOURCE_DEPLETION.md](./RESOURCE_DEPLETION.md).
-
-## Village founding and stockpile
-
-The first player village now begins by placing a **free Stockpile** on clear, level forest ground using a 2-meter grid. Click the Village tab and choose a location, or use the nearby-clearing shortcut. Once founded, click the physical stockpile (or use **Walk to stockpile**) to return with your gathered wood, stone, berries and vines. Its storage holds up to **480 items** and is separate from the 10-slot personal Pack. Deposit all or 12 at a time, and withdraw 12 at a time when nearby. All **village buildings use stockpiled materials** rather than backpack contents. The original five Stone Age structures are arranged around the Stockpile within a 24-meter village radius. Existing built villages receive a free home stockpile without losing their huts. See [STOCKPILE_SYSTEM.md](./STOCKPILE_SYSTEM.md) for controls, save migration and future plans.
-
-## Personal inventory
-The starter Wayfarer's Pack has **10 slots**, and wood, stone, wild berries and vines stack to **12 per slot**. Trees yield wood plus vines; berry bushes yield berries plus vines; stone deposits yield stone. Crafting, technology and buildings consume carried stacks. Select a filled slot to inspect or discard it if the pack becomes full. Existing saves with more resources than 10 slots can carry retain the excess as manually recoverable supplies. See [INVENTORY_SYSTEM.md](./INVENTORY_SYSTEM.md).
-
-### Buildable Cooking Hearth
-
-The original static campfire has been removed from the starting world. Researching **Control of Fire** unlocks the **Cooking Hearth** blueprint, but does not create an automatic campfire. Deposit **6 wood and 5 stone** at your village stockpile, approach the Cooking Hearth construction plot and build it; only then will the hearth's stones, logs, flames, and firelight appear. The completed structure and its location persist with the village save. Cooking food remains a future feature.
-
-## Free-position village construction
-
-Epoch now uses a genuine **2-meter construction grid**. The Stockpile is the home base, but there are **no automatically displayed preset hut circles**. Choose where to found the Stockpile with the movable preview and confirm it, then select any structure from Village → Construction. Click ground or use the arrow pad / keyboard arrows to reposition the green/red preview; press R to rotate, and Confirm Placement to build using materials in village storage. Only constructed buildings appear permanently in the world. Multiple Family Huts contribute +3 population capacity each. Existing saves are migrated automatically, retaining original built hut locations. See [STOCKPILE_SYSTEM.md](./STOCKPILE_SYSTEM.md).

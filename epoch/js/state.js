@@ -1,7 +1,7 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113m";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
-import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114a";
-import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114a";
+import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114b";
+import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
  depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261113k";

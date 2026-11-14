@@ -1,7 +1,7 @@
-import {GameState} from "./state.js?v=20261114a";
-import {World} from "./world.js?v=20261114a";
-import {UI} from "./ui.js?v=20261114a";
-import {TitleScreen} from "./title-screen.js?v=20261113m";
+import {GameState} from "./state.js?v=20261114b";
+import {World} from "./world.js?v=20261114b";
+import {UI} from "./ui.js?v=20261114b";
+import {TitleScreen} from "./title-screen.js?v=20261114b";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
 // Load the 3D game ONLY when a save is selected or a new founder is created.
@@ -43,6 +43,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
   // Expose a read-only inspection aid for development without exposing mutation methods.
   Object.defineProperty(globalThis,"epochDebug",{value:()=>({
     slot:state.slot,heroName:state.data.hero.name,year:state.formatYear(),generation:state.data.generation,
+    ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal},
     forest:world.terrain.status,
     resourceNodes:state.resourceStatistics(),
     resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
@@ -56,7 +57,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
       buildings:state.data.village.buildings.map(b=>({...b})),
       renderedBuildings:world.villageBuildings.size,
       stockpile:state.stockpileInfo(),
-      placingStockpile:world.placingStockpile,stockpileCandidate:world.stockpileCandidate?{...world.stockpileCandidate}:null,
+      placingStockpile:world.placingStockpile,placementPinned:!!world.placementPinned,stockpileCandidate:world.stockpileCandidate?{...world.stockpileCandidate}:null,
       placingBuilding:world.placingBuilding,buildingCandidate:world.buildingCandidate?{...world.buildingCandidate}:null,
       hasGrid:!!world.villageGrid,gridVisible:!!world.villageGrid?.isEnabled()},
     movement:world.character?.animationStatus?.()||null,

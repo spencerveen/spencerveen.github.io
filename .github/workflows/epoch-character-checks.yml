@@ -3,54 +3,13 @@ name: Epoch character asset checks
 on:
   pull_request:
     paths:
-      - 'epoch/assets/characters/**'
-      - 'epoch/tools/**'
-      - 'epoch/tests/**'
-      - 'epoch/js/character-models.js'
-      - 'epoch/js/quaternius-models.js'
-      - 'epoch/js/locomotion.js'
-      - 'epoch/js/settlement.js'
-      - 'epoch/js/village-placement.js'
-      - 'epoch/js/village-world.js'
-      - 'epoch/js/village-ui.js'
-      - 'epoch/js/stockpile.js'
-      - 'epoch/js/save-slots.js'
-      - 'epoch/js/title-screen.js'
-      - 'epoch/js/stockpile-world.js'
-      - 'epoch/js/inventory.js'
-      - 'epoch/js/resource-nodes.js'
-      - 'epoch/js/harvest.js'
-      - 'epoch/js/inventory-ui.js'
-      - 'epoch/js/forest-generation.js'
-      - 'epoch/js/forest-chunks.js'
-      - 'epoch/js/village-world.js'
-      - 'epoch/js/village-ui.js'
+      - 'epoch/**'
       - '.github/workflows/epoch-character-checks.yml'
   push:
     branches: [main]
     paths:
-      - 'epoch/assets/characters/**'
-      - 'epoch/tools/**'
-      - 'epoch/tests/**'
-      - 'epoch/js/character-models.js'
-      - 'epoch/js/quaternius-models.js'
-      - 'epoch/js/locomotion.js'
-      - 'epoch/js/settlement.js'
-      - 'epoch/js/village-placement.js'
-      - 'epoch/js/village-world.js'
-      - 'epoch/js/village-ui.js'
-      - 'epoch/js/stockpile.js'
-      - 'epoch/js/save-slots.js'
-      - 'epoch/js/title-screen.js'
-      - 'epoch/js/stockpile-world.js'
-      - 'epoch/js/inventory.js'
-      - 'epoch/js/resource-nodes.js'
-      - 'epoch/js/harvest.js'
-      - 'epoch/js/inventory-ui.js'
-      - 'epoch/js/forest-generation.js'
-      - 'epoch/js/forest-chunks.js'
-      - 'epoch/js/village-world.js'
-      - 'epoch/js/village-ui.js'
+      - 'epoch/**'
+      - '.github/workflows/epoch-character-checks.yml'
 
 jobs:
   validate-glb:
@@ -59,6 +18,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Validate contextual interfaces and research/culture bootstrap
+        run: node epoch/tests/check-contextual-ui.mjs
       - name: Validate title save slots, migration and character creation locks
         run: node epoch/tests/check-save-slots.mjs
       - name: Validate permanent resource depletion and berry regeneration
