@@ -174,11 +174,11 @@ export class ForestChunks{
   const candidate=world.spawnTribeCamp?tribeAtChunk(this.seed,cx,cz):null;
   const active=candidate&&world.isTribeSiteActive?.(candidate);
   const relocated=candidate&&world.getTribeRecord?.(candidate.id)?.status==="relocated";
+  const dryTribe=candidate&&this.waterAt(candidate.x,candidate.z).depth<.12;
   const tribe=active&&dryTribe?candidate:null;
   const reservation=(active||relocated)&&dryTribe?candidate:null;
   const withinCamp=(x,z,extra=0)=>reservation&&Math.hypot(x-reservation.x,z-reservation.z)<TRIBE_CLEARING_RADIUS+extra;
   const rawResources=forestObjects(this.seed,cx,cz);
-  const dryTribe=candidate&&this.waterAt(candidate.x,candidate.z).depth<.12;
   // Bedrock is decoration, not a new harvestable stone deposit or collider.
   const outcrops=mountainOutcropSites(this.seed,cx,cz,
    (px,pz)=>this.heightAt(px,pz),(px,pz)=>this.waterAt(px,pz),
