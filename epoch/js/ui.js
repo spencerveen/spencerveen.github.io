@@ -2,7 +2,7 @@ import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114x";
 import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
 import {BUILDINGS} from "./settlement.js?v=20261114u";
 import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114x";
-import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114x";
+import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114beaches2";
 import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));

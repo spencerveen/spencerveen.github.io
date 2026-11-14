@@ -1,5 +1,5 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
-import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeBerries} from "./survival.js?v=20261114s";
+import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeBerries} from "./survival.js?v=20261114beaches2";
 import {newDevCheats,validDevCheat} from "./dev-cheats.js?v=20261114devpanel1";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114w";
@@ -8,8 +8,8 @@ import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
  depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261114y";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
-import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113k";
-import {harvestAtNode} from "./harvest.js?v=20261114x";
+import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261114beaches2";
+import {harvestAtNode} from "./harvest.js?v=20261114beaches2";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
@@ -17,7 +17,7 @@ import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  NATURAL_DEATH_AGE} from "./residents.js?v=20261114w";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
- resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261114x";
+ resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261114beaches2";
 import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack} from "./equipment.js?v=20261114x";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],

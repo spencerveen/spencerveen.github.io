@@ -1,4 +1,4 @@
-import {ITEMS,INVENTORY_SLOTS,itemStackLimit} from "./inventory.js?v=20261114x";
+import {ITEMS,INVENTORY_SLOTS,itemStackLimit} from "./inventory.js?v=20261114beaches2";
 import {EQUIPMENT_SLOTS,equippedItem} from "./equipment.js?v=20261114x";
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 

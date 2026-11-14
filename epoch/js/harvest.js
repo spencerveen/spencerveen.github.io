@@ -3,9 +3,9 @@
  * deterministic node and only depletes it by the quantity that fits in the
  * character's ten-slot inventory.
  */
-import {addItems,itemCapacity} from "./inventory.js?v=20261114x";
-import {SURVIVAL} from "./survival.js?v=20261114q";
-import {RESOURCE_NODES,BUSH_VINE_YIELD,resourceNodeStatus,recordResourceNode} from "./resource-nodes.js?v=20261113j";
+import {addItems,itemCapacity} from "./inventory.js?v=20261114beaches2";
+import {SURVIVAL} from "./survival.js?v=20261114beaches2";
+import {RESOURCE_NODES,BUSH_VINE_YIELD,resourceNodeStatus,recordResourceNode} from "./resource-nodes.js?v=20261114beaches2";
 export function harvestAtNode(state,meta,action="gather",now=Date.now()){
  if(state.data.survival?.gameOver)return {type:"empty",label:"Your civilization has ended."};
  const status=resourceNodeStatus(state.data.resourceNodes,meta,now);

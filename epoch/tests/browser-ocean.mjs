@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import {launchBrowser,gameUrl,continueGame} from "./browser-helpers.mjs";
 import {coastlineX} from "../js/ocean-generation.js";
+import {beachAt,beachFlintSites} from "../js/beach-generation.js";
+import {chunkCoord} from "../js/forest-generation.js";
 const seed=12000,shore=coastlineX(0,seed);
 const browser=await launchBrowser();
 try{
@@ -55,6 +57,42 @@ try{
  assert(test.offshore.oceanChunks>=20,"farther east should become entirely open sea");
  assert(test.offshoreMeshes>0&&test.someLowRes,
   "offshore water uses reduced-complexity meshes");
- assert.deepEqual(errors,[],"ocean exploration must not trigger runtime errors");
- console.log("PASS browser ocean: eastern coastline, coastal wading, sea collision, marine colors and streaming");
+ // Go to a deterministic beach-flint shard and check the actual rendered
+ // chunk, harvestable meshes and absence of trunks/canopies over sandy dunes.
+ let piece=null;
+ for(let z=-330;z<=330&&!piece;z+=20){
+  const at=chunkCoord(coastlineX(z,seed)-45,z);
+  for(let dx=-2;dx<=2&&!piece;dx++)for(let dz=-2;dz<=2&&!piece;dz++){
+   piece=beachFlintSites(seed,at.cx+dx,at.cz+dz)[0]||null;
+  }
+ }
+ assert(piece,"seeded starter coast should have at least one piece of flint");
+ const shoreScene=await page.evaluate(({x,z,id})=>{
+  const w=window.__epochTestWorld;
+  w.player.position.x=x;w.player.position.z=z;
+  w.player.position.y=w.groundY(x,z);
+  w.terrain.update(x,z);
+  const flint=w.entities.find(e=>e.resource==="flint"&&e.resourceId===id);
+  const trees=w.entities.filter(e=>e.shape==="tree")
+   .map(e=>({x:e.x,z:e.z}));
+  const berries=w.entities.filter(e=>e.shape==="bush")
+   .map(e=>({x:e.x,z:e.z}));
+  const remaining=flint?w.getResourceStatus(flint)?.remaining:null;
+  let after=null;
+  if(flint){
+   w.cooldown=0;
+   w.collect(flint);
+   after=w.getResourceStatus(flint)?.remaining;
+  }
+  return {found:!!flint,pickable:flint?.mesh?.isPickable,
+   remaining,after,trees,berries};
+ },piece);
+ assert(shoreScene.found&&shoreScene.pickable,"flint must appear as a clickable 3D world resource");
+ assert.equal(shoreScene.remaining,2);
+ assert.equal(shoreScene.after,1,"beach flint gathering enters the real survival and inventory system");
+ for(const obj of [...shoreScene.trees,...shoreScene.berries])
+  assert(!beachAt(obj.x,obj.z,seed).vegetationClear,
+   "trees and bushes must stay behind the full dune buffer");
+ assert.deepEqual(errors,[],"ocean and beach exploration must not trigger runtime errors");
+ console.log("PASS browser ocean: seawater, broad treeless beaches, clickable flint collection and streamed terrain");
 }finally{await browser.close()}
