@@ -54,14 +54,21 @@ class FakeMesh {
  refreshBoundingInfo(){}
  dispose(){this.disposed=true}
 }
+class FakeVertexData {
+ static ComputeNormals(positions,indices,normals){
+  for(let i=0;i<positions.length;i++)normals.push(0,1,0);
+ }
+ applyToMesh(mesh){mesh.vertices=this.positions;mesh.indices=this.indices;mesh.colors=this.colors;}
+}
 globalThis.BABYLON={
  Vector3:class {constructor(x,y,z){this.x=x;this.y=y;this.z=z}},
+ Mesh:FakeMesh,
  MeshBuilder:{
   CreateGround:(name)=>new FakeMesh(name),
   CreateSphere:(name)=>new FakeMesh(name)
  },
  VertexBuffer:{PositionKind:"pos",NormalKind:"norm"},
- VertexData:{ComputeNormals:(positions,indices,normals)=>{for(let i=0;i<positions.length;i++)normals.push(0,1,0)}}
+ VertexData:FakeVertexData
 };
 const {ForestChunks}=await import("../js/forest-chunks.js");
 const disposed=[],world={
