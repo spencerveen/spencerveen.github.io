@@ -6,16 +6,16 @@ import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114w";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114y";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
- STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
+ STOCKPILE_CAPACITY,stockpileSpace,stockpileHas,payStockpile,nearStockpile,withinVillage,
  depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261114fish1";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
-import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261114flint1";
+import {resourceNodeStatus,resourceStateStats,recordResourceNode} from "./resource-nodes.js?v=20261114flint1";
 import {harvestAtNode} from "./harvest.js?v=20261114flint1";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
- moveResidentHome,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
- NATURAL_DEATH_AGE} from "./residents.js?v=20261114w";
+ moveResidentHome,assignResidentJob,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
+ NATURAL_DEATH_AGE} from "./residents.js?v=20261114jobs1";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114fish1";
@@ -434,6 +434,53 @@ export class GameState{
    if(deaths.some(p=>p.id===d.successorId))d.successorId=null;
   }
   return deaths;
+ }
+ assignResidentJob(id,job){
+  if(this.data.survival.gameOver||!this.data.village.stockpile)return false;
+  if(!assignResidentJob(this.data.village,id,job,this.data.year))return false;
+  this.changed();
+  return true;
+ }
+ /** A villager completes a real work trip at the village stockpile.
+  * Validate the target again so a player harvest or another worker cannot
+  * duplicate finite resource, fish, or wildlife loot while they are away.
+  */
+ completeVillagerWork(id,task){
+  const villager=this.data.village.residents.find(p=>p.id===id);
+  const pile=this.data.village.stockpile;
+  if(!villager||!pile||this.data.survival.gameOver||!task||
+     villager.job!==task.job)return {ok:false,reason:"Assignment changed."};
+  let goods={},apply=null,removed=false;
+  const gathering={woodcutter:"wood",stonegatherer:"stone",forager:"food"};
+  if(task.kind==="resource"&&gathering[task.job]===task.resource){
+   const prefix=task.resource+":";
+   if(typeof task.id!=="string"||!task.id.startsWith(prefix))return {ok:false};
+   const status=resourceNodeStatus(this.data.resourceNodes,
+    {id:task.id,resource:task.resource});
+   if(!status||status.removed||status.remaining<1)return {ok:false,reason:"Resource depleted."};
+   const amount=Math.min(2,status.remaining);
+   goods={[task.resource==="food"?"berries":task.resource]:amount};
+   removed=status.remaining===amount&&task.resource!=="food";
+   apply=()=>recordResourceNode(this.data.resourceNodes,status,status.remaining-amount);
+  }else if(task.kind==="fish"&&task.job==="fisher"){
+   if(typeof task.id!=="string"||!/^fish:-?\\d+,-?\\d+:\\d+$/.test(task.id)||
+      this.data.fishCatches[task.id])return {ok:false,reason:"Fish already caught."};
+   goods={fish_meat:1};
+   apply=()=>{this.data.fishCatches[task.id]=true;removed=true};
+  }else if(task.kind==="hunt"&&task.job==="hunter"){
+   if(typeof task.id!=="string"||!/^wildlife:[-\\w:,]+$/.test(task.id)||
+      !["deer","rabbit"].includes(task.species))return {ok:false};
+   const animal={id:task.id,species:task.species},status=this.wildlifeStatus(animal);
+   if(!status||status.dead||status.looted)return {ok:false,reason:"Animal unavailable."};
+   goods={...WILDLIFE[task.species].loot};
+   apply=()=>{this.data.wildlife[task.id]={species:task.species,health:0,dead:true,looted:true};removed=true};
+  }else return {ok:false,reason:"Job and target do not match."};
+  const total=Object.values(goods).reduce((sum,n)=>sum+n,0);
+  if(total>stockpileSpace(pile))return {ok:false,reason:"Stockpile is full."};
+  apply();
+  for(const [item,amount] of Object.entries(goods))pile.items[item]=(pile.items[item]||0)+amount;
+  this.changed();
+  return {ok:true,goods,removed};
  }
  villageHousing(){return housingUnits(this.data.village)}
  assignResidentHome(id,homeId){
