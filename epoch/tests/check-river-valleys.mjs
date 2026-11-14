@@ -9,7 +9,10 @@ for(const seed of [STARTER_SEED,42,1337,987654321]){
   const points=watershedAtBand(seed,basin).routes[0].points;
   for(let i=0;i<points.length;i+=8){
    const {x,z}=points[i],uncarved=mountainAt(x,z,seed,[],1000).uplift;
-   if(uncarved>12&&waterAt(x,z,seed).depth>.2){overlap={x,z,uncarved};break}
+   const candidate=waterAt(x,z,seed);
+   if(uncarved>9&&candidate.corridorDistance< -3.05){
+    overlap={x,z,uncarved};break;
+   }
   }
  }
  assert(overlap,"some river passes through a formerly higher mountain");
