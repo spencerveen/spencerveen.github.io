@@ -34,6 +34,7 @@ jobs:
           node --check epoch/js/equipment.js
           node --check epoch/js/hunting.js
           node --check epoch/js/cooking.js
+          node --check epoch/js/fishing.js
           node --check epoch/js/dev-cheats.js
           node --check epoch/js/ocean-generation.js
           node --check epoch/js/beach-generation.js
@@ -53,6 +54,8 @@ jobs:
         run: node epoch/tests/check-crafting.mjs
       - name: Validate Phase 5C hearth cooking, inventory transactions and nutrition
         run: node epoch/tests/check-cooking.mjs
+      - name: Validate Phase 5D fish habitats, spear catches, meals and saves
+        run: node epoch/tests/check-fishing.mjs
       - name: Verify Phase 5B wildlife ecology, combat, meat, hides and persistent hunting
         run: node epoch/tests/check-hunting.mjs
       - name: Validate civilization-based Knowledge and single-founder population

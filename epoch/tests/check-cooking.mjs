@@ -53,7 +53,7 @@ assert.equal(saved.inventoryCount("cooked_meat"),1);
 assert.equal(saved.data.village.stockpile.items.wood,0);
 assert.equal(saved.survivalStatus().maxStamina,120);
 assert(saved.data.skills.cooking>0);
-assert.deepEqual(Object.keys(COOKING_RECIPES),["roasted_meat","berry_roast"]);
+assert.deepEqual(Object.keys(COOKING_RECIPES),["roasted_meat","berry_roast","cooked_fish"]);
 assert(FOOD_EFFECTS.cooked_meat.hunger<FOOD_EFFECTS.berry_roast.hunger);
 const full=new GameState({slot:2,newGame:true});
 full.onChange=()=>{};

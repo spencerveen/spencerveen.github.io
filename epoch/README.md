@@ -58,11 +58,19 @@ Craft and **equip a Wooden Club, Stone Axe or Stone Spear**, approach wildlife w
 
 **Raw animal meat cannot be eaten.** Build a Cooking Hearth to roast it into meals for Hunger, Stamina and modest Health recovery.
 
+## Phase 5D — Spear Fishing
+
+Shallow rivers, lakes and eastern ocean coastline now contain deterministic small low-poly fish. The fish appear in the detailed 3×3 chunk window, move gently at the water surface and unload as you travel. Their water locations are generated from the same seeded hydrology as terrain, never on dry land or far out at sea. Successful catches remain depleted after chunk streaming or reloading because only caught fish IDs are saved.
+
+Craft and equip a **Stone Spear**, approach a fish in the shallows with WASD, then press **H** or click the fish within 3 meters. Each catch grants 1 raw Fish Meat and Fishing skill XP, costing **8 Stamina** and **1 spear durability**. A full backpack, insufficient stamina or missing spear prevents a catch without losing anything. H still attacks nearby deer, boar and rabbits, choosing the nearest available hunting/fishing target. Fishing from boats, rod fishing and nets are planned for later updates.
+
+Roast your catch at your built **Cooking Hearth**: **2 Fish Meat + 1 Wood → 2 Roasted Fish**. Each portion restores 31 Hunger, 18 Stamina and 4 Health. Raw fish is not edible. **E** now prioritizes Berry-Roasted Meat, Roasted Meat, Roasted Fish, then Wild Berries.
+
 ## Phase 5C — Cooking and Food
 
-The constructed **Cooking Hearth** opens an actual cooking station. Click the building and stand within 6m to prepare one of two recipes: **Roasted Meat** (2 Animal Meat + 1 Wood → 2 Roasted Meat) or **Berry-Roasted Meat** (1 Animal Meat + 2 Wild Berries + 1 Wood → 1 Berry-Roasted Meat). Wood is consumed as fuel. Ingredients are drawn from Inventory first, then village stockpile; finished meals go into the backpack. Cooking is instantaneous and earns Cooking XP. Failed attempts with insufficient supplies, no hearth or no output space never consume materials.
+The constructed **Cooking Hearth** opens an actual cooking station. Click the building and stand within 6m to prepare one of three recipes: **Roasted Meat** (2 Animal Meat + 1 Wood → 2 Roasted Meat) or **Berry-Roasted Meat** (1 Animal Meat + 2 Wild Berries + 1 Wood → 1 Berry-Roasted Meat). Wood is consumed as fuel. Ingredients are drawn from Inventory first, then village stockpile; finished meals go into the backpack. Cooking is instantaneous and earns Cooking XP. Failed attempts with insufficient supplies, no hearth or no output space never consume materials.
 
-Roasted Meat restores **38 Hunger, 16 Stamina and 6 Health**. Berry-Roasted Meat restores **52 Hunger, 20 Stamina and 10 Health**, plus a timed +20 maximum-Stamina boost. Both can be eaten from Inventory. **E** now consumes the first available food in order: Berry-Roasted Meat, Roasted Meat, Wild Berries. Raw meat is not edible. Cooking fish and fishing remain later developments.
+Roasted Meat restores **38 Hunger, 16 Stamina and 6 Health**. Berry-Roasted Meat restores **52 Hunger, 20 Stamina and 10 Health**, plus a timed +20 maximum-Stamina boost. Both can be eaten from Inventory. **E** now consumes the first available food in order: Berry-Roasted Meat, Roasted Meat, Roasted Fish, Wild Berries. Raw meat and raw fish are not edible.
 
 ## Phase 5A — Primitive crafting and durability
 
@@ -96,6 +104,7 @@ Press **E** during gameplay to eat one cooked meal or Wild Berry straight from t
 | Click a tribal leader, sign or camp shelter | Interact after approaching manually with WASD; trust quests remain available |
 | Click Cooking Hearth | Cook roasted meat and berry-roasted meat from carried and stored ingredients |
 | H beside wildlife / click animal | Attack with an equipped primitive weapon; costs Stamina and weapon durability |
+| H near fish / click fish | Spear fish in shallow water with a Stone Spear; costs Stamina and durability |
 | F near a carcass / click carcass | Harvest meat, fur, hides and bones into backpack |
 | F near a tribal leader | Open a nearby tribe encounter (if no gatherable resource takes priority) |
 | Click a named villager or overhead nameplate | Open their saved personal profile |

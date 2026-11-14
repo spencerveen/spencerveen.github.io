@@ -12,7 +12,9 @@ const processed=["raw_hide","leather","bone"];
 const weapons=["wood_club","stone_axe","stone_spear","sling","bow"];
 for(const id of [...core,...processed,...weapons,"arrows","fur_armor","leather_armor"])
  assert(ITEMS[id],"Missing Stone Age item: "+id);
-assert.equal(ITEM_IDS.length,22,"22 catalog entries include roasted meat and berry-roasted meals in Phase 5C");
+assert.equal(ITEM_IDS.length,23,"23 Stone Age items include roasted fish in Phase 5D");
+assert.equal(ITEMS.fish_meat.category,"material");
+assert.equal(ITEMS.cooked_fish.category,"food");
 assert(ITEMS.cooked_meat?.category==="food"&&ITEMS.berry_roast?.category==="food");
 assert(ITEMS.animal_meat?.category==="material","raw meat must require cooking");
 assert.equal(ITEM_CATEGORIES.length,5);
