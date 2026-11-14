@@ -99,6 +99,14 @@ The same saved **world seed** now creates connected, meandering rivers and lakes
 
 **Existing saves:** The original founding clearing is always dry. Saves created before 4B.2 automatically preserve a one-time snapshot of their existing stockpile and building locations. This keeps old settlements above water, and the saved protected sites do not change as new buildings are constructed. Seed, settled villages and tribal camp locations are unchanged. Water itself is generated deterministically and doesn't need a separate save record.
 
+## Phase 4B.2 — Mountains and foothills (terrain pass 1)
+
+The terrain now includes **seeded mountain belts and long, curving ridges** beyond the original founding area. Gradual foothills connect the older rolling forest to higher land, with lower saddles between ridges. These mountains are part of the continuous world-coordinate heightfield, not separately spawned decorative rocks, and they stream with the existing 32-meter terrain chunks. The starting forest remains unchanged within 150 meters of the original clearing.
+
+**Existing saves:** When loading a save created before this update, Epoch takes a one-time snapshot of its stockpile and completed building positions. The new mountain uplift is suppressed near those original sites, keeping the village at its previous elevation. Procedural tribal camps are also locally protected. Newly built structures do not alter mountains after this initial migration, and saves retain their current world seed and water layout.
+
+This first pass concentrates on the terrain shapes. Rocky slopes, cliffs, slope-aware navigation, specialized resources, and mountain-fed water drainage are separate follow-up improvements.
+
 ## Inventory, resources, and world
 
 Knowledge comes from founding the stockpile (**+3**), constructing the first of each building type (Toolmaker's Shelter **+6**, Hut **+3**, Council Lodge **+3**, Cooking Hearth **+4**), and milestones at **3 buildings (+3)**, **6 buildings (+4)**, and **10 buildings (+5)**. Repeat huts cannot repeatedly award a first-build bonus. An existing Toolmaker's Shelter generates **1 Knowledge per 60 seconds of active gameplay** until villager research assignments are available. Gathering and crafting award skill XP, not Knowledge. Culture's existing earning rules remain temporary until the villager system is built.

@@ -52,6 +52,16 @@ The exact same resource objects respawn when the surrounding chunk is loaded aga
 - `tests/check-settlement.mjs`: retains village and seed save compatibility
 - `tests/browser-walk.mjs`: Chromium verifies scene loads, materials/animals, seed persistence, character movement and village construction
 
+## Mountain ranges and foothills (Phase 4B.2, terrain pass 1)
+
+Mountain elevations are calculated in `js/mountain-generation.js` using seeded regional noise, curving ridges, and a continuous foothill envelope. The base forest terrain height is retained, and mountain uplift is layered on top. An original-forest radius of 150 meters around the starting clearing has no mountain uplift, with a gradual transition beyond it. Mountains are generated in absolute world coordinates, so loaded 32-meter chunks share seamless boundaries.
+
+The river and lake samplers use the same mountain-adjusted surface height as dry terrain, preventing water from floating above or sinking away from the new land. Physically downhill drainage and mountain-fed river sources are deferred to a later terrain/hydrology pass.
+
+For pre-mountain save slots, the `mountainProtectedSites` array records the historical stockpile and completed building coordinates once, and attenuates uplift near those sites. This is independent of water protection, so saves that already contain water migration data are also handled. Protected wilderness tribe camp locations are included while terrain is streamed. New construction never reshapes an existing ridge.
+
+Visual rock/cliff materials, steep-slope movement restrictions, specialized wildlife and mountain resources are planned separately. Unit checks live in `tests/check-mountains.mjs`.
+
 ## Planned future world improvements
 
 1. **Performance profiling:** mesh instancing, worker-based chunk generation, and asynchronous chunk-load pacing
