@@ -24,8 +24,8 @@ assert.equal(placementCheck({village,world,kind:"family",x:-10,z:4}).ok,false,"s
 world.groundY=()=>.18;
 const candidate=choosePlacement(village,world,"family");
 assert(candidate?.ok,"auto-select available ground for placement");
-assert.equal(candidate.x%2,0,"building snaps to 2m grid");
-assert.equal(candidate.z%2,0);
+assert(candidate.x%2===0,"building snaps to 2m grid");
+assert(candidate.z%2===0);
 assert.equal(state.canPlaceVillageBuilding("family",candidate.x,candidate.z,0,world).ok,false,"must deposit wood and stone first");
 for(const [id,n] of Object.entries({wood:70,stone:40})){
  assert.equal(state.addResource(id,n),n);
