@@ -69,7 +69,7 @@ assert.equal(game.data.equipment.ammo,null);
 assert(game.unequip("body"));
 assert.equal(game.data.equipment.body,null);
 assert.equal(game.inventoryCount("fur_armor"),1);
-assert.equal(game.unequip("weapon"));
+assert(game.unequip("weapon"));
 assert.equal(game.data.equipment.weapon,null);
 assert.equal(game.inventoryCount("stone_spear"),1);
 assert.equal(game.unequip("weapon"),false,"cannot unequip an empty slot");
