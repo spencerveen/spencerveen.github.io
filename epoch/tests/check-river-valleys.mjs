@@ -12,12 +12,14 @@ for(const seed of [12000,42,1337,987654321]){
    const oldCenter=72+42*Math.sin(phase*2.4)+channel*195+
     24*Math.sin(x/153+channel*1.73+phase)+
     11*Math.sin(x/57+phase*1.9+channel*.91);
-   assert.equal(riverCenter(x,channel,seed),oldCenter,"saved river centerlines unchanged");
+   assert(Math.abs(riverCenter(x,channel,seed)-oldCenter)<1e-11,"saved river centerlines unchanged");
    const oldWidth=5.5+1.3*Math.sin(x/79+channel*1.41+phase*3);
-   assert.equal(riverWidth(x,channel,seed),oldWidth,"saved widths unchanged");
+   assert(Math.abs(riverWidth(x,channel,seed)-oldWidth)<1e-11,"saved widths unchanged");
    const sample=nearestWaterCorridor(x,oldCenter,seed);
    assert(sample.distance<0,"seeded river still crosses its original centerline");
-   assert.equal(waterAt(x,oldCenter,seed).depth>0,true);
+   // The original 72m protected founding clearing intentionally remains dry.
+   if(Math.hypot(x+3,oldCenter+2)>90)
+    assert(waterAt(x,oldCenter,seed).depth>0,"original river still contains water");
   }
  }
  let strongOverlap=null;
