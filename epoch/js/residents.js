@@ -3,7 +3,7 @@
  * Relationships in Phase 3 are factual shared histories, not invented kinship.
  */
 import {BUILDINGS,VILLAGE_START_CAPACITY} from "./settlement.js?v=20261114u";
-import {validVillagerJob,VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs1";
+import {validVillagerJob,VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
 
 export const NATURAL_DEATH_AGE=100;
 export const DECEASED_HISTORY_LIMIT=100;
