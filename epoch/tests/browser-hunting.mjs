@@ -5,6 +5,8 @@ try{
  const page=await browser.newPage({viewport:{width:1280,height:850},ignoreHTTPSErrors:true});
  const errors=[];page.on("pageerror",e=>errors.push(String(e)));
  await page.addInitScript(()=>{
+  // Never overwrite the state on a reload; persistence is the feature tested.
+  if(localStorage.getItem("epoch.stoneage.slot.1"))return;
   localStorage.setItem("epoch.stoneage.slot.1",JSON.stringify({
    version:1,worldSeed:12000,hero:{name:"Hunter",age:18},
    equipment:{weapon:"stone_spear",body:null,ammo:null},weaponCondition:48,
