@@ -91,15 +91,24 @@ export function forestObjects(seed,cx,cz){
  }
  return result;
 }
+// Starter wildlife has fixed, non-overlapping identities; wilderness animals
+// vary among deer, boar and rabbit, with seeded locations and stable IDs.
 export function forestAnimals(seed,cx,cz){
  const result=DEER_POINTS.filter(([x,z])=>floorChunk(x)===cx&&floorChunk(z)===cz)
-   .map(([x,z],i)=>({x,z,id:"starter-deer-"+i}));
+  .map(([x,z])=>({x,z,id:"wildlife:starter:deer:"+x+":"+z,species:"deer"}));
+ const rabbits=[[10,17],[-17,6]];
+ for(const [x,z] of rabbits){
+  if(floorChunk(x)===cx&&floorChunk(z)===cz)
+   result.push({x,z,id:"wildlife:starter:rabbit:"+x+":"+z,species:"rabbit"});
+ }
  const rng=seededRandom(seed^0x235a1cb,cx,cz);
- if(rng()>.43){
+ if(rng()>.35){
   const x=cx*CHUNK_SIZE+4+rng()*(CHUNK_SIZE-8);
   const z=cz*CHUNK_SIZE+4+rng()*(CHUNK_SIZE-8);
-  if(Math.hypot(x,z)>21&&validForestSite(x,z,5))
-   result.push({x,z,id:"deer:"+chunkKey(cx,cz)});
+  if(Math.hypot(x,z)>21&&validForestSite(x,z,5)){
+   const type=rng(),species=type<.47?"deer":type<.74?"boar":"rabbit";
+   result.push({x,z,species,id:"wildlife:"+chunkKey(cx,cz)+":"+species});
+  }
  }
  return result;
 }

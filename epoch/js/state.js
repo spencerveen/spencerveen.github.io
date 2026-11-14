@@ -19,6 +19,7 @@ import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normali
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114craft1";
 import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack,CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
+import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261114hunt1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
@@ -47,7 +48,7 @@ const fresh=(founder=null)=>{
  version:1,year:-12000,calendarProgress:0,generation:1,worldSeed:Math.floor(Math.random()*0x7fffffff)+1,hero:{name,age:18,appearance},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),
- equipment:emptyEquipment(),weaponCondition:null,resourceNodes:{},knowledge:0,culture:0,
+ equipment:emptyEquipment(),weaponCondition:null,resourceNodes:{},wildlife:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
  knowledgeClaims:[],researchSeconds:0,tribes:{},waterProtectedSites:[],mountainProtectedSites:[],oceanProtectedSites:[],watershedProtectedSites:[],
  survival:freshSurvival(),successorId:null,lastDeath:null,
@@ -215,6 +216,7 @@ export class GameState{
   // Untouched procedural nodes are implicit. Save only modified resource IDs.
   this.data.resourceNodes=data?.resourceNodes&&typeof data.resourceNodes==="object"
    &&!Array.isArray(data.resourceNodes)?{...data.resourceNodes}:{};
+  this.data.wildlife=normalizeWildlife(data?.wildlife);
   // Temporary development switches stay in memory, never in browser saves.
   this.devCheats=newDevCheats();
   this.onChange=()=>{};
@@ -586,6 +588,55 @@ export class GameState{
   if(type==="wood"&&this.equippedAxe())this.wearEquippedTool();
   this.changed();
   return {label:`+${gained} ${info.name}${vines?" · +"+vines+" vines":""}${gained<info.amount?" (pack nearly full)":""}`,type,added:gained,vines};
+ }
+ wildlifeStatus(animal){
+  const record=animal?.id&&this.data.wildlife[animal.id];
+  const species=animal?.species||record?.species;
+  const def=WILDLIFE[species];
+  if(!def)return null;
+  return {id:animal.id,species,health:record?.health??def.health,
+   maxHealth:def.health,dead:record?.dead||false,looted:record?.looted||false};
+ }
+ huntAnimal(animal){
+  const status=this.wildlifeStatus(animal);
+  if(!status||status.dead)return {ok:false,reason:"Already hunted."};
+  if(this.data.survival.gameOver)return {ok:false,reason:"Cannot hunt while incapacitated."};
+  const tool=this.equippedToolCondition();
+  const stats=tool&&animalCombatStats(tool.id,ITEMS[tool.id]?.combat);
+  if(!stats)return {ok:false,reason:"Equip a Wooden Club, Stone Axe or Stone Spear before hunting."};
+  if(!this.canSpendStamina(stats.stamina))
+   return {ok:false,reason:"Too exhausted to swing your weapon."};
+  if(!this.spendStamina(stats.stamina,"attack"))
+   return {ok:false,reason:"Not enough stamina."};
+  const health=Math.max(0,status.health-stats.damage);
+  const dead=health<=0;
+  this.data.wildlife[status.id]={species:status.species,health,dead,looted:false};
+  const wear=this.wearEquippedTool();
+  this.gainXP("survival",dead?17:5);
+  const name=WILDLIFE[status.species].name;
+  const message=dead?name+" down! Press F beside the carcass to gather meat and materials.":
+   "Hit "+name+" for "+stats.damage+" damage ("+health+" health left).";
+  this.changed(dead?this.data.hero.name+" hunted a "+name.toLowerCase()+".":null);
+  return {ok:true,dead,health,damage:stats.damage,weaponBroken:!!wear?.broken,
+   reason:message+(wear?.broken?" Your "+ITEMS[tool.id].name+" broke.":"")};
+ }
+ harvestAnimal(animal){
+  const status=this.wildlifeStatus(animal);
+  if(!status?.dead||status.looted)return {ok:false,reason:"No animal remains to collect."};
+  const loot=WILDLIFE[status.species].loot;
+  // Stage all items in a copy before applying anything, so a nearly-full
+  // backpack never deletes animal drops or takes only half the carcass.
+  const preview=this.data.inventory.map(s=>s?{...s}:null);
+  for(const [id,qty] of Object.entries(loot))
+   if(addItems(preview,id,qty)!==qty)
+    return {ok:false,reason:"Backpack full. Make room for meat, hides and fur, then return."};
+  this.data.inventory=preview;
+  this.data.wildlife[status.id].looted=true;
+  this.syncResources();
+  this.gainXP("survival",9);
+  this.changed(this.data.hero.name+" gathered "+WILDLIFE[status.species].name+" meat and materials.");
+  return {ok:true,looted:true,loot:{...loot},
+   reason:"Collected "+Object.entries(loot).map(([id,n])=>n+" "+ITEMS[id].name).join(", ")+ "."};
  }
  resourceStatus(meta,now=Date.now()){return resourceNodeStatus(this.data.resourceNodes,meta,now)}
  resourceStatistics(){return resourceStateStats(this.data.resourceNodes)}
