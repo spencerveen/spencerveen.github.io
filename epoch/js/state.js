@@ -405,7 +405,7 @@ export class GameState{
    id:member.id,name:member.name,sex:member.sex,age:member.age,
    originTribeId:tribe.id,originTribeName:tribe.name,
    role:member.role==="leader"?"formerLeader":"resident",recruitment:"peaceful",
-   joinedYear:this.data.year,homeId:null,
+   joinedYear:this.data.year,homeId:null,job:"idle",
    memories:[{year:this.data.year,text:"Welcomed peacefully from "+tribe.name+"."}]
   }));
   this.data.village.residents.push(...arrivals);
