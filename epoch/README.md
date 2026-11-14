@@ -30,7 +30,7 @@ Visit `http://127.0.0.1:8765/epoch/`. No backend is required. The current Babylo
 | Toolmaker's Shelter | Technology research |
 | Council Lodge | Culture and traditions |
 | Hut | Shows actual residents, available beds and villager profiles |
-| Cooking Hearth | Hearth information; cooking recipes are planned |
+| Cooking Hearth | Cook roasted meat and berry-roasted meat from hunted supplies |
 | Wilderness tribal camps and leaders | Meet leaders, help with supply quests to earn Trust, and invite tribes to settle peacefully |
 | Village residents (click people or open Stockpile → People) | Inspect a villager's personal chronicle, former clanmates, housemates and housing assignment |
 | Survival HUD | Health, Stamina, Hunger and temporary food-bonus timer; bars appear by the founder's name |
@@ -56,7 +56,13 @@ The wilderness now spawns seeded **deer, wild boars and rabbits**, each with dis
 
 Craft and **equip a Wooden Club, Stone Axe or Stone Spear**, approach wildlife with WASD, then press **H** or click a nearby animal to attack. Weapons use their real catalog damage, reach and stamina costs, and lose one durability per successful blow. Hunting has a short cooldown and requires sufficient stamina. A defeated animal leaves a persistent carcass; stand beside it and press **F** (or click it) to collect meat, fur, hide and bone. Loot goes to your backpack only if all drops fit, avoiding accidental losses when full; a harvested carcass stays gone when terrain chunks reload or the save reopens. Animal injuries are recorded, too, so a damaged animal doesn't mysteriously heal when a chunk unloads.
 
-**Raw animal meat is a gathered food material, not currently edible.** Cooking and safe meals follow in Phase 5C, when the Cooking Hearth becomes useful.
+**Raw animal meat cannot be eaten.** Build a Cooking Hearth to roast it into meals for Hunger, Stamina and modest Health recovery.
+
+## Phase 5C — Cooking and Food
+
+The constructed **Cooking Hearth** opens an actual cooking station. Click the building and stand within 6m to prepare one of two recipes: **Roasted Meat** (2 Animal Meat + 1 Wood → 2 Roasted Meat) or **Berry-Roasted Meat** (1 Animal Meat + 2 Wild Berries + 1 Wood → 1 Berry-Roasted Meat). Wood is consumed as fuel. Ingredients are drawn from Inventory first, then village stockpile; finished meals go into the backpack. Cooking is instantaneous and earns Cooking XP. Failed attempts with insufficient supplies, no hearth or no output space never consume materials.
+
+Roasted Meat restores **38 Hunger, 16 Stamina and 6 Health**. Berry-Roasted Meat restores **52 Hunger, 20 Stamina and 10 Health**, plus a timed +20 maximum-Stamina boost. Both can be eaten from Inventory. **E** now consumes the first available food in order: Berry-Roasted Meat, Roasted Meat, Wild Berries. Raw meat is not edible. Cooking fish and fishing remain later developments.
 
 ## Phase 5A — Primitive crafting and durability
 
@@ -71,7 +77,7 @@ Crafted tools track **durability**: Club 36, Axe 45, Spear 48. Remaining conditi
 3. Open the stockpile's **Build** section. Construct a **Toolmaker's Shelter** with **12 stored wood and 8 stored stone**. It requires no prior research, so Technology is reachable from a fresh game.
 4. Click the completed shelter to research **Control of Fire** and **Stone Toolmaking**. Research uses Inventory materials first and automatically draws any shortage from the village stockpile, plus Knowledge; no manual withdrawal is needed. Village founding and first-time construction now award Knowledge, and a Toolmaker's Shelter produces 1 Knowledge per active minute. Craft a **Wooden Club** from 3 stored Wood, or learn Stone Toolmaking to craft Stone Axes and Stone Spears from stored supplies.
 5. Build a **Hut** for 10 stored wood and 6 stored stone. It adds 3 housing capacity; click it to see its occupants. Build a **Council Lodge** for 14 stored wood and 8 stored stone, then click it to establish traditions. The lodge requires no prior Culture unlock.
-6. After researching Control of Fire, build a **Cooking Hearth** for 6 stored wood and 5 stored stone. Its fire appears only after construction. Leadership changes when your character dies. Name a successor from a villager's profile in **Village → People**.
+6. After researching Control of Fire, build a **Cooking Hearth** for 6 stored wood and 5 stored stone. Click it to cook hunted meat and berry-roasted meals. Leadership changes when your character dies. Name a successor from a villager's profile in **Village → People**.
 
 ## Quick eat shortcut
 
@@ -82,12 +88,13 @@ Press **E** during gameplay to eat one Wild Berry straight from the backpack, wi
 | Input | Action |
 |---|---|
 | WASD / Shift + WASD | Walk / sprint relative to the camera (sprinting uses Stamina) |
-| E (quick eat) | Instantly eat **one carried berry** to restore Hunger and Stamina; no Inventory panel needed |
-| Click a berry stack → Eat | Alternative inventory action; same food benefit |
+| E (quick eat) | Eat one cooked meal from your backpack, falling back to berries; raw meat is not edible |
+| Click an edible stack → Eat | Eat one berry or cooked meal for its listed benefits |
 | Left-click ground | No movement; clicking terrain pins placement only when building |
 | Left-click resource / F nearby | Gather only when in range; walk with WASD first |
 | Shift-click berry bush / Shift + F nearby | Permanently clear a bush for vines |
 | Click a tribal leader, sign or camp shelter | Interact after approaching manually with WASD; trust quests remain available |
+| Click Cooking Hearth | Cook roasted meat and berry-roasted meat from carried and stored ingredients |
 | H beside wildlife / click animal | Attack with an equipped primitive weapon; costs Stamina and weapon durability |
 | F near a carcass / click carcass | Harvest meat, fur, hides and bones into backpack |
 | F near a tribal leader | Open a nearby tribe encounter (if no gatherable resource takes priority) |
@@ -108,7 +115,7 @@ Placement starts from a movable preview. A click or arrow adjustment pins its lo
 
 The item catalog now defines **nine foundational resources** (Wood, Stone, Vines, Berries, Animal Meat, Fur, Flint, Fish Meat and Feathers), plus Raw Hide, Leather and Bone for future processing. It also includes **Wooden Club, Stone Axe, Stone Spear, Sling, Bow, Stone-Tipped Arrows, Fur Armor and Leather Armor**. Their categories, stack sizes, short tooltips, planned crafting recipes and preliminary combat/protection statistics are centralized as data rather than hard-coded inventory summaries.
 
-**Availability:** Wood, Stone, Vines and Berries can be gathered in forests, Flint from beaches, and Animal Meat, Fur, Raw Hide and Bone from hunted deer, rabbits and boars. Clubs, axes and spears are crafted at the village stockpile. Bow, sling, armor crafting, fishing, cooking and defensive armor effects remain future milestones.
+**Availability:** Wood, Stone, Vines and Berries can be gathered in forests, Flint from beaches, and Animal Meat, Fur, Raw Hide and Bone from hunted deer, rabbits and boars. Clubs, axes and spears are crafted at the village stockpile. Bow, sling, armor crafting, fishing and defensive armor effects remain future milestones.
 
 The **Inventory** panel still has ten carried slots. New gear such as clubs, axes, spears and armor occupies one slot per item when carried; stackable materials and arrows use stacks of twelve. Under the backpack is a compact **Equipment** section with **Main Hand, Body Armor and Ammunition** slots. Click carried gear to **Equip**; click a slot's **Unequip** button to return it to the backpack. Swapping a weapon places the previous one directly into the vacated backpack slot; unequipping requires space. Equipped items do not count toward backpack capacity. Existing saves with a crafted Stone Axe automatically migrate it into Main Hand, and the woodcutting bonus applies **only while the axe is equipped**. Material storage at the village stockpile accepts new materials and arrows, not equipped weapons or armor. Inventory, equipment and old saves retain their item quantities and identities.
 

@@ -1,8 +1,11 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114x";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114cook1";
+import {COOKING_RECIPES} from "./cooking.js?v=20261114cook1";
+import {ITEMS} from "./inventory.js?v=20261114cook1";
+import {FOOD_EFFECTS} from "./survival.js?v=20261114cook1";
 import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
-import {BUILDINGS} from "./settlement.js?v=20261114u";
+import {BUILDINGS} from "./settlement.js?v=20261114cook1";
 import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114craft1";
-import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114craft1";
+import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114cook1";
 import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
@@ -10,7 +13,7 @@ const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI"
 const names={wood:"Wood",stone:"Stone",food:"Berries",vines:"Vines",knowledge:"Knowledge",culture:"Culture"};
 const contexts={lore:"tech",council:"culture",family:"hut",hearth:"building"};
 const titles={pack:["YOUR ADVENTURER","Inventory"],skills:["LEARN BY DOING","Skills"],village:["YOUR HOME BASE","Village stockpile"],tech:["TOOLMAKER'S SHELTER","Technology"],culture:["COUNCIL LODGE","Culture"],hut:["HUT","Household"],building:["AROUND THE HEARTH","Cooking Hearth"]};
-const skillNotes={woodcutting:"Practice by gathering wood from trees.",mining:"Practice by gathering stone from deposits.",foraging:"Practice by picking wild berries.",crafting:"Practice by crafting equipment.",construction:"Practice by constructing village buildings.",survival:"Grow through gathering and life in the wilderness."};
+const skillNotes={woodcutting:"Practice by gathering wood from trees.",mining:"Practice by gathering stone from deposits.",foraging:"Practice by picking wild berries.",crafting:"Practice by crafting equipment.",cooking:"Prepare nourishing meals at a built Cooking Hearth.",construction:"Practice by constructing village buildings.",survival:"Grow through gathering and life in the wilderness."};
 export class UI{
  constructor(state,world){
   this.state=state;this.world=world;this.tab="pack";this.panelOpen=false;this.villageSection="storage";this.sourceBuildingId=null;this.selectedBuildingId=null;this.selectedSlot=null;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;this.panelMarkup=null;
@@ -284,7 +287,36 @@ export class UI{
   html+='<p class="context-note">To assign or move someone into this Hut, open Stockpile → People and select their profile. Designate future leaders from villager profiles; leadership changes happen when the current character dies.</p>';
   return html;
  }
- building(){const def=BUILDINGS[this.contextBuilding()?.kind];return '<div class="building-context"><span class="stat-pill">Village gathering place</span><h3>'+esc(def?.name||"Village building")+'</h3><p>'+esc(def?.description||"")+'</p></div><p class="context-note">Cooking recipes are a future milestone. Your built hearth and fire are saved with this village.</p>'}
+ building(){
+  const station=this.contextBuilding();
+  if(!station||station.kind!=="hearth")
+   return '<p class="context-note">Return to your constructed Cooking Hearth to prepare food.</p>';
+  const pos=this.world.player.position,state=this.state;
+  const close=Math.hypot(pos.x-station.x,pos.z-station.z)<=6;
+  let html='<div class="building-context"><span class="stat-pill">Stone Age cooking · '+(close?"Fire ready":"Move closer")+
+   '</span><h3>Cooking Hearth</h3><p>Roast hunted meat using Wood for fuel. Ingredients are taken from your backpack first, then village storage.</p></div>'+
+   '<p class="context-note">Prepared food goes into your backpack. Raw meat cannot be eaten. Cooking is immediate for now.</p>'+
+   '<div class="village-build-catalog">';
+  for(const [id,recipe] of Object.entries(COOKING_RECIPES)){
+   const ready=state.cookingPreview(id,pos.x,pos.z),effect=FOOD_EFFECTS[recipe.output.id];
+   const cost=Object.entries(recipe.cost).map(([item,n])=>{
+    const have=state.inventoryCount(item)+(state.data.village.stockpile?.items?.[item]||0);
+    return '<span class="cost-chip '+(have>=n?"met":"missing")+'">'+
+     ITEMS[item].icon+' '+esc(ITEMS[item].name)+' <b>'+have+' / '+n+'</b></span>';
+   }).join("");
+   html+='<div class="entry village-build-card"><div class="research-heading"><h3>'+
+    ITEMS[recipe.output.id].icon+' '+esc(recipe.name)+'</h3><span class="tag">×'+
+    recipe.output.qty+'</span></div><p>'+esc(recipe.description)+'</p>'+
+    '<small class="building-purpose">Per serving: +'+effect.hunger+' Hunger · +'+effect.stamina+
+    ' Stamina · +'+effect.health+' Health'+(effect.berryBoost?' · Berry stamina boost':'')+
+    '</small><div class="cost-list">'+cost+'</div>'+
+    (!close?'<p class="context-note">Move within 6m of the hearth.</p>':
+     !ready.ok?'<p class="context-note">'+esc(ready.reason)+'</p>':'')+
+    '<button type="button" data-action="cook-recipe" data-recipe="'+id+'" '+
+    (!ready.ok?'disabled':'')+'>Cook '+esc(recipe.name)+'</button></div>';
+  }
+  return html+'</div>';
+ }
  render(){
   const d=this.state.data,o=this.objective(),placing=!!(this.world.placingStockpile||this.world.placingBuilding);
   // After founding, the top-left surface becomes a simple survival-only HUD.
@@ -318,6 +350,14 @@ export class UI{
    return;
   }
   if(handlePackAction(this,btn)||handleVillageAction(this,btn))return;
+  if(action==="cook-recipe"){
+   if(!this.canUseContext("building")||this.contextBuilding()?.kind!=="hearth"){
+    this.toast("Visit your built Cooking Hearth to prepare meals.");return;
+   }
+   const p=this.world.player.position;
+   this.toast(this.state.cookRecipe(btn.dataset.recipe,p.x,p.z).reason);
+   return;
+  }
   if(action==="name-successor"){
    if(this.modal!=="resident"||this.activeResidentId!==btn.dataset.id)return;
    const id=this.state.data.successorId===this.activeResidentId?null:this.activeResidentId;
@@ -387,7 +427,7 @@ export class UI{
   if(focusKey)$("guide").querySelector('[data-cheat="'+focusKey+'"]')?.focus({preventScroll:true});
  }
  menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
- help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Swim through deep rivers, lakes and oceans with WASD; Shift swims faster at a greater stamina cost. Stop moving to float and recover when tired. Use WASD to move; clicking terrain does not move your character. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills. Click inventory items for actions and hover for a short description. Press E to quickly eat one carried berry without opening Inventory. Press F to gather or interact nearby, or collect a carcass; Shift+F clears berry bushes for vines. Press H beside wildlife to hunt with your equipped club, axe or spear. Deer and rabbits flee, and cornered boars can hurt you. Craft Wooden Clubs, Stone Axes, and Stone Spears under Village → Craft. Equipped axes lose durability when chopping wood.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. Move people between homes with free beds from their profiles.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Hut → Housing.</strong> See its current residents and available beds. Assign successors from the People profiles.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Walk up using WASD, then click a tribal leader, resident, hut or sign (or press F near the leader) to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Walk close to a tree, rock or berry bush, then click or press F to gather. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
+ help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Swim through deep rivers, lakes and oceans with WASD; Shift swims faster at a greater stamina cost. Stop moving to float and recover when tired. Use WASD to move; clicking terrain does not move your character. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills. Click inventory items for actions and hover for a short description. Press E to eat one cooked meal or berry from your backpack (berry-roasted meat, roasted meat, then berries). Press F to gather or interact nearby, or collect a carcass; Shift+F clears berry bushes for vines. Press H beside wildlife to hunt with your equipped club, axe or spear. Deer and rabbits flee, and cornered boars can hurt you. Craft Wooden Clubs, Stone Axes, and Stone Spears under Village → Craft. Equipped axes lose durability when chopping wood.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. Move people between homes with free beds from their profiles.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Cooking Hearth → Cooking.</strong> Roast hunted meat with Wood for fuel. Combine meat with berries for richer meals. Raw meat cannot be eaten.</p><p><strong>Hut → Housing.</strong> See its current residents and available beds. Assign successors from the People profiles.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Walk up using WASD, then click a tribal leader, resident, hut or sign (or press F near the leader) to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Walk close to a tree, rock or berry bush, then click or press F to gather. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
  close(){
   if(!this.modal||this.modal==="gameover")return;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
   const target=this.dialogReturnFocus;(target?.isConnected&&!target.closest("[inert]")?target:$("toggle")).focus({preventScroll:true});
@@ -405,9 +445,9 @@ export class UI{
      document.activeElement?.isContentEditable)return;const key=e.key.toLowerCase();
   if(key==="e"&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey){
    e.preventDefault();
-   const eaten=this.state.eatBerries();
-   this.toast(eaten?"Ate 1 wild berry. Hunger and stamina restored.":
-    "No berries in your backpack.");
+   const eaten=this.state.quickEat();
+   this.toast(eaten?"Ate 1 "+ITEMS[eaten].name.toLowerCase()+". Hunger and stamina restored.":
+    "No ready-to-eat food in your backpack.");
    return;
   }
   if(key==="l"&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey){

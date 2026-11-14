@@ -1,4 +1,5 @@
-import {ITEMS,INVENTORY_SLOTS,itemStackLimit,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114craft1";
+import {ITEMS,INVENTORY_SLOTS,itemStackLimit,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114cook1";
+import {FOOD_EFFECTS} from "./survival.js?v=20261114cook1";
 import {EQUIPMENT_SLOTS,equippedItem} from "./equipment.js?v=20261114craft1";
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 
@@ -35,7 +36,7 @@ export function inventoryPanel(ui){
      '<small>×'+slot.qty+'</small></div>'+
       (toolMaxDurability(slot.id)?'<small class="tool-condition">Durability '+
        toolCondition(slot.id,slot.durability)+' / '+toolMaxDurability(slot.id)+'</small>':'');
-    if(slot.id==="berries")
+    if(FOOD_EFFECTS[slot.id])
      html+='<button type="button" role="menuitem" class="pack-action-primary" data-action="eat-stack" data-slot="'+i+'">Eat</button>';
     if(item.equipSlot)
      html+='<button type="button" role="menuitem" class="pack-action-primary" data-action="equip-stack" data-slot="'+i+'">Equip</button>';
@@ -93,10 +94,11 @@ export function handlePackAction(ui,button){
  if(!slot||ui.selectedSlot!==index)return true;
  const item=ITEMS[slot.id];
  if(action==="eat-stack"){
-  if(slot.id!=="berries")return true;
+  if(!FOOD_EFFECTS[slot.id])return true;
+  const name=item.name,eaten=ui.state.eatFood(slot.id,index);
   ui.selectedSlot=null;
-  ui.toast(ui.state.eatBerries(index)?
-   "Ate 1 berry. Hunger and stamina restored.":"Unable to eat those berries.");
+  ui.toast(eaten?"Ate 1 "+name+". Hunger and stamina restored.":
+   "Unable to eat "+name+".");
   return true;
  }
  if(action==="equip-stack"){

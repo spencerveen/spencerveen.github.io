@@ -12,7 +12,7 @@ const purpose={
  family:"A home for three villagers. Open it to see who lives here and check available beds.",
  lore:"Your place of discovery. Open it to research technologies for your people.",
  council:"The heart of shared tradition. Open it to develop culture and inheritance.",
- hearth:"A communal fire for your village. Cooking recipes will arrive in a later update."
+ hearth:"A communal fire for roasting hunted meat into nourishing food."
 };
 const itemName=id=>ITEMS[id]?.name||id;
 const requiredMaterials=(cost,items)=>`<div class="cost-list" aria-label="Materials in village storage">${Object.entries(cost).map(([id,need])=>{
@@ -176,7 +176,7 @@ function buildPanel(ui){
   const missing=shortages(definition.cost,items);
   html+=`<div class="entry village-build-card"><div class="research-heading"><h3>${kindIcon[kind]} ${esc(definition.name)}</h3>${existing.length?`<span class="tag">${existing.length} built</span>`:""}</div>
    <p>${esc(purpose[kind])}</p>
-   <small class="building-purpose">${kind==="family"?"View residents · +3 housing capacity":kind==="hearth"?"Visible village fire":"Opens "+destination[kind]}</small>
+   <small class="building-purpose">${kind==="family"?"View residents · +3 housing capacity":kind==="hearth"?"Cooking · roasted meat and meals":"Opens "+destination[kind]}</small>
    ${!already?requiredMaterials(definition.cost,items):""}
    ${already?`<button type="button" data-action="select-building" data-id="${esc(existing[0].id)}">Open ${destination[kind]}</button>`:
     `<button type="button" data-action="start-building" data-kind="${kind}" ${locked.length?"disabled":""}>${locked.length?"Requires "+esc(prereq(locked[0])):"Place "+esc(definition.name)}</button>`}
