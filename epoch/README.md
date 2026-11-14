@@ -31,9 +31,10 @@ Visit `http://127.0.0.1:8765/epoch/`. No backend is required. The current Babylo
 | Council Lodge | Culture and traditions |
 | Family Hut | Dynasty, family chronicle, and reviewed succession |
 | Cooking Hearth | Hearth information; cooking recipes are planned |
+| Wilderness tribal camps and leaders | Discover tribes; inspect their leader, residents and disposition |
 | Game menu | Save game, Help, and Save & return to title |
 
-New games start with **one resident: the founder**. Other NPCs appear only for residents actually recorded in the save; older villages retain their saved residents. Recruitment, births, and villager jobs are planned for later. A Family Hut adds housing capacity, not residents.
+New games start with **one resident: the founder**. Small independent tribes appear in the wilderness with **2–5 seeded, named people**, tribal leaders and simple camps. Visit the camp or click its people and huts to meet the leader. Their names and locations reproduce from the saved world seed; discoveries and future outcomes are saved separately and persist across reloads and terrain streaming. Recruitment, conversation quests and attacks are not yet playable. Other home-village NPCs appear only for residents actually recorded in the save; older villages retain their saved residents. Recruitment, births, and villager jobs are planned for later. A Family Hut adds housing capacity, not residents.
 
 The title screen offers New Game, Continue, and three independent local save slots. Founder appearance is chosen when starting a new game and cannot be edited afterward. Descendants inherit related appearance traits. There is no global Village, Technology, Culture, Dynasty, or Character tab.
 
@@ -54,6 +55,8 @@ The title screen offers New Game, Continue, and three independent local save slo
 | Left-click ground | Auto-walk to a position |
 | Left-click resource / E nearby | Approach and gather / gather a nearby resource |
 | Shift-click berry bush / Shift + E nearby | Permanently clear a bush for vines |
+| Click a tribal leader, sign or camp shelter | Approach an independent tribe and inspect its people |
+| E near a tribal leader | Open a nearby tribe encounter (if no gatherable resource takes priority) |
 | Hold arrow keys (outside build mode) | Smoothly rotate left/right or tilt up/down, easing to a stop |
 | Right mouse drag / mouse wheel | Optional camera rotation / zoom |
 | I / K | Toggle Inventory / Skills |
@@ -73,7 +76,7 @@ Inventory has **10 slots**, with **12 items per stack**. The stockpile holds **4
 
 Trees contain 12 wood and disappear when exhausted; stone deposits contain 12 stone and do not regrow. Bushes contain 8 berries, which regrow two minutes after depletion, including while the game is closed. Clearing a bush yields 3 vines and permanently removes it. This is a world interaction, not an Inventory action. Harvested resources and removed objects persist across chunk reloads and descendants.
 
-The saved seed generates one forest biome in 32-meter chunks: 25 terrain chunks remain nearby, with scenery and wildlife in the inner nine. Resources are finite, while untouched regions regenerate from the seed. Deer are ambient wildlife. See [RESOURCE_DEPLETION.md](./RESOURCE_DEPLETION.md) and [VILLAGE_SYSTEM.md](./VILLAGE_SYSTEM.md) for details.
+The saved seed generates one forest biome in 32-meter chunks: 25 terrain chunks remain nearby, with scenery, wildlife and independent tribal camps in the inner nine. Camps appear in cleared sites, render and unload with terrain detail, and do not spawn inside the founding clearing. A seed-specific first tribe is placed in an explorable outer ring; additional tribes appear throughout the wilderness. Each tribe has a deterministic ID, leader, and 2–5 members. Phase 1 only supports discovery and inspection; no diplomacy, population migration, or combat yet. Resources are finite, while untouched regions regenerate from the seed. Deer are ambient wildlife. See [RESOURCE_DEPLETION.md](./RESOURCE_DEPLETION.md) and [VILLAGE_SYSTEM.md](./VILLAGE_SYSTEM.md) for details.
 
 ## Saves
 
@@ -83,7 +86,7 @@ Progress autosaves after state changes. The game menu also offers **Save game** 
 
 ## Current limits and assets
 
-Housing capacity increases immediately, but new settlers, household assignment, worker jobs, cooking, combat, hunting, NPC conversations, rival civilizations, additional ages, multiplayer, accounts, and synced saves are not implemented. Research and Culture are functional building activities; automatic building production bonuses remain planned. Desktop play is the main target, with responsive panels and on-screen placement controls; complete touch movement still needs work.
+Housing capacity increases immediately. Tribal camps and inspection are implemented, but new settlers, household assignment, worker jobs, cooking, combat, hunting, NPC conversations, tribal diplomacy, recruitment, rival civilization AI, additional ages, multiplayer, accounts, and synced saves are not implemented. Research and Culture are functional building activities; automatic building production bonuses remain planned. Desktop play is the main target, with responsive panels and on-screen placement controls; complete touch movement still needs work.
 
 Characters use Quaternius Universal Base Characters Standard **CC0** assets with real skinned rigs, separate hairstyles, and authored idle/walk/run clips. Source credit, license, pinned import revision, and rebuild instructions are in [assets/characters/QUATERNIUS.md](./assets/characters/QUATERNIUS.md). Previous original GLBs remain as fallback art. Stone Age clothing and animation polish are future visual work; the founder creator currently uses a stylized reference portrait.
 

@@ -1,5 +1,6 @@
 import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeight,
  forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261113j";
+import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114l";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 
@@ -42,7 +43,11 @@ export class ForestChunks{
  showDetails(chunk){
   if(chunk.detailed)return;
   const world=this.world,{cx,cz,key}=chunk,scene=world.scene;
+  const candidate=world.spawnTribeCamp?tribeAtChunk(this.seed,cx,cz):null;
+  const tribe=candidate&&world.isTribeSiteActive?.(candidate)?candidate:null;
+  const withinCamp=(x,z,extra=0)=>tribe&&Math.hypot(x-tribe.x,z-tribe.z)<TRIBE_CLEARING_RADIUS+extra;
   for(const item of forestObjects(this.seed,cx,cz)){
+   if(withinCamp(item.x,item.z))continue;
    // Generated positions repeat, but harvesting changes persist by stable ID.
    // Never recreate a tree, mined rock or chopped bush that was removed.
    const status=world.getResourceStatus?.(item);
@@ -53,7 +58,7 @@ export class ForestChunks{
   for(let i=0;i<13;i++){
    const x=cx*CHUNK_SIZE+1+rand()*(CHUNK_SIZE-2);
    const z=cz*CHUNK_SIZE+1+rand()*(CHUNK_SIZE-2);
-   if(!validForestSite(x,z,3.7))continue;
+   if(!validForestSite(x,z,3.7)||withinCamp(x,z))continue;
    const tuft=B.MeshBuilder.CreateSphere("Forest grass tuft",{diameter:.18,segments:4},scene);
    tuft.position=V(x,this.heightAt(x,z)+.08,z);
    tuft.scaling=V(.8+rand()*.8,.65+rand()*.8,.5+rand()*.4);
@@ -61,12 +66,14 @@ export class ForestChunks{
    chunk.vegetation.push(tuft);
   }
   for(const animal of forestAnimals(this.seed,cx,cz))
-   world.makeAnimal(animal.x,animal.z,key);
+   if(!withinCamp(animal.x,animal.z,2))world.makeAnimal(animal.x,animal.z,key);
+  if(tribe)world.spawnTribeCamp(tribe,key);
   chunk.detailed=true;
  }
  hideDetails(chunk){
   if(!chunk.detailed)return;
   const key=chunk.key,world=this.world;
+  world.removeTribeCamp?.(key);
   if(world.target?.chunkKey===key){
    world.target=null;world.path=[];
   }

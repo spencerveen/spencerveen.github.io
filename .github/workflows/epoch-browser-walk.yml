@@ -18,7 +18,7 @@ permissions:
 jobs:
   chromium-walk:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,6 +32,8 @@ jobs:
           sleep 1
       - name: Validate building-driven interfaces and responsive controls
         run: node epoch/tests/browser-contextual-ui.mjs
+      - name: Explore seeded wilderness tribes and interact with their leaders
+        run: node epoch/tests/browser-tribes.mjs
       - name: Confirm imported 3D humanoids animate in Chromium
         run: node epoch/tests/browser-walk.mjs
       - name: Preserve screenshots and server logs

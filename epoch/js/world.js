@@ -6,13 +6,20 @@ import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockp
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114b";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261113k";
-import {ForestChunks} from "./forest-chunks.js?v=20261113k";
+import {ForestChunks} from "./forest-chunks.js?v=20261114l";
+import {createTribeWorld} from "./tribe-world.js?v=20261114l";
+import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114l";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export class World {
- constructor(canvas,onGather,onStatus,onBuildingSelect=()=>{},seed=STARTER_SEED,getResourceStatus=()=>null,onFoundStockpile=()=>false,onOpenStockpile=()=>{},onBuild=()=>({ok:false}),getBuildStatus=()=>({ok:false}),onPlacementChange=()=>{}){
+ constructor(canvas,onGather,onStatus,onBuildingSelect=()=>{},seed=STARTER_SEED,getResourceStatus=()=>null,onFoundStockpile=()=>false,onOpenStockpile=()=>{},onBuild=()=>({ok:false}),getBuildStatus=()=>({ok:false}),onPlacementChange=()=>{},tribeHandlers={}){
   this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;this.getResourceStatus=getResourceStatus;this.onFoundStockpile=onFoundStockpile;this.onOpenStockpile=onOpenStockpile;this.onBuild=onBuild;this.getBuildStatus=getBuildStatus;this.onPlacementChange=onPlacementChange;this.worldSeed=seed>>>0;
+  this.onTribeDiscover=tribeHandlers.onDiscover||(()=>{});
+  this.onTribeInteract=tribeHandlers.onInteract||(()=>{});
+  this.getTribeRecord=tribeHandlers.getRecord||(()=>null);
+  this.getTribeHome=tribeHandlers.getHome||(()=>null);
+  this.discoveredTribes=new Set();this.tribeTarget=null;
   this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onBuildingSelect;this.placingBuilding=null;this.buildingCandidate=null;this.village=null;this.placingStockpile=false;this.stockpileTarget=false;this.stockpile=null;this.stockpileCandidate=null;this.homePositionKey=null;
   this._inputBlocked=false;this.placementPinned=false;this.cameraDragging=false;this.focusTarget=null;
   this.cameraKeys={};this.cameraOrbitVelocity={horizontal:0,vertical:0};
@@ -20,7 +27,10 @@ export class World {
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.020;this.scene.fogColor=new B.Color3(.62,.71,.62);
-  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();createVillageWorld(this,onBuildingSelect);createStockpileWorld(this);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
+  this.makeMaterials();this.makeGround();this.makeLight();
+  createTribeWorld(this,(scene,member,tribe)=>createQuaterniusHuman(scene,
+   randomAppearance("epoch:wilderness:"+this.worldSeed+":"+member.id,member.sex),null,member.name));
+  this.makeLandscape();createVillageWorld(this,onBuildingSelect);createStockpileWorld(this);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
   this.engine.runRenderLoop(()=>{const dt=Math.min(.045,this.engine.getDeltaTime()/1000);this.update(dt);this.scene.render()});
   window.addEventListener("resize",()=>this.engine.resize());
  }
@@ -30,7 +40,7 @@ export class World {
   if(blocked===this._inputBlocked)return;
   this._inputBlocked=blocked;
   if(blocked){
-   this.keys={};this.resetCameraKeys();this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.cameraDragging=false;
+   this.keys={};this.resetCameraKeys();this.path=[];this.target=null;this.tribeTarget=null;this.plotTarget=null;this.stockpileTarget=false;this.cameraDragging=false;
    if(this.cameraPointerId!=null&&this.canvas.hasPointerCapture?.(this.cameraPointerId))
     this.canvas.releasePointerCapture(this.cameraPointerId);
    this.cameraPointerId=null;
@@ -213,7 +223,8 @@ export class World {
   this.terrain.seed=this.worldSeed;
   this.terrain.center=null;
   this.terrain.update(this.player.position.x,this.player.position.z);
-  this.path=[];this.target=null;this.plotTarget=null;
+  this.discoveredTribes.clear();
+  this.path=[];this.target=null;this.tribeTarget=null;this.plotTarget=null;
  }
  setDiscovery(fire){
   // Fire research is only the prerequisite for building the hearth.
@@ -234,6 +245,35 @@ export class World {
   this.obstacles=this.obstacles.filter(o=>!o.stockpile);
   if(pile)this.obstacles.push({x:pile.x,z:pile.z,r:1.65,stockpile:true});
   this.syncVillagers(village?.population??1);
+  // A newly founded village cannot occupy the same clearing as a tribe.
+  for(const camp of [...this.tribeCamps.values()])
+   if(!this.isTribeSiteActive(camp.tribe))this.removeTribeCamp(camp.chunk);
+ }
+ isTribeSiteActive(tribe){
+  const record=this.getTribeRecord(tribe.id);
+  return tribeCampIsActive(tribe,record?{[tribe.id]:record}:null,this.getTribeHome());
+ }
+ focusTribe(id){
+  const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===id);
+  return camp?this.focusLocation(camp.leader.x,camp.leader.z):false;
+ }
+ walkToTribe(id){
+  const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===id);
+  if(!camp)return false;
+  this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.tribeTarget=null;this.focusTarget=null;this.path=[];
+  const {leader,tribe}=camp,p=this.player.position;
+  const dx=p.x-leader.x,dz=p.z-leader.z,d=Math.hypot(dx,dz);
+  if(d<TRIBE_INTERACT_RANGE){
+   this.onTribeDiscover(tribe);
+   this.onTribeInteract(tribe);return true;
+  }
+  const approach=TRIBE_INTERACT_RANGE-1.3;
+  if(!this.plan(leader.x+dx/d*approach,leader.z+dz/d*approach)){
+   this.onStatus("Cannot reach "+tribe.name,"Try approaching the camp from another direction.");return false;
+  }
+  this.tribeTarget=tribe.id;
+  this.onStatus("Approaching "+tribe.name,"Travel to the tribal leader to learn about this settlement.");
+  return true;
  }
  highlightPlot(id){}
  focusBuilding(id){
@@ -481,11 +521,14 @@ export class World {
    }
    if(e.type===B.PointerEventTypes.POINTERMOVE){
     const meta=pick?.pickedMesh?.metadata;
-    const key=meta?.stockpile?"stockpile":meta?.buildingId||null;
+    const key=meta?.stockpile?"stockpile":meta?.buildingId||meta?.tribeId||null;
     this.canvas.style.cursor=key||meta?.resource?"pointer":"default";
     if(key&&key!==this.hoveredInteraction){
      if(meta.stockpile)this.onStatus("Village stockpile","Click to open village storage and construction.");
-     else{
+     else if(meta.tribeId){
+      const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===meta.tribeId);
+      if(camp)this.onStatus(camp.tribe.name,"Click to approach the tribe and meet its leader.");
+     }else{
       const kind=meta.buildingKind;
       const destination={lore:"Technology",council:"Culture",family:"Dynasty",hearth:"Cooking Hearth"}[kind]||"Building";
       this.onStatus(BUILDINGS[kind]?.name||"Village building","Click to open "+destination+".");
@@ -496,6 +539,8 @@ export class World {
    if(e.type!==B.PointerEventTypes.POINTERPICK||e.event?.button!==0)return;
    if(!pick?.hit)return;
    const mesh=pick.pickedMesh;
+   if(mesh?.metadata?.tribeId){this.walkToTribe(mesh.metadata.tribeId);return}
+   this.tribeTarget=null;
    if(mesh?.metadata?.stockpile){this.walkToStockpile();return}
    if(mesh?.metadata?.buildingId){
     this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;
@@ -519,10 +564,15 @@ export class World {
     &&Math.hypot(e.x-p.x,e.z-p.z)<2.7)
    .sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
   if(near)this.walkToResource(near,action);
-  else this.onStatus("Nothing nearby",action==="cut"?"Get within gathering range of a berry bush to cut it down.":"Move closer to a tree, rock or berry bush.");
+  else if(action==="gather"){
+   const camp=[...this.tribeCamps.values()]
+    .find(c=>Math.hypot(c.leader.x-p.x,c.leader.z-p.z)<TRIBE_INTERACT_RANGE);
+   if(camp)this.walkToTribe(camp.tribe.id);
+   else this.onStatus("Nothing nearby","Move closer to a tree, rock, berry bush or tribal leader.");
+  }else this.onStatus("Nothing nearby","Get within gathering range of a berry bush to cut it down.");
  }
  walkToResource(meta,action="gather"){
-  this.focusTarget=null;
+  this.focusTarget=null;this.tribeTarget=null;
   const status=this.getResourceStatus(meta);
   if(status?.removed){this.onStatus("Already depleted","This resource is no longer available.");return}
   const dist=Math.hypot(meta.x-this.player.position.x,meta.z-this.player.position.z);
@@ -620,7 +670,7 @@ export class World {
   const forward=V(-Math.cos(c.alpha),0,-Math.sin(c.alpha)),right=V(forward.z,0,-forward.x);
   const x=(this.keys.d?1:0)-(this.keys.a?1:0),z=(this.keys.w?1:0)-(this.keys.s?1:0);
   let direction=V(0,0,0),moving=false;
-  if(x||z){this.focusTarget=null;this.path=[];this.target=null;this.plotTarget=null;this.stockpileTarget=false;direction=right.scale(x).add(forward.scale(z)).normalize();moving=true;}
+  if(x||z){this.focusTarget=null;this.path=[];this.target=null;this.tribeTarget=null;this.plotTarget=null;this.stockpileTarget=false;direction=right.scale(x).add(forward.scale(z)).normalize();moving=true;}
   else if(this.path.length){
    const next=this.path[0],diff=next.subtract(p);diff.y=0;
    if(diff.length()<.25){this.path.shift();}
@@ -639,6 +689,26 @@ export class World {
   // Chunks regenerate from the seed; berry recovery is based on real elapsed
   // time even if this node wasn't loaded while the bush was growing back.
   this.terrain.update(p.x,p.z);
+  if(!this.inputBlocked){
+   for(const camp of this.tribeCamps.values()){
+    const tribe=camp.tribe;
+    if(!this.discoveredTribes.has(tribe.id)&&Math.hypot(p.x-tribe.x,p.z-tribe.z)<TRIBE_DISCOVERY_RANGE){
+     this.discoveredTribes.add(tribe.id);
+     if(!this.getTribeRecord(tribe.id)?.discovered){
+      this.onTribeDiscover(tribe);
+      this.onStatus("A tribe discovered",tribe.name+" has a small settlement nearby. Meet its leader to learn more.");
+     }
+    }
+   }
+   if(this.tribeTarget){
+    const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===this.tribeTarget);
+    if(!camp)this.tribeTarget=null;
+    else if(Math.hypot(p.x-camp.leader.x,p.z-camp.leader.z)<TRIBE_INTERACT_RANGE){
+     this.tribeTarget=null;this.path=[];
+     this.onTribeDiscover(camp.tribe);this.onTribeInteract(camp.tribe);
+    }
+   }
+  }
   this.berryClock+=dt;
   if(this.berryClock>=2){this.berryClock=0;this.terrain.refreshBerries()}
   p.y=this.groundY(p.x,p.z);
@@ -663,6 +733,8 @@ export class World {
   c.target.copyFrom(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));
   const t=performance.now()/1000;
   this.people.forEach(person=>person.human.animate(t+person.phase,false));
+  for(const camp of this.tribeCamps.values())
+   camp.humans.forEach((human,i)=>human.animate(t+i*1.25,false));
   if(this.flame?.isEnabled())this.flame.scaling.y=1.05+.12*Math.sin(t*8);
   this.animals.forEach((a,i)=>{
    a.node.position.x=a.origin.x+Math.sin(t*.18+a.phase)*1.35;

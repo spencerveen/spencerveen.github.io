@@ -8,6 +8,7 @@ import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113k";
 import {harvestAtNode} from "./harvest.js?v=20261113k";
+import {tribeAtChunk,normalizeTribeRecords} from "./tribes.js?v=20261114l";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113k";
@@ -40,7 +41,7 @@ const fresh=(founder=null)=>{
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
- knowledgeClaims:[],researchSeconds:0,
+ knowledgeClaims:[],researchSeconds:0,tribes:{},
  lineage:[{name,gen:1,start:-12000,role:"Founder",appearance:{...appearance}}],
  history:["The wanderer "+name+" entered a quiet clearing in a vast prehistoric wilderness."]
  };
@@ -103,6 +104,7 @@ export class GameState{
   }else this.data.knowledgeClaims=[];
   this.data.researchSeconds=Number.isFinite(Number(data?.researchSeconds))?
    Math.max(0,Math.min(RESEARCH_SECONDS_PER_KNOWLEDGE-.001,Number(data.researchSeconds))):0;
+  this.data.tribes=normalizeTribeRecords(data?.tribes);
   // Old saves tracked boundless counters. Pack as much as possible into ten
   // 12-item slots, and retain any remainder as recoverable migration supplies.
   // Never silently delete a veteran player's existing wood/stone/berries.
@@ -185,6 +187,21 @@ export class GameState{
    if(fromStockpile)this.data.village.stockpile.items[canonicalItem(id)]-=fromStockpile;
   }
   this.syncResources();
+  return true;
+ }
+ tribeRecord(id){
+  const record=this.data.tribes?.[id];
+  return record?{...record}:null;
+ }
+ discoverTribe(candidate){
+  if(!candidate||!Number.isInteger(candidate.cx)||!Number.isInteger(candidate.cz))return false;
+  const tribe=tribeAtChunk(this.data.worldSeed,candidate.cx,candidate.cz);
+  if(!tribe||tribe.id!==candidate.id)return false;
+  const previous=this.data.tribes[tribe.id];
+  if(previous?.discovered)return false;
+  this.data.tribes[tribe.id]={status:previous?.status||"active",
+   discovered:true,discoveredYear:this.data.year};
+  this.changed("Discovered "+tribe.name+" in the wilderness.");
   return true;
  }
  gainXP(skill,amount){this.data.skills[skill]=(this.data.skills[skill]||0)+amount}

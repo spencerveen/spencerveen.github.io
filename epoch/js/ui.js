@@ -32,6 +32,23 @@ export class UI{
  selectBuilding(id){return selectVillageBuilding(this,id)}
  openBuildingPanel(id){const b=this.state.data.village.buildings.find(b=>b.id===id);if(!b||!contexts[b.kind])return false;this.selectedBuildingId=id;return this.openPanel(contexts[b.kind],{buildingId:id})}
  openStockpile(){return openStockpile(this)}
+ openTribe(tribe){
+  if(!tribe||!tribe.members?.length)return false;
+  // Encounter panels are always tied to a person in the world, not a global
+  // tribe menu. Discovery is persisted by GameState before opening.
+  this.state.discoverTribe(tribe);
+  const leader=tribe.members.find(member=>member.role==="leader")||tribe.members[0];
+  const members=tribe.members.map(member=>
+   '<div class="timeline"><b>'+esc(member.name)+'</b><span>'+esc(member.role==="leader"?"Tribal leader":"Tribesperson")+' · Age '+member.age+'</span></div>').join("");
+  const disposition=tribe.disposition[0].toUpperCase()+tribe.disposition.slice(1);
+  this.showDialog("tribe",tribe.name,
+   '<div class="building-context"><span class="stat-pill">'+esc(disposition)+' tribe</span><p>A small independent settlement beyond your village.</p></div>'+
+   '<div class="entry"><h3>Meet '+esc(leader.name)+'</h3><p>This tribe has '+tribe.population+' people living in the wilderness. You have discovered their home, but no diplomatic relationship has been established yet.</p></div>'+
+   '<h3 class="section-heading">People of '+esc(tribe.name)+'</h3>'+members+
+   '<p class="context-note">Phase 1: this encounter is for exploration only. Conversations, trust, quests, recruitment and combat are coming in later phases.</p>'+
+   '<button type="button" class="game-button" data-action="resume">Return to the wilderness</button>');
+  return true;
+ }
  openFounding(){return !this.state.data.village.stockpile&&this.openPanel("village")}
  openPanel(tab,{buildingId=null}={}){
   if(!titles[tab])return false;
@@ -113,12 +130,12 @@ export class UI{
  }
  showDialog(kind,title,html){
   if(!this.modal)this.dialogReturnFocus=document.activeElement;this.modal=kind;this.world.inputBlocked=true;
-  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="succession"?"ONE GENERATION TO THE NEXT":kind==="help"?"FIELD NOTES":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
+  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="succession"?"ONE GENERATION TO THE NEXT":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
   for(const id of ["scene","left","hud-tools","right","toggle"])$(id).inert=true;$("toggle").setAttribute("aria-expanded","true");
   ($("guide").querySelector("button:not(:disabled)")||$("close-modal")).focus({preventScroll:true});
  }
  menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
- help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Click the ground to walk there. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies and place buildings.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Family Hut → Dynasty.</strong> Follow your lineage and plan succession.</p></div><div class="entry"><h3>Gather and build</h3><p>Click a tree, rock or berry bush to gather; E gathers nearby. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
+ help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Click the ground to walk there. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies and place buildings.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Family Hut → Dynasty.</strong> Follow your lineage and plan succession.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Click their people, huts or leader signs to approach and meet them. Press E near a leader to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Click a tree, rock or berry bush to gather; E gathers nearby. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
  close(){
   if(!this.modal)return;this.modal=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
   const target=this.dialogReturnFocus;(target?.isConnected&&!target.closest("[inert]")?target:$("toggle")).focus({preventScroll:true});

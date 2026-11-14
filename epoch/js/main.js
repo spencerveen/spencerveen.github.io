@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261114j";
-import {World} from "./world.js?v=20261114j";
-import {UI} from "./ui.js?v=20261114k";
+import {GameState} from "./state.js?v=20261114l";
+import {World} from "./world.js?v=20261114l";
+import {UI} from "./ui.js?v=20261114l";
 import {TitleScreen} from "./title-screen.js?v=20261114b";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
@@ -25,7 +25,13 @@ async function startEpoch({slot,newGame=false,founder=null}){
     ()=>ui?.openStockpile(),
     (kind,x,z,turn,world)=>state.placeVillageBuilding(kind,x,z,turn,world),
     (kind,x,z,turn,world)=>state.canPlaceVillageBuilding(kind,x,z,turn,world),
-    ()=>ui?.render());
+    ()=>ui?.render(),
+    {
+     onDiscover:tribe=>{if(state.discoverTribe(tribe))ui?.toast("Discovered "+tribe.name);},
+     onInteract:tribe=>ui?.openTribe(tribe),
+     getRecord:id=>state.tribeRecord(id),
+     getHome:()=>state.data.village.stockpile
+    });
   ui=new UI(state,world);
   sessionStarted=true;
   state.save();
@@ -49,6 +55,11 @@ async function startEpoch({slot,newGame=false,founder=null}){
     resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
     skills:{...state.data.skills},resources:{...state.data.resources},inventory:{slots:state.data.inventory.map(slot=>slot?{...slot}:null),used:state.inventoryUsed(),unpacked:{...state.data.unpacked}},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
+    tribes:{discovered:Object.entries(state.data.tribes).filter(([,r])=>r.discovered).map(([id])=>id),
+      records:Object.fromEntries(Object.entries(state.data.tribes).map(([id,r])=>[id,{...r}])),
+      loaded:[...world.tribeCamps.values()].map(c=>({id:c.tribe.id,name:c.tribe.name,
+        members:c.tribe.population,x:c.tribe.x,z:c.tribe.z})),
+      renderedCharacters:[...world.tribeCamps.values()].reduce((sum,c)=>sum+c.humans.length,0)},
     hearth:{built:!!world.hearthBuilt,visible:[...world.villageBuildings.values()].some(item=>item.entry.kind==="hearth"&&item.root.isEnabled()),
       lit:!!world.flame?.isEnabled(),glow:world.fireLight?.intensity||0,
       freeCampfires:world.scene.transformNodes.filter(n=>n.name==="campfire").length,
