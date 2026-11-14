@@ -4,7 +4,7 @@
  * stays unchanged; this module adds smooth nonnegative uplift.
  */
 import {terrainHeight,STARTER_SEED} from "./forest-generation.js?v=20261114y";
-import {nearestWaterCorridor} from "./water-corridors.js?v=20261114ecology2";
+import {nearestWaterCorridor} from "./water-corridors.js?v=20261114watershed2";
 export const MOUNTAIN_MODEL_VERSION=1;
 export const MOUNTAIN_START_RADIUS=150;
 export const RIVER_VALLEY_SHOULDER=68;
@@ -54,7 +54,7 @@ export function mountainAt(x,z,seed=STARTER_SEED,protectedSites=[],corridorDista
  // a mountainside, suppress mountain uplift through a wide rounded valley.
  // Passing the already-calculated corridor distance avoids duplicate searches
  // in the very dense terrain/water mesh samplers.
- const shore=Number.isFinite(corridorDistance)?corridorDistance:
+ const shore=corridorDistance!==null&&(Number.isFinite(corridorDistance)||corridorDistance===Infinity)?corridorDistance:
   nearestWaterCorridor(x,z,seed).distance;
  const valley=riverValleyFactor(shore);
  const strength=mass*protection*valley;

@@ -5,10 +5,10 @@
  */
 import {STARTER_SEED} from "./forest-generation.js?v=20261114y";
 import {mountainTerrainHeight} from "./mountain-generation.js?v=20261114ecology3";
-import {nearestWaterCorridor} from "./water-corridors.js?v=20261114ecology2";
+import {nearestWaterCorridor} from "./water-corridors.js?v=20261114watershed2";
 import {oceanAt,SEA_LEVEL} from "./ocean-generation.js?v=20261114ecology3";
 export {riverCenter,riverWidth,lakeSites} from "./water-corridors.js?v=20261114ecology2";
-export const WATER_MODEL_VERSION=1;
+export const WATER_MODEL_VERSION=2;
 export const SHALLOW_LIMIT=.85;
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
@@ -31,7 +31,8 @@ export function waterAt(x,z,seed=STARTER_SEED,protectedSites=[],mountainProtecte
   protection=Math.min(protection,smooth((Math.hypot(x-site.x,z-site.z)-radius)/11));
  }
  const inside=Math.max(0,-best);
- const raw=inside>0?(kind==="lake"?(.15+2.5*smooth(inside/7.2)):(.12+1.65*smooth(inside/3.7))):0;
+ const raw=inside>0?(kind==="lake"?(.15+2.6*smooth(inside/9)):
+  (.13+1.65*smooth(inside/3.5))):0;
  const depth=raw*protection;
  const base=ocean?ocean.groundY:mountainTerrainHeight(x,z,seed,mountainProtectedSites,best);
  return {kind:depth>.02?kind:"land",depth:depth>.02?depth:0,

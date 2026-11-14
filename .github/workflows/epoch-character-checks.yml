@@ -51,6 +51,8 @@ jobs:
         run: node epoch/tests/check-tribes.mjs
       - name: Validate waterway shapes and chunk continuity across saved seeds
         run: node epoch/tests/check-natural-waterways.mjs
+      - name: Validate finite branching river networks and sparse lake basins
+        run: node epoch/tests/check-watersheds.mjs
       - name: Validate tribe spacing, complete dry sites and historical camp identity
         run: node epoch/tests/check-world-ecology.mjs
       - name: Validate peaceful tribe quests, housing and resident migration
