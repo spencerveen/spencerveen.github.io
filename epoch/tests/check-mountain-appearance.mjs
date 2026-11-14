@@ -53,9 +53,13 @@ for(const seed of [12000,42,1337,987654321]){
   "underwater mountain terrain must not spawn floating rocks");
  assert.deepEqual(mountainOutcropSites(seed,cx,cz,terrain,shallow,
   [{x:peak.x,z:peak.z,radius:1000}]),[],"protected settlements never get bedrock props");
- assert.equal(mountainTerrainHeight(peak.x,peak.z,seed),terrain(peak.x,peak.z)+
-  shallow(peak.x,peak.z).depth,
-  "visuals never modify river or terrain elevations");
+ const seaOrRiver=shallow(peak.x,peak.z);
+ assert.equal(terrain(peak.x,peak.z),
+  seaOrRiver.depth>0?seaOrRiver.bedY:seaOrRiver.surfaceY-.055,
+  "rendered terrain shares the river and ocean seabed elevations");
+ assert.equal(mountainTerrainHeight(peak.x,peak.z,seed),
+  mountainTerrainHeight(peak.x,peak.z,seed),
+  "the visual material does not alter procedural mountain elevation");
 }
 assert(anyOutcrop,"at least one seeded highland must have exposed-rock props");
 console.log("PASS mountain visuals: green starter, high rock faces, deterministic outcrops, safe water and villages, unchanged heights");

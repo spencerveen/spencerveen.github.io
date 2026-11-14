@@ -18,8 +18,11 @@ for(const seed of [12000,42,1337,987654321]){
    const sample=nearestWaterCorridor(x,oldCenter,seed);
    assert(sample.distance<0,"seeded river still crosses its original centerline");
    // The original 72m protected founding clearing intentionally remains dry.
+   // Past the new eastern coastline the river's historical footprint
+   // merges into ocean; inland channel positions must still be wet.
    if(Math.hypot(x+3,oldCenter+2)>90)
-    assert(waterAt(x,oldCenter,seed).depth>0,"original river still contains water");
+    assert(waterAt(x,oldCenter,seed).depth>0,
+     "original river corridor stays wet, including where it meets the sea");
   }
  }
  let strongOverlap=null;
