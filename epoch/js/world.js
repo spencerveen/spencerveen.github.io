@@ -5,8 +5,8 @@ import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114y
 import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114fish1";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
-import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view1";
-import {ForestChunks} from "./forest-chunks.js?v=20261114view1";
+import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view2";
+import {ForestChunks} from "./forest-chunks.js?v=20261114view2";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114textures1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
@@ -50,7 +50,7 @@ export class World {
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   // Let distant trees and coastlines remain visible across the wider streamed area.
    // Keep this in sync with the terrain texture shader's fogDensity uniform.
-   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.012;this.scene.fogColor=new B.Color3(.62,.71,.62);
+   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.009;this.scene.fogColor=new B.Color3(.62,.71,.62);
   this.makeMaterials();this.makeGround();this.makeLight();
   createTribeWorld(this,(scene,member,tribe)=>createQuaterniusHuman(scene,
    randomAppearance("epoch:wilderness:"+this.worldSeed+":"+member.id,member.sex),null,member.name));
