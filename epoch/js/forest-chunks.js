@@ -1,7 +1,7 @@
 import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeight,
  forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261114y";
 import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114ocean1";
-import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114m";
+import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114ecology1";
 import {terrainAppearanceAt,mountainOutcropSites} from "./mountain-appearance.js?v=20261114valleys1";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
@@ -78,19 +78,20 @@ export class ForestChunks{
  heightAt(x,z){return waterTerrainHeight(x,z,this.seed,this.protectedSites,this.mountainProtectedSites,this.oceanProtectedSites)}
  waterAt(x,z){return waterAt(x,z,this.seed,this.protectedSites,this.mountainProtectedSites,this.oceanProtectedSites)}
  refreshProtectedSites(cx,cz){
-  // Cover every tribe within reach of the entire five-by-five window, plus
-  // two extra chunk rings. Camps keep their exact original seed positions.
+  // The landscape must dictate new tribe locations, not vice versa.
+  // Only historically discovered tribes preserve their old terrain carving.
   const sites=[...(this.world.waterSafeSites||[])];
   const mountainSites=[...(this.world.mountainSafeSites||[])];
   const oceanSites=[...(this.world.oceanSafeSites||[])];
   for(let dx=-5;dx<=5;dx++)for(let dz=-5;dz<=5;dz++){
-   const tribe=tribeAtChunk(this.seed,cx+dx,cz+dz);
-   if(tribe){
-    sites.push({x:tribe.x,z:tribe.z,radius:10});
-    mountainSites.push({x:tribe.x,z:tribe.z,radius:14});
-    // A seeded shoreline cannot delete a previously discovered tribal camp.
-    oceanSites.push({x:tribe.x,z:tribe.z,radius:15});
-   }
+   const tx=cx+dx,tz=cz+dz;
+   const record=this.world.getTribeRecord?.("tribe:"+chunkKey(tx,tz));
+   if(!record||record.placementVersion===2)continue;
+   const tribe=tribeAtChunk(this.seed,tx,tz,true);
+   if(!tribe)continue;
+   sites.push({x:tribe.x,z:tribe.z,radius:10});
+   mountainSites.push({x:tribe.x,z:tribe.z,radius:14});
+   oceanSites.push({x:tribe.x,z:tribe.z,radius:15});
   }
   this.protectedSites=sites;
   this.mountainProtectedSites=mountainSites;
@@ -171,7 +172,9 @@ export class ForestChunks{
  showDetails(chunk){
   if(chunk.detailed)return;
   const world=this.world,{cx,cz,key}=chunk,scene=world.scene;
-  const candidate=world.spawnTribeCamp?tribeAtChunk(this.seed,cx,cz):null;
+  const record=world.getTribeRecord?.("tribe:"+key);
+  const candidate=world.spawnTribeCamp?
+   tribeAtChunk(this.seed,cx,cz,!!record&&record.placementVersion!==2):null;
   const active=candidate&&world.isTribeSiteActive?.(candidate);
   const relocated=candidate&&world.getTribeRecord?.(candidate.id)?.status==="relocated";
   const dryTribe=candidate&&this.waterAt(candidate.x,candidate.z).depth<.12;
@@ -227,7 +230,7 @@ export class ForestChunks{
    if(!withinCamp(animal.x,animal.z,2)&&this.waterAt(animal.x,animal.z).depth<.12)
     world.makeAnimal(animal.x,animal.z,key);
   if(tribe)world.spawnTribeCamp(tribe,key);
-  else if(relocated)world.spawnAbandonedTribeCamp?.(candidate,key);
+  else if(relocated&&dryTribe)world.spawnAbandonedTribeCamp?.(candidate,key);
   chunk.detailed=true;
  }
  hideDetails(chunk){

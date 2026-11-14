@@ -2,7 +2,7 @@
  * Small, streamed Stone Age camps for the procedural tribes in tribes.js.
  * Visual roots and skinned characters are disposed when their chunk unloads.
  */
-import {TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114m";
+import {TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114ecology1";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 

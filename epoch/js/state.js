@@ -11,7 +11,7 @@ import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113k";
 import {harvestAtNode} from "./harvest.js?v=20261114x";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
- TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114m";
+ TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114ecology1";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  moveResidentHome,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
  NATURAL_DEATH_AGE} from "./residents.js?v=20261114w";
@@ -298,20 +298,24 @@ export class GameState{
  }
  discoverTribe(candidate){
   if(!candidate||!Number.isInteger(candidate.cx)||!Number.isInteger(candidate.cz))return false;
-  const tribe=tribeAtChunk(this.data.worldSeed,candidate.cx,candidate.cz);
+  const previous=this.data.tribes[candidate.id];
+  const tribe=tribeAtChunk(this.data.worldSeed,candidate.cx,candidate.cz,
+   !!previous&&previous.placementVersion!==2);
   if(!tribe||tribe.id!==candidate.id)return false;
-  const previous=this.data.tribes[tribe.id];
   if(previous?.discovered||previous?.status==="relocated"||previous?.status==="razed")return false;
   this.data.tribes[tribe.id]={status:previous?.status||"active",
    discovered:true,discoveredYear:this.data.year,
-   trust:tribeTrust(tribe,previous),completed:previous?.completed||0};
+   trust:tribeTrust(tribe,previous),completed:previous?.completed||0,
+   placementVersion:tribe.placementVersion};
   this.changed("Discovered "+tribe.name+" in the wilderness.");
   return true;
  }
  tribeDefinition(id){
   const match=/^tribe:(-?\d+),(-?\d+)$/.exec(String(id));
   if(!match)return null;
-  const tribe=tribeAtChunk(this.data.worldSeed,Number(match[1]),Number(match[2]));
+  const record=this.data.tribes[id];
+  const tribe=tribeAtChunk(this.data.worldSeed,Number(match[1]),Number(match[2]),
+   !!record&&record.placementVersion!==2);
   return tribe?.id===id?tribe:null;
  }
  tribeProgress(id){
