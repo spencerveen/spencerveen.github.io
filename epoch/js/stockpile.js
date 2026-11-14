@@ -3,7 +3,7 @@
  * Its inventory is village-only and cannot be used to bypass the player's
  * personal ten-slot carry limit. Materials for hut construction come from here.
  */
-import {STOCKPILE_ITEM_IDS,canonicalItem,addItems,countItem,removeItems,itemCapacity} from "./inventory.js?v=20261114x";
+import {STOCKPILE_ITEM_IDS,canonicalItem,addItems,countItem,removeItems,itemCapacity} from "./inventory.js?v=20261114fish1";
 export const STOCKPILE_CAPACITY=480; // Total individual items, not stacks.
 export const STOCKPILE_INTERACT_RANGE=5;
 export const VILLAGE_RADIUS=24;

@@ -2,11 +2,11 @@ import {founderAppearance,randomAppearance,normalizeAppearance} from "./characte
 import {createQuaterniusHuman} from "./quaternius-models.js?v=20261114swimanim1";
 import {BUILDINGS} from "./settlement.js?v=20261114u";
 import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114y";
-import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114y";
+import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114fish1";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114hunt1";
-import {ForestChunks} from "./forest-chunks.js?v=20261114hunt1";
+import {ForestChunks} from "./forest-chunks.js?v=20261114fish1";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114textures1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";

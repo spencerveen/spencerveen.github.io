@@ -1,5 +1,5 @@
-import {ITEMS,INVENTORY_SLOTS,itemStackLimit,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114cook1";
-import {FOOD_EFFECTS} from "./survival.js?v=20261114cook1";
+import {ITEMS,INVENTORY_SLOTS,itemStackLimit,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114fish1";
+import {FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
 import {EQUIPMENT_SLOTS,equippedItem} from "./equipment.js?v=20261114craft1";
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 

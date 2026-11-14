@@ -3,8 +3,8 @@
  * village stockpile ingredients second, and always output to the backpack.
  * This simulation is pure: failed recipes never lose ingredients or fuel.
  */
-import {addItems,removeItems,countItem,canonicalItem} from "./inventory.js?v=20261114cook1";
-import {stockpileCount} from "./stockpile.js?v=20261114cook1";
+import {addItems,removeItems,countItem,canonicalItem} from "./inventory.js?v=20261114fish1";
+import {stockpileCount} from "./stockpile.js?v=20261114fish1";
 
 export const COOKING_VERSION=2;
 export const COOKING_REACH=6;

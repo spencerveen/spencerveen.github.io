@@ -1,13 +1,13 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
-import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeFood,FOOD_EFFECTS} from "./survival.js?v=20261114cook1";
-import {COOKING_RECIPES,COOKING_REACH,prepareCooking} from "./cooking.js?v=20261114cook1";
+import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeFood,FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
+import {COOKING_RECIPES,COOKING_REACH,prepareCooking} from "./cooking.js?v=20261114fish1";
 import {newDevCheats,validDevCheat} from "./dev-cheats.js?v=20261114devpanel1";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114w";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114y";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
- depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261114y";
+ depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261114fish1";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261114beaches2";
 import {harvestAtNode} from "./harvest.js?v=20261114craft1";
@@ -18,7 +18,7 @@ import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  NATURAL_DEATH_AGE} from "./residents.js?v=20261114w";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
- resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114craft1";
+ resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114fish1";
 import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack,CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261114hunt1";
 import {FISH_STAMINA_COST,FISH_CATCH_AMOUNT,normalizeFishCatches} from "./fishing.js?v=20261114fish1";

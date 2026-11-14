@@ -1,6 +1,6 @@
 import {BUILDINGS} from "./settlement.js?v=20261114u";
-import {nearStockpile,STOCKPILE_CAPACITY,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114x";
-import {STOCKPILE_ITEM_IDS,ITEMS,itemCapacity,toolMaxDurability,toolCondition} from "./inventory.js?v=20261114craft1";
+import {nearStockpile,STOCKPILE_CAPACITY,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114fish1";
+import {STOCKPILE_ITEM_IDS,ITEMS,itemCapacity,toolMaxDurability,toolCondition} from "./inventory.js?v=20261114fish1";
 import {CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
