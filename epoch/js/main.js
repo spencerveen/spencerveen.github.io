@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261113n";
-import {World} from "./world.js?v=20261113n";
-import {UI} from "./ui.js?v=20261113n";
+import {GameState} from "./state.js?v=20261114a";
+import {World} from "./world.js?v=20261114a";
+import {UI} from "./ui.js?v=20261114a";
 import {TitleScreen} from "./title-screen.js?v=20261113m";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
@@ -20,9 +20,12 @@ async function startEpoch({slot,newGame=false,founder=null}){
   const world=new World(canvas,
     (resource,action)=>{const result=state.harvestResource(resource,action);if(result)ui?.toast(result.label);return result},
     (title,details)=>ui?.status(title,details),
-    id=>ui?.selectPlot(id),state.data.worldSeed,meta=>state.resourceStatus(meta),
+    id=>ui?.selectBuilding(id),state.data.worldSeed,meta=>state.resourceStatus(meta),
     (x,z)=>state.foundStockpile(x,z),
-    ()=>ui?.openStockpile());
+    ()=>ui?.openStockpile(),
+    (kind,x,z,turn,world)=>state.placeVillageBuilding(kind,x,z,turn,world),
+    (kind,x,z,turn,world)=>state.canPlaceVillageBuilding(kind,x,z,turn,world),
+    ()=>ui?.render());
   ui=new UI(state,world);
   sessionStarted=true;
   state.save();
@@ -45,15 +48,17 @@ async function startEpoch({slot,newGame=false,founder=null}){
     resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
     skills:{...state.data.skills},resources:{...state.data.resources},inventory:{slots:state.data.inventory.map(slot=>slot?{...slot}:null),used:state.inventoryUsed(),unpacked:{...state.data.unpacked}},appearance:{...state.data.hero.appearance},villagerCount:world.people.length,
     technologies:[...state.data.technologies],civics:[...state.data.civics],
-    hearth:{built:!!world.hearthBuilt,visible:!!world.villagePlots.get("hearth_1")?.constructed.isEnabled(),
+    hearth:{built:!!world.hearthBuilt,visible:[...world.villageBuildings.values()].some(item=>item.entry.kind==="hearth"&&item.root.isEnabled()),
       lit:!!world.flame?.isEnabled(),glow:world.fireLight?.intensity||0,
       freeCampfires:world.scene.transformNodes.filter(n=>n.name==="campfire").length,
       position:world.fireLight?{x:world.fireLight.position.x,z:world.fireLight.position.z}:null},
     settlement:{plots:{...state.data.village.plots},population:state.data.village.population,capacity:state.villageCapacity(),
-      selectedPlot:ui.selectedPlot,worldPlots:world.villagePlots.size,
+      buildings:state.data.village.buildings.map(b=>({...b})),
+      renderedBuildings:world.villageBuildings.size,
       stockpile:state.stockpileInfo(),
-      placingStockpile:world.placingStockpile,
-      worldPlotCenters:Object.fromEntries([...world.villagePlots].map(([id,item])=>[id,{x:item.plot.x,z:item.plot.z}]))},
+      placingStockpile:world.placingStockpile,stockpileCandidate:world.stockpileCandidate?{...world.stockpileCandidate}:null,
+      placingBuilding:world.placingBuilding,buildingCandidate:world.buildingCandidate?{...world.buildingCandidate}:null,
+      hasGrid:!!world.villageGrid,gridVisible:!!world.villageGrid?.isEnabled()},
     movement:world.character?.animationStatus?.()||null,
     hairAttachment:world.character?.attachmentStatus?.()||null,
     npcAttachments:world.people.map(person=>person.human.attachmentStatus?.()||null),

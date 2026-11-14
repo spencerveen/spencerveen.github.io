@@ -48,3 +48,17 @@ If the game is reset, all structures, inventory, stockpile and forest progress r
 ### Future upgrades
 
 More storage tiers, individual building placement with rotation and valid-footprint checks, hauling jobs for villagers, resource reservation for construction, storage pit upgrades, and multiple settlement centers are intentionally **not included** yet. Only one primary Stockpile can be founded in the current single-village prototype.
+
+## Free 2-meter village building grid (November 2026)
+
+The five original preselected building plots were removed from the world. Placing the first Stockpile does **not** spawn yellow rings, stakes or building labels in the forest.
+
+**Stockpile founding:** In the Village tab, choose *Choose stockpile location*. A transparent footprint previews the placement without immediately founding it. Move it by clicking an open terrain position, clicking the on-screen arrow pad, or pressing the keyboard arrow keys (2-meter increments). Press **Confirm Placement** or Enter only when the footprint is valid; Escape cancels. The shortcut *Found at nearby clearing* can still establish a stockpile immediately when desired.
+
+**Free construction:** After founding, the Village tab lists Family Hut, Cooking Hearth, Toolmaker's Shelter and Council Lodge. Select a building to enter construction mode and see a temporary 2-meter grid centered on the Stockpile's 24-meter village radius. One translucent footprint shows the pending structure; move it with mouse or arrow controls and rotate with **R** or the rotate button. Valid footprints are green, and blocked terrain is red with a reason. Confirm only when the site and stored materials are valid. The grid and preview disappear after placement or cancellation.
+
+Building site validation rejects overlapping finished buildings, stockpile clearance, trees, stone, steep ground, and areas outside village territory. Buildings consume the same stockpiled costs and tech/culture requirements. Multiple Family Huts can be placed independently, with each adding +3 population capacity; the special Cooking Hearth, Toolmaker's Shelter and Council Lodge are one per village for now.
+
+**Save migration:** Existing completed structures from the former five-plot village are migrated into records with their exact old world coordinates and saved rotations. Empty old sites are not recreated. Newly placed structures are persisted as `village.buildings` entries containing individual stable IDs, types, world coordinates and quarter-turn orientations. Existing stockpiles, stored materials, family populations and discoveries remain unchanged.
+
+Future iterations may allow relocating already-built structures with a demolition/move cost, custom roads, additional storages and expanded village zones. This pass lets players decide where every *new* building is built, but existing finished buildings remain permanent.

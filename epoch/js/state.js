@@ -1,6 +1,7 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113m";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
-import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261113k";
+import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114a";
+import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114a";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
  depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261113k";
@@ -64,14 +65,22 @@ export class GameState{
     plots:{...(this.data.village?.plots||{})}
    };
   }
-  this.data.village.population=Math.max(1,Math.min(capacity(this.data.village),Number(this.data.village.population)||5));
-  // A veteran with constructed huts gets a free stockpile at the original
-  // camp, so the previously built structures stay in their exact positions.
-  // Other characters can choose their own starting location.
+  // A veteran with built structures inherits the same original stockpile.
   if(data?.version===1 && data?.village?.stockpile===undefined
      && Object.keys(this.data.village.plots).length>0)
    this.data.village.stockpile=createStockpile(LEGACY_HOME.x,LEGACY_HOME.z);
   else this.data.village.stockpile=normalStockpile(this.data.village.stockpile);
+  // Preserve every completed structure in its exact historical world location,
+  // without recreating the five old empty construction circles.
+  this.data.village.buildings=normalizeBuildings(
+   this.data.village.buildings,this.data.village.plots,this.data.village.stockpile);
+  this.data.village.nextBuildingNumber=Math.max(1,
+   Number(this.data.village.nextBuildingNumber)||1,
+   ...this.data.village.buildings.map(b=>{
+    const m=/^building_([0-9]+)$/.exec(b.id);return m?Number(m[1])+1:1;
+   }));
+  this.data.village.population=Math.max(1,
+   Math.min(capacity(this.data.village),Number(this.data.village.population)||5));
   // Old saves tracked boundless counters. Pack as much as possible into ten
   // 12-item slots, and retain any remainder as recoverable migration supplies.
   // Never silently delete a veteran player's existing wood/stone/berries.
@@ -209,6 +218,34 @@ export class GameState{
   if(moved){this.syncResources();this.changed()}
   return moved;
  }
+ canPlaceVillageBuilding(kind,x,z,turn=0,world=null){
+  const blueprint=BUILDINGS[kind],village=this.data.village;
+  if(!blueprint)return {ok:false,reason:"Unknown building type."};
+  if(!village.stockpile)return {ok:false,reason:"Found a village stockpile first."};
+  if(UNIQUE_BUILDINGS.includes(kind)&&village.buildings.some(b=>b.kind===kind))
+   return {ok:false,reason:"This village already has a "+blueprint.name+"."};
+  for(const requirement of blueprint.requires){
+   if(!this.data.technologies.includes(requirement)&&!this.data.civics.includes(requirement))
+    return {ok:false,reason:"Unlock "+(requirement==="fire"?"Control of Fire":requirement==="tools"?"Stone Toolmaking":"Tribal Community")+" first."};
+  }
+  if(!stockpileHas(village.stockpile,blueprint.cost))
+   return {ok:false,reason:"Deposit "+Object.entries(blueprint.cost).map(([id,n])=>n+" "+id).join(" and ")+" at your stockpile."};
+  return placementCheck({village,world,kind,x,z,turn});
+ }
+ placeVillageBuilding(kind,x,z,turn=0,world=null){
+  const check=this.canPlaceVillageBuilding(kind,x,z,turn,world);
+  if(!check.ok)return {ok:false,reason:check.reason};
+  const blueprint=BUILDINGS[kind],village=this.data.village;
+  if(!payStockpile(village.stockpile,blueprint.cost))
+   return {ok:false,reason:"Village resources changed; try again."};
+  const id="building_"+village.nextBuildingNumber++;
+  const entry={id,kind,x:check.x,z:check.z,turn:check.turn};
+  village.buildings.push(entry);
+  if(kind==="family")this.data.shelter=true;
+  this.gainXP("construction",kind==="family"?55:65);
+  this.changed(this.data.hero.name+"'s village built a "+blueprint.name+".");
+  return {ok:true,building:entry};
+ }
  canBuildPlot(id){
   const plot=PLOT_BY_ID[id],building=BUILDINGS[plot?.kind];
   if(!plot||!building)return {ok:false,reason:"Unknown village plot"};
@@ -225,14 +262,16 @@ export class GameState{
   return {ok:true,reason:"Ready to construct"};
  }
  buildVillagePlot(id){
+  // Legacy API for old tests and imported saves, not a visible preset plot.
   const result=this.canBuildPlot(id);
   if(!result.ok)return false;
-  const plot=PLOT_BY_ID[id],building=BUILDINGS[plot.kind];
-  if(!payStockpile(this.data.village.stockpile,building.cost))return false;
+  const plot=PLOT_BY_ID[id],site=plotAtHome(this.data.village,id);
+  const placed=this.placeVillageBuilding(plot.kind,site.x,site.z,plot.rotation*2/Math.PI);
+  if(!placed.ok)return false;
+  const entry=this.data.village.buildings.find(b=>b.id===placed.building.id);
+  if(entry)entry.id=id;
   this.data.village.plots[id]=plot.kind;
-  if(plot.kind==="family")this.data.shelter=true; // Support pre-village saves.
-  this.gainXP("construction",plot.kind==="family"?55:65);
-  this.changed(`${this.data.hero.name}'s village built a ${building.name}.`);
+  this.save();
   return true;
  }
  villageCapacity(){return capacity(this.data.village)}

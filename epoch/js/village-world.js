@@ -1,4 +1,6 @@
-import {PLOTS,BUILDINGS,plotAtHome} from "./settlement.js?v=20261113k";
+import {BUILDINGS} from "./settlement.js?v=20261114a";
+import {BUILDING_RADIUS,footprint} from "./village-placement.js?v=20261114a";
+import {BUILD_GRID,VILLAGE_RADIUS} from "./stockpile.js?v=20261114a";
 // Low-poly architectural placeholders for the first settlement-building slice.
 // Each visual occupies a fixed build plot; meshes and interaction metadata are
 // kept separate from saved game state. Only constructed models cause collision.
@@ -113,72 +115,125 @@ function createLabel(world,parent,label,m){
  labelMat.disableLighting=true;labelMat.backFaceCulling=false;plane.material=labelMat;
  return plane;
 }
-export function createVillageWorld(world,onPlot){
+export function createVillageWorld(world,onBuildingClick){
  const m={
   wood:mat(world,"village timber","#6e4d34"),mud:mat(world,"village clay walls","#897454"),
   thatch:mat(world,"village straw","#ae9664"),thatchDark:mat(world,"village council thatch","#837a57"),
   door:mat(world,"dark hut doorway","#302b21"),fur:mat(world,"village tribal hide","#bca583"),
   stone:mat(world,"village stones","#81867d"),stoneDark:mat(world,"village flint","#4b5550"),
-  free:mat(world,"free village plot","#b79751","#51421e"),
-  built:mat(world,"completed village plot","#66986e","#263a25"),
-  selected:mat(world,"selected village plot","#e4c47d","#b58c34")
+  valid:mat(world,"valid build outline","#9bdd98","#285d39"),
+  invalid:mat(world,"invalid build outline","#e58f76","#68322d"),
+  ghostValid:mat(world,"building preview","#84c7a2"),
+  ghostInvalid:mat(world,"blocked building preview","#dc8172")
  };
- world.villagePlots=new Map();world.villageMats=m;
- for(const plot of PLOTS){
-  const building=BUILDINGS[plot.kind];
-  const parent=new B.TransformNode("Village plot "+plot.id,world.scene);
-  parent.position=V(plot.x,world.groundY(plot.x,plot.z)+.12,plot.z);
-  parent.rotation.y=plot.rotation;
-  const marker=B.MeshBuilder.CreateTorus("Plot outline: "+building.name,{diameter:plot.kind==="council"?6.5:5.3,thickness:.085,tessellation:30},world.scene);
-  marker.parent=parent;marker.position.y=.10;marker.material=m.free;
-  for(const x of [-2.2,2.2])for(const z of [-2.2,2.2]){
-   const stake=pole(world,parent,x,z,.73,m.wood,.085);
-   stake.material=m.free;
-  }
-  const sign=createLabel(world,parent,building.name,m);
-  const constructed=new B.TransformNode("Built "+building.name,world.scene);
-  constructed.parent=parent;constructed.position.y=0;constructed.setEnabled(false);
-  if(plot.kind==="family")hut(world,constructed,m,false);
-  if(plot.kind==="council")hut(world,constructed,m,true);
-  if(plot.kind==="lore")techShelter(world,constructed,m);
-  if(plot.kind==="hearth")cookingStation(world,constructed,m);
-  // Clicking any mesh in a building or any plot outline selects the same plot.
-  for(const mesh of parent.getChildMeshes()){
-   mesh.metadata={...(mesh.metadata||{}),plotId:plot.id};
-   mesh.isPickable=true;
-  }
-  world.villagePlots.set(plot.id,{plot,parent,marker,constructed,sign,built:false});
+ m.valid.alpha=.8;m.invalid.alpha=.8;
+ m.ghostValid.alpha=.34;m.ghostInvalid.alpha=.38;
+ world.villageMats=m;
+ world.villageBuildings=new Map();
+ world.villageSignature=null;world.villageGrid=null;world.villageGridHome=null;
+ world.onVillagePlot=onBuildingClick;
+ const previewRoot=new B.TransformNode("Movable village building preview",world.scene);
+ const outline=B.MeshBuilder.CreateTorus("Build footprint preview",{diameter:1,thickness:.12,tessellation:38},world.scene);
+ outline.parent=previewRoot;outline.position.y=.12;outline.isPickable=false;outline.material=m.valid;
+ const ghost=obj(world,"box","Building silhouette preview",previewRoot,[0,.9,0],[2.6,1.8,2.6],m.ghostValid);
+ ghost.isPickable=false;
+ previewRoot.setEnabled(false);
+ world.villagePreview={root:previewRoot,outline,ghost};
+}
+function makeBuiltStructure(world,entry){
+ const kind=entry.kind,definition=BUILDINGS[kind];
+ const root=new B.TransformNode("Village "+definition.name+" "+entry.id,world.scene);
+ root.position=V(entry.x,world.groundY(entry.x,entry.z)+.12,entry.z);
+ root.rotation.y=entry.turn*Math.PI/2;
+ if(kind==="family")hut(world,root,world.villageMats,false);
+ if(kind==="council")hut(world,root,world.villageMats,true);
+ if(kind==="lore")techShelter(world,root,world.villageMats);
+ if(kind==="hearth")cookingStation(world,root,world.villageMats);
+ // No unbuilt marker rings, labels, signposts or empty template slots.
+ for(const mesh of root.getChildMeshes()){
+  mesh.metadata={...(mesh.metadata||{}),buildingId:entry.id,buildingKind:entry.kind};
+  mesh.isPickable=true;
  }
- world.onVillagePlot=onPlot;
+ return root;
+}
+function updateVillageGrid(world,pile){
+ const key=pile?pile.x+","+pile.z:null;
+ if(world.villageGridHome===key)return;
+ if(world.villageGrid){world.villageGrid.dispose(false,false);world.villageGrid=null}
+ world.villageGridHome=key;
+ if(!pile)return;
+ const lines=[];
+ for(let i=-VILLAGE_RADIUS;i<=VILLAGE_RADIUS;i+=BUILD_GRID){
+  const half=Math.sqrt(Math.max(0,VILLAGE_RADIUS*VILLAGE_RADIUS-i*i));
+  if(half<.5)continue;
+  const halfSteps=Math.floor(half/BUILD_GRID)*BUILD_GRID;
+  for(const vertical of [true,false]){
+   const pts=[];
+   for(let step=-halfSteps;step<=halfSteps;step+=BUILD_GRID){
+    const x=pile.x+(vertical?i:step),z=pile.z+(vertical?step:i);
+    pts.push(V(x,world.groundY(x,z)+.10,z));
+   }
+   if(pts.length>=2)lines.push(pts);
+  }
+ }
+ world.villageGrid=B.MeshBuilder.CreateLineSystem("Village 2m placement grid",{lines},world.scene);
+ world.villageGrid.color=new B.Color3(.83,.75,.49);
+ world.villageGrid.alpha=.38;
+ world.villageGrid.isPickable=false;
+ world.villageGrid.setEnabled(!!world.placingBuilding);
 }
 export function syncVillageWorld(world,village){
- if(!world.villagePlots)return;
- world.obstacles=world.obstacles.filter(o=>!o.plotId);
- for(const item of world.villagePlots.values()){
-  const {plot,marker,constructed,parent}=item;
-  const site=plotAtHome(village,plot.id);
-  const visible=!!village?.stockpile;
-  plot.x=site.x;plot.z=site.z;
-  parent.position=V(site.x,world.groundY(site.x,site.z)+.12,site.z);
-  parent.setEnabled(visible);
-  const built=visible&&village?.plots?.[plot.id]===plot.kind;
-  item.built=!!built;
-  constructed.setEnabled(!!built);
-  marker.material=built?world.villageMats.built:world.villageMats.free;
-  if(built && plot.kind!=="hearth")
-   world.obstacles.push({x:site.x,z:site.z,r:plot.kind==="council"?2.6:2.0,plotId:plot.id});
+ if(!world.villageBuildings)return;
+ updateVillageGrid(world,village?.stockpile);
+ const rows=(village?.buildings||[]).filter(entry=>BUILDINGS[entry.kind]);
+ const signature=JSON.stringify(rows);
+ if(world.villageSignature!==signature){
+  const ids=new Set(rows.map(b=>b.id));
+  for(const [id,item] of world.villageBuildings){
+   if(ids.has(id))continue;
+   item.root.dispose(false,false);world.villageBuildings.delete(id);
+  }
+  for(const entry of rows){
+   let item=world.villageBuildings.get(entry.id);
+   if(!item||item.entry.kind!==entry.kind){
+    if(item)item.root.dispose(false,false);
+    const root=makeBuiltStructure(world,entry);
+    item={root,entry:{...entry}};world.villageBuildings.set(entry.id,item);
+   }
+   item.entry={...entry};
+   item.root.position=V(entry.x,world.groundY(entry.x,entry.z)+.12,entry.z);
+   item.root.rotation.y=entry.turn*Math.PI/2;
+  }
+  world.villageSignature=signature;
  }
- const hearth=world.villagePlots.get("hearth_1");
- world.hearthBuilt=!!hearth?.built;
- if(hearth&&world.fireLight){
-  const x=hearth.plot.x,z=hearth.plot.z;
-  world.fireLight.position=V(x,world.groundY(x,z)+1.12,z);
+ world.obstacles=world.obstacles.filter(o=>!o.buildingId&&!o.plotId);
+ for(const item of world.villageBuildings.values()){
+  const e=item.entry;
+  if(e.kind!=="hearth")
+   world.obstacles.push({x:e.x,z:e.z,r:footprint(e.kind)-.25,buildingId:e.id});
  }
+ const hearth=rows.find(row=>row.kind==="hearth");
+ world.hearthBuilt=!!hearth;
+ if(hearth&&world.fireLight)
+  world.fireLight.position=V(hearth.x,world.groundY(hearth.x,hearth.z)+1.12,hearth.z);
  world.updateHearthFire();
 }
+export function showVillagePreview(world,candidate){
+ const view=world.villagePreview;
+ if(!view)return;
+ const show=!!candidate;
+ view.root.setEnabled(show);
+ if(world.villageGrid)world.villageGrid.setEnabled(show);
+ if(!show)return;
+ const radius=footprint(candidate.kind),height=candidate.kind==="hearth"?.65:candidate.kind==="council"?2.8:2.2;
+ view.root.position=V(candidate.x,world.groundY(candidate.x,candidate.z)+.04,candidate.z);
+ view.root.rotation.y=(candidate.turn||0)*Math.PI/2;
+ view.outline.scaling=V(radius*2.05,1,radius*2.05);
+ view.ghost.scaling=V(radius*1.55,height,radius*1.55);
+ view.ghost.position.y=height/2;
+ view.outline.material=candidate.ok?world.villageMats.valid:world.villageMats.invalid;
+ view.ghost.material=candidate.ok?world.villageMats.ghostValid:world.villageMats.ghostInvalid;
+}
 export function highlightVillagePlot(world,id){
- for(const item of world.villagePlots?.values()||[]){
-  item.marker.material=item.plot.id===id?world.villageMats.selected:
-   item.built?world.villageMats.built:world.villageMats.free;
- }
+ // Kept for older UI callers. Empty site outlines no longer exist.
 }

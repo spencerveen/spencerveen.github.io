@@ -1,22 +1,23 @@
 import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113k";
 import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113k";
-import {PLOT_BY_ID} from "./settlement.js?v=20261113k";
-import {stockpileValidation,nearStockpile,LEGACY_HOME} from "./stockpile.js?v=20261113k";
+import {BUILDINGS} from "./settlement.js?v=20261114a";
+import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114a";
+import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114a";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261113k";
-import {createVillageWorld,syncVillageWorld,highlightVillagePlot} from "./village-world.js?v=20261113n";
+import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114a";
 import {STARTER_SEED,terrainHeight} from "./forest-generation.js?v=20261113k";
 import {ForestChunks} from "./forest-chunks.js?v=20261113k";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export class World {
- constructor(canvas,onGather,onStatus,onPlot=()=>{},seed=STARTER_SEED,getResourceStatus=()=>null,onFoundStockpile=()=>false,onOpenStockpile=()=>{}){
-  this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;this.getResourceStatus=getResourceStatus;this.onFoundStockpile=onFoundStockpile;this.onOpenStockpile=onOpenStockpile;this.worldSeed=seed>>>0;
-  this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onPlot;this.placingStockpile=false;this.stockpileTarget=false;this.stockpile=null;this.stockpileCandidate=null;this.homePositionKey=null;
+ constructor(canvas,onGather,onStatus,onBuildingSelect=()=>{},seed=STARTER_SEED,getResourceStatus=()=>null,onFoundStockpile=()=>false,onOpenStockpile=()=>{},onBuild=()=>({ok:false}),getBuildStatus=()=>({ok:false}),onPlacementChange=()=>{}){
+  this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;this.getResourceStatus=getResourceStatus;this.onFoundStockpile=onFoundStockpile;this.onOpenStockpile=onOpenStockpile;this.onBuild=onBuild;this.getBuildStatus=getBuildStatus;this.onPlacementChange=onPlacementChange;this.worldSeed=seed>>>0;
+  this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onBuildingSelect;this.placingBuilding=null;this.buildingCandidate=null;this.village=null;this.placingStockpile=false;this.stockpileTarget=false;this.stockpile=null;this.stockpileCandidate=null;this.homePositionKey=null;
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.020;this.scene.fogColor=new B.Color3(.62,.71,.62);
-  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();createVillageWorld(this,onPlot);createStockpileWorld(this);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
+  this.makeMaterials();this.makeGround();this.makeLight();this.makeLandscape();createVillageWorld(this,onBuildingSelect);createStockpileWorld(this);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
   this.engine.runRenderLoop(()=>{const dt=Math.min(.045,this.engine.getDeltaTime()/1000);this.update(dt);this.scene.render()});
   window.addEventListener("resize",()=>this.engine.resize());
  }
@@ -146,6 +147,7 @@ export class World {
  syncVillage(village){
   const pile=village?.stockpile||null;
   this.stockpile=pile;
+  this.currentVillage=village;
   syncVillageWorld(this,village);
   syncStockpileWorld(this,pile);
   this.obstacles=this.obstacles.filter(o=>!o.stockpile);
@@ -160,41 +162,27 @@ export class World {
    person.human.root.position=V(x,this.groundY(x,z),z);
   }
  }
- highlightPlot(id){highlightVillagePlot(this,id)}
- canBuildOnPlot(id){
-  const plot=this.villagePlots?.get(id)?.plot;
-  if(!plot||!this.stockpile)return {ok:false,reason:"Found your village first."};
-  const blocked=this.obstacles.some(o=>!o.plotId&&!o.stockpile
-   &&Math.hypot(o.x-plot.x,o.z-plot.z)<(o.r||0)+(plot.kind==="council"?2.8:2.05));
-  return blocked?{ok:false,reason:"Clear trees or rocks from this building site."}:{ok:true,reason:"Site clear"};
- }
+ highlightPlot(id){}
  beginStockpilePlacement(){
   if(this.stockpile)return false;
+  this.cancelBuildingPlacement();
   this.placingStockpile=true;this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.path=[];
+  const initial=this.findSuggestedStockpileSite();
   const p=this.player.position;
-  this.stockpileCandidate=stockpileValidation(this,p.x+5,p.z+5);
-  showStockpilePreview(this,this.stockpileCandidate);
-  this.onStatus("Choose stockpile site","Move over level ground, then left-click to found your village. Press Escape to cancel.");
+  this.previewStockpileAt(initial?.x??p.x+8,initial?.z??p.z+8);
+  this.onStatus("Choose stockpile location","Move with arrows or click the ground, then press Confirm Placement. Escape cancels.");
   return true;
  }
  findSuggestedStockpileSite(){
-  // Accessible quick-found option: use the original open camp footprint when
-  // available, otherwise look around the current character on the 2m grid.
   const p=this.player.position,options=[[LEGACY_HOME.x,LEGACY_HOME.z]];
-  for(const radius of [6,8,10,12,14,16]){
-   for(let step=0;step<16;step++){
-    const a=step*Math.PI/8;
+  for(const radius of [6,8,10,12,14,16])
+   for(let step=0;step<24;step++){
+    const a=step*Math.PI/12;
     options.push([p.x+Math.cos(a)*radius,p.z+Math.sin(a)*radius]);
    }
-  }
   for(const [x,z] of options){
    const candidate=stockpileValidation(this,x,z);
-   if(!candidate.ok)continue;
-   // Prefer founding sites whose first housing plot is already unobstructed.
-   const familyX=candidate.x-6,familyZ=candidate.z+12;
-   const familyClear=!this.obstacles.some(o=>!o.plotId
-    &&Math.hypot(o.x-familyX,o.z-familyZ)<(o.r||0)+2.15);
-   if(familyClear)return candidate;
+   if(candidate.ok)return candidate;
   }
   return null;
  }
@@ -203,19 +191,83 @@ export class World {
   const candidate=this.findSuggestedStockpileSite();
   if(!candidate){this.onStatus("No clear home site","Move to a clearing or chop nearby trees, then try again.");return false}
   const placed=this.onFoundStockpile(candidate.x,candidate.z);
-  if(placed){this.cancelStockpilePlacement();
-   this.onStatus("Village founded","Stockpile established at "+candidate.x+", "+candidate.z+".");}
+  if(placed){
+   this.cancelStockpilePlacement();
+   this.onStatus("Village founded","Your stockpile is established! Return with gathered resources.");
+  }
   return placed;
  }
  cancelStockpilePlacement(){
   this.placingStockpile=false;this.stockpileCandidate=null;
   showStockpilePreview(this,null);
+  this.onPlacementChange();
  }
  previewStockpileAt(x,z){
   if(!this.placingStockpile)return null;
+  const old=this.stockpileCandidate;
   const result=stockpileValidation(this,x,z);
   this.stockpileCandidate=result;showStockpilePreview(this,result);
+  if(!old||old.x!==result.x||old.z!==result.z||old.ok!==result.ok)this.onPlacementChange();
   return result;
+ }
+ nudgeStockpile(dx,dz){
+  if(!this.placingStockpile)return;
+  const p=this.stockpileCandidate||this.player.position;
+  this.previewStockpileAt(p.x+dx*BUILD_GRID,p.z+dz*BUILD_GRID);
+ }
+ confirmStockpilePlacement(){
+  if(!this.placingStockpile||!this.stockpileCandidate)
+   return {ok:false,reason:"Choose a location."};
+  const {x,z}=this.stockpileCandidate;
+  const current=stockpileValidation(this,x,z);
+  if(!current.ok){this.previewStockpileAt(x,z);return {ok:false,reason:current.reason}}
+  if(!this.onFoundStockpile(x,z))
+   return {ok:false,reason:"Could not establish stockpile here."};
+  this.cancelStockpilePlacement();
+  return {ok:true,x,z};
+ }
+ beginBuildingPlacement(kind,village){
+  if(!BUILDINGS[kind]||!village?.stockpile)return false;
+  this.cancelStockpilePlacement();
+  this.placingBuilding=kind;this.village=village;this.target=null;this.plotTarget=null;this.stockpileTarget=false;this.path=[];
+  const start=choosePlacement(village,this,kind);
+  this.previewBuildingAt(start?.x??village.stockpile.x+8,start?.z??village.stockpile.z+8,0);
+  this.onStatus("Place "+BUILDINGS[kind].name,"Move with arrows (2m grid), R to rotate, or click ground. Confirm in Village.");
+  return true;
+ }
+ previewBuildingAt(x,z,turn=this.buildingCandidate?.turn||0){
+  if(!this.placingBuilding)return null;
+  const last=this.buildingCandidate;
+  const result=placementCheck({village:this.village,world:this,kind:this.placingBuilding,x,z,turn});
+  this.buildingCandidate=result;
+  showVillagePreview(this,result);
+  if(!last||last.x!==result.x||last.z!==result.z||last.turn!==result.turn||last.ok!==result.ok)
+   this.onPlacementChange();
+  return result;
+ }
+ nudgeBuilding(dx,dz){
+  if(!this.placingBuilding)return;
+  const c=this.buildingCandidate||this.village.stockpile;
+  this.previewBuildingAt(c.x+dx*BUILD_GRID,c.z+dz*BUILD_GRID);
+ }
+ rotateBuilding(){
+  if(!this.placingBuilding||!this.buildingCandidate)return;
+  const c=this.buildingCandidate;
+  this.previewBuildingAt(c.x,c.z,c.turn+1);
+ }
+ confirmBuildingPlacement(){
+  const candidate=this.buildingCandidate;
+  if(!this.placingBuilding||!candidate)return {ok:false,reason:"Select a building first."};
+  const check=this.getBuildStatus(candidate.kind,candidate.x,candidate.z,candidate.turn,this);
+  if(!check.ok){this.previewBuildingAt(candidate.x,candidate.z,candidate.turn);return {ok:false,reason:check.reason}}
+  const result=this.onBuild(candidate.kind,candidate.x,candidate.z,candidate.turn,this);
+  if(result.ok)this.cancelBuildingPlacement();
+  return result;
+ }
+ cancelBuildingPlacement(){
+  this.placingBuilding=null;this.buildingCandidate=null;this.village=null;
+  showVillagePreview(this,null);
+  this.onPlacementChange();
  }
  walkToStockpile(){
   if(!this.stockpile)return false;
@@ -230,58 +282,65 @@ export class World {
   }else this.onStatus("Cannot reach stockpile","Try approaching from another side.");
   return success;
  }
- distanceToPlot(id){
-  const p=this.villagePlots?.get(id)?.plot;if(!p||!this.stockpile)return Infinity;
-  return Math.hypot(this.player.position.x-p.x,this.player.position.z-p.z);
- }
- walkToPlot(id){
-  const plot=this.villagePlots?.get(id)?.plot;if(!plot||!this.stockpile)return false;
-  this.target=null;this.stockpileTarget=false;
-  this.plotTarget=null;
-  const d=this.distanceToPlot(id);
-  if(d<=4.2&&d>=2.5){this.onPlot(id);return true}
-  const dx=this.player.position.x-plot.x,dz=this.player.position.z-plot.z;
-  const len=Math.hypot(dx,dz)||1;
-  const success=this.plan(plot.x+dx/len*3.45,plot.z+dz/len*3.45);
-  if(!success){this.onStatus("Plot unreachable","Try approaching the building from another direction.");return false}
-  this.plotTarget=id;
-  this.onStatus("Approaching "+id.replace("_"," "),"Walking to the village construction site.");
-  return true;
- }
-
  bindInput(){
   const isText=()=>["INPUT","TEXTAREA"].includes(document.activeElement?.tagName);
   window.addEventListener("keydown",e=>{
    if(isText())return;const key=e.key.toLowerCase();
+   if(this.placingStockpile||this.placingBuilding){
+    const delta={arrowleft:[-1,0],arrowright:[1,0],arrowup:[0,-1],arrowdown:[0,1]}[key];
+    if(delta){
+     e.preventDefault();
+     if(this.placingStockpile)this.nudgeStockpile(...delta);
+     else this.nudgeBuilding(...delta);
+     return;
+    }
+    if(key==="r"&&this.placingBuilding){e.preventDefault();this.rotateBuilding();return}
+    if(key==="escape"){
+     e.preventDefault();
+     if(this.placingStockpile)this.cancelStockpilePlacement();
+     else this.cancelBuildingPlacement();
+     this.onStatus("Build mode closed","Select a building from the Village panel.");
+     return;
+    }
+    if(key==="enter"){
+     e.preventDefault();
+     const outcome=this.placingStockpile?this.confirmStockpilePlacement():this.confirmBuildingPlacement();
+     this.onStatus(outcome.ok?"Construction complete":"Cannot place here",outcome.reason||"Your village has grown.");
+     return;
+    }
+    if(key==="e")return;
+   }
    if(["w","a","s","d","shift","e"].includes(key)){e.preventDefault();this.keys[key]=true;}
-   if(key==="escape"&&this.placingStockpile)this.cancelStockpilePlacement();
    if(key==="e")this.interactNearby(e.shiftKey?"cut":"gather");
   });
   window.addEventListener("keyup",e=>{this.keys[e.key.toLowerCase()]=false});
   window.addEventListener("blur",()=>{this.keys={}});
   this.scene.onPointerObservable.add(e=>{
    const pick=e.pickInfo;
-   if(this.placingStockpile){
-    if(e.type===B.PointerEventTypes.POINTERMOVE&&pick?.hit&&pick.pickedMesh?.metadata?.terrain)
-     this.previewStockpileAt(pick.pickedPoint.x,pick.pickedPoint.z);
-    if(e.type===B.PointerEventTypes.POINTERPICK&&e.event.button===0){
-     if(!pick?.hit||!pick.pickedMesh?.metadata?.terrain){
-      this.onStatus("Choose open ground","Click a terrain tile to found your village.");return;
-     }
-     const spot=this.previewStockpileAt(pick.pickedPoint.x,pick.pickedPoint.z);
-     if(!spot?.ok){this.onStatus("Stockpile cannot go here",spot?.reason||"Choose another spot.");return}
-     if(this.onFoundStockpile(spot.x,spot.z)){
-      this.cancelStockpilePlacement();
-      this.onStatus("Village founded","Your stockpile is established! Return with gathered resources.");
+   if(this.placingStockpile||this.placingBuilding){
+    if(e.type===B.PointerEventTypes.POINTERMOVE||
+      (e.type===B.PointerEventTypes.POINTERPICK&&e.event?.button===0)){
+     // Always select the ground beneath scenery, even when a nearby tree,
+     // player or ghost overlaps the frontmost cursor hit.
+     const ground=this.scene.pick(this.scene.pointerX,this.scene.pointerY,
+      mesh=>!!mesh?.metadata?.terrain);
+     if(ground?.hit&&ground.pickedPoint){
+      const x=ground.pickedPoint.x,z=ground.pickedPoint.z;
+      const candidate=this.placingStockpile?this.previewStockpileAt(x,z):
+       this.previewBuildingAt(x,z);
+      if(e.type===B.PointerEventTypes.POINTERPICK)
+       this.onStatus(candidate?.ok?"Position selected":"Site blocked",
+        (candidate?.reason||"Move the preview")+
+        ". Confirm in the Village panel, or nudge with the arrows.");
      }
     }
     return;
    }
-   if(e.type!==B.PointerEventTypes.POINTERPICK||e.event.button!==0)return;
+   if(e.type!==B.PointerEventTypes.POINTERPICK||e.event?.button!==0)return;
    if(!pick?.hit)return;
    const mesh=pick.pickedMesh;
    if(mesh?.metadata?.stockpile){this.walkToStockpile();return}
-   if(mesh?.metadata?.plotId){this.walkToPlot(mesh.metadata.plotId);return}
+   if(mesh?.metadata?.buildingId){this.onPlot(mesh.metadata.buildingId);return}
    if(mesh?.metadata?.resource){
     this.stockpileTarget=false;
     this.walkToResource(mesh.metadata,e.event.shiftKey?"cut":"gather");return;
@@ -425,9 +484,6 @@ export class World {
   if(this.stockpileTarget&&this.stockpile
     &&nearStockpile(this.stockpile,p.x,p.z)){
    this.stockpileTarget=false;this.path=[];this.onOpenStockpile();
-  }
-  if(this.plotTarget && this.distanceToPlot(this.plotTarget)<4.2){
-   const id=this.plotTarget;this.plotTarget=null;this.path=[];this.onPlot(id);
   }
   const aim=V(p.x,p.y+1.2,p.z);
   c.setTarget(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));

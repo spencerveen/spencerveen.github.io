@@ -220,3 +220,32 @@ footer{position:absolute;z-index:4;bottom:16px;left:50%;transform:translateX(-50
  .epoch-save-actions{width:100%}
  .epoch-save-actions button{flex:1}
 }
+
+/* Free-position Village builder: only show these controls during placement. */
+.village-placement-panel{border:1px solid #bba37384!important;background:linear-gradient(155deg,#2b3e2c,#192a20)!important}
+.village-placement-panel h3{color:#f2dfb7!important}
+.village-placement-controls{display:flex;flex-direction:column;align-items:center;gap:5px;margin:13px auto;max-width:270px}
+.village-placement-controls>button{width:61px;height:45px;min-height:45px;font-size:22px;line-height:1;background:#354d3c;border:1px solid #a8b89066;border-radius:8px;color:#eeddb5;touch-action:manipulation}
+.village-control-middle{display:flex;align-items:center;justify-content:space-between;gap:7px;width:100%}
+.village-control-middle>button{width:61px;height:45px;min-height:45px;font-size:22px;line-height:1;background:#354d3c;border:1px solid #a8b89066;border-radius:8px;color:#eeddb5;touch-action:manipulation}
+.village-control-middle>span{display:flex;align-items:center;justify-content:center;height:45px;flex:1;background:#101d16b5;border:1px solid #728a6d38;border-radius:6px;font-size:11px;color:#bcc9b1;letter-spacing:.08em;text-transform:uppercase}
+.village-placement-controls button:hover{border-color:#dfc993;background:#475d45}
+.village-placement-result{padding:11px 12px;border:1px solid #cbb87c5c;background:#151f17b5;color:#eddca8;border-radius:8px;font-size:12px;font-weight:700;margin:12px 0;line-height:1.45}
+.village-placement-result.invalid{border-color:#b475605c;color:#efb6a8}
+.village-placement-result.valid{border-color:#7bae7e87;color:#c7edba}
+.village-placement-result small{display:block;font-size:11px;font-weight:400;color:#bfc5b8;margin-top:5px}
+.village-placement-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.village-placement-buttons button{min-width:0;white-space:normal;min-height:44px}
+.village-placement-buttons button:disabled{opacity:.4;cursor:not-allowed}
+.village-build-catalog{display:grid;grid-template-columns:1fr;gap:9px;margin:12px 0}
+.village-build-card{padding:13px!important;display:flex;flex-direction:column;gap:7px}
+.village-build-card h3{margin:0;color:#e6d7b1}
+.village-build-card p{font-size:12px;line-height:1.5;margin:0}
+.village-build-card small{line-height:1.45}
+.village-build-card button{margin-top:auto;min-height:36px}
+.village-built-item{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px 8px}
+.village-built-item strong{font-size:12px;color:#e9dbb5}
+.village-built-item small{grid-column:1/-1}
+.village-built-item button{grid-column:1/-1}
+.village-built-item.chosen{border-color:#e2c8838a}
+@media(min-width:520px){.village-build-catalog{grid-template-columns:repeat(2,minmax(0,1fr))}}

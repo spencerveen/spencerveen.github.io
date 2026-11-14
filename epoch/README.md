@@ -110,3 +110,7 @@ The starter Wayfarer's Pack has **10 slots**, and wood, stone, wild berries and 
 ### Buildable Cooking Hearth
 
 The original static campfire has been removed from the starting world. Researching **Control of Fire** unlocks the **Cooking Hearth** blueprint, but does not create an automatic campfire. Deposit **6 wood and 5 stone** at your village stockpile, approach the Cooking Hearth construction plot and build it; only then will the hearth's stones, logs, flames, and firelight appear. The completed structure and its location persist with the village save. Cooking food remains a future feature.
+
+## Free-position village construction
+
+Epoch now uses a genuine **2-meter construction grid**. The Stockpile is the home base, but there are **no automatically displayed preset hut circles**. Choose where to found the Stockpile with the movable preview and confirm it, then select any structure from Village → Construction. Click ground or use the arrow pad / keyboard arrows to reposition the green/red preview; press R to rotate, and Confirm Placement to build using materials in village storage. Only constructed buildings appear permanently in the world. Multiple Family Huts contribute +3 population capacity each. Existing saves are migrated automatically, retaining original built hut locations. See [STOCKPILE_SYSTEM.md](./STOCKPILE_SYSTEM.md).

@@ -1,7 +1,6 @@
 import {LEGACY_HOME} from "./stockpile.js?v=20261113k";
-// Stone Age village blueprint: the same five starter building locations follow
-// whichever 2-meter-grid location the player selects for their stockpile.
-// Save plot IDs stay stable across existing villages and future upgrades.
+// Stone Age building types and original plot coordinates kept solely to
+// migrate existing constructed villages. New construction uses free 2m grid.
 export const BUILDINGS={
  family:{name:"Family Hut",short:"Housing",description:"A hide-and-timber family dwelling. Adds room for three more villagers.",cost:{wood:10,stone:6},requires:[],capacity:3},
  hearth:{name:"Cooking Hearth",short:"Cooking",description:"A communal firepit with a roasting spit. The cooking station is ready for hunting and meat recipes later.",cost:{wood:6,stone:5},requires:["fire"],capacity:0},
@@ -18,7 +17,7 @@ export const PLOTS=[
 export const PLOT_BY_ID=Object.fromEntries(PLOTS.map(plot=>[plot.id,plot]));
 export const VILLAGE_START_POPULATION=5; // Player and four existing settlement NPCs.
 export const VILLAGE_START_CAPACITY=5;   // Temporary sleeping places around camp.
-export function emptyVillage(){return {plots:{},population:VILLAGE_START_POPULATION,stockpile:null}}
+export function emptyVillage(){return {plots:{},buildings:[],nextBuildingNumber:1,population:VILLAGE_START_POPULATION,stockpile:null}}
 /** Keep plot IDs stable, but move their starter blueprint with the home base. */
 export function plotAtHome(village,id){
  const plot=PLOT_BY_ID[id];
@@ -29,6 +28,9 @@ export function plotAtHome(village,id){
 }
 export function villagePlots(village){return PLOTS.map(p=>plotAtHome(village,p.id))}
 export function capacity(village){
+ if(Array.isArray(village?.buildings))
+  return VILLAGE_START_CAPACITY+
+   village.buildings.filter(building=>building.kind==="family").length*BUILDINGS.family.capacity;
  return VILLAGE_START_CAPACITY+PLOTS.reduce((sum,plot)=>
   sum+(village?.plots?.[plot.id]==="family"?BUILDINGS.family.capacity:0),0);
 }
