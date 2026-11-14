@@ -1,126 +1,157 @@
-import {BUILDINGS} from "./settlement.js?v=20261114a";
+import {BUILDINGS} from "./settlement.js?v=20261114b";
 import {nearStockpile,STOCKPILE_CAPACITY,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114a";
-import {ITEM_IDS,ITEMS} from "./inventory.js?v=20261114a";
-import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114a";
+import {ITEM_IDS,ITEMS,itemCapacity} from "./inventory.js?v=20261114a";
+import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
-const cost=items=>Object.entries(items).map(([k,v])=>v+" "+k).join(" · ");
 const prereq=id=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[id]||id);
 const near=ui=>nearStockpile(ui.state.data.village.stockpile,ui.world.player.position.x,ui.world.player.position.z);
-const kindIcon={family:"🏠",hearth:"🔥",lore:"🪓",council:"🪶"};
-const arrows=()=>`<div class="village-placement-controls" role="group" aria-label="Move building preview by 2 meters">
- <button type="button" data-action="grid-nudge" data-dx="0" data-dz="-1" aria-label="Move forward two meters">↑</button>
+const kindIcon={family:"⌂",hearth:"♨",lore:"✦",council:"❖"};
+const destination={family:"Dynasty",lore:"Technology",council:"Culture",hearth:"Hearth"};
+const purpose={
+ family:"Your family's home. Open it to view your dynasty and continue your lineage.",
+ lore:"Your place of discovery. Open it to research technologies for your people.",
+ council:"The heart of shared tradition. Open it to develop culture and inheritance.",
+ hearth:"A communal fire for your village. Cooking recipes will arrive in a later update."
+};
+const itemName=id=>ITEMS[id]?.name||id;
+const requiredMaterials=(cost,items)=>`<div class="cost-list" aria-label="Materials in village storage">${Object.entries(cost).map(([id,need])=>{
+ const have=items?.[id]||0;
+ return `<span class="cost-chip ${have>=need?"met":"missing"}">${ITEMS[id]?.icon||""} ${esc(itemName(id))} <b>${have} / ${need}</b></span>`;
+}).join("")}</div>`;
+const shortages=(cost,items)=>Object.entries(cost).filter(([id,need])=>(items?.[id]||0)<need).map(([id,need])=>`${need-(items?.[id]||0)} ${itemName(id)}`).join(" · ");
+const arrows=(rotate=false)=>`<div class="village-placement-controls" role="group" aria-label="Move preview on the two meter grid">
+ <button type="button" data-action="grid-nudge" data-dx="0" data-dz="-1" aria-label="Move north two meters">↑</button>
  <div class="village-control-middle">
-  <button type="button" data-action="grid-nudge" data-dx="-1" data-dz="0" aria-label="Move left two meters">←</button>
-  <span>2m grid</span>
-  <button type="button" data-action="grid-nudge" data-dx="1" data-dz="0" aria-label="Move right two meters">→</button>
+  <button type="button" data-action="grid-nudge" data-dx="-1" data-dz="0" aria-label="Move west two meters">←</button>
+  ${rotate?"":'<span>2 m grid</span>'}
+  <button type="button" data-action="grid-nudge" data-dx="1" data-dz="0" aria-label="Move east two meters">→</button>
  </div>
- <button type="button" data-action="grid-nudge" data-dx="0" data-dz="1" aria-label="Move backward two meters">↓</button>
+ <button type="button" data-action="grid-nudge" data-dx="0" data-dz="1" aria-label="Move south two meters">↓</button>
+ ${rotate?'<button type="button" class="placement-rotate-inline" data-action="grid-rotate" aria-label="Rotate building 90 degrees" title="Rotate 90° (R)">↻</button>':""}
  </div>`;
-const placementPanel=(candidate,stockpile=false,ui)=>{
- const name=stockpile?"Founding Stockpile":BUILDINGS[ui.world.placingBuilding]?.name||"Building";
- let valid=!!candidate?.ok,reason=candidate?.reason||"Move preview over clear ground.";
+const placementPanel=(candidate,stockpile,ui)=>{
+ const definition=BUILDINGS[ui.world.placingBuilding];
+ const name=stockpile?"Village Stockpile":definition?.name||"Building";
+ let valid=!!candidate?.ok,reason=candidate?.reason||"Choose clear ground for your village.";
  if(!stockpile&&candidate){
   const checked=ui.state.canPlaceVillageBuilding(candidate.kind,candidate.x,candidate.z,candidate.turn,ui.world);
   valid=valid&&checked.ok;
-  if(!checked.ok)reason=checked.reason;
+  if(candidate.ok&&!checked.ok){
+   const missing=shortages(definition.cost,ui.state.data.village.stockpile?.items);
+   reason=missing?"Store "+missing+" more before building.":checked.reason;
+  }
  }
- return `<div class="entry village-placement-panel">
-  <h3>◇ Position: ${esc(name)}</h3>
-  <p>Move the preview by clicking terrain, using the arrow controls, or pressing the keyboard arrow keys. The gold grid appears only during building mode.</p>
-  ${arrows()}
-  ${stockpile?"":'<button type="button" class="game-button alt" data-action="grid-rotate">↻ Rotate 90° (R)</button>'}
-  <div class="village-placement-result ${valid?"valid":"invalid"}">
-   ${valid?"✓ Valid location":"✕ Cannot build here"} · X ${candidate?.x??"—"}, Z ${candidate?.z??"—"}${stockpile?"":" · "+((candidate?.turn||0)*90)+"°"}
+ return `<div class="village-placement-panel">
+  <div class="research-heading"><h3>${esc(name)}</h3><span class="tag">${ui.world.placementPinned?"Position pinned":"Choose a position"}</span></div>
+  <p class="context-note">Click terrain to pin the preview. Adjust with arrows${stockpile?"":" or rotate"}, then confirm.</p>
+  ${arrows(!stockpile)}
+  <div class="village-placement-result ${valid?"valid":"invalid"}" role="status">
+   <strong>${valid?"✓ Ready to place":"Choose another location or add supplies"}</strong>
    <small>${esc(reason)}</small>
+   <small>X ${candidate?.x??"—"} · Z ${candidate?.z??"—"}${stockpile?"":" · "+((candidate?.turn||0)*90)+"°"}</small>
   </div>
   <div class="village-placement-buttons">
-   <button type="button" data-action="${stockpile?"confirm-stockpile":"confirm-building"}" ${!valid?"disabled":""}>✓ Confirm Placement</button>
+   <button type="button" data-action="${stockpile?"confirm-stockpile":"confirm-building"}" ${!valid?"disabled":""}>${stockpile?"Found village":"Confirm placement"}</button>
    <button type="button" class="game-button alt" data-action="${stockpile?"cancel-stockpile":"cancel-building"}">Cancel</button>
   </div>
-  <small>Keyboard: arrow keys to move, Enter to confirm, Escape to cancel${stockpile?"":", R to rotate"}.</small>
+  <small class="context-note">Enter confirms · Escape cancels</small>
  </div>`;
 };
-export function villagePanel(ui){
- const state=ui.state,world=ui.world,village=state.data.village,pile=village.stockpile;
- const buildings=village.buildings||[];
- let html='<div class="panel-title"><h2>Our Village</h2><small>Free build grid</small></div>';
- html+=`<div class="village-population"><div><small>VILLAGE POPULATION</small><strong>${village.population} / ${state.villageCapacity()}</strong></div><span>${buildings.length} constructed</span></div>`;
- if(!pile){
-  html+='<div class="entry village-home"><h3>🏕 Found Your Village</h3>';
-  html+='<p>Your first Stockpile defines your village center. Place it on clear ground, then return with gathered resources. No huts or construction slots appear until you choose what to build.</p>';
-  html+='<small>Free first stockpile · 2m snapping · Clear, level ground</small>';
-  if(world.placingStockpile)html+=placementPanel(world.stockpileCandidate,true,ui);
-  else html+='<button type="button" data-action="place-stockpile">Choose stockpile location</button><button type="button" class="game-button alt" data-action="found-nearby-stockpile">Found at nearby clearing</button>';
-  html+='</div>';
-  return html;
- }
- const atHome=near(ui),storage=state.stockpileInfo();
- html+=`<div class="entry village-home"><h3>🏕 Village Stockpile <span class="tag">Home base</span></h3>
- <p>Resources collected in your Pack must be brought home. Village construction costs come from this stockpile.</p>
- <small>Center X ${pile.x}, Z ${pile.z} · Building radius ${VILLAGE_RADIUS}m · Grid 2m</small>
- <div class="pack-capacity"><span>Stored materials</span><strong>${storage.used} / ${STOCKPILE_CAPACITY}</strong></div>`;
- html+='<div class="stockpile-resource-list">';
+function storagePanel(ui){
+ const state=ui.state,pile=state.data.village.stockpile,storage=state.stockpileInfo(),atHome=near(ui);
+ let html=`<div class="pack-capacity"><span>Village storage</span><strong>${storage.used} / ${STOCKPILE_CAPACITY}</strong></div>
+  <p class="context-note">Bring gathered materials here. All village buildings use these stored supplies.</p>
+  <div class="stockpile-resource-list">`;
  for(const id of ITEM_IDS){
+  const carried=state.inventoryCount(id),stored=storage.items[id]||0;
+  const deposit=Math.min(12,carried,STOCKPILE_CAPACITY-storage.used);
+  const take=Math.min(12,stored,itemCapacity(state.data.inventory,id));
   html+=`<div class="stockpile-resource-row"><span>${ITEMS[id].icon} ${esc(ITEMS[id].name)}</span>
-  <span class="stockpile-balance">Pack <b>${state.inventoryCount(id)}</b> · Stored <b>${storage.items[id]}</b></span>
-  <div class="stockpile-actions">
-   <button type="button" data-action="deposit-stockpile" data-item="${id}" ${!atHome||!state.inventoryCount(id)||storage.used>=STOCKPILE_CAPACITY?"disabled":""}>Deposit 12</button>
-   <button type="button" data-action="withdraw-stockpile" data-item="${id}" ${!atHome||!storage.items[id]?"disabled":""}>Take 12</button>
-  </div></div>`;
+   <span class="stockpile-balance">Stored <b>${stored}</b> · Carried <b>${carried}</b></span>
+   <div class="stockpile-actions">
+    <button type="button" data-action="deposit-stockpile" data-item="${id}" ${!atHome||deposit<=0?"disabled":""}>Deposit ${deposit>0?deposit:12}</button>
+    <button type="button" class="game-button alt" data-action="withdraw-stockpile" data-item="${id}" ${!atHome||take<=0?"disabled":""}>Take ${take>0?take:12}</button>
+   </div></div>`;
  }
  html+=`</div><div class="stockpile-primary-actions">
- <button type="button" data-action="return-stockpile">${atHome?"At stockpile ✓":"Walk to stockpile"}</button>
- <button type="button" data-action="deposit-all-stockpile" ${!atHome||state.inventoryUsed()===0||storage.used>=STOCKPILE_CAPACITY?"disabled":""}>Deposit all backpack resources</button></div>
- <small>${atHome?"You are close enough to transfer resources.":"Move within "+STOCKPILE_INTERACT_RANGE+"m to transfer materials."}</small></div>`;
- html+='<div class="panel-title"><h2>Construction</h2><small>Place each structure yourself</small></div>';
- html+='<p class="info">No preset construction circles. Choose a building to open the 2-meter grid, move its preview wherever you like within village territory, then confirm. Trees, rocks, steep ground and other buildings can block a location.</p>';
- if(world.placingBuilding)html+=placementPanel(world.buildingCandidate,false,ui);
- html+='<div class="village-build-catalog">';
- for(const [kind,building] of Object.entries(BUILDINGS)){
-  const already=UNIQUE_BUILDINGS.includes(kind)&&buildings.some(b=>b.kind===kind);
-  const locked=building.requires.filter(req=>!state.data.technologies.includes(req)&&!state.data.civics.includes(req));
-  const missing=Object.entries(building.cost).filter(([id,n])=>(storage.items[id]||0)<n);
-  html+=`<div class="entry village-build-card"><h3>${kindIcon[kind]} ${esc(building.name)}${already?' <span class="tag">Built</span>':""}</h3>
-   <p>${esc(building.description)}</p>
-   ${building.capacity?"<small>+3 housing capacity per hut</small>":""}
-   <small>From stockpile: ${esc(cost(building.cost))}</small>
-   ${building.requires.length?'<small>Requires '+esc(building.requires.map(prereq).join(", "))+'</small>':""}
-   <button type="button" data-action="start-building" data-kind="${kind}" ${already||locked.length?"disabled":""}>
-    ${already?"Already built":locked.length?"Unlock "+esc(prereq(locked[0])):world.placingBuilding===kind?"Change placement":"Place "+esc(building.name)}
-   </button>
-   ${missing.length&&!already?'<small>Gather and deposit more '+esc(missing.map(([id])=>id).join(" and "))+' before confirming.</small>':""}
+  <button type="button" data-action="deposit-all-stockpile" ${!atHome||state.inventoryUsed()===0||storage.used>=STOCKPILE_CAPACITY?"disabled":""}>Deposit all materials</button>
+  ${!atHome?'<button type="button" class="game-button alt" data-action="return-stockpile">Walk to stockpile</button>':""}
+ </div><p class="context-note">${atHome?"Within reach · transfers available":"Move within "+STOCKPILE_INTERACT_RANGE+" m to transfer supplies."}</p>
+ <div class="village-population"><div><small>VILLAGERS</small><strong>${state.data.village.population} / ${state.villageCapacity()}</strong></div><span>${state.data.village.buildings.length} buildings · ${VILLAGE_RADIUS} m territory</span></div>`;
+ return html;
+}
+function buildPanel(ui){
+ const state=ui.state,village=state.data.village,items=village.stockpile.items;
+ let html='<p class="context-note">Give each part of village life a place in the world. Select a blueprint, choose its location, and build using village storage.</p><div class="village-build-catalog">';
+ for(const kind of ["lore","council","family","hearth"]){
+  const definition=BUILDINGS[kind],existing=village.buildings.filter(b=>b.kind===kind);
+  const already=UNIQUE_BUILDINGS.includes(kind)&&existing.length>0;
+  const locked=definition.requires.filter(req=>!state.data.technologies.includes(req)&&!state.data.civics.includes(req));
+  const missing=shortages(definition.cost,items);
+  html+=`<div class="entry village-build-card"><div class="research-heading"><h3>${kindIcon[kind]} ${esc(definition.name)}</h3>${existing.length?`<span class="tag">${existing.length} built</span>`:""}</div>
+   <p>${esc(purpose[kind])}</p>
+   <small class="building-purpose">${kind==="family"?"Opens Dynasty · +3 housing capacity":kind==="hearth"?"Visible village fire":"Opens "+destination[kind]}</small>
+   ${!already?requiredMaterials(definition.cost,items):""}
+   ${already?`<button type="button" data-action="select-building" data-id="${esc(existing[0].id)}">Open ${destination[kind]}</button>`:
+    `<button type="button" data-action="start-building" data-kind="${kind}" ${locked.length?"disabled":""}>${locked.length?"Requires "+esc(prereq(locked[0])):"Place "+esc(definition.name)}</button>`}
+   ${!already&&missing?`<small class="context-note">Need ${esc(missing)} more in storage.</small>`:""}
   </div>`;
  }
- html+='</div>';
- if(buildings.length){
-  html+='<div class="panel-title"><h2>Constructed Buildings</h2><small>Saved in your village</small></div>';
-  for(const building of buildings){
-   const def=BUILDINGS[building.kind];
-   html+=`<div class="entry village-built-item ${ui.selectedBuildingId===building.id?"chosen":""}">
-    <strong>${kindIcon[building.kind]} ${esc(def.name)}</strong>
-    <small>X ${building.x}, Z ${building.z} · ${building.turn*90}°</small>
-    <button type="button" class="game-button alt" data-action="select-building" data-id="${esc(building.id)}">View building</button>
-   </div>`;
-  }
+ return html+"</div>";
+}
+function buildingsPanel(ui){
+ const buildings=ui.state.data.village.buildings;
+ if(!buildings.length)return '<div class="empty-state"><h3>Your village begins here</h3><p>Build a shelter for discovery, a lodge for culture, or a home for your dynasty.</p><button type="button" data-action="village-section" data-section="build">Browse blueprints</button></div>';
+ let html='<p class="context-note">Click these buildings in the world to return to their activities.</p>';
+ for(const building of buildings){
+  const definition=BUILDINGS[building.kind];
+  if(!definition)continue;
+  html+=`<div class="entry village-built-item ${ui.selectedBuildingId===building.id?"chosen":""}">
+   <strong>${kindIcon[building.kind]} ${esc(definition.name)}</strong><span class="tag">${destination[building.kind]}</span>
+   <small>X ${building.x} · Z ${building.z} · ${building.turn*90}°</small>
+   <button type="button" class="game-button alt" data-action="select-building" data-id="${esc(building.id)}">Open ${destination[building.kind]}</button>
+  </div>`;
  }
  return html;
 }
-export function selectVillageBuilding(ui,id){
- ui.selectedBuildingId=id;ui.tab="village";ui.render();
- document.getElementById("right")?.classList.add("open");
+export function villagePanel(ui){
+ const world=ui.world,pile=ui.state.data.village.stockpile;
+ if(world.placingStockpile)return placementPanel(world.stockpileCandidate,true,ui);
+ if(world.placingBuilding)return placementPanel(world.buildingCandidate,false,ui);
+ if(!pile)return `<div class="entry village-home"><span class="kicker">A PLACE TO CALL HOME</span><h3>Establish your camp</h3>
+  <p>Place a free stockpile on clear ground. This becomes the center of your village and the place to store supplies and plan buildings.</p>
+  <small>Free to place · 2 m grid · Clear, level ground</small>
+  <button type="button" data-action="place-stockpile">Choose a location</button>
+  <button type="button" class="game-button alt" data-action="found-nearby-stockpile">Use a nearby clearing</button></div>`;
+ const section=["storage","build","buildings"].includes(ui.villageSection)?ui.villageSection:"storage";
+ return `<nav class="section-tabs" aria-label="Village activities">${[["storage","Storage"],["build","Build"],["buildings","Buildings"]].map(([id,label])=>`<button type="button" data-action="village-section" data-section="${id}" class="${section===id?"active":""}" aria-pressed="${section===id}">${label}</button>`).join("")}</nav>`+
+  (section==="build"?buildPanel(ui):section==="buildings"?buildingsPanel(ui):storagePanel(ui));
 }
+export function selectVillageBuilding(ui,id){return ui.openBuildingPanel(id)}
 export function openStockpile(ui){
- ui.tab="village";ui.render();document.getElementById("right")?.classList.add("open");
+ ui.villageSection="storage";
+ return ui.openPanel("village");
 }
 export function handleVillageAction(ui,btn){
  const action=btn.dataset.action,world=ui.world,state=ui.state;
- if(action==="open-village"){openStockpile(ui);return true}
+ if(action==="open-village"){
+  if(!state.data.village.stockpile)ui.openFounding();
+  else{world.focusStockpile?.();ui.toast("Click your stockpile to manage the village.");}
+  return true;
+ }
+ if(action==="village-section"){
+  if(["storage","build","buildings"].includes(btn.dataset.section))ui.villageSection=btn.dataset.section;
+  ui.resetScroll=true;
+  ui.render();return true;
+ }
  if(action==="place-stockpile"){
-  if(world.beginStockpilePlacement())ui.toast("Move your stockpile preview, then confirm its position.");
+  if(world.beginStockpilePlacement())ui.toast("Choose clear ground, then confirm your stockpile.");
   ui.render();return true;
  }
  if(action==="found-nearby-stockpile"){
-  ui.toast(world.foundSuggestedStockpile()?"Village stockpile established!":"No clear ground nearby; move to a clearing.");
+  const placed=world.foundSuggestedStockpile();
+  if(placed)ui.villageSection="storage";
+  ui.toast(placed?"Your village is founded. Click the stockpile to return here.":"No clear ground nearby. Move to a clearing and try again.");
   ui.render();return true;
  }
  if(action==="cancel-stockpile"){world.cancelStockpilePlacement();ui.render();return true}
@@ -135,35 +166,36 @@ export function handleVillageAction(ui,btn){
  if(action==="grid-rotate"){world.rotateBuilding();ui.render();return true}
  if(action==="confirm-stockpile"){
   const result=world.confirmStockpilePlacement();
-  ui.toast(result.ok?"Village founded! Your Stockpile is ready.":result.reason);
+  if(result.ok)ui.villageSection="storage";
+  ui.toast(result.ok?"Village founded. Your stockpile is ready.":result.reason);
   ui.render();return true;
  }
  if(action==="start-building"){
   const kind=btn.dataset.kind;
-  if(BUILDINGS[kind]&&world.beginBuildingPlacement(kind,state.data.village))
-   ui.toast("Move the "+BUILDINGS[kind].name+" preview using arrows or the ground.");
+  ui.villageSection="build";
+  if(BUILDINGS[kind]&&world.beginBuildingPlacement(kind,state.data.village))ui.toast("Click terrain to position the "+BUILDINGS[kind].name+".");
   ui.render();return true;
  }
  if(action==="confirm-building"){
   const result=world.confirmBuildingPlacement();
-  ui.toast(result.ok?BUILDINGS[result.building.kind].name+" constructed!":result.reason);
+  ui.toast(result.ok?BUILDINGS[result.building.kind].name+" built. Click it to open "+destination[result.building.kind]+".":result.reason);
   ui.render();return true;
  }
  if(action==="select-building"){selectVillageBuilding(ui,btn.dataset.id);return true}
  if(action==="return-stockpile"){
   if(!near(ui))world.walkToStockpile();
-  else ui.toast("You're standing at your village stockpile.");
+  else ui.toast("You're within reach of your stockpile.");
   return true;
  }
  if(["deposit-all-stockpile","deposit-stockpile","withdraw-stockpile"].includes(action)){
-  if(!near(ui)){ui.toast("Return to your stockpile before transferring resources.");return true}
+  if(!near(ui)){ui.toast("Move closer to your stockpile to transfer materials.");return true}
   const p=world.player.position;let qty=0;
   if(action==="deposit-all-stockpile")qty=state.depositAllToStockpile(p.x,p.z);
   else if(action==="deposit-stockpile")qty=state.depositToStockpile(btn.dataset.item,12,p.x,p.z);
   else qty=state.withdrawFromStockpile(btn.dataset.item,12,p.x,p.z);
   ui.toast(qty?(action==="withdraw-stockpile"?"Took ":"Deposited ")+qty+
-   (action==="deposit-all-stockpile"?" resources.":" "+ITEMS[btn.dataset.item].name+"."):
-   "Nothing transferred. Check pack space or stockpile capacity.");
+   (action==="deposit-all-stockpile"?" materials.":" "+ITEMS[btn.dataset.item].name+"."):
+   "Nothing transferred. Check inventory space and stockpile capacity.");
   return true;
  }
  return false;

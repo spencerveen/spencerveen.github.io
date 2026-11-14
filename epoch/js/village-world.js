@@ -1,5 +1,5 @@
-import {BUILDINGS} from "./settlement.js?v=20261114a";
-import {BUILDING_RADIUS,footprint} from "./village-placement.js?v=20261114a";
+import {BUILDINGS} from "./settlement.js?v=20261114b";
+import {BUILDING_RADIUS,footprint} from "./village-placement.js?v=20261114b";
 import {BUILD_GRID,VILLAGE_RADIUS} from "./stockpile.js?v=20261114a";
 // Low-poly architectural placeholders for the first settlement-building slice.
 // Each visual occupies a fixed build plot; meshes and interaction metadata are
@@ -97,22 +97,26 @@ function cookingStation(world,parent,m){
  world.fireLight.diffuse=new B.Color3(1,.58,.2);
  world.fireLight.range=10;
 }
-function createLabel(world,parent,label,m){
- // A readable floating marker to identify the 3D construction location.
- const plane=B.MeshBuilder.CreatePlane("Village: "+label,{width:3.7,height:.63},world.scene);
- plane.parent=parent;plane.position=V(0,3.95,0);
+function createLabel(world,parent,title,subtitle,height){
+ const plane=B.MeshBuilder.CreatePlane("Village: "+title,{width:2.15,height:.5},world.scene);
+ plane.parent=parent;plane.position=V(0,height,0);
  plane.billboardMode=B.Mesh.BILLBOARDMODE_ALL;
- const texture=new B.DynamicTexture("village label "+label,{width:512,height:96},world.scene,false);
+ const texture=new B.DynamicTexture("village label "+title,{width:512,height:120},world.scene,false);
  texture.hasAlpha=true;
  const ctx=texture.getContext();
- ctx.clearRect(0,0,512,96);
- ctx.fillStyle="rgba(12,24,18,0.85)";ctx.fillRect(0,0,512,96);
- ctx.strokeStyle="#d2ba83";ctx.strokeRect(3,3,506,90);
- ctx.fillStyle="#f1e5ce";ctx.font="bold 33px Arial";ctx.textAlign="center";
- ctx.fillText(label,256,60,476);texture.update();
- const labelMat=new B.StandardMaterial("label "+label,world.scene);
- labelMat.diffuseTexture=texture;labelMat.opacityTexture=texture;
+ ctx.clearRect(0,0,512,120);
+ ctx.fillStyle="rgba(13,27,21,.9)";ctx.fillRect(2,2,508,116);
+ ctx.strokeStyle="#8c8264";ctx.lineWidth=2;ctx.strokeRect(3,3,506,114);
+ ctx.fillStyle="#f0e4c8";ctx.font="600 36px Arial";ctx.textAlign="center";
+ ctx.fillText(title,256,51,470);
+ ctx.fillStyle="#a9b8a9";ctx.font="23px Arial";ctx.fillText(subtitle,256,89,470);
+ texture.update();
+ const labelMat=new B.StandardMaterial("label "+title,world.scene);
+ labelMat.diffuseTexture=texture;labelMat.emissiveTexture=texture;
+ labelMat.diffuseColor=B.Color3.White();labelMat.emissiveColor=B.Color3.White();
+ labelMat.specularColor=B.Color3.Black();labelMat.useAlphaFromDiffuseTexture=true;
  labelMat.disableLighting=true;labelMat.backFaceCulling=false;plane.material=labelMat;
+ plane.onDisposeObservable.addOnce(()=>{labelMat.dispose();texture.dispose();});
  return plane;
 }
 export function createVillageWorld(world,onBuildingClick){
@@ -149,7 +153,10 @@ function makeBuiltStructure(world,entry){
  if(kind==="council")hut(world,root,world.villageMats,true);
  if(kind==="lore")techShelter(world,root,world.villageMats);
  if(kind==="hearth")cookingStation(world,root,world.villageMats);
- // No unbuilt marker rings, labels, signposts or empty template slots.
+ const labels={family:["Dynasty","Family Hut",3.35],council:["Culture","Council Lodge",3.65],lore:["Technology","Toolmaker's Shelter",3.65],hearth:["Cooking Hearth","Village fire",2.85]};
+ const label=labels[kind];
+ if(label)createLabel(world,root,...label);
+ // Context labels exist only on constructed buildings.
  for(const mesh of root.getChildMeshes()){
   mesh.metadata={...(mesh.metadata||{}),buildingId:entry.id,buildingKind:entry.kind};
   mesh.isPickable=true;

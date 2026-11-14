@@ -1,74 +1,66 @@
-# Epoch — Stone Age Village Foundation
+# Epoch — Stone Age Village
 
-## First settlement milestone
+Village activities are tied to physical structures. **Inventory** and **Skills** are the only global gameplay tabs. Start through the **Establish camp** objective; after founding, click the stockpile for the village's **Storage / Build / Buildings** sections.
 
-The initial site is **Wanderer's Clearing**. The world contains five fixed, clickable construction sites to grow the village in a guided first building pass. Each construction plot has a boundary ring, a visible label, corner markers, and a distinct building when completed.
+## Founding and storage
 
-| Plot | Building | Resources | Gate | Current benefit |
-|---|---|---|---|---|
-| Family Hut 1 | Family Hut | 10 wood / 6 stone | None | +3 population capacity |
-| Family Hut 2 | Family Hut | 10 wood / 6 stone | None | +3 population capacity |
-| Cooking site | Cooking Hearth | 6 wood / 5 stone | Control of Fire | 3D cooking station; recipes later |
-| Research site | Toolmaker's Shelter | 12 wood / 8 stone | Stone Toolmaking | 3D workshop; tech XP later |
-| Gathering site | Council Lodge | 14 wood / 8 stone | Tribal Community | 3D longhouse; culture bonuses later |
+The first stockpile is free. Choose clear, sufficiently level ground using its preview, or use the nearby-clearing option. Click terrain to pin the preview, adjust it on the 2-meter grid, and confirm. The stockpile becomes the village center and holds **480 individual items**, separately from the character's 10-slot Inventory.
 
-Names are evocative game terminology, not claims that every real prehistoric society used these exact buildings or names. The region has not yet been assigned a specific historical location or archaeological tradition.
+Clicking the stockpile approaches it and opens village storage when in range. Transfers require the player to be within **5 meters**. Deposit all carried materials or transfer up to 12 of a resource at a time, limited by available supplies and capacity. The panel distinguishes stored and carried quantities and updates transfer availability when interaction range changes.
 
-## Construction controls
+All buildings spend **village storage** materials. Research, traditions, and personal crafting use **carried Inventory** materials instead. Withdraw supplies when needed for those activities.
 
-Click a marked plot in the 3D world to automatically approach it. Its details open in the **Village** tab. You can also open the Village tab directly and click **Walk to construction site**. While near the edge of the plot, press **Construct** if you have the materials and prerequisite technology/civic. Construction earns a small amount of personal Construction skill XP.
+## Buildings and activities
 
-The player must approach a construction site to build; this prevents instant world-wide building from anywhere on the map. The character must also stand outside the plot footprint so the new building doesn't trap them inside its collision volume. Buildings add collision and pathfinding obstacles once built.
+| Building | Stored material cost | Research gate | Current activity or effect |
+|---|---|---|---|
+| Family Hut | 10 wood / 6 stone | None | Opens Dynasty; +3 housing capacity per hut |
+| Toolmaker's Shelter | 12 wood / 8 stone | None | Opens Technology research |
+| Council Lodge | 14 wood / 8 stone | None | Opens Culture and traditions |
+| Cooking Hearth | 6 wood / 5 stone | Control of Fire | Visible fire and hearth information; recipes later |
 
-## Population capacity
+Toolmaker's Shelter and Council Lodge can be built **before any research or traditions**. Their interfaces provide access to those systems, so requiring their own discoveries first would block progression. A village may have multiple Family Huts, but only one shelter, lodge, and hearth.
 
-The existing four named villagers and the player are the initial five people at camp. This prototype begins at **5/5 capacity**, representing temporary sleeping places. Each Family Hut adds **3 maximum resident slots**, allowing 5/8 and then 5/11. This change is immediately functional, but additional settlers **do not spawn automatically yet**. Population, housing occupancy, survival consumption, villager jobs and family household assignment come in later milestones.
+Click a completed Toolmaker's Shelter, Council Lodge, or Family Hut in the world to open its activity. The stockpile's **Buildings** section also lists completed structures and opens their corresponding activities. Objective actions help locate the next relevant building. A Cooking Hearth opens its information panel; Control of Fire alone does not create a free campfire.
 
-## Other buildings, later effects
+Names are evocative game terminology. The prototype has not been assigned a specific archaeological tradition or historical region.
 
-- **Cooking Hearth:** real cooking system after hunting and raw meat resources arrive. Food processing, fuel and cooking skill are future extensions. The fire ring from Control of Fire remains in the same place.
-- **Toolmaker's Shelter:** future knowledge production, workshops, experimentation and early tool recipes. No automatic Knowledge/Tech XP in this first implementation.
-- **Council Lodge:** future culture generation, social decisions, tradition unlocks, oral history and ceremonies. No automatic Culture XP in this first implementation.
+## Free-grid construction
 
-These structures are separate from future farm plots, animal husbandry, mines, advanced technology and region-specific settlement layouts.
+1. Click the stockpile, then open **Build**.
+2. Select a blueprint. Costs show current stored quantities, required amounts, and shortages.
+3. Click ground to pin the preview. Use arrow keys or on-screen arrows for 2-meter adjustments; use **R** or Rotate for 90-degree turns. Arrow adjustments and rotation also pin the preview. Camera rotation does not change its chosen position.
+4. Use **Confirm placement** or Enter when the site and supplies are valid. Escape cancels placement. Closing the panel or switching to a personal interface also cancels placement.
 
-## Ideas for the next village phase
+The whole footprint must fit within the stockpile's **24-meter village radius**. Nearby buildings, the stockpile, trees, rocks, and steep terrain restrict placement. Only completed structures remain in the world; there are no preset empty plot circles. Construction spends stored supplies and grants Construction XP.
 
-1. **Storage Pit** or **Granary:** increases resource storage; early subterranean pits could be a credible prehistoric option.
-2. **Hide-Drying Rack:** crafts leather/hide for primitive clothing and gear.
-3. **Medicine Shelter:** heals injuries and adds a healing-herbs skill.
-4. **Watchfire:** reveals approaching animals and nearby rival tribes.
-5. **Animal Pen:** captures and domesticates animals when husbandry becomes available.
-6. **Meeting Circle:** outdoor culture and diplomacy before permanent halls; could upgrade into the Council Lodge.
+Finished structures save independent IDs, kinds, coordinates, and quarter-turn rotations. Current controls place new structures; moving, rotating, or demolishing existing buildings, relocating a founded stockpile, and a general village edit mode are not implemented.
 
-Only the four primary building types have been implemented for now. The additional options are design ideas, not hidden gameplay features.
+## Housing and succession
 
-## Source layout
+The player and four existing villagers start at **5 / 5** capacity. Each Family Hut adds **3** maximum resident spaces: one hut gives 5 / 8, two give 5 / 11. Extra capacity does not automatically spawn settlers. Household assignment, population growth, food consumption, and worker jobs are future systems.
 
-- `js/settlement.js`: building definitions, costs, prerequisites, plot IDs/coordinates, housing formulas
-- `js/state.js`: persistent construction, inventory deductions, eligibility checks, save migration, Construction XP
-- `js/village-world.js`: 3D plot geometry, built structures, interaction markers, visibility and collisions
-- `js/world.js`: click-to-approach pathfinding and plot interactions
-- `js/village-ui.js`: Village panel, site selection, walk-to-build UI
-- `js/ui.js`: integration with current objectives, top-level tabs, state updates
-- `tests/check-settlement.mjs`: persistence, capacity, prerequisites and save migration
-- `tests/browser-walk.mjs`: graphical construction, build sites and walking interaction
+Click a Family Hut to view Dynasty and the family chronicle. **Plan succession** first opens a confirmation dialog explaining that control passes to an 18-year-old descendant and the calendar advances 24 years. Personal skill XP retention is 8%, or 15% with Oral Tradition, or 25% with Apprenticeship. Buildings, stored and carried supplies, discoveries, traditions, and saved resource changes persist.
 
-## Save migration
+The always-available game menu provides Save, Help, and Save & return to title. These actions are separate from Dynasty.
 
-The storage key remains `epoch.stoneage.v1` and no existing save is deleted. Existing `shelter:true` is converted into `village.plots.family_1="family"` on first load, without charging materials, so the existing hut keeps its value. Current and future generations inherit village construction progress. Resetting the demo still requires explicit confirmation.
+## Persistence and migration
 
-## Later: free placement and growing settlements
+Three local save slots store the village with the rest of its world. The old `epoch.stoneage.v1` save is preserved as a one-time migration source. Older completed plot-based buildings convert to individual building records and retain their locations; an old built village without storage receives a home stockpile. Original plot IDs exist only for compatibility, not as new-game construction sites.
 
-These first five sites are **fixed**. Moving/placing arbitrary new building footprints requires snapping, collision checks, persistent coordinates, navigation around structures and a scalable map. We should introduce those systems separately instead of hardcoding one building per location forever. Each construction site is already identified by a stable plot ID to support that upgrade.
+Depleted trees, exhausted stone, and cleared bushes remain removed across reloads and descendants. Empty berry bushes retain their plant and regrow fruit after two minutes. Existing inventory overflow remains recoverable rather than being discarded.
 
-### Initial acceptance checklist
+## Planned extensions
 
-- Village tab displays current population/capacity and five construction locations.
-- Clicking plots in 3D walks the character to the site and opens the correct details.
-- All four models look distinct and toggle from empty plot to built structure.
-- Research/culture gates and material requirements work.
-- Family Hut #1 and #2 each add exactly 3 housing capacity.
-- Built structures persist on refresh and across descendants.
-- Existing shelter is respected as the first hut.
-- Babylon 3D scene, character animation and resource gathering continue to work.
+Cooking recipes, automated workshop/research or Culture production, growing populations, household jobs, roads, fences, decorative variants, additional storage buildings, and editing completed layouts are future work. The present update changes how existing activities are reached and how their panels work; it does not add those simulations.
+
+## Source and verification
+
+- `js/settlement.js`: building definitions, costs, housing, and legacy plot IDs.
+- `js/state.js`: construction spending, research/civic eligibility, succession, and save migration.
+- `js/village-placement.js`: grid snapping, territory, slope, and overlap checks.
+- `js/village-world.js` / `js/stockpile-world.js`: world models, interaction metadata, and previews.
+- `js/world.js`: picking, stockpile approach, input handling, and pinned placement.
+- `js/village-ui.js` / `js/ui.js`: contextual activities, objective guidance, and dialogs.
+- `tests/check-contextual-ui.mjs`, `check-village-grid.mjs`, `check-stockpile.mjs`, and `check-settlement.mjs`: state and compatibility checks.
+- `tests/browser-contextual-ui.mjs` / `tests/browser-walk.mjs`: browser interaction and responsive-layout checks.

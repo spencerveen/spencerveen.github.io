@@ -3,19 +3,35 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#101b17"><title>Epoch | Dawn of the First Tribe</title>
-<link rel="stylesheet" href="./styles.css?v=20261114a">
+<link rel="stylesheet" href="./styles.css?v=20261114b">
 <script src="https://cdn.babylonjs.com/babylon.js" defer></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js" defer></script>
-<script type="module" src="./js/main.js?v=20261114a"></script>
+<script type="module" src="./js/main.js?v=20261114b"></script>
 </head>
 <body>
-<canvas id="scene" aria-label="3D Stone Age world"></canvas><div class="vignette"></div>
-<header><div class="branding"><a href="/ai-projects/">← Projects</a><span class="monogram">E</span><div><strong>EPOCH</strong><small>DAWN OF THE FIRST TRIBE · PRE-ALPHA</small></div></div><div class="stats"><span>STONE AGE</span><span id="year">12,000 BCE</span><span id="generation">GEN I</span></div><button id="toggle">☰</button></header>
-<aside id="left"><span class="kicker">THE FIRST CHAPTER</span><h1>Before the Dawn</h1><p class="italic">History begins with a single family.</p><div class="objective"><span class="kicker">CURRENT OBJECTIVE</span><h3 id="objective-title">Gather the essentials</h3><p id="objective-description">Collect wood and stone, then discover fire.</p><small id="objective-progress">0 / 4 wood · 0 / 2 stone</small></div><div class="mini"><small>ANCESTOR</small><b id="ancestor-name">Aren</b><span id="ancestor-age">Age 18 · Founder</span></div><div class="mini"><small>SETTLEMENT</small><b id="settlement">Wanderer's Clearing</b><span id="settlement-status">Unsettled wilderness</span></div><button id="help" class="text-button">ⓘ Controls & guide</button></aside>
-<aside id="right"><nav class="tabs"><button data-tab="pack" class="active">Pack</button><button data-tab="village">Village</button><button data-tab="skills">Skills</button><button data-tab="tech">Tech</button><button data-tab="culture">Culture</button><button data-tab="dynasty">Dynasty</button></nav><main id="panel"></main></aside>
-<footer><div class="keys">W A S D <small>move</small></div><div class="status"><b id="action">The wilderness awaits</b><span id="details">Click a tree, rock or berry bush to collect resources.</span></div><div class="currency">✦ <b id="science">0</b> Knowledge &nbsp; ❖ <b id="culture">0</b> Culture</div></footer>
-<div id="toasts"></div>
-<div id="modal" class="modal-overlay hidden"><div class="modal"><button id="close-modal" aria-label="Close">×</button><span class="kicker">FIELD NOTES</span><h2>How to play</h2><div id="guide"></div></div></div>
+<canvas id="scene" tabindex="0" aria-label="3D Stone Age world"></canvas><div class="vignette"></div>
+<header>
+ <div class="branding"><a href="/ai-projects/" aria-label="Back to projects">← Projects</a><span class="monogram" aria-hidden="true">E</span><div><strong>EPOCH</strong><small>DAWN OF THE FIRST TRIBE</small></div></div>
+ <div class="stats"><span>STONE AGE</span><span id="year">12,000 BCE</span><span id="generation">GEN I</span></div>
+ <button id="toggle" type="button" aria-label="Open game menu" aria-haspopup="dialog" aria-controls="modal" aria-expanded="false">☰</button>
+</header>
+<aside id="left" aria-label="Current objective">
+ <span class="kicker">YOUR NEXT CHAPTER</span><h2 id="objective-title">Establish your camp</h2>
+ <p id="objective-description">Choose a clearing for your first stockpile.</p>
+ <div class="objective-bottom"><small id="objective-progress">Your first stockpile is free</small><button id="objective-action" type="button" data-action="objective">Establish camp</button></div>
+ <div class="hero-chip"><b id="ancestor-name">Aren</b><span id="ancestor-age">Age 18 · Founder</span></div><span id="settlement-status">A new beginning</span>
+</aside>
+<nav id="hud-tools" class="hud-tools" aria-label="Personal interfaces">
+ <button type="button" data-tab="pack" aria-controls="right" aria-expanded="false"><span class="tool-icon" aria-hidden="true">▣</span><span class="tool-label">Inventory</span><kbd>I</kbd></button>
+ <button type="button" data-tab="skills" aria-controls="right" aria-expanded="false"><span class="tool-icon" aria-hidden="true">✧</span><span class="tool-label">Skills</span><kbd>K</kbd></button>
+</nav>
+<aside id="right" class="context-panel" aria-label="Inventory" aria-hidden="true" inert>
+ <div class="context-heading"><div><span class="kicker" id="context-eyebrow">YOUR ADVENTURER</span><h2 id="context-title">Inventory</h2></div><button id="close-panel" type="button" aria-label="Close panel">×</button></div>
+ <main id="panel" tabindex="-1"></main>
+</aside>
+<footer><div class="status" role="status" aria-live="polite"><b id="action">A world to make your own</b><span id="details">Click resources to gather. Click your village buildings to use them.</span></div><div class="currency"><span>✦ <b id="science">0</b> Knowledge</span><span>❖ <b id="culture">0</b> Culture</span></div></footer>
+<div id="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
+<div id="modal" class="modal-overlay hidden"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="dialog-title" tabindex="-1"><button id="close-modal" type="button" aria-label="Close dialog">×</button><span class="kicker" id="dialog-eyebrow">A MOMENT BY THE FIRE</span><h2 id="dialog-title">Game menu</h2><div id="guide"></div></div></div>
 <div id="start-screen" role="region" aria-label="Epoch title and save selection">
  <div class="epoch-opening-card"><div class="epoch-opening-header"><span class="epoch-crest">E</span><span><strong>EPOCH</strong><small>DAWN OF THE FIRST TRIBE</small></span></div>
  <h1>Before the Dawn</h1><p>Preparing the title screen...</p></div>

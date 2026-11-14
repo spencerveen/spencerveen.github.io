@@ -2,10 +2,10 @@ import {LEGACY_HOME} from "./stockpile.js?v=20261113k";
 // Stone Age building types and original plot coordinates kept solely to
 // migrate existing constructed villages. New construction uses free 2m grid.
 export const BUILDINGS={
- family:{name:"Family Hut",short:"Housing",description:"A hide-and-timber family dwelling. Adds room for three more villagers.",cost:{wood:10,stone:6},requires:[],capacity:3},
+ family:{name:"Family Hut",short:"Dynasty",description:"A home for your family. Click to open your dynasty and family chronicle. Adds room for three villagers.",cost:{wood:10,stone:6},requires:[],capacity:3},
  hearth:{name:"Cooking Hearth",short:"Cooking",description:"A communal firepit with a roasting spit. The cooking station is ready for hunting and meat recipes later.",cost:{wood:6,stone:5},requires:["fire"],capacity:0},
- lore:{name:"Toolmaker's Shelter",short:"Technology",description:"A covered workspace for experimenting with flint, tools and new discoveries. Technology bonuses come later.",cost:{wood:12,stone:8},requires:["tools"],capacity:0},
- council:{name:"Council Lodge",short:"Culture",description:"A gathering place for stories, traditions and village decisions. Culture bonuses come later.",cost:{wood:14,stone:8},requires:["community"],capacity:0}
+ lore:{name:"Toolmaker's Shelter",short:"Technology",description:"Your place of discovery. Click this shelter to open Technology and research your first advances.",cost:{wood:12,stone:8},requires:[],capacity:0},
+ council:{name:"Council Lodge",short:"Culture",description:"Your tribe's gathering place. Click this lodge to open Culture and establish lasting traditions.",cost:{wood:14,stone:8},requires:[],capacity:0}
 };
 export const PLOTS=[
  {id:"family_1",kind:"family",x:-8,z:4,rotation:0},

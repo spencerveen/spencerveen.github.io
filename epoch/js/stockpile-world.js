@@ -25,22 +25,26 @@ function pole(scene,name,parent,xyz,scale,mat){
 }
 function floatingLabel(world,parent){
  const scene=world.scene;
- const panel=B.MeshBuilder.CreatePlane("Stockpile label",{width:3.5,height:.62},scene);
- panel.parent=parent;panel.position=V(0,3.65,0);
+ const panel=B.MeshBuilder.CreatePlane("Stockpile label",{width:2.15,height:.5},scene);
+ panel.parent=parent;panel.position=V(0,2.05,0);
  panel.billboardMode=B.Mesh.BILLBOARDMODE_ALL;
- const texture=new B.DynamicTexture("Stockpile label art",{width:512,height:88},scene,false);
+ const texture=new B.DynamicTexture("Stockpile label art",{width:512,height:120},scene,false);
  texture.hasAlpha=true;
  const ctx=texture.getContext();
- ctx.clearRect(0,0,512,88);
- ctx.fillStyle="rgba(23,29,18,.88)";ctx.fillRect(0,0,512,88);
- ctx.strokeStyle="#bda56c";ctx.lineWidth=4;ctx.strokeRect(3,3,506,82);
- ctx.font="bold 34px Georgia";ctx.fillStyle="#f1e4c6";
- ctx.textAlign="center";ctx.fillText("VILLAGE STOCKPILE",256,57,490);
+ ctx.clearRect(0,0,512,120);
+ ctx.fillStyle="rgba(13,27,21,.9)";ctx.fillRect(2,2,508,116);
+ ctx.strokeStyle="#8c8264";ctx.lineWidth=2;ctx.strokeRect(3,3,506,114);
+ ctx.font="600 36px Arial";ctx.fillStyle="#f0e4c8";
+ ctx.textAlign="center";ctx.fillText("Village",256,51,470);
+ ctx.font="23px Arial";ctx.fillStyle="#a9b8a9";ctx.fillText("Stockpile",256,89,470);
  texture.update();
  const m=new B.StandardMaterial("Stockpile sign text",scene);
- m.diffuseTexture=texture;m.opacityTexture=texture;
+ m.diffuseTexture=texture;m.emissiveTexture=texture;
+ m.diffuseColor=B.Color3.White();m.emissiveColor=B.Color3.White();
+ m.specularColor=B.Color3.Black();m.useAlphaFromDiffuseTexture=true;
  m.backFaceCulling=false;m.disableLighting=true;
- panel.material=m;panel.isPickable=false;
+ panel.material=m;panel.isPickable=true;panel.metadata={stockpile:true};
+ panel.onDisposeObservable.addOnce(()=>{m.dispose();texture.dispose();});
 }
 export function createStockpileWorld(world){
  const s=world.scene;
