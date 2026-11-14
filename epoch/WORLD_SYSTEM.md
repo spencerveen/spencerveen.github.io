@@ -15,8 +15,8 @@ The environment still uses the original Epoch trees (cylindrical trunks and gree
 | Existing saves | Stable seed 12000; houses and resources preserved |
 | Biomes | Forest only |
 | Chunk size | 32 × 32 meters |
-| Visible terrain | 5 × 5 chunks (160 × 160 meters window) |
-| Detailed terrain | 3 × 3 chunks (96 × 96 meters window) |
+| Visible terrain | 7 × 7 chunks (224 × 224 meters window) |
+| Detailed terrain | 5 × 5 chunks (160 × 160 meters window) |
 | Mesh resolution | 16 subdivisions per 32-meter chunk |
 | World edges | No fixed playable border while walking |
 | Scenery | Trees, rocks, berry bushes, short grass and deer |
@@ -24,7 +24,7 @@ The environment still uses the original Epoch trees (cylindrical trunks and gree
 | Movement | WASD/Shift and click-to-walk, with dynamically bounded A* paths |
 | Village | Existing five fixed plots remain anchored in the clearing |
 
-When crossing a chunk boundary, a new band of terrain meshes is created from the same world seed and distant chunks are disposed. Detailed scenery and wandering deer are displayed only on the closer 3 × 3 band. That prevents growth in memory usage as players explore, although creating a new group of meshes on a chunk crossing may still cause a brief stutter.
+When crossing a chunk boundary, a new band of terrain meshes is created from the same world seed and distant chunks are disposed. Detailed scenery and wandering deer are displayed only on the closer 5 × 5 band. That prevents growth in memory usage as players explore, although creating a new group of meshes on a chunk crossing may still cause a brief stutter.
 
 ### Determinism
 
@@ -104,7 +104,7 @@ The water is not yet a hydrologically solved downhill network; source selection,
 
 `js/mountain-appearance.js` adds deterministic color blending for the existing terrain heightfield. Exposed stone increases with mountain uplift and the actual mesh-normal slope; high ridge faces gain subtle weathered bedding and crest highlights, with gradual green-to-rock transitions. The mesh keeps 16 subdivisions per chunk and shares a single terrain material with vertex colors. Water surfaces and river shore treatments remain separate.
 
-The nearby detailed 3×3 terrain window also contains occasional seed-based faceted bedrock outcrops. These visuals are deliberately non-interactive: they do not consume stockpile materials, create harvest nodes, affect building placement, or change movement. They stream and dispose using the existing chunk lifecycle. Mountain geometry, world seeds, save records, and one-time building protection areas are unchanged.
+The nearby detailed 5×5 terrain window also contains occasional seed-based faceted bedrock outcrops. These visuals are deliberately non-interactive: they do not consume stockpile materials, create harvest nodes, affect building placement, or change movement. They stream and dispose using the existing chunk lifecycle. Mountain geometry, world seeds, save records, and one-time building protection areas are unchanged.
 
 Pure logic and rendering checks are in `tests/check-mountain-appearance.mjs`. Steep-slope movement rules, mountain traversal and new resources are intentionally deferred to later phases.
 
