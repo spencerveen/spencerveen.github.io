@@ -7,6 +7,7 @@ import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./st
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114y";
 import {ForestChunks} from "./forest-chunks.js?v=20261114ocean1";
+import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114swim1";
 import {createTribeWorld} from "./tribe-world.js?v=20261114m";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;
@@ -19,6 +20,7 @@ export class World {
   this.onTribeInteract=tribeHandlers.onInteract||(()=>{});
   this.onResidentSelect=tribeHandlers.onResidentSelect||(()=>{});
   this.spendSprint=tribeHandlers.spendSprint||(()=>true);
+  this.spendSwim=tribeHandlers.spendSwim||tribeHandlers.spendSprint||(()=>true);
   this.getVitals=tribeHandlers.getVitals||(()=>({health:100,gameOver:false}));
   this.getTribeRecord=tribeHandlers.getRecord||(()=>null);
   this.getTribeHome=tribeHandlers.getHome||(()=>null);
@@ -32,6 +34,7 @@ export class World {
   this._inputBlocked=false;this.placementPinned=false;this.cameraDragging=false;this.focusTarget=null;
   this.cameraKeys={};this.cameraOrbitVelocity={horizontal:0,vertical:0};
   this.stockpileInRange=undefined;this.onInteractionRangeChange=()=>{};this.hoveredInteraction=null;this.waterNoticeCooldown=0;
+  this.swimExhausted=false;this.waterMotion="land";this.onWaterModeChange=()=>{};
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.020;this.scene.fogColor=new B.Color3(.62,.71,.62);
@@ -674,10 +677,8 @@ export class World {
  }
 
  isBlocked(x,z){
-  // No legacy square world boundary. Terrain and plots are navigable using
-  // the same collision test wherever their chunks are currently active.
-  return this.terrain?.waterAt(x,z).passable===false||
-   this.obstacles.some(o=>Math.hypot(o.x-x,o.z-z)<o.r+.31);
+  // Rivers, lakes and oceans are traversable by swimming. Props stay solid.
+  return this.obstacles.some(o=>Math.hypot(o.x-x,o.z-z)<o.r+.31);
  }
  plan(x,z){
   const p=this.player.position,dist=Math.hypot(x-p.x,z-p.z);
@@ -747,22 +748,69 @@ export class World {
   if(x||z){this.focusTarget=null;this.path=[];this.target=null;this.tribeTarget=null;this.plotTarget=null;this.stockpileTarget=false;direction=right.scale(x).add(forward.scale(z)).normalize();moving=true;}
   // No click-to-move or automated path-following.
   // Only WASD sets a movement direction.
-  let running=false;
+  let running=false,swam=false,actuallyMoved=false;
+  const waterBefore=this.terrain.waterAt(p.x,p.z);
+  if(!isSwimmingDepth(waterBefore))this.swimExhausted=false;
   if(moving){
-   running=!!this.keys.shift && this.spendSprint(11*dt);
-   const speed=running?6.4:3.6,movement=direction.scale(speed*dt);
-   const test=p.add(movement);
-   if(!this.isBlocked(test.x,test.z)){p.x=test.x;p.z=test.z}
-   else if(!this.isBlocked(p.x+movement.x,p.z))p.x+=movement.x;
-   else if(!this.isBlocked(p.x,p.z+movement.z))p.z+=movement.z;
-   if(this.terrain.waterAt(test.x,test.z).passable===false&&this.waterNoticeCooldown===0){
-    this.onStatus("Deep water","Too deep to wade. Find a shallow crossing or follow the bank.");
-    this.waterNoticeCooldown=5;
+   const fast=!!this.keys.shift;
+   const probe=p.add(direction.scale(.2));
+   const swimming=isSwimmingDepth(waterBefore)||
+    isSwimmingDepth(this.terrain.waterAt(probe.x,probe.z));
+   const speed=swimming?(fast?SWIM.fastSpeed:SWIM.speed):fast?6.4:3.6;
+   const candidateAt=s=>{
+    const step=direction.scale(s*dt);
+    return [[p.x+step.x,p.z+step.z],[p.x+step.x,p.z],
+     [p.x,p.z+step.z]].find(([nx,nz])=>
+       !this.isBlocked(nx,nz)&&Math.hypot(nx-p.x,nz-p.z)>.00001)||null;
+   };
+   let target=candidateAt(speed);
+   if(target){
+    const needsSwim=swimming||isSwimmingDepth(this.terrain.waterAt(...target));
+    if(needsSwim){
+     target=candidateAt(fast?SWIM.fastSpeed:SWIM.speed);
+     if(target){
+      // Crossing from deep water directly into shallows is always possible,
+      // including when the swimmer has run out of stamina.
+      const reachingShallows=isSwimmingDepth(waterBefore)&&
+       !isSwimmingDepth(this.terrain.waterAt(...target));
+      if(this.swimExhausted&&this.getVitals().stamina>=SWIM.recovery)
+       this.swimExhausted=false;
+      if(reachingShallows||
+         (!this.swimExhausted&&this.spendSwim(swimCost(dt,fast)))){
+       p.x=target[0];p.z=target[1];actuallyMoved=true;swam=!reachingShallows;
+      }else{
+       this.swimExhausted=true;
+       if(this.waterNoticeCooldown===0){
+        this.onStatus("Too tired to swim",
+         "Float to recover stamina, then swim toward the bank.");
+        this.waterNoticeCooldown=4;
+       }
+      }
+     }
+    }else{
+     running=fast&&this.spendSprint(11*dt);
+     target=candidateAt(running?6.4:3.6);
+     if(target){p.x=target[0];p.z=target[1];actuallyMoved=true;}
+    }
    }
    this.player.rotation.y=Math.atan2(direction.x,direction.z);
-   this.walkTime+=dt*speed*2.4;
+   if(actuallyMoved)this.walkTime+=dt*(swam?speed:running?6.4:3.6)*2.4;
+   else this.walkTime=0;
+  }else this.walkTime=0;
+  const waterNow=this.terrain.waterAt(p.x,p.z),deep=isSwimmingDepth(waterNow);
+  if(!deep)this.swimExhausted=false;
+  const nextMode=deep?(swam?"swimming":this.swimExhausted?"exhausted":"floating"):
+   waterNow.depth>.03?"wading":"land";
+  if(nextMode!==this.waterMotion){
+   const previous=this.waterMotion;
+   this.waterMotion=nextMode;
+   this.onWaterModeChange(nextMode);
+   if(nextMode==="swimming"&&previous!=="floating"&&previous!=="exhausted"&&
+      this.waterNoticeCooldown===0){
+    this.onStatus("Swimming","WASD to swim; Shift swims faster but costs more stamina. Release movement to float and recover.");
+    this.waterNoticeCooldown=5;
+   }
   }
-  else this.walkTime=0;
   // Chunks regenerate from the seed; berry recovery is based on real elapsed
   // time even if this node wasn't loaded while the bush was growing back.
   this.terrain.update(p.x,p.z);
@@ -781,7 +829,13 @@ export class World {
   }
   this.berryClock+=dt;
   if(this.berryClock>=2){this.berryClock=0;this.terrain.refreshBerries()}
-  p.y=this.groundY(p.x,p.z);
+  const bedY=this.groundY(p.x,p.z);
+  p.y=deep?Math.max(bedY,waterNow.surfaceY-SWIM.surfaceOffset):bedY;
+  if(this.character?.root){
+   // Temporary buoyancy and lean until an authored swim clip is available.
+   this.character.root.position.y=deep?Math.sin(performance.now()/1000*3.8)*.045:0;
+   this.character.root.rotation.x=deep?-.16:0;
+  }
   const atStockpile=nearStockpile(this.stockpile,p.x,p.z);
   if(atStockpile!==this.stockpileInRange){
    this.stockpileInRange=atStockpile;
@@ -789,7 +843,7 @@ export class World {
   }
   // Drive authored movement clips with a continuous clock; pressing Shift
   // switches the player to the jogging loop without resetting progression.
-  this.character?.animate(performance.now()/1000,moving,running);
+  this.character?.animate(performance.now()/1000,actuallyMoved,running);
   const focus=this.focusTarget;
   const aim=focus?V(focus.x,this.groundY(focus.x,focus.z)+1.2,focus.z):V(p.x,p.y+1.2,p.z);
   // Never call ArcRotateCamera.setTarget every frame: it recomputes alpha/beta

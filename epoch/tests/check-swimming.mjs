@@ -1,0 +1,36 @@
+import assert from "node:assert/strict";
+import {GameState} from "../js/state.js";
+import {SWIM,isSwimmingDepth,swimCost} from "../js/swimming.js";
+import {waterAt,SHALLOW_LIMIT} from "../js/water-generation.js";
+import {riverCenter} from "../js/water-corridors.js";
+import {coastlineX} from "../js/ocean-generation.js";
+assert.equal(SWIM.depth,SHALLOW_LIMIT);
+assert(!isSwimmingDepth({depth:.1}));
+assert(isSwimmingDepth({depth:SHALLOW_LIMIT}));
+assert.equal(swimCost(0),0);
+assert(swimCost(1,true)>swimCost(1));
+for(const seed of [12000,1337,42]){
+ assert(isSwimmingDepth(waterAt(300,riverCenter(300,0,seed),seed)));
+ assert(isSwimmingDepth(waterAt(coastlineX(0,seed)+50,0,seed)));
+}
+const memory=new Map();
+globalThis.localStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
+const g=new GameState({slot:1,newGame:true});g.onChange=()=>{};
+g.data.survival.stamina=15;
+assert(g.spendStamina(SWIM.cost,"swim"));
+assert.equal(g.data.survival.stamina,15-SWIM.cost);
+g.advance(1);
+assert.equal(g.data.survival.stamina,15-SWIM.cost,"active swimming prevents automatic regeneration");
+g.advance(1);
+assert(g.data.survival.stamina>15-SWIM.cost,"floating recovers stamina");
+g.data.survival.stamina=.2;
+assert(!g.spendStamina(SWIM.cost,"swim"));
+g.advance(5);
+assert(g.data.survival.stamina>=SWIM.recovery,"exhausted players can recover afloat");
+assert.equal(g.data.survival.gameOver,false);
+const c=new GameState({slot:2,newGame:true});
+c.setDevCheat("unlimitedSprint",true);c.data.survival.stamina=9;
+assert(c.spendStamina(5,"sprint"));assert.equal(c.data.survival.stamina,9);
+assert(c.spendStamina(5,"swim"));assert.equal(c.data.survival.stamina,4);
+c.save();assert(!("swimming" in JSON.parse(memory.get("epoch.stoneage.slot.2"))));
+console.log("PASS swim cost, shallow/deep thresholds, float regeneration, no drowning and sprint-cheat independence");

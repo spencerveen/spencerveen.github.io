@@ -52,6 +52,10 @@ The exact same resource objects respawn when the surrounding chunk is loaded aga
 - `tests/check-settlement.mjs`: retains village and seed save compatibility
 - `tests/browser-walk.mjs`: Chromium verifies scene loads, materials/animals, seed persistence, character movement and village construction
 
+## Swimming and floating
+
+`js/swimming.js` centralizes the depth threshold, regular and fast swim costs, speeds and exhaustion recovery threshold. The movement system now blocks only physical obstacles; both river and ocean water can be crossed. A swim stroke charges the existing GameState stamina pool using the `swim` reason, suppressing passive regeneration for that tick. The temporary sprint-only cheat does not apply to swimming. Exhausted swimmers float until enough stamina recovers, with a free exit step into adjacent shallow water. The visual player root follows the sampled water surface while the streamed terrain remains the same seabed. A temporary bob and lean reuse locomotion until dedicated swim clips are made. No new saved settings or change to existing water generation is necessary.
+
 ## Ocean biome and coastline (Phase 4B.3)
 
 `js/ocean-generation.js` defines one continuous seeded eastern shoreline and an open ocean extending toward positive X. The coastline sits roughly 470–665 meters from the origin depending on the seed and latitude (Z). It carves a gentle 96-meter coastal shelf into the existing mountain/forest height field. The water model reports `kind: "ocean"` in addition to rivers and lakes, returning constant sea level, a gradual seafloor, wadeable nearshore depths and impassable deeper water. Beach sands and underwater seafloor colors are applied through the existing vertex-color terrain pipeline. No ocean geometry is persisted; chunk meshes stream deterministically. Fully offshore chunks render a low-detail water grid to limit draw overhead.

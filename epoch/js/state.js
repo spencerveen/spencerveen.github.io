@@ -411,7 +411,8 @@ export class GameState{
    return true;
   }
   if(!spendStamina(v,amount))return false;
-  if(reason==="sprint")this.sprintedThisTick=true;
+  // Active swimming uses stamina and blocks passive regeneration.
+  if(reason==="sprint"||reason==="swim")this.sprintedThisTick=true;
   this.onVitals();
   return true;
  }

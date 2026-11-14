@@ -1,5 +1,5 @@
 import {GameState} from "./state.js?v=20261114devpanel1";
-import {World} from "./world.js?v=20261114ocean1";
+import {World} from "./world.js?v=20261114swim1";
 import {UI} from "./ui.js?v=20261114devpanel1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
@@ -36,6 +36,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
      getOceanSafeSites:()=>state.data.oceanProtectedSites,
      onResidentSelect:id=>ui?.openResident(id),
      spendSprint:amount=>state.spendStamina(amount,"sprint"),
+     spendSwim:amount=>state.spendStamina(amount,"swim"),
      getVitals:()=>state.survivalStatus()
     });
   ui=new UI(state,world);
@@ -88,7 +89,9 @@ async function startEpoch({slot,newGame=false,founder=null}){
     movement:world.character?.animationStatus?.()||null,
     hairAttachment:world.character?.attachmentStatus?.()||null,
     npcAttachments:world.people.map(person=>person.human.attachmentStatus?.()||null),
-    position:{x:world.player.position.x,z:world.player.position.z}
+    position:{x:world.player.position.x,y:world.player.position.y,z:world.player.position.z},
+    swimming:{mode:world.waterMotion,exhausted:world.swimExhausted,
+      depth:world.terrain.waterAt(world.player.position.x,world.player.position.z).depth}
 
   }),configurable:true});
  }catch(error){

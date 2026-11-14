@@ -97,6 +97,12 @@ During a running game, press **L** to open or close the developer panel. It cont
 
 These are deliberately temporary, session-only test switches in `js/dev-cheats.js`. They default to off every time Epoch opens, are not stored in save slots, and do not undo an already completed game-over. Players' villages, normal saves and death/permadeath rules when the toggles are off remain intact. The dev-only module, UI controls and state hooks can all be removed before release.
 
+## Swimming and water traversal
+
+Deep water in rivers, lakes and oceans is now traversable with **WASD**. Shallows (under 0.85m depth) remain walkable, while swimming moves at 2.25m/s and drains **5.25 stamina per second**. **Shift** swims at 3.1m/s for **9.25 stamina per second**. Swimming consumes the same stamina as sprinting and gathering, and stops normal stamina regeneration during active swim strokes. Releasing movement allows the character to float in place and recover. Exhausted swimmers remain afloat without dying and can continue when they have recovered 5 stamina; an exhausted swimmer can always climb into adjacent shallows. This makes rivers crossable without enabling endless free swimming.
+
+The player floats near the water surface rather than walking on the seabed. The existing walking cycle is a temporary paddling placeholder with a subtle forward lean and bob until real swim animations are added. Swimming does not change saves, river positions or marine terrain. Drowning, currents and dedicated swimming abilities can be developed later. The temporary **Unlimited Sprint** cheat affects running only; it does not disable swimming stamina costs.
+
 ## Phase 4B.3 — Ocean and coastline (first biome pass)
 
 Epoch now has a distinct **ocean biome to the east (+X) of the starting forest**. The saved seed controls a broad, winding coastline about 470–665 meters east of the starting clearing. A gently sloped sandy beach separates existing forests/mountains from shallow tidal water and progressively deeper open ocean, which continues as you travel farther east. Ocean water is blue-green in the shallows and deeper blue offshore. Beach and seafloor colors blend directly into the existing terrain; dense marine chunks use cheaper 8-subdivision water meshes, while shoreline chunks keep the existing detailed 32-subdivision clipping.

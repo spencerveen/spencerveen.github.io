@@ -46,7 +46,8 @@ try{
  assert.equal(test.shallow.kind,"ocean");
  assert(test.shallow.passable&&!test.shallowBlocked);
  assert.equal(test.deep.kind,"ocean");
- assert(test.deepBlocked&&!test.deep.passable);
+ assert(!test.deepBlocked&&!test.deep.passable,
+  "deep sea uses swimming instead of blocking player movement");
  assert(test.oceanMeshes>0&&test.hasMarineBlue,"ocean uses the marine color palette");
  assert.equal(test.underWaterResources,0);
  assert.equal(test.first.loaded,25);

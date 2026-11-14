@@ -61,7 +61,7 @@ try{
  },options);
  assert(!check.problem,JSON.stringify(check));
  assert(check.sample.depth>1&&check.sample.kind!=="land");
- assert.equal(check.blocked,true,"deep water physically blocks walking");
+ assert.equal(check.blocked,false,"deep water no longer forms an invisible movement wall");
  assert.equal(check.status.loaded,25);
  assert(check.waterMeshes>0,"some streamed chunks contain visible water");
  assert.equal(check.waterPickable,false,"water does not intercept world object interactions");
