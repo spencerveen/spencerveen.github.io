@@ -1,7 +1,7 @@
-import {GameState} from "./state.js?v=20261114flint1";
+import {GameState} from "./state.js?v=20261114jobs1";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
-import {World} from "./world.js?v=20261114flint1";
-import {UI} from "./ui.js?v=20261114fish2";
+import {World} from "./world.js?v=20261114jobs1";
+import {UI} from "./ui.js?v=20261114jobs1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
@@ -37,6 +37,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
      getMountainSafeSites:()=>state.data.mountainProtectedSites,
      getOceanSafeSites:()=>state.data.oceanProtectedSites,
      onResidentSelect:id=>ui?.openResident(id),
+     onVillagerWork:(id,task)=>state.completeVillagerWork(id,task),
      spendSprint:amount=>state.spendStamina(amount,"sprint"),
      spendSwim:amount=>state.spendStamina(amount,"swim"),
      getVitals:()=>({...state.survivalStatus(),
@@ -96,7 +97,8 @@ async function startEpoch({slot,newGame=false,founder=null}){
       residents:(state.data.village.residents||[]).map(v=>({...v})),
       deceased:(state.data.village.deceased||[]).map(v=>({...v})),
       housing:state.villageHousing(),
-      people:world.people.map(p=>({id:p.id,name:p.name,homeId:p.homeId,x:p.x,z:p.z})),
+      people:world.people.map(p=>({id:p.id,name:p.name,homeId:p.homeId,job:p.job,
+       work:p.work?.mode||"idle",target:p.work?.task?.id||null,x:p.x,z:p.z})),
       buildings:state.data.village.buildings.map(b=>({...b})),
       renderedBuildings:world.villageBuildings.size,
       stockpile:state.stockpileInfo(),
