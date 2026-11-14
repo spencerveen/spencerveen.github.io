@@ -5,7 +5,7 @@
  * The terrain height function is continuous across positive/negative chunks.
  */
 export const CHUNK_SIZE=32;
-export const ACTIVE_RADIUS=3; // 7×7 streamed terrain window (224m across)
+export const ACTIVE_RADIUS=4; // 9×9 streamed terrain window (288m across)
 export const DETAIL_RADIUS=2; // 5×5 nearby scenery and interactive wildlife
 export const TERRAIN_SUBDIVISIONS=16;
 export const STARTER_SEED=12000;
