@@ -70,7 +70,7 @@ The river and lake samplers use the same mountain-adjusted surface height as dry
 
 For pre-mountain save slots, the `mountainProtectedSites` array records the historical stockpile and completed building coordinates once, and attenuates uplift near those sites. This is independent of water protection, so saves that already contain water migration data are also handled. Protected wilderness tribe camp locations are included while terrain is streamed. New construction never reshapes an existing ridge.
 
-Visual rock/cliff materials, steep-slope movement restrictions, specialized wildlife and mountain resources are planned separately. Unit checks live in `tests/check-mountains.mjs`.
+Visual rock/cliff materials, steep-slope movement restrictions, specialized wildlife and mountain resources are planned separately. Sparse collectible mountain flint now spawns around seeded rocky foothills and highlands, sharing the beach flint inventory and persistent depletion rules. Unit checks live in `tests/check-mountains.mjs`.
 
 ## Geography cleanup — Riverbanks and lake basins
 
