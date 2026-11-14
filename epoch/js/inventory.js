@@ -1,7 +1,7 @@
 /**
  * Shared Stone Age item catalog and ten-slot carried inventory.
- * In Phase 4B.1 only existing wood/stone/berries/vines have world sources.
- * New material drops, weapon crafting and combat are later phases.
+ * Core Stone Age resources, crafted weapons and condition tracking.
+ * Hunting and combat remain later phases.
  */
 export const INVENTORY_SLOTS=10;
 export const STACK_LIMIT=12;
@@ -19,12 +19,12 @@ export const ITEMS=Object.freeze({
  raw_hide:{name:"Raw Hide",icon:"🟫",category:"material",description:"Unworked hide from hunted animals (future).",hint:"Can be processed into leather."},
  leather:{name:"Leather",icon:"🧵",category:"material",description:"Processed hide (future).",hint:"Protective clothing and gear."},
  bone:{name:"Bone",icon:"🦴",category:"material",description:"Hunting byproduct (future).",hint:"Tools, needles and fishing hooks."},
- wood_club:{name:"Wooden Club",icon:"🪵",category:"weapon",equipSlot:"weapon",stackLimit:1,
-  description:"Primitive wooden melee weapon (future).",hint:"Simple close-range weapon.",combat:{damage:7,stamina:9,reach:1.7}},
- stone_axe:{name:"Stone Axe",icon:"🪓",category:"weapon",equipSlot:"weapon",stackLimit:1,
-  description:"Useful for woodcutting; future melee weapon.",hint:"Gather 3 wood when equipped.",combat:{damage:10,stamina:12,reach:1.6}},
- stone_spear:{name:"Stone Spear",icon:"🔱",category:"weapon",equipSlot:"weapon",stackLimit:1,
-  description:"Flint-tipped spear (future).",hint:"Longer-reach melee weapon.",combat:{damage:8,stamina:10,reach:2.7}},
+ wood_club:{name:"Wooden Club",icon:"🪵",category:"weapon",equipSlot:"weapon",stackLimit:1,durability:36,
+  description:"Simple wooden melee weapon. Hunting and defense arrive later.",hint:"Craft with 3 Wood · 36 durability.",combat:{damage:7,stamina:9,reach:1.7}},
+ stone_axe:{name:"Stone Axe",icon:"🪓",category:"weapon",equipSlot:"weapon",stackLimit:1,durability:45,
+  description:"A stone head hafted to wood, useful for chopping trees.",hint:"Gather 3 Wood when equipped; loses durability with use.",combat:{damage:10,stamina:12,reach:1.6}},
+ stone_spear:{name:"Stone Spear",icon:"🔱",category:"weapon",equipSlot:"weapon",stackLimit:1,durability:48,
+  description:"Flint-tipped long-reach weapon for future hunting.",hint:"Craft from Wood, Flint and Vines · 48 durability.",combat:{damage:8,stamina:10,reach:2.7}},
  sling:{name:"Sling",icon:"🪢",category:"weapon",equipSlot:"weapon",stackLimit:1,
   description:"Primitive stone-hurling weapon (future).",hint:"Ranged weapon; uses stones.",combat:{damage:5,stamina:6,reach:12}},
  bow:{name:"Primitive Bow",icon:"🏹",category:"weapon",equipSlot:"weapon",stackLimit:1,
@@ -41,6 +41,13 @@ export const STOCKPILE_ITEM_IDS=Object.freeze(ITEM_IDS.filter(id=>
  ["material","food","ammo"].includes(ITEMS[id].category)));
 export function canonicalItem(id){return id==="food"?"berries":id}
 export function itemStackLimit(id){return ITEMS[canonicalItem(id)]?.stackLimit||STACK_LIMIT}
+export function toolMaxDurability(id){return ITEMS[canonicalItem(id)]?.durability||0}
+export function toolCondition(id,raw){
+ const max=toolMaxDurability(id);
+ if(!max)return null;
+ if(raw===undefined||raw===null)return max;
+ return Number.isFinite(Number(raw))?Math.min(max,Math.max(0,Math.floor(Number(raw)))):max;
+}
 export function emptyInventory(){return Array.from({length:INVENTORY_SLOTS},()=>null)}
 export function emptyUnpacked(){return Object.fromEntries(ITEM_IDS.map(id=>[id,0]))}
 const sane=n=>Number.isFinite(Number(n))?Math.max(0,Math.floor(Number(n))):0;
@@ -51,7 +58,13 @@ export function normalizeInventory(raw){
   const item=raw[i];if(!item)continue;
   const id=canonicalItem(item.id);
   const qty=sane(item.qty);
-  if(ITEMS[id]&&qty>0)slots[i]={id,qty:Math.min(itemStackLimit(id),qty)};
+  if(ITEMS[id]&&qty>0){
+   const condition=toolCondition(id,item.durability);
+   if(toolMaxDurability(id)&&condition<=0)continue;
+   slots[i]={id,qty:Math.min(itemStackLimit(id),qty)};
+   if(toolMaxDurability(id)&&item.durability!==undefined)
+    slots[i].durability=condition;
+  }
  }
  return slots;
 }

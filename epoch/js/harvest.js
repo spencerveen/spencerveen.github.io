@@ -31,7 +31,7 @@ export function harvestAtNode(state,meta,action="gather",now=Date.now()){
    label:status.kind==="food"?"This bush is out of berries. Regrows in "+seconds+"s; Shift+click to cut for vines.":"This deposit is depleted."};
  }
  const harvesting={
-  wood:{item:"wood",amount:state.data.axe?3:2,skill:"woodcutting",xp:13,label:"wood"},
+  wood:{item:"wood",amount:state.equippedAxe()?3:2,skill:"woodcutting",xp:13,label:"wood"},
   stone:{item:"stone",amount:2,skill:"mining",xp:12,label:"stone"},
   flint:{item:"flint",amount:1,skill:"mining",xp:8,label:"flint"},
   food:{item:"berries",amount:2,skill:"foraging",xp:12,label:"wild berries"}
@@ -53,6 +53,7 @@ export function harvestAtNode(state,meta,action="gather",now=Date.now()){
  state.syncResources();
  state.gainXP(harvesting.skill,Math.max(1,Math.round(harvesting.xp*added/harvesting.amount)));
  state.gainXP("survival",2);
+ const worn=status.kind==="wood"&&state.equippedAxe()?state.wearEquippedTool():null;
  if(status.kind==="food")state.data.culture++;
  state.changed();
  const removed=!!latest.removed;
@@ -60,5 +61,6 @@ export function harvestAtNode(state,meta,action="gather",now=Date.now()){
   remaining===0?" · berries depleted (regrow in 2 min)":" · "+remaining+"/"+status.max+" remaining";
  return {type:"gathered",resourceId:status.id,kind:status.kind,
   added,vines,remaining,removed,regrowAt:latest.regrowAt,
-  label:"+"+added+" "+harvesting.label+(vines?" · +"+vines+" vines":"")+end};
+  label:"+"+added+" "+harvesting.label+(vines?" · +"+vines+" vines":"")+end+
+   (worn?.broken?" · Stone Axe broke!":worn?" · Axe "+worn.remaining+"/"+worn.max:"")};
 }

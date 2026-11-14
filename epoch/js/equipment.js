@@ -1,6 +1,5 @@
-/** Phase 4B.1: persistent, separate equipment and planned recipes.
- * Equipment is NOT part of the 10 carried slots. Only backpack-owned
- * gear can be equipped; swaps are atomic and preserve every item.
+/** Persistent equipped gear and primitive crafting recipes.
+ * Each crafted weapon has a separate condition tracked across equipment swaps.
  */
 import {ITEMS,itemStackLimit} from "./inventory.js?v=20261114x";
 export const EQUIPMENT_SLOTS=Object.freeze({
@@ -9,10 +8,9 @@ export const EQUIPMENT_SLOTS=Object.freeze({
  ammo:{name:"Ammunition",accepts:"ammo"}
 });
 export const CRAFTING_PLANS=Object.freeze({
- // Stone axe is the only recipe actually playable in the village Craft tab.
- stone_axe:{station:"stockpile",materials:{wood:2,stone:3},output:{id:"stone_axe",qty:1},available:true},
- wood_club:{station:"toolmaker",materials:{wood:3},output:{id:"wood_club",qty:1},available:false},
- stone_spear:{station:"toolmaker",materials:{wood:2,flint:1,vines:1},output:{id:"stone_spear",qty:1},available:false},
+ wood_club:{station:"stockpile",materials:{wood:3},output:{id:"wood_club",qty:1},available:true,requires:[],xp:12},
+ stone_axe:{station:"stockpile",materials:{wood:2,stone:3},output:{id:"stone_axe",qty:1},available:true,requires:["tools"],xp:28},
+ stone_spear:{station:"stockpile",materials:{wood:2,flint:1,vines:1},output:{id:"stone_spear",qty:1},available:true,requires:["tools"],xp:24},
  sling:{station:"hideworking",materials:{raw_hide:1,vines:2},output:{id:"sling",qty:1},available:false},
  bow:{station:"fletching",materials:{wood:3,vines:2,raw_hide:1},output:{id:"bow",qty:1},available:false},
  arrows:{station:"fletching",materials:{wood:1,flint:1,feathers:2},output:{id:"arrows",qty:4},available:false},

@@ -9,7 +9,7 @@ import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed
  depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261114y";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261114beaches2";
-import {harvestAtNode} from "./harvest.js?v=20261114beaches2";
+import {harvestAtNode} from "./harvest.js?v=20261114craft1";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
@@ -17,15 +17,15 @@ import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  NATURAL_DEATH_AGE} from "./residents.js?v=20261114w";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
- resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261114beaches2";
-import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack} from "./equipment.js?v=20261114x";
+ resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114craft1";
+import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack,CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["construction","Construction"],["survival","Survival"]
 ];
 export const TECH={
  fire:{name:"Control of Fire",description:"Learn to start and tend fire. Unlocks construction of the village Cooking Hearth; no campfire is built automatically.",cost:{wood:4,stone:2,knowledge:3},needs:[]},
- tools:{name:"Stone Toolmaking",description:"Shape stone tools and craft your first proper axe.",cost:{wood:5,stone:6,knowledge:7},needs:["fire"]},
+ tools:{name:"Stone Toolmaking",description:"Shape stone axes and flint-tipped spears.",cost:{wood:5,stone:6,knowledge:7},needs:["fire"]},
  farming:{name:"Early Agriculture",description:"Experiment with growing food and preparing permanent farmland. A preview of our next age.",cost:{food:10,stone:5,knowledge:18},needs:["tools"],culture:["community"]}
 };
 // First discoveries and meaningful construction milestones generate Knowledge.
@@ -47,7 +47,7 @@ const fresh=(founder=null)=>{
  version:1,year:-12000,calendarProgress:0,generation:1,worldSeed:Math.floor(Math.random()*0x7fffffff)+1,hero:{name,age:18,appearance},
  skills:Object.fromEntries(SKILLS.map(([id])=>[id,0])),
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),
- equipment:emptyEquipment(),resourceNodes:{},knowledge:0,culture:0,
+ equipment:emptyEquipment(),weaponCondition:null,resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
  knowledgeClaims:[],researchSeconds:0,tribes:{},waterProtectedSites:[],mountainProtectedSites:[],oceanProtectedSites:[],watershedProtectedSites:[],
  survival:freshSurvival(),successorId:null,lastDeath:null,
@@ -208,6 +208,8 @@ export class GameState{
    this.data.unpacked=migration.unpacked;
   }
   this.data.equipment=normalizeEquipment(data?.equipment,!!data?.axe);
+  this.data.weaponCondition=this.data.equipment.weapon?
+   toolCondition(this.data.equipment.weapon,data?.weaponCondition):null;
   this.syncAxeOwnership();
   this.syncResources();
   // Untouched procedural nodes are implicit. Save only modified resource IDs.
@@ -240,14 +242,48 @@ export class GameState{
    countItem(this.data.inventory,"stone_axe")>0;
  }
  equippedAxe(){return this.data.equipment?.weapon==="stone_axe"}
+ equippedToolCondition(){
+  const id=this.data.equipment?.weapon;
+  return id&&toolMaxDurability(id)?{id,remaining:toolCondition(id,this.data.weaponCondition),
+   max:toolMaxDurability(id)}:null;
+ }
+ wearEquippedTool(amount=1){
+  const current=this.equippedToolCondition();
+  if(!current||!Number.isFinite(amount)||amount<=0)return null;
+  const remaining=Math.max(0,current.remaining-Math.floor(amount));
+  this.data.weaponCondition=remaining;
+  if(remaining===0){
+   this.data.equipment.weapon=null;
+   this.data.weaponCondition=null;
+   this.syncAxeOwnership();
+  }
+  return {id:current.id,remaining,max:current.max,broken:remaining===0};
+ }
  equipFromPack(index){
-  if(this.data.survival.gameOver||!equipFromBackpack(this.data.inventory,this.data.equipment,index))return false;
+  if(this.data.survival.gameOver)return false;
+  const incoming=this.data.inventory[index],previous=this.data.equipment.weapon;
+  const oldCondition=this.data.weaponCondition;
+  if(!equipFromBackpack(this.data.inventory,this.data.equipment,index))return false;
+  if(incoming&&ITEMS[incoming.id]?.equipSlot==="weapon"){
+   this.data.weaponCondition=toolCondition(incoming.id,incoming.durability);
+   if(previous&&this.data.inventory[index]&&toolMaxDurability(previous))
+    this.data.inventory[index].durability=toolCondition(previous,oldCondition);
+  }
   this.syncAxeOwnership();
   this.changed();
   return true;
  }
  unequip(slot){
-  if(this.data.survival.gameOver||!unequipToBackpack(this.data.inventory,this.data.equipment,slot))return false;
+  if(this.data.survival.gameOver)return false;
+  const previous=this.data.equipment.weapon;
+  const empty=slot==="weapon"?this.data.inventory.findIndex(item=>item===null):-1;
+  const condition=this.data.weaponCondition;
+  if(!unequipToBackpack(this.data.inventory,this.data.equipment,slot))return false;
+  if(slot==="weapon"){
+   if(previous&&empty>=0&&toolMaxDurability(previous))
+    this.data.inventory[empty].durability=toolCondition(previous,condition);
+   this.data.weaponCondition=null;
+  }
   this.syncAxeOwnership();
   this.changed();
   return true;
@@ -547,6 +583,7 @@ export class GameState{
   this.gainXP(info.skill,Math.max(1,Math.round(info.xp*gained/info.amount)));
   this.gainXP("survival",2);
   if(type==="food")this.data.culture++;
+  if(type==="wood"&&this.equippedAxe())this.wearEquippedTool();
   this.changed();
   return {label:`+${gained} ${info.name}${vines?" · +"+vines+" vines":""}${gained<info.amount?" (pack nearly full)":""}`,type,added:gained,vines};
  }
@@ -565,23 +602,28 @@ export class GameState{
   this.changed(`${this.data.hero.name}'s people discovered ${node.name}.`);
   return true;
  }
- craftAxe(x,z){
-  const pile=this.data.village.stockpile,cost={wood:2,stone:3};
-  // Crafting happens at the stockpile; it must not duplicate an owned axe or
-  // consume materials when there is no space for the new item.
-  if(this.data.survival.gameOver||this.data.axe||
-     !this.data.technologies.includes("tools")||
-     !nearStockpile(pile,x,z)||!stockpileHas(pile,cost)||
-     (this.data.equipment.weapon!==null&&
-      !this.data.inventory.some(item=>item===null)))return false;
-  if(!payStockpile(pile,cost))return false;
-  if(this.data.equipment.weapon===null)this.data.equipment.weapon="stone_axe";
-  else addItems(this.data.inventory,"stone_axe",1);
+ craftTool(id,x,z){
+  const plan=CRAFTING_PLANS[id],pile=this.data.village.stockpile;
+  if(!plan?.available||plan.station!=="stockpile"||
+     this.data.survival.gameOver||!nearStockpile(pile,x,z)||
+     !plan.requires.every(tech=>this.data.technologies.includes(tech))||
+     !stockpileHas(pile,plan.materials)||
+     this.data.equipment.weapon===id||this.inventoryCount(id)>0)return false;
+  const equipNow=this.data.equipment.weapon===null;
+  const free=equipNow?-1:this.data.inventory.findIndex(slot=>slot===null);
+  // Validate the destination before consuming stored resources.
+  if(!equipNow&&free<0)return false;
+  if(!payStockpile(pile,plan.materials))return false;
+  if(equipNow){
+   this.data.equipment.weapon=id;
+   this.data.weaponCondition=toolCondition(id);
+  }else this.data.inventory[free]={id,qty:1,durability:toolCondition(id)};
   this.syncAxeOwnership();
-  this.gainXP("crafting",28);
-  this.changed(`${this.data.hero.name} crafted a stone axe at the village.`);
+  this.gainXP("crafting",plan.xp||12);
+  this.changed(`${this.data.hero.name} crafted ${ITEMS[id].name} at the village.`);
   return true;
  }
+ craftAxe(x,z){return this.craftTool("stone_axe",x,z)}
  stockpileInfo(){
   const pile=this.data.village.stockpile;
   return {placed:!!pile,x:pile?.x??null,z:pile?.z??null,
