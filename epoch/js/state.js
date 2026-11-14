@@ -1,5 +1,5 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
-import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeBerries} from "./survival.js?v=20261114q";
+import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeBerries} from "./survival.js?v=20261114s";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114m";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";

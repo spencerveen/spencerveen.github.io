@@ -28,7 +28,7 @@ assert.equal(game.survivalStatus().stamina,94);
 game.advance(1);
 assert.equal(game.survivalStatus().stamina,94,"sprinting suppresses stamina recovery during the same second");
 game.advance(1);
-assert.equal(game.survivalStatus().stamina,99,"stamina regenerates when not sprinting");
+assert.equal(game.survivalStatus().stamina,95,"normal stamina now recovers only one point per second");
 game.data.survival.stamina=5;
 assert.equal(game.spendStamina(6),false,"insufficient stamina blocks action");
 assert.equal(game.data.survival.stamina,5,"blocked action does not remove stamina");
