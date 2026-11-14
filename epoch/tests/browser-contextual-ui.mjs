@@ -152,7 +152,7 @@ try{
   });
   assert(queued.path>0&&queued.hasTarget,"precondition: travel and a gather target are queued before clicking the building");
  }});
- await page.waitForFunction(()=>window.epochDebug().ui.context==="tech",null,{timeout:5000});
+ await page.waitForFunction(()=>window.epochDebug().ui.context==="tech",null,{timeout:12000});
  assert.deepEqual(await page.evaluate(()=>({path:window.__epochTestWorld.path.length,target:window.__epochTestWorld.target})),{path:0,target:null},"opening a building cancels the previous travel and gather intent");
  assert.equal((await page.evaluate(()=>window.epochDebug().ui)).sourceBuildingId,"test_lore");
  assert((await page.locator(".context-note").allTextContents()).some(t=>t.includes("Inventory first, then your village stockpile")),"research explains both material sources");

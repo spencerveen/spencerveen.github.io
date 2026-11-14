@@ -30,6 +30,8 @@ jobs:
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/epoch-http.log 2>&1 &
           sleep 1
+      - name: Explore ocean shore, wading, open water and streaming in Chromium
+        run: node epoch/tests/browser-ocean.mjs
       - name: Validate building-driven interfaces and responsive controls
         run: node epoch/tests/browser-contextual-ui.mjs
       - name: Explore seeded wilderness tribes and interact with their leaders
@@ -42,8 +44,6 @@ jobs:
         run: node epoch/tests/browser-equipment.mjs
       - name: Validate water meshes, deep-water collision and chunk cleanup
         run: node epoch/tests/browser-water.mjs
-      - name: Explore ocean shore, wading, open water and streaming in Chromium
-        run: node epoch/tests/browser-ocean.mjs
       - name: Inspect exposed mountain rock and vegetation streaming in Chromium
         run: node epoch/tests/browser-mountain-appearance.mjs
       - name: Validate natural aging, death succession, memorials and a clean HUD
