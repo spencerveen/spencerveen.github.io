@@ -38,6 +38,13 @@ export function terrainAppearanceAt(x,z,seed=STARTER_SEED,protectedSites=[],wate
  const shore=water&&Number.isFinite(water.shore)?
   smooth((2.8-water.shore)/2.8)*(1-rock*.55):0;
  color=mix(color,BANK,shore*.56);
+ // Pale sand blends inward from the eastern ocean coast; darker wet sand
+ // stays visible beneath shallow sea without recoloring inland rivers.
+ const nearSea=water?.kind==="ocean"?1:(water?.coastBeach||0);
+ if(nearSea>0){
+  const sand=water?.kind==="ocean"?[.46,.46,.38]:[.72,.67,.47];
+  color=mix(color,sand,nearSea*.94);
+ }
  return {color:[...color,1],rock,foothill};
 }
 

@@ -1,5 +1,5 @@
 import {GameState} from "./state.js?v=20261114devpanel1";
-import {World} from "./world.js?v=20261114valleys1";
+import {World} from "./world.js?v=20261114ocean1";
 import {UI} from "./ui.js?v=20261114devpanel1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
@@ -33,6 +33,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
      getHome:()=>state.data.village.stockpile,
      getWaterSafeSites:()=>state.data.waterProtectedSites,
      getMountainSafeSites:()=>state.data.mountainProtectedSites,
+     getOceanSafeSites:()=>state.data.oceanProtectedSites,
      onResidentSelect:id=>ui?.openResident(id),
      spendSprint:amount=>state.spendStamina(amount,"sprint"),
      getVitals:()=>state.survivalStatus()

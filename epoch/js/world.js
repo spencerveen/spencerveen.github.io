@@ -6,7 +6,7 @@ import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockp
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114y";
-import {ForestChunks} from "./forest-chunks.js?v=20261114valleys1";
+import {ForestChunks} from "./forest-chunks.js?v=20261114ocean1";
 import {createTribeWorld} from "./tribe-world.js?v=20261114m";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;
@@ -26,6 +26,7 @@ export class World {
   // safe without moving rivers every time a new Hut is built.
   this.waterSafeSites=tribeHandlers.getWaterSafeSites?.()||[];
   this.mountainSafeSites=tribeHandlers.getMountainSafeSites?.()||[];
+  this.oceanSafeSites=tribeHandlers.getOceanSafeSites?.()||[];
   this.discoveredTribes=new Set();this.tribeTarget=null;
   this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onBuildingSelect;this.placingBuilding=null;this.buildingCandidate=null;this.village=null;this.placingStockpile=false;this.stockpileTarget=false;this.stockpile=null;this.stockpileCandidate=null;this.homePositionKey=null;
   this._inputBlocked=false;this.placementPinned=false;this.cameraDragging=false;this.focusTarget=null;

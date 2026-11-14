@@ -49,7 +49,7 @@ const fresh=(founder=null)=>{
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),
  equipment:emptyEquipment(),resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
- knowledgeClaims:[],researchSeconds:0,tribes:{},waterProtectedSites:[],mountainProtectedSites:[],
+ knowledgeClaims:[],researchSeconds:0,tribes:{},waterProtectedSites:[],mountainProtectedSites:[],oceanProtectedSites:[],
  survival:freshSurvival(),successorId:null,lastDeath:null,
  lineage:[{name,gen:1,start:-12000,role:"Founder",appearance:{...appearance}}],
  history:["The wanderer "+name+" entered a quiet clearing in a vast prehistoric wilderness."]
@@ -143,6 +143,19 @@ export class GameState{
     ...this.data.village.buildings.map(b=>({x:b.x,z:b.z,radius:12}))
    ].slice(0,120);
   }else this.data.mountainProtectedSites=[];
+  // Preserve pre-ocean settlements even if they already completed the
+  // earlier water/mountain migrations. Snapshot once, not at every build.
+  if(Array.isArray(data?.oceanProtectedSites)){
+   this.data.oceanProtectedSites=data.oceanProtectedSites.slice(0,120).filter(p=>
+    p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Number.isFinite(p.radius)&&
+    p.radius>=3&&p.radius<=90).map(p=>({x:p.x,z:p.z,radius:p.radius}));
+  }else if(data?.version===1){
+   this.data.oceanProtectedSites=[
+    ...(this.data.village.stockpile?[{x:this.data.village.stockpile.x,
+      z:this.data.village.stockpile.z,radius:36}]:[]),
+    ...this.data.village.buildings.map(b=>({x:b.x,z:b.z,radius:13}))
+   ].slice(0,120);
+  }else this.data.oceanProtectedSites=[];
   this.data.survival=normalizeSurvival(data?.survival);
   this.data.successorId=this.data.village.residents.some(r=>r.id===data?.successorId)?data.successorId:null;
   this.data.lastDeath=data?.lastDeath&&typeof data.lastDeath==="object"&&

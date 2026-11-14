@@ -1,6 +1,6 @@
 import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeight,
  forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261114y";
-import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114valleys1";
+import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114ocean1";
 import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114m";
 import {terrainAppearanceAt,mountainOutcropSites} from "./mountain-appearance.js?v=20261114valleys1";
 const B=globalThis.BABYLON;
@@ -25,13 +25,13 @@ export function buildWaterSurface(cx,cz,sampleAt,subdivisions=32){
    const wx=minX+ix*spacing,wz=minZ+iz*spacing;
    const sample=sampleAt(wx,wz);
    row.push({x:wx-centerX,z:wz-centerZ,
-    y:sample.surfaceY+.025,d:sample.depth});
+    y:sample.surfaceY+.025,d:sample.depth,o:sample.kind==="ocean"?1:0});
   }
   nodes.push(row);
  }
  const positions=[],colors=[],indices=[];
  const blend=(a,b,t)=>({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,
-  y:a.y+(b.y-a.y)*t,d:threshold});
+  y:a.y+(b.y-a.y)*t,d:threshold,o:a.o+(b.o-a.o)*t});
  const clip=(triangle)=>{
   const polygon=[];
   for(let i=0;i<3;i++){
@@ -45,7 +45,13 @@ export function buildWaterSurface(cx,cz,sampleAt,subdivisions=32){
   for(const p of polygon){
    const deep=Math.max(0,Math.min(1,p.d/2));
    positions.push(p.x,p.y,p.z);
-   colors.push(1.04-deep*.28,1.06-deep*.19,1.03-deep*.04,
+   // Ocean teal in shallows fading toward deeper marine blue. One mesh and
+   // material can contain both ocean and river triangles at an estuary.
+   const ocean=p.o||0;
+   const far=Math.max(0,Math.min(1,p.d/8));
+   colors.push((1.04-deep*.28)*(1-ocean)+ocean*(.89-far*.24),
+    (1.06-deep*.19)*(1-ocean)+ocean*(1.15-far*.26),
+    (1.03-deep*.04)*(1-ocean)+ocean*(1.28-far*.18),
     .84+deep*.13);
   }
   for(let i=1;i<polygon.length-1;i++)indices.push(base,base+i,base+i+1);
@@ -67,30 +73,36 @@ export class ForestChunks{
   this.loaded=new Map();this.center=null;this.created=0;this.disposed=0;
   this.protectedSites=Array.isArray(world.waterSafeSites)?[...world.waterSafeSites]:[];
   this.mountainProtectedSites=Array.isArray(world.mountainSafeSites)?[...world.mountainSafeSites]:[];
+  this.oceanProtectedSites=Array.isArray(world.oceanSafeSites)?[...world.oceanSafeSites]:[];
  }
- heightAt(x,z){return waterTerrainHeight(x,z,this.seed,this.protectedSites,this.mountainProtectedSites)}
- waterAt(x,z){return waterAt(x,z,this.seed,this.protectedSites,this.mountainProtectedSites)}
+ heightAt(x,z){return waterTerrainHeight(x,z,this.seed,this.protectedSites,this.mountainProtectedSites,this.oceanProtectedSites)}
+ waterAt(x,z){return waterAt(x,z,this.seed,this.protectedSites,this.mountainProtectedSites,this.oceanProtectedSites)}
  refreshProtectedSites(cx,cz){
   // Cover every tribe within reach of the entire five-by-five window, plus
   // two extra chunk rings. Camps keep their exact original seed positions.
   const sites=[...(this.world.waterSafeSites||[])];
   const mountainSites=[...(this.world.mountainSafeSites||[])];
+  const oceanSites=[...(this.world.oceanSafeSites||[])];
   for(let dx=-5;dx<=5;dx++)for(let dz=-5;dz<=5;dz++){
    const tribe=tribeAtChunk(this.seed,cx+dx,cz+dz);
    if(tribe){
     sites.push({x:tribe.x,z:tribe.z,radius:10});
     mountainSites.push({x:tribe.x,z:tribe.z,radius:14});
+    // A seeded shoreline cannot delete a previously discovered tribal camp.
+    oceanSites.push({x:tribe.x,z:tribe.z,radius:15});
    }
   }
   this.protectedSites=sites;
   this.mountainProtectedSites=mountainSites;
+  this.oceanProtectedSites=oceanSites;
  }
  get status(){
   return {seed:this.seed,center:this.center?{...this.center}:null,
    loaded:this.loaded.size,detailed:[...this.loaded.values()].filter(c=>c.detailed).length,
    keys:[...this.loaded.keys()],created:this.created,disposed:this.disposed,
    resources:this.world.entities.length,animals:this.world.animals.length,
-   waterChunks:[...this.loaded.values()].filter(c=>!!c.waterMesh).length};
+   waterChunks:[...this.loaded.values()].filter(c=>!!c.waterMesh).length,
+   oceanChunks:[...this.loaded.values()].filter(c=>c.hasOcean).length};
  }
  create(cx,cz){
   const world=this.world,key=chunkKey(cx,cz),scene=world.scene;
@@ -127,7 +139,11 @@ export class ForestChunks{
   mesh.isPickable=true;
   // Clip the water surface to the actual wet portion of each square.
   // Triangles no longer stretch over dry land with interpolated alpha.
-  const surface=buildWaterSurface(cx,cz,(wx,wz)=>this.waterAt(wx,wz));
+  const c=CHUNK_SIZE/2;
+  const seaCorners=[[-c,-c],[-c,c],[c,-c],[c,c],[0,0]];
+  const allOcean=seaCorners.every(([dx,dz])=>this.waterAt(x+dx,z+dz).kind==="ocean");
+  // Low-poly open water; reserve detailed shoreline clipping for coastal chunks.
+  const surface=buildWaterSurface(cx,cz,(wx,wz)=>this.waterAt(wx,wz),allOcean?8:32);
   let visibleWater=null;
   if(surface.indices.length){
    const waterMesh=new B.Mesh("Water ["+key+"]",scene);
@@ -147,7 +163,9 @@ export class ForestChunks{
    // groups, putting translucent water in front of trees and characters.
    visibleWater=waterMesh;
   }
-  this.loaded.set(key,{cx,cz,key,mesh,waterMesh:visibleWater,vegetation:[],detailed:false});
+  this.loaded.set(key,{cx,cz,key,mesh,waterMesh:visibleWater,hasOcean:allOcean||
+   seaCorners.some(([dx,dz])=>this.waterAt(x+dx,z+dz).kind==="ocean"),
+   vegetation:[],detailed:false});
   this.created++;
  }
  showDetails(chunk){
@@ -156,10 +174,11 @@ export class ForestChunks{
   const candidate=world.spawnTribeCamp?tribeAtChunk(this.seed,cx,cz):null;
   const active=candidate&&world.isTribeSiteActive?.(candidate);
   const relocated=candidate&&world.getTribeRecord?.(candidate.id)?.status==="relocated";
-  const tribe=active?candidate:null;
-  const reservation=active||relocated?candidate:null;
+  const tribe=active&&dryTribe?candidate:null;
+  const reservation=(active||relocated)&&dryTribe?candidate:null;
   const withinCamp=(x,z,extra=0)=>reservation&&Math.hypot(x-reservation.x,z-reservation.z)<TRIBE_CLEARING_RADIUS+extra;
   const rawResources=forestObjects(this.seed,cx,cz);
+  const dryTribe=candidate&&this.waterAt(candidate.x,candidate.z).depth<.12;
   // Bedrock is decoration, not a new harvestable stone deposit or collider.
   const outcrops=mountainOutcropSites(this.seed,cx,cz,
    (px,pz)=>this.heightAt(px,pz),(px,pz)=>this.waterAt(px,pz),

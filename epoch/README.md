@@ -97,6 +97,14 @@ During a running game, press **L** to open or close the developer panel. It cont
 
 These are deliberately temporary, session-only test switches in `js/dev-cheats.js`. They default to off every time Epoch opens, are not stored in save slots, and do not undo an already completed game-over. Players' villages, normal saves and death/permadeath rules when the toggles are off remain intact. The dev-only module, UI controls and state hooks can all be removed before release.
 
+## Phase 4B.3 — Ocean and coastline (first biome pass)
+
+Epoch now has a distinct **ocean biome to the east (+X) of the starting forest**. The saved seed controls a broad, winding coastline about 470–665 meters east of the starting clearing. A gently sloped sandy beach separates existing forests/mountains from shallow tidal water and progressively deeper open ocean, which continues as you travel farther east. Ocean water is blue-green in the shallows and deeper blue offshore. Beach and seafloor colors blend directly into the existing terrain; dense marine chunks use cheaper 8-subdivision water meshes, while shoreline chunks keep the existing detailed 32-subdivision clipping.
+
+Ocean movement follows the existing water rule: wade in the shallows, but deep ocean blocks walking until swimming/boats are implemented. Trees, berry bushes, wild deer and stone deposits are suppressed underwater. Oceans are **not a world edge**: the surface continues indefinitely and can support swimming, ships, fishing and coastal villages later. Rivers keep their existing inland paths and merge visually into the sea at the coastline. Real tides, ocean wildlife, waves, currents, offshore islands and travel are future milestones.
+
+A one-time `oceanProtectedSites` snapshot shelters pre-ocean stockpiles and buildings, even in saves that already completed earlier water migrations. Historic tribal camps are also kept on dry ground as chunks stream. Newly built villages cannot reshape the coast, and existing saves retain their seeds, materials, residents and progress.
+
 ## Phase 4B.2 — Rivers, lakes and water
 
 The same saved **world seed** now creates connected, meandering rivers and lakes that widen sections of the river corridor. Water generation uses continuous **world coordinates**, not independent chunk endpoints, so rivers remain seamless as you walk between the existing 32-meter terrain chunks. Water surfaces are translucent, with sandy shore transitions and a recessed river/lake bed. Water meshes load and unload with the same 5×5 chunk window as the rest of the forest.

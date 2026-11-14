@@ -52,6 +52,12 @@ The exact same resource objects respawn when the surrounding chunk is loaded aga
 - `tests/check-settlement.mjs`: retains village and seed save compatibility
 - `tests/browser-walk.mjs`: Chromium verifies scene loads, materials/animals, seed persistence, character movement and village construction
 
+## Ocean biome and coastline (Phase 4B.3)
+
+`js/ocean-generation.js` defines one continuous seeded eastern shoreline and an open ocean extending toward positive X. The coastline sits roughly 470–665 meters from the origin depending on the seed and latitude (Z). It carves a gentle 96-meter coastal shelf into the existing mountain/forest height field. The water model reports `kind: "ocean"` in addition to rivers and lakes, returning constant sea level, a gradual seafloor, wadeable nearshore depths and impassable deeper water. Beach sands and underwater seafloor colors are applied through the existing vertex-color terrain pipeline. No ocean geometry is persisted; chunk meshes stream deterministically. Fully offshore chunks render a low-detail water grid to limit draw overhead.
+
+Existing worlds migrate a one-time `oceanProtectedSites` snapshot from stockpiles and existing buildings, independent of older river/mountain protection. Nearby tribal camp clearings are also protected. This prevents the new sea from deleting historical settlements. New builds cannot reshape the ocean. The earlier rivers retain their seeded routes and join the ocean at the shore. We have not yet implemented realistic tide levels, sea currents, aquatic wildlife, swimming, watercraft, or ocean islands.
+
 ## Mountain ranges and foothills (Phase 4B.2, terrain pass 1)
 
 Mountain elevations are calculated in `js/mountain-generation.js` using seeded regional noise, curving ridges, and a continuous foothill envelope. The base forest terrain height is retained, and mountain uplift is layered on top. An original-forest radius of 150 meters around the starting clearing has no mountain uplift, with a gradual transition beyond it. Mountains are generated in absolute world coordinates, so loaded 32-meter chunks share seamless boundaries.

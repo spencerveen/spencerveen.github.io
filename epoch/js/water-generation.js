@@ -6,13 +6,21 @@
 import {STARTER_SEED} from "./forest-generation.js?v=20261114y";
 import {mountainTerrainHeight} from "./mountain-generation.js?v=20261114valleys1";
 import {nearestWaterCorridor} from "./water-corridors.js?v=20261114valleys1";
+import {oceanAt,SEA_LEVEL} from "./ocean-generation.js?v=20261114ocean1";
 export {riverCenter,riverWidth,lakeSites} from "./water-corridors.js?v=20261114valleys1";
 export const WATER_MODEL_VERSION=1;
 export const SHALLOW_LIMIT=.85;
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
-export function waterAt(x,z,seed=STARTER_SEED,protectedSites=[],mountainProtectedSites=[]){
+export function waterAt(x,z,seed=STARTER_SEED,protectedSites=[],mountainProtectedSites=[],oceanProtectedSites=[]){
  if(!Number.isFinite(x)||!Number.isFinite(z))return {kind:"land",depth:0,shore:Infinity};
+ const ocean=oceanAt(x,z,seed,oceanProtectedSites,mountainProtectedSites);
+ if(ocean?.depth>.025)return {
+  kind:"ocean",id:"ocean:eastern-sea",depth:ocean.depth,
+  shore:ocean.shore,coastDistance:ocean.distance,coastBeach:ocean.beach,
+  surfaceY:SEA_LEVEL,bedY:ocean.bedY,
+  shallow:ocean.depth<SHALLOW_LIMIT,passable:ocean.depth<SHALLOW_LIMIT
+ };
  const {distance:best,kind,id:siteId}=nearestWaterCorridor(x,z,seed);
  // The original starter area (including original resource sites and plots)
  // has always been dry. Retain that invariant for every existing world seed.
@@ -25,15 +33,16 @@ export function waterAt(x,z,seed=STARTER_SEED,protectedSites=[],mountainProtecte
  const inside=Math.max(0,-best);
  const raw=inside>0?(kind==="lake"?(.18+2.25*smooth(inside/5)):(.15+1.5*smooth(inside/2.8))):0;
  const depth=raw*protection;
- const base=mountainTerrainHeight(x,z,seed,mountainProtectedSites,best);
+ const base=ocean?ocean.groundY:mountainTerrainHeight(x,z,seed,mountainProtectedSites,best);
  return {kind:depth>.02?kind:"land",depth:depth>.02?depth:0,
   shore:Math.abs(best),id:depth>.02?siteId:null,
   corridorDistance:best,
+  coastDistance:ocean?.distance??-Infinity,coastBeach:ocean?.beach||0,
   surfaceY:base+.055,bedY:base-depth,
   shallow:depth>0&&depth<SHALLOW_LIMIT,
   passable:depth<SHALLOW_LIMIT};
 }
-export function waterTerrainHeight(x,z,seed=STARTER_SEED,protectedSites=[],mountainProtectedSites=[]){
- const sample=waterAt(x,z,seed,protectedSites,mountainProtectedSites);
+export function waterTerrainHeight(x,z,seed=STARTER_SEED,protectedSites=[],mountainProtectedSites=[],oceanProtectedSites=[]){
+ const sample=waterAt(x,z,seed,protectedSites,mountainProtectedSites,oceanProtectedSites);
  return sample.depth>0?sample.bedY:sample.surfaceY-.055;
 }
