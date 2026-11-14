@@ -2,7 +2,7 @@ import {founderAppearance,randomAppearance,normalizeAppearance} from "./characte
 import {createQuaterniusHuman} from "./quaternius-models.js?v=20261114swimanim1";
 import {BUILDINGS} from "./settlement.js?v=20261114u";
 import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114y";
-import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114fish1";
+import {stockpileValidation,nearStockpile,stockpileSpace,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114fish1";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view2";
@@ -248,7 +248,7 @@ export class World {
     person.human.root.position=V(x,this.groundY(x,z),z);
    }
    if(!person.work||oldHome!==resident.homeId||oldJob!==person.job)
-    person.work={mode:"idle",task:null,timer:0,retry:1+(i%4)*.4,moving:false,stalled:0};
+    person.work={mode:"idle",task:null,timer:0,retry:1+(i%4)*.4,moving:false,stalled:0,noProgress:0};
    return person;
   });
  }
@@ -269,6 +269,8 @@ export class World {
    root.position.x=nx;root.position.z=nz;root.position.y=this.groundY(nx,nz);
    root.rotation.y=a;
    person.work.moving=true;person.work.stalled=0;
+   const remaining=Math.hypot(destination.x-nx,destination.z-nz);
+   person.work.noProgress=remaining<dist-.004?0:(person.work.noProgress||0)+dt;
    return false;
   }
   person.work.moving=false;person.work.stalled+=dt;
@@ -284,14 +286,20 @@ export class World {
    const work=person.work;
    if(!work)continue;
    work.moving=false;
-   if(person.job==="idle"){work.mode="idle";work.task=null;continue}
+   if(person.job==="idle"){
+    work.mode="idle";work.task=null;
+    if(Number.isFinite(person.homeX)&&Number.isFinite(person.homeZ))
+     this.moveVillager(person,{x:person.homeX,z:person.homeZ},dt,.7);
+    continue;
+   }
    if(work.mode==="idle"){
     work.retry-=dt;if(work.retry>0)continue;
+    if(stockpileSpace(pile)<2){work.retry=7;continue}
     const claimed=new Set(this.people.filter(p=>p!==person&&p.work?.task)
      .map(p=>p.work.task.id));
     const task=findVillagerWork(this,person,claimed);
     if(!task){work.retry=5;continue}
-    work.task=task;work.mode="outbound";work.stalled=0;
+    work.task=task;work.mode="outbound";work.stalled=0;work.noProgress=0;
    }
    if(work.mode==="outbound"){
     const task=work.task;
@@ -301,12 +309,12 @@ export class World {
      if(!animal){work.mode="idle";work.task=null;work.retry=3;continue}
      task.x=animal.node.position.x;task.z=animal.node.position.z;
     }
-    if(this.moveVillager(person,task,dt,task.kind==="fish"?1.25:2.1)){
+    if(this.moveVillager(person,task,dt,task.kind==="fish"?.55:2.1)){
      work.mode="working";work.timer=JOB_WORK_SECONDS[person.job]||4;
     }
    }else if(work.mode==="working"){
     work.timer-=dt;
-    if(work.timer<=0){work.mode="returning";work.stalled=0}
+    if(work.timer<=0){work.mode="returning";work.stalled=0;work.noProgress=0}
    }else if(work.mode==="returning"){
     const point={x:pile.x+2.5,z:pile.z+2.5};
     if(this.moveVillager(person,point,dt,1.15)){
@@ -328,8 +336,8 @@ export class World {
      }else work.retry=outcome?.reason==="Stockpile is full."?10:3;
     }
    }
-   if(work.stalled>4){
-    work.mode="idle";work.task=null;work.retry=6;work.stalled=0;
+   if(work.stalled>4||work.noProgress>8){
+    work.mode="idle";work.task=null;work.retry=6;work.stalled=0;work.noProgress=0;
    }
   }
  }
