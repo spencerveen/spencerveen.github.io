@@ -1,6 +1,6 @@
 import {GameState} from "./state.js?v=20261114j";
 import {World} from "./world.js?v=20261114j";
-import {UI} from "./ui.js?v=20261114j";
+import {UI} from "./ui.js?v=20261114k";
 import {TitleScreen} from "./title-screen.js?v=20261114b";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");

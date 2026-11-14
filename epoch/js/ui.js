@@ -1,6 +1,6 @@
 import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114j";
 import {BUILDINGS} from "./settlement.js?v=20261114b";
-import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114b";
+import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114k";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114b";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));

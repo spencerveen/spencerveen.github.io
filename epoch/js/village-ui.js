@@ -61,6 +61,10 @@ function storagePanel(ui){
  const state=ui.state,pile=state.data.village.stockpile,storage=state.stockpileInfo(),atHome=near(ui);
  let html=`<div class="pack-capacity"><span>Village storage</span><strong>${storage.used} / ${STOCKPILE_CAPACITY}</strong></div>
   <p class="context-note">Bring gathered materials here. All village buildings use these stored supplies.</p>
+  <div class="stockpile-primary-actions">
+   <button type="button" data-action="deposit-all-stockpile" ${!atHome||state.inventoryUsed()===0||storage.used>=STOCKPILE_CAPACITY?"disabled":""}>Deposit all materials</button>
+   ${!atHome?'<button type="button" class="game-button alt" data-action="return-stockpile">Walk to stockpile</button>':""}
+  </div>
   <div class="stockpile-resource-list">`;
  for(const id of ITEM_IDS){
   const carried=state.inventoryCount(id),stored=storage.items[id]||0;
@@ -73,10 +77,7 @@ function storagePanel(ui){
     <button type="button" class="game-button alt" data-action="withdraw-stockpile" data-item="${id}" ${!atHome||take<=0?"disabled":""}>Take ${take>0?take:12}</button>
    </div></div>`;
  }
- html+=`</div><div class="stockpile-primary-actions">
-  <button type="button" data-action="deposit-all-stockpile" ${!atHome||state.inventoryUsed()===0||storage.used>=STOCKPILE_CAPACITY?"disabled":""}>Deposit all materials</button>
-  ${!atHome?'<button type="button" class="game-button alt" data-action="return-stockpile">Walk to stockpile</button>':""}
- </div><p class="context-note">${atHome?"Within reach · transfers available":"Move within "+STOCKPILE_INTERACT_RANGE+" m to transfer supplies."}</p>
+ html+=`</div><p class="context-note">${atHome?"Within reach · transfers available":"Move within "+STOCKPILE_INTERACT_RANGE+" m to transfer supplies."}</p>
  <div class="village-population"><div><small>VILLAGERS</small><strong>${state.data.village.population} / ${state.villageCapacity()}</strong></div><span>${state.data.village.buildings.length} buildings · ${VILLAGE_RADIUS} m territory</span></div>`;
  return html;
 }

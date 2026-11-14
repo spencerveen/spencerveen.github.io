@@ -38,6 +38,8 @@ assert(!inventory.includes('data-action="open-village"'),"Inventory does not byp
 assert.equal(handlePackAction(ui,{dataset:{action:"chop-bush"}}),false,"The removed inventory action cannot trigger gathering");
 const storage=villagePanel(ui);
 assert(storage.includes('data-action="deposit-stockpile"'),"Stockpile context exposes storage controls");
+assert(storage.indexOf('data-action="deposit-all-stockpile"')<storage.indexOf('data-action="deposit-stockpile"'),"Deposit all is the first stockpile transfer action");
+assert.equal([...storage.matchAll(/data-action="deposit-all-stockpile"/g)].length,1,"Deposit all appears exactly once");
 assert(storage.includes('data-action="village-section"'),"Village tasks have local sections instead of global tabs");
 ui.villageSection="build";
 const construction=villagePanel(ui);
