@@ -101,6 +101,14 @@ These are deliberately temporary, session-only test switches in `js/dev-cheats.j
 
 High mountains no longer receive the same density of leafy trees, berry bushes, grass tufts and deer as ordinary forest. Exposed rock is visually more convincing, while natural stone deposits are still available. Newly spawned camps also stay clear of legacy discovered tribal settlements.
 
+## Finite two-dimensional watersheds (river redesign)
+
+Rivers no longer repeat as near-parallel, endless ribbons. Seeded highland headwaters feed **finite, winding 2D river courses** with pronounced turns; two narrower tributaries join each main river and many branches travel mostly north or south before merging. Every main course terminates at the eastern ocean. Rivers narrow toward their sources and widen downstream.
+
+**Large lakes are now uncommon** (roughly one in three broad catchments), instead of appearing every few hundred meters. Their positions follow river bends and their broad shores are irregular. The entire network is cached and spatially indexed by 96m cells to keep terrain streaming fast; it is still reproducible from your existing world seed. New rivers may cross different wilderness terrain than before, so the old save-protection system continues to keep completed villages dry. Existing tribe records remain intact, and unsafe undiscovered camps are filtered by the tribe placement checks.
+
+This is a procedural branching watershed with highland-selected sources, **not yet a physically solved downhill flow simulation**. A later hydrology pass can model precise drainage gradients, currents and waterfalls.
+
 ## World ecology cleanup — More natural water and tribes
 
 Rivers now vary in width as they meander, and seeded lakes are larger, elongated, and gently lobed rather than small circles. River centerlines, lake coordinates, and lake IDs remain stable. Lake descriptors are cached in a bounded lookup for better chunk-generation performance; no new save geometry is needed.

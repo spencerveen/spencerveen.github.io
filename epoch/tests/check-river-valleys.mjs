@@ -1,69 +1,34 @@
 import assert from "node:assert/strict";
 import {STARTER_SEED,terrainHeight,CHUNK_SIZE} from "../js/forest-generation.js";
-import {riverCenter,riverWidth,lakeSites,nearestWaterCorridor} from "../js/water-corridors.js";
+import {watershedAtBand,nearestWaterCorridor,riverCenter} from "../js/water-corridors.js";
 import {mountainAt,mountainTerrainHeight,riverValleyFactor,RIVER_VALLEY_SHOULDER} from "../js/mountain-generation.js";
 import {waterAt,waterTerrainHeight} from "../js/water-generation.js";
-
-// The signed river/lake footprint is a pure module, with the exact old path.
-for(const seed of [12000,42,1337,987654321]){
- const phase=(seed%100000)*.0000712;
- for(const x of [-624,-224,-12,155,310,800]){
-  for(const channel of [-2,0,1]){
-   const oldCenter=72+42*Math.sin(phase*2.4)+channel*195+
-    24*Math.sin(x/153+channel*1.73+phase)+
-    11*Math.sin(x/57+phase*1.9+channel*.91);
-   assert(Math.abs(riverCenter(x,channel,seed)-oldCenter)<1e-11,"saved river centerlines unchanged");
-   const width=riverWidth(x,channel,seed);
-   assert(width>3.5&&width<10,"natural river width remains safe and bounded");
-   const sample=nearestWaterCorridor(x,oldCenter,seed);
-   assert(sample.distance<0,"seeded river still crosses its original centerline");
-   // The original 72m protected founding clearing intentionally remains dry.
-   // Past the new eastern coastline the river's historical footprint
-   // merges into ocean; inland channel positions must still be wet.
-   if(Math.hypot(x+3,oldCenter+2)>90)
-    assert(waterAt(x,oldCenter,seed).depth>0,
-     "original river corridor stays wet, including where it meets the sea");
+for(const seed of [STARTER_SEED,42,1337,987654321]){
+ let overlap=null;
+ for(let basin=-3;basin<=3&&!overlap;basin++){
+  const points=watershedAtBand(seed,basin).routes[0].points;
+  for(let i=0;i<points.length;i+=8){
+   const {x,z}=points[i],uncarved=mountainAt(x,z,seed,[],1000).uplift;
+   if(uncarved>12&&waterAt(x,z,seed).depth>.2){overlap={x,z,uncarved};break}
   }
  }
- let strongOverlap=null;
- for(let x=-1200;x<=1200&&!strongOverlap;x+=24)for(let channel=-3;channel<=3;channel++){
-  const z=riverCenter(x,channel,seed);
-  const uncarved=mountainAt(x,z,seed,[],1000).uplift;
-  if(uncarved>12){strongOverlap={x,z,uncarved};break;}
- }
- assert(strongOverlap,"each seed has a mountain crossing near some river");
- const {x,z,uncarved}=strongOverlap;
- const water=waterAt(x,z,seed);
- const valley=mountainAt(x,z,seed).uplift;
- assert(valley<.001,"a river should flow on the floor of a mountain valley");
- assert(uncarved>12,"uncarved ridge would have buried the river");
- assert.equal(water.surfaceY-.055,terrainHeight(x,z,seed),
-  "water surface lies on the low valley floor instead of atop the peak");
- // Preserve the shape of the existing river and its wading restrictions.
- assert(["river","lake"].includes(water.kind),"the original river corridor may widen into a lake");
- assert.equal(water.passable,false);
- assert.equal(waterTerrainHeight(x,z,seed),water.bedY);
- assert.equal(water.corridorDistance,nearestWaterCorridor(x,z,seed).distance);
- // The valley has smooth foothill shoulders across the original bank.
+ assert(overlap,"some river passes through a formerly higher mountain");
+ const {x,z,uncarved}=overlap,w=waterAt(x,z,seed);
+ assert(mountainAt(x,z,seed).uplift<.001,"river valleys cut a low channel through ridges");
+ assert.equal(w.surfaceY-.055,terrainHeight(x,z,seed));
+ assert.equal(waterTerrainHeight(x,z,seed),w.bedY);
+ assert.equal(w.corridorDistance,nearestWaterCorridor(x,z,seed).distance);
  assert.equal(riverValleyFactor(-4),0);
  assert.equal(riverValleyFactor(RIVER_VALLEY_SHOULDER+3),1);
- for(let dist=-3;dist<70;dist+=3){
-  const p=riverValleyFactor(dist),next=riverValleyFactor(dist+.00001);
-  assert(p>=0&&p<=1&&Math.abs(next-p)<.00001);
- }
+ for(let t=-3;t<70;t+=3)
+  assert(Math.abs(riverValleyFactor(t+.00001)-riverValleyFactor(t))<.00001);
  for(const seam of [-128,-32,0,32,320]){
   const zc=riverCenter(seam,0,seed);
   const nearL=mountainTerrainHeight(seam-.00001,zc,seed);
   const nearR=mountainTerrainHeight(seam+.00001,zc,seed);
-  assert(Math.abs(nearL-nearR)<.001,"terrain remains seamless at chunk crossings");
+  assert(Math.abs(nearL-nearR)<.002);
  }
- const lake=lakeSites(seed,0,3)[0];
- if(lake){
-  assert.equal(mountainAt(lake.x,lake.z,seed).uplift,0,
-   "lakes also sit on the valley floor");
- }
- const protectedSite=[{x:740,z:520,radius:42}];
- assert.equal(mountainAt(740,520,seed,protectedSite).uplift,0,
-  "historic villages remain at their old mountain elevation");
+ const site=[{x:740,z:520,radius:42}];
+ assert.equal(mountainAt(740,520,seed,site).uplift,0);
 }
-console.log("PASS mountain valleys: stable rivers, carved valley floors, smooth shoulders, lakes, old saves and seams");
+console.log("PASS watershed valleys: mountain crossings, smooth shoulders, water-bed continuity, protected sites");

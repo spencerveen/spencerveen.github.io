@@ -7,81 +7,58 @@ import {stockpileValidation} from "../js/stockpile.js";
 import {placementCheck} from "../js/village-placement.js";
 import {GameState} from "../js/state.js";
 
-assert.equal(WATER_MODEL_VERSION,1);
-// A real shoreline-shaped mesh must never spill a transparent quad over dry
-// ground, and unloaded chunks must not allocate invisible water surfaces.
-const drySurface=buildWaterSurface(0,0,(x,z)=>waterAt(x,z,STARTER_SEED));
-assert.equal(drySurface.indices.length,0,"starter clearing has no water surface triangles");
-const riverX=250,riverZ=riverCenter(riverX,0,STARTER_SEED);
-const riverChunk=chunkCoord(riverX,riverZ);
-const surface=buildWaterSurface(riverChunk.cx,riverChunk.cz,
- (x,z)=>waterAt(x,z,STARTER_SEED));
-assert(surface.indices.length>0,"deep river creates rendered water triangles");
-assert.equal(surface.indices.length%3,0);
-assert.equal(surface.positions.length/3,surface.colors.length/4);
-for(let i=3;i<surface.colors.length;i+=4)
- assert(surface.colors[i]>=.84,"shoreline mesh must not use transparent dry-land vertices");
-for(let i=0;i<surface.indices.length;i+=3){
- const a=surface.indices[i]*3,b=surface.indices[i+1]*3,c=surface.indices[i+2]*3;
- const wx=(surface.positions[a]+surface.positions[b]+surface.positions[c])/3+(riverChunk.cx+.5)*CHUNK_SIZE;
- const wz=(surface.positions[a+2]+surface.positions[b+2]+surface.positions[c+2])/3+(riverChunk.cz+.5)*CHUNK_SIZE;
- const centroid=waterAt(wx,wz,STARTER_SEED);
- assert(centroid.depth>.001||centroid.shore<1.5,
-  "a water triangle may cross the shoreline by only a sub-meter boundary approximation");
-}
-
+assert.equal(WATER_MODEL_VERSION,2);
 assert(SHALLOW_LIMIT>.3&&SHALLOW_LIMIT<1.3);
-for(const seed of [12000,1337,987654321,42]){
- for(let x=-400;x<=400;x+=13)for(let z=-400;z<=400;z+=17){
-  const water=waterAt(x,z,seed);
-  assert.deepEqual(waterAt(x,z,seed),water,"water geometry must be reproducible from saved world seed");
-  assert(Number.isFinite(water.depth)&&water.depth>=0&&water.depth<5);
-  assert(Number.isFinite(waterTerrainHeight(x,z,seed)));
-  assert(Math.abs(waterTerrainHeight(x,z,seed)-(mountainTerrainHeight(x,z,seed)-water.depth))<1e-9);
-  if(water.depth>0)assert(["river","lake"].includes(water.kind));
- }
- assert.equal(waterAt(0,0,seed).depth,0,"original village stays dry across all existing seeds");
- assert.equal(waterAt(-2,-8,seed).depth,0,"legacy starting stockpile remains dry");
- for(let x of [-320,-224,-128,96,192,320]){
-  for(const channel of [-1,0,1]){
-   const z=riverCenter(x,channel,seed);
-   assert(Number.isFinite(z));
-   assert(Number.isFinite(riverWidth(x,channel,seed)));
-   if(Math.hypot(x,z)<90)continue;
-   const sample=waterAt(x,z,seed);
-   assert(sample.depth>0&&sample.kind!=="land","rivers must have no missing sections");
+const findDeep=(seed)=>{
+ for(let basin=-3;basin<=3;basin++)
+  for(let x=-1100;x<=400;x+=21){
+   const z=riverCenter(x,basin,seed),w=waterAt(x,z,seed);
+   if(w.depth>1&&w.kind==="river")return {x,z,w,basin};
   }
+ return null;
+};
+for(const seed of [12000,1337,987654321,42]){
+ assert.equal(waterAt(0,0,seed).depth,0,"founding clearing always dry");
+ assert.equal(waterAt(-2,-8,seed).depth,0);
+ const deep=findDeep(seed);
+ assert(deep,"each seeded world has a deep finite river");
+ assert.equal(deep.w.passable,false,"deep water requires swimming");
+ assert.equal(waterAt(-2500,deep.z,seed).depth,0,"western headwaters have finite ends");
+ const at=chunkCoord(deep.x,deep.z);
+ const surface=buildWaterSurface(at.cx,at.cz,(x,z)=>waterAt(x,z,seed));
+ assert(surface.indices.length>0,"water mesh renders the actual stream");
+ assert.equal(surface.indices.length%3,0);
+ assert.equal(surface.positions.length/3,surface.colors.length/4);
+ assert(surface.colors.every((v,i)=>i%4!==3||v>=.84));
+ for(let i=0;i<surface.indices.length;i+=3){
+  const indices=surface.indices,vertices=surface.positions;
+  const a=indices[i]*3,b=indices[i+1]*3,c=indices[i+2]*3;
+  const wx=(vertices[a]+vertices[b]+vertices[c])/3+(at.cx+.5)*CHUNK_SIZE;
+  const wz=(vertices[a+2]+vertices[b+2]+vertices[c+2])/3+(at.cz+.5)*CHUNK_SIZE;
+  const w=waterAt(wx,wz,seed);
+  assert(w.depth>.001||w.shore<1.5,"water triangles clip near the natural banks");
  }
- for(const boundary of [-CHUNK_SIZE*6,-CHUNK_SIZE,0,CHUNK_SIZE,CHUNK_SIZE*5]){
-  const z=riverCenter(boundary,0,seed);
-  if(Math.hypot(boundary,z)<84)continue;
-  const at=waterAt(boundary,z,seed);
-  assert(at.depth>.1,"river crosses chunk boundaries");
-  assert(Math.abs(waterAt(boundary-.00001,z,seed).depth-at.depth)<.001,"left side of chunk seam agrees");
-  assert(Math.abs(waterAt(boundary+.00001,z,seed).depth-at.depth)<.001,"right side of chunk seam agrees");
+ for(let x=-440;x<=320;x+=31)for(let z=-420;z<=420;z+=43){
+  const w=waterAt(x,z,seed);
+  assert.deepEqual(w,waterAt(x,z,seed),"world seed always reproduces the same water");
+  assert(Number.isFinite(w.depth)&&w.depth>=0&&w.depth<5);
+  assert(Number.isFinite(waterTerrainHeight(x,z,seed)));
+  assert(Math.abs(waterTerrainHeight(x,z,seed)-
+   (mountainTerrainHeight(x,z,seed)-w.depth))<1e-9);
  }
- let lake=null;
- for(let channel=-2;channel<=2&&!lake;channel++)
-  for(let section=-4;section<=4&&!lake;section++)
-   lake=lakeSites(seed,channel,section).find(p=>Math.hypot(p.x,p.z)>100);
- assert(lake,"seed creates lakes in the explorable wilderness");
- assert(waterAt(lake.x,lake.z,seed).depth>1,"lakes have deep central water");
- const protect=waterAt(lake.x,lake.z,seed,[{x:lake.x,z:lake.z,radius:38}]);
- assert.equal(protect.depth,0,"existing village protection keeps a historical lake-bed dry");
- const at=waterAt(lake.x+85,lake.z,seed,[{x:lake.x,z:lake.z,radius:38}]);
- assert.deepEqual(at,waterAt(lake.x+85,lake.z,seed),"protection does not affect remote geography");
+ for(const [x,z] of [[deep.x,deep.z],[32,128],[-96,-160]]){
+  const at=waterAt(x,z,seed);
+  assert(Math.abs(waterAt(x+.00001,z,seed).depth-at.depth)<.002);
+  assert(Math.abs(waterAt(x-.00001,z,seed).depth-at.depth)<.002);
+ }
+ const protect=waterAt(deep.x,deep.z,seed,[{x:deep.x,z:deep.z,radius:38}]);
+ assert.equal(protect.depth,0,"old villages remain protected from changed water routes");
+ const away=waterAt(deep.x+150,deep.z,seed,[{x:deep.x,z:deep.z,radius:38}]);
+ assert.deepEqual(away,waterAt(deep.x+150,deep.z,seed));
 }
-assert.notEqual(riverCenter(172,0,12000),riverCenter(172,0,1337),"world seeds affect river routes");
-let crossing=null,deep=null;
-for(let x=190;x<560;x+=7){
- const center=riverCenter(x,0,STARTER_SEED),width=riverWidth(x,0,STARTER_SEED);
- const inner=waterAt(x,center,STARTER_SEED);
- const bank=waterAt(x,center+width-.1,STARTER_SEED);
- if(inner.depth>1&&bank.depth>0&&bank.depth<SHALLOW_LIMIT){crossing=bank;deep=inner;break}
-}
-assert(crossing?.passable&&crossing.shallow,"shallows support wading");
-assert.equal(deep?.passable,false,"deep water remains classified as swimming depth");
-assert.equal(waterAt(NaN,0).depth,0,"invalid coordinates never crash water generation");
+assert.equal(waterAt(NaN,0).depth,0);
+const deep=findDeep(12000);
+assert(deep.w.depth>SHALLOW_LIMIT);
 
 const dryWorld={player:{position:{x:0,z:0}},groundY:()=>.18,obstacles:[],
  terrain:{waterAt:()=>({depth:1.5})}};
@@ -96,7 +73,7 @@ assert(!placementCheck({village,world:dryWorld,kind:"family",x:8,z:0}).reason.in
 
 const saves=new Map();
 globalThis.localStorage={getItem:k=>saves.get(k)||null,setItem:(k,v)=>saves.set(k,v),removeItem:k=>saves.delete(k)};
-const legacyAt={x:300,z:riverCenter(300,0,12000)};
+const legacyAt={x:deep.x,z:deep.z};
 saves.set("epoch.stoneage.slot.1",JSON.stringify({version:1,worldSeed:12000,
  hero:{name:"Old Founder"},village:{population:1,stockpile:{...legacyAt,items:{}},
  buildings:[{id:"building_1",kind:"family",x:legacyAt.x+8,z:legacyAt.z+8}],

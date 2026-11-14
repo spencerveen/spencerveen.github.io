@@ -194,17 +194,26 @@ export function nearestWaterCorridor(x,z,seed=STARTER_SEED){
  }
  return best;
 }
-export function riverCenter(x,channel=0,seed=STARTER_SEED){
+// Diagnostic cross-section helpers for tests and future map rendering.
+// Return a point exactly on the smoothed centerline at the requested X.
+function crossSection(x,channel,seed){
  const points=basin(seed,channel).routes[0].points;
- let nearest=points[0],delta=Infinity;
- for(const p of points){const d=Math.abs(p.x-x);if(d<delta){delta=d;nearest=p;}}
- return nearest.z;
+ let best=null,bestError=Infinity;
+ for(let i=0;i<points.length-1;i++){
+  const a=points[i],b=points[i+1],dx=b.x-a.x;
+  if(Math.abs(dx)<1e-8)continue;
+  const t=(x-a.x)/dx;
+  if(t>=0&&t<=1)return {z:mix(a.z,b.z,t),progress:mix(a.t,b.t,t)};
+  const nearest=t<0?a:b,error=Math.abs(nearest.x-x);
+  if(error<bestError){bestError=error;best=nearest;}
+ }
+ return {z:best.z,progress:best.t};
+}
+export function riverCenter(x,channel=0,seed=STARTER_SEED){
+ return crossSection(x,channel,seed).z;
 }
 export function riverWidth(x,channel=0,seed=STARTER_SEED){
- const points=basin(seed,channel).routes[0].points;
- let nearest=points[0],delta=Infinity;
- for(const p of points){const d=Math.abs(p.x-x);if(d<delta){delta=d;nearest=p;}}
- return 1.15+6.2*Math.pow(nearest.t,.85);
+ return 1.15+6.2*Math.pow(crossSection(x,channel,seed).progress,.85);
 }
 export function lakeSites(seed,channel,section){
  return basin(seed,channel).lakes.filter(l=>Math.floor(l.x/232)===section);
