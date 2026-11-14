@@ -1,6 +1,6 @@
 import {BUILDINGS} from "./settlement.js?v=20261114u";
-import {nearStockpile,STOCKPILE_CAPACITY,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114a";
-import {ITEM_IDS,ITEMS,itemCapacity} from "./inventory.js?v=20261114v";
+import {nearStockpile,STOCKPILE_CAPACITY,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114x";
+import {STOCKPILE_ITEM_IDS,ITEMS,itemCapacity} from "./inventory.js?v=20261114x";
 import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
 const prereq=id=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[id]||id);
@@ -66,7 +66,9 @@ function storagePanel(ui){
    ${!atHome?'<p class="context-note">Move closer with WASD to use storage.</p>':""}
   </div>
   <div class="stockpile-resource-list">`;
- for(const id of ITEM_IDS){
+ for(const id of STOCKPILE_ITEM_IDS.filter(id=>
+  ["wood","stone","berries","vines"].includes(id)||
+  state.inventoryCount(id)>0||(storage.items[id]||0)>0)){
   const carried=state.inventoryCount(id),stored=storage.items[id]||0;
   const deposit=Math.min(12,carried,STOCKPILE_CAPACITY-storage.used);
   const take=Math.min(12,stored,itemCapacity(state.data.inventory,id));
@@ -130,7 +132,8 @@ function craftPanel(ui){
   (made?'<span class="tag">Crafted</span>':'')+'</div>'+
   '<p>Gather 3 wood per tree interaction instead of 2.</p>';
  if(made){
-  html+='<p class="context-note">Your Stone Axe is crafted and equipped.</p>';
+  html+='<p class="context-note">Stone Axe owned. '+(state.equippedAxe()?
+   'crafted and equipped in Main Hand.':'Equip it from your backpack to gain the woodcutting bonus.')+'</p>';
  }else{
   html+=requiredMaterials(cost,stored);
   if(!known)html+='<p class="context-note">Research Stone Toolmaking at the Toolmaker\'s Shelter first.</p>';

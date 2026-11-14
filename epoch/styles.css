@@ -524,3 +524,17 @@ body.village-established #left .survival-bar {height:7px}
 @media (max-width:700px){
  body.village-established #left {width:min(235px,calc(100vw - 24px));padding:11px 13px}
 }
+
+/* Phase 4B.1: equipment is separate from the ten backpack slots. */
+.equipment-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:17px 0 9px;padding-top:13px;border-top:1px solid #c3bd873b}
+.equipment-heading strong{font-size:13px;color:#e9e5d2}
+.equipment-heading small{font-size:10px;color:#abbda6;text-align:right}
+.equipment-slot-grid{display:grid;gap:7px}
+.equipment-slot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border:1px solid #c4b78832;border-radius:8px;background:#bdbe9b0c}
+.equipment-slot>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.equipment-slot small{font-size:10px;color:#aabda9}
+.equipment-slot strong{font-size:12px;color:#e1e6d8}
+.equipment-slot button{flex:0 0 auto;padding:6px 10px;min-height:32px;font-size:11px;background:#3b4b32;border:1px solid #b6b98d4d;border-radius:7px;color:#e4e7d4}
+.equipment-slot button:hover{background:#526845}
+.equipment-placeholder{color:#748979;font-size:14px}
+@media(max-width:440px){.equipment-heading{flex-direction:column;gap:3px}.equipment-heading small{text-align:left}}

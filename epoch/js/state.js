@@ -5,10 +5,10 @@ import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlemen
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
- depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261113k";
+ depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261114x";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113k";
-import {harvestAtNode} from "./harvest.js?v=20261114q";
+import {harvestAtNode} from "./harvest.js?v=20261114x";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114m";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,

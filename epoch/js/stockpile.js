@@ -3,7 +3,7 @@
  * Its inventory is village-only and cannot be used to bypass the player's
  * personal ten-slot carry limit. Materials for hut construction come from here.
  */
-import {ITEM_IDS,canonicalItem,addItems,countItem,removeItems,itemCapacity} from "./inventory.js?v=20261113k";
+import {STOCKPILE_ITEM_IDS,canonicalItem,addItems,countItem,removeItems,itemCapacity} from "./inventory.js?v=20261114x";
 export const STOCKPILE_CAPACITY=480; // Total individual items, not stacks.
 export const STOCKPILE_INTERACT_RANGE=5;
 export const VILLAGE_RADIUS=24;
@@ -16,7 +16,7 @@ export const snapGrid=n=>Math.round(Number(n)/BUILD_GRID)*BUILD_GRID;
 export function normalStockpile(raw){
  if(!raw||!Number.isFinite(Number(raw.x))||!Number.isFinite(Number(raw.z)))return null;
  const items={};
- for(const id of ITEM_IDS)items[id]=safe(raw.items?.[id]??(id==="berries"?raw.items?.food:0));
+ for(const id of STOCKPILE_ITEM_IDS)items[id]=safe(raw.items?.[id]??(id==="berries"?raw.items?.food:0));
  return {x:snapGrid(Number(raw.x)),z:snapGrid(Number(raw.z)),items};
 }
 export function createStockpile(x,z){
@@ -26,7 +26,7 @@ export function stockpileCount(stockpile,id){
  return safe(stockpile?.items?.[canonicalItem(id)]);
 }
 export function stockpileUsed(stockpile){
- return stockpile?ITEM_IDS.reduce((sum,id)=>sum+stockpileCount(stockpile,id),0):0;
+ return stockpile?STOCKPILE_ITEM_IDS.reduce((sum,id)=>sum+stockpileCount(stockpile,id),0):0;
 }
 export function stockpileSpace(stockpile){
  return stockpile?Math.max(0,STOCKPILE_CAPACITY-stockpileUsed(stockpile)):0;
@@ -48,7 +48,7 @@ export function withinVillage(stockpile,x,z,radius=VILLAGE_RADIUS){
 }
 export function depositStockpile(slots,stockpile,id,requested){
  id=canonicalItem(id);
- if(!stockpile||!ITEM_IDS.includes(id))return 0;
+ if(!stockpile||!STOCKPILE_ITEM_IDS.includes(id))return 0;
  const moved=Math.min(stockpileSpace(stockpile),countItem(slots,id),safe(requested));
  if(!moved)return 0;
  if(!removeItems(slots,id,moved))return 0;
@@ -58,12 +58,12 @@ export function depositStockpile(slots,stockpile,id,requested){
 export function depositAllStockpile(slots,stockpile){
  if(!stockpile)return 0;
  let total=0;
- for(const id of ITEM_IDS)total+=depositStockpile(slots,stockpile,id,countItem(slots,id));
+ for(const id of STOCKPILE_ITEM_IDS)total+=depositStockpile(slots,stockpile,id,countItem(slots,id));
  return total;
 }
 export function withdrawStockpile(slots,stockpile,id,requested){
  id=canonicalItem(id);
- if(!stockpile||!ITEM_IDS.includes(id))return 0;
+ if(!stockpile||!STOCKPILE_ITEM_IDS.includes(id))return 0;
  const move=Math.min(stockpileCount(stockpile,id),itemCapacity(slots,id),safe(requested));
  if(!move)return 0;
  const added=addItems(slots,id,move);

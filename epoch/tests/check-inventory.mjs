@@ -9,7 +9,8 @@ const {ITEMS,ITEM_IDS,INVENTORY_SLOTS,STACK_LIMIT,emptyInventory,addItems,
 const slots=emptyInventory();
 assert.equal(slots.length,10);
 assert.equal(STACK_LIMIT,12);
-assert.deepEqual(ITEM_IDS,["wood","stone","berries","vines"]);
+assert.deepEqual(ITEM_IDS.slice(0,4),["wood","stone","berries","vines"]);
+assert(ITEM_IDS.length>=20,"Stone Age materials, weapons and armor expand the catalog");
 assert.equal(addItems(slots,"wood",12),12);
 assert.deepEqual(slots[0],{id:"wood",qty:12});
 assert.equal(addItems(slots,"wood",1),1);

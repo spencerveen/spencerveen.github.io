@@ -1,0 +1,144 @@
+import assert from "node:assert/strict";
+import {GameState} from "../js/state.js";
+import {ITEMS,ITEM_IDS,ITEM_CATEGORIES,STOCKPILE_ITEM_IDS,
+ emptyInventory,normalizeInventory,itemStackLimit,addItems,countItem} from "../js/inventory.js";
+import {CRAFTING_PLANS,EQUIPMENT_SLOTS,normalizeEquipment} from "../js/equipment.js";
+import {LEGACY_HOME} from "../js/stockpile.js";
+
+const storage=new Map();
+globalThis.localStorage={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)};
+const core=["wood","stone","vines","berries","animal_meat","fur","flint","fish_meat","feathers"];
+const processed=["raw_hide","leather","bone"];
+const weapons=["wood_club","stone_axe","stone_spear","sling","bow"];
+for(const id of [...core,...processed,...weapons,"arrows","fur_armor","leather_armor"])
+ assert(ITEMS[id],"Missing Stone Age item: "+id);
+assert.equal(ITEM_IDS.length,20,"20 catalog entries cover 9 core resources, 3 processed, 5 weapons, arrows and 2 armor sets");
+assert.equal(ITEM_CATEGORIES.length,5);
+assert.equal(Object.keys(EQUIPMENT_SLOTS).join(","),"weapon,body,ammo");
+assert.equal(CRAFTING_PLANS.stone_axe.available,true);
+assert(Object.entries(CRAFTING_PLANS).filter(([id])=>id!=="stone_axe").every(([,r])=>!r.available),
+ "only the existing stone axe is craftable in 4B.1");
+assert(!STOCKPILE_ITEM_IDS.includes("fur_armor"));
+assert(!STOCKPILE_ITEM_IDS.includes("stone_axe"));
+assert(STOCKPILE_ITEM_IDS.includes("animal_meat")&&STOCKPILE_ITEM_IDS.includes("arrows"));
+assert.equal(itemStackLimit("wood_club"),1);
+assert.equal(itemStackLimit("fur_armor"),1);
+assert.equal(itemStackLimit("arrows"),12);
+const slots=emptyInventory();
+assert.equal(addItems(slots,"stone_spear",2),2);
+assert.deepEqual(slots.slice(0,2),[{id:"stone_spear",qty:1},{id:"stone_spear",qty:1}],"equipment never stacks");
+assert.equal(addItems(slots,"flint",13),13);
+assert.equal(countItem(slots,"flint"),13);
+assert.equal(normalizeInventory([{id:"wood_club",qty:999},{id:"fur_armor",qty:22},{id:"arrows",qty:99}])[0].qty,1);
+assert.equal(normalizeInventory([{id:"wood_club",qty:999},{id:"fur_armor",qty:22},{id:"arrows",qty:99}])[2].qty,12);
+assert.deepEqual(normalizeEquipment({weapon:"wood",body:"invalid",ammo:{id:"arrows",qty:500}}),
+ {weapon:null,body:null,ammo:{id:"arrows",qty:12}});
+assert.deepEqual(normalizeEquipment(undefined,true),{weapon:"stone_axe",body:null,ammo:null});
+
+const game=new GameState({slot:1,newGame:true});
+game.onChange=()=>{};
+assert.deepEqual(game.data.equipment,{weapon:null,body:null,ammo:null});
+game.addResource("wood_club",1);
+game.addResource("fur_armor",1);
+game.addResource("arrows",6);
+game.addResource("stone_spear",1);
+const axeBonus=()=>game.equippedAxe();
+const index=id=>game.data.inventory.findIndex(s=>s?.id===id);
+const countAll=id=>game.inventoryCount(id)+
+ (game.data.equipment.weapon===id?1:0)+(game.data.equipment.body===id?1:0)+
+ (game.data.equipment.ammo?.id===id?game.data.equipment.ammo.qty:0);
+assert(!game.equipFromPack(index("wood")),"materials are not equipment");
+assert(game.equipFromPack(index("wood_club")));
+assert.equal(game.data.equipment.weapon,"wood_club");
+assert.equal(game.inventoryCount("wood_club"),0);
+assert.equal(countAll("wood_club"),1);
+assert(game.equipFromPack(index("stone_spear")),"a new weapon swaps with main hand");
+assert.equal(game.data.equipment.weapon,"stone_spear");
+assert.equal(countAll("stone_spear"),1);
+assert.equal(game.inventoryCount("wood_club"),1,"swapped-out weapon returns to the used slot");
+assert(game.equipFromPack(index("fur_armor")));
+assert.equal(game.data.equipment.body,"fur_armor");
+assert.equal(game.inventoryCount("fur_armor"),0);
+assert(game.equipFromPack(index("arrows")));
+assert.deepEqual(game.data.equipment.ammo,{id:"arrows",qty:6});
+assert.equal(game.inventoryCount("arrows"),0);
+assert.equal(countAll("arrows"),6);
+assert(game.unequip("ammo"));
+assert.equal(game.inventoryCount("arrows"),6);
+assert.equal(game.data.equipment.ammo,null);
+assert(game.unequip("body"));
+assert.equal(game.data.equipment.body,null);
+assert.equal(game.inventoryCount("fur_armor"),1);
+assert.equal(game.unequip("weapon"));
+assert.equal(game.data.equipment.weapon,null);
+assert.equal(game.inventoryCount("stone_spear"),1);
+assert.equal(game.unequip("weapon"),false,"cannot unequip an empty slot");
+
+game.save();
+const loaded=new GameState({slot:1});
+assert.deepEqual(loaded.data.equipment,game.data.equipment);
+assert.deepEqual(loaded.data.inventory,game.data.inventory);
+assert.equal(loaded.data.axe,false);
+
+const full=new GameState({slot:2,newGame:true});
+full.onChange=()=>{};
+full.data.equipment.weapon="wood_club";
+for(let i=0;i<10;i++)full.data.inventory[i]={id:"stone",qty:12};
+assert.equal(full.unequip("weapon"),false,"full backpack blocks unequip without deleting the item");
+assert.equal(full.data.equipment.weapon,"wood_club");
+full.data.inventory[2]={id:"stone_spear",qty:1};
+assert(full.equipFromPack(2),"swapping uses the item slot even if the backpack is full");
+assert.equal(full.data.equipment.weapon,"stone_spear");
+assert.deepEqual(full.data.inventory[2],{id:"wood_club",qty:1});
+
+const legacy={version:1,worldSeed:12000,axe:true,technologies:["fire","tools"],
+ hero:{name:"Old Lumberjack"},village:{population:1,buildings:[],plots:{}}};
+storage.set("epoch.stoneage.slot.3",JSON.stringify(legacy));
+const migrated=new GameState({slot:3});
+assert.equal(migrated.data.equipment.weapon,"stone_axe","legacy crafted axe migrates to main-hand slot");
+assert(migrated.data.axe);
+assert(migrated.equippedAxe());
+assert.equal(migrated.inventoryCount("stone_axe"),0);
+migrated.save();
+const again=new GameState({slot:3});
+assert.equal(again.data.equipment.weapon,"stone_axe","migration doesn't produce extra axes");
+assert.equal(again.inventoryCount("stone_axe"),0);
+assert(again.unequip("weapon"));
+assert.equal(again.inventoryCount("stone_axe"),1);
+assert(!again.equippedAxe());
+again.save();
+const afterUnequip=new GameState({slot:3});
+assert.equal(afterUnequip.data.equipment.weapon,null,"old axe flag cannot re-equip intentionally unequipped gear");
+assert.equal(afterUnequip.inventoryCount("stone_axe"),1);
+assert(afterUnequip.equipFromPack(afterUnequip.data.inventory.findIndex(s=>s?.id==="stone_axe")));
+assert(afterUnequip.equippedAxe());
+const axeIndex=afterUnequip.data.inventory.findIndex(s=>s?.id==="stone_axe");
+assert.equal(axeIndex,-1,"equipping an axe removes it from the backpack");
+afterUnequip.save();
+const noDup=new GameState({slot:3});
+assert.equal(noDup.data.equipment.weapon,"stone_axe");
+assert.equal(noDup.inventoryCount("stone_axe"),0);
+
+const crafted=new GameState({slot:1,newGame:true});
+crafted.onChange=()=>{};
+assert(crafted.foundStockpile(LEGACY_HOME.x,LEGACY_HOME.z));
+crafted.data.technologies.push("tools");
+crafted.data.village.stockpile.items.wood=10;
+crafted.data.village.stockpile.items.stone=10;
+assert(crafted.craftAxe(LEGACY_HOME.x,LEGACY_HOME.z));
+assert.equal(crafted.data.equipment.weapon,"stone_axe");
+assert(crafted.equippedAxe());
+assert.equal(crafted.data.village.stockpile.items.wood,8);
+assert.equal(crafted.data.village.stockpile.items.stone,7);
+assert(!crafted.craftAxe(LEGACY_HOME.x,LEGACY_HOME.z));
+assert(crafted.unequip("weapon"));
+assert(!crafted.equippedAxe(),"woodcutting bonus only applies while holding an axe");
+assert(!crafted.craftAxe(LEGACY_HOME.x,LEGACY_HOME.z),"the backpack axe prevents a duplicate craft");
+crafted.save();
+const existing=new GameState({slot:1});
+assert.equal(existing.data.equipment.weapon,null);
+assert.equal(existing.inventoryCount("stone_axe"),1);
+assert(existing.equipFromPack(existing.data.inventory.findIndex(s=>s?.id==="stone_axe")));
+assert(existing.equippedAxe());
+assert.equal(existing.inventoryCount("stone_axe"),0);
+console.log("PASS 4B.1: item registry, 1-item equipment stacks, swaps, full-pack protection, ammo, save migration and equipped stone axe");

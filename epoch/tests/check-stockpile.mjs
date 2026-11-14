@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {ITEM_IDS} from "../js/inventory.js";
+import {ITEM_IDS,STOCKPILE_ITEM_IDS} from "../js/inventory.js";
 import {PLOTS,plotAtHome} from "../js/settlement.js";
 import {LEGACY_HOME,STOCKPILE_CAPACITY,STOCKPILE_INTERACT_RANGE,VILLAGE_RADIUS,
  snapGrid,stockpileUsed,stockpileValidation} from "../js/stockpile.js";
@@ -48,7 +48,9 @@ assert.equal(game.depositAllToStockpile(0,0),0,"Cannot deposit from far away");
 assert.equal(game.stockpileInfo().used,0);
 assert.equal(game.depositAllToStockpile(6,6),91,"All materials deposited into stockpile");
 assert.equal(game.inventoryUsed(),0,"Personal backpack is empty after depositing");
-for(const id of ITEM_IDS)assert.equal(game.stockpileInfo().items[id],initial[id]);
+for(const id of STOCKPILE_ITEM_IDS)
+ assert.equal(game.stockpileInfo().items[id],initial[id]||0);
+assert.equal(game.stockpileInfo().items.stone_axe,undefined,"equippable tools stay outside village storage");
 assert.equal(game.canBuildPlot("family_1").ok,true,"Stored supplies unlock building");
 assert(game.buildVillagePlot("family_1"),"Family Hut uses stockpile resources");
 assert.equal(game.stockpileInfo().items.wood,34);
