@@ -48,7 +48,7 @@ const fresh=(founder=null)=>{
  resources:{wood:0,stone:0,food:0,vines:0},inventory:emptyInventory(),unpacked:emptyUnpacked(),
  equipment:emptyEquipment(),resourceNodes:{},knowledge:0,culture:0,
  technologies:[],civics:[],axe:false,shelter:false,village:emptyVillage(),
- knowledgeClaims:[],researchSeconds:0,tribes:{},
+ knowledgeClaims:[],researchSeconds:0,tribes:{},waterProtectedSites:[],
  survival:freshSurvival(),successorId:null,lastDeath:null,
  lineage:[{name,gen:1,start:-12000,role:"Founder",appearance:{...appearance}}],
  history:["The wanderer "+name+" entered a quiet clearing in a vast prehistoric wilderness."]
@@ -115,6 +115,20 @@ export class GameState{
    ];
   }
   normalizeHomes(this.data.village);
+  // One-time migration: protect historical construction coordinates from
+  // newly introduced water. New games retain fixed seed-only waterways.
+  // Persist this snapshot so later building never reshapes nearby rivers.
+  if(Array.isArray(data?.waterProtectedSites)){
+   this.data.waterProtectedSites=data.waterProtectedSites.slice(0,120).filter(p=>
+    p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Number.isFinite(p.radius)&&
+    p.radius>=3&&p.radius<=60).map(p=>({x:p.x,z:p.z,radius:p.radius}));
+  }else if(data?.version===1){
+   this.data.waterProtectedSites=[
+    ...(this.data.village.stockpile?[{x:this.data.village.stockpile.x,
+      z:this.data.village.stockpile.z,radius:34}]:[]),
+    ...this.data.village.buildings.map(b=>({x:b.x,z:b.z,radius:8}))
+   ].slice(0,120);
+  }else this.data.waterProtectedSites=[];
   this.data.survival=normalizeSurvival(data?.survival);
   this.data.successorId=this.data.village.residents.some(r=>r.id===data?.successorId)?data.successorId:null;
   this.data.lastDeath=data?.lastDeath&&typeof data.lastDeath==="object"&&

@@ -5,8 +5,8 @@ import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114y
 import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114y";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
-import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261113k";
-import {ForestChunks} from "./forest-chunks.js?v=20261114m";
+import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114y";
+import {ForestChunks} from "./forest-chunks.js?v=20261114y";
 import {createTribeWorld} from "./tribe-world.js?v=20261114m";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;
@@ -22,11 +22,14 @@ export class World {
   this.getVitals=tribeHandlers.getVitals||(()=>({health:100,gameOver:false}));
   this.getTribeRecord=tribeHandlers.getRecord||(()=>null);
   this.getTribeHome=tribeHandlers.getHome||(()=>null);
+  // Migration snapshots, not current player construction, keep legacy saves
+  // safe without moving rivers every time a new Hut is built.
+  this.waterSafeSites=tribeHandlers.getWaterSafeSites?.()||[];
   this.discoveredTribes=new Set();this.tribeTarget=null;
   this.keys={};this.path=[];this.target=null;this.plotTarget=null;this.entities=[];this.obstacles=[];this.animals=[];this.people=[];this.walkTime=0;this.cooldown=0;this.berryClock=0;this.targetAction="gather";this.onPlot=onBuildingSelect;this.placingBuilding=null;this.buildingCandidate=null;this.village=null;this.placingStockpile=false;this.stockpileTarget=false;this.stockpile=null;this.stockpileCandidate=null;this.homePositionKey=null;
   this._inputBlocked=false;this.placementPinned=false;this.cameraDragging=false;this.focusTarget=null;
   this.cameraKeys={};this.cameraOrbitVelocity={horizontal:0,vertical:0};
-  this.stockpileInRange=undefined;this.onInteractionRangeChange=()=>{};this.hoveredInteraction=null;
+  this.stockpileInRange=undefined;this.onInteractionRangeChange=()=>{};this.hoveredInteraction=null;this.waterNoticeCooldown=0;
   this.engine=new B.Engine(canvas,true,{antialias:true,stencil:true,preserveDrawingBuffer:false});
   this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.62,.71,.62,1);
   this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.020;this.scene.fogColor=new B.Color3(.62,.71,.62);
@@ -64,7 +67,9 @@ export class World {
    stone:this.mat("stone","#889089"),stoneDark:this.mat("stoneDark","#5b6661"),berries:this.mat("berries","#9d3832"),
    skin:this.mat("skin","#c99470"),hair:this.mat("hair","#3f3328"),cloth:this.mat("cloth","#806445"),
    river:this.mat("river","#598d8f"),fire:this.mat("fire","#ef9c45"),flame:this.mat("flame","#f6d181"),grass:this.mat("grass","#74986b")};
-  this.m.river.alpha=.76;this.m.fire.emissiveColor=new B.Color3(.76,.28,.04);this.m.flame.emissiveColor=new B.Color3(.95,.63,.2);
+  this.m.river.alpha=.83;this.m.river.backFaceCulling=false;
+  this.m.river.emissiveColor=new B.Color3(.06,.12,.13);
+  this.m.fire.emissiveColor=new B.Color3(.76,.28,.04);this.m.flame.emissiveColor=new B.Color3(.95,.63,.2);
  }
  makeGround(){
   // Chunk geometry is managed independently from the permanent village,
@@ -663,7 +668,8 @@ export class World {
  isBlocked(x,z){
   // No legacy square world boundary. Terrain and plots are navigable using
   // the same collision test wherever their chunks are currently active.
-  return this.obstacles.some(o=>Math.hypot(o.x-x,o.z-z)<o.r+.31);
+  return this.terrain?.waterAt(x,z).passable===false||
+   this.obstacles.some(o=>Math.hypot(o.x-x,o.z-z)<o.r+.31);
  }
  plan(x,z){
   const p=this.player.position,dist=Math.hypot(x-p.x,z-p.z);
@@ -725,6 +731,7 @@ export class World {
   else if(this.placingStockpile||this.placingBuilding)this.resetCameraKeys();
   else this.updateKeyboardCamera(dt);
   this.cooldown=Math.max(0,this.cooldown-dt);
+  this.waterNoticeCooldown=Math.max(0,this.waterNoticeCooldown-dt);
   const p=this.player.position,c=this.camera;
   const forward=V(-Math.cos(c.alpha),0,-Math.sin(c.alpha)),right=V(forward.z,0,-forward.x);
   const x=(this.keys.d?1:0)-(this.keys.a?1:0),z=(this.keys.w?1:0)-(this.keys.s?1:0);
@@ -740,6 +747,10 @@ export class World {
    if(!this.isBlocked(test.x,test.z)){p.x=test.x;p.z=test.z}
    else if(!this.isBlocked(p.x+movement.x,p.z))p.x+=movement.x;
    else if(!this.isBlocked(p.x,p.z+movement.z))p.z+=movement.z;
+   if(this.terrain.waterAt(test.x,test.z).passable===false&&this.waterNoticeCooldown===0){
+    this.onStatus("Deep water","Too deep to wade. Find a shallow crossing or follow the bank.");
+    this.waterNoticeCooldown=5;
+   }
    this.player.rotation.y=Math.atan2(direction.x,direction.z);
    this.walkTime+=dt*speed*2.4;
   }

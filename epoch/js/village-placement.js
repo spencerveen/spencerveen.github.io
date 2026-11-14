@@ -48,6 +48,13 @@ export function placementCheck({village,world,kind,x,z,turn=0,ignoreId=null}){
   return {...answer,ok:false,reason:"Too close to the stockpile."};
  if((village.buildings||[]).some(b=>b.id!==ignoreId&&Math.hypot(x-b.x,z-b.z)<radius+footprint(b.kind)+.6))
   return {...answer,ok:false,reason:"Overlaps another building."};
+ // Buildings require dry ground across their full footprint.
+ if(world?.terrain?.waterAt){
+  for(const [dx,dz] of [[0,0],[radius,0],[-radius,0],[0,radius],[0,-radius]]){
+   if(world.terrain.waterAt(x+dx,z+dz).depth>.03)
+    return {...answer,ok:false,reason:"Buildings need dry land above the waterline."};
+  }
+ }
  // A four-direction terrain sample catches slope before spending materials.
  if(world?.groundY){
   const center=world.groundY(x,z);

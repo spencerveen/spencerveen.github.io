@@ -31,6 +31,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
      onInteract:tribe=>ui?.openTribe(tribe),
      getRecord:id=>state.tribeRecord(id),
      getHome:()=>state.data.village.stockpile,
+     getWaterSafeSites:()=>state.data.waterProtectedSites,
      onResidentSelect:id=>ui?.openResident(id),
      spendSprint:amount=>state.spendStamina(amount,"sprint"),
      getVitals:()=>state.survivalStatus()
