@@ -26,15 +26,18 @@ Visit `http://127.0.0.1:8765/epoch/`. No backend is required. The current Babylo
 | Inventory button / I | Ten-slot inventory, stack inspection/discard, Stone Axe crafting |
 | Skills button / K | Six personal skill tracks and XP progress |
 | Objective → Establish camp | Free first-stockpile placement |
-| Village Stockpile | Village **Storage / Build / Buildings** sections |
+| Village Stockpile | Village **Storage / Build / Buildings / People** sections |
 | Toolmaker's Shelter | Technology research |
 | Council Lodge | Culture and traditions |
 | Family Hut | Dynasty, family chronicle, and reviewed succession |
 | Cooking Hearth | Hearth information; cooking recipes are planned |
 | Wilderness tribal camps and leaders | Meet leaders, help with supply quests to earn Trust, and invite tribes to settle peacefully |
+| Village residents (click people or open Stockpile → People) | Inspect a villager's personal chronicle, former clanmates, housemates and housing assignment |
 | Game menu | Save game, Help, and Save & return to title |
 
-New games start with **one resident: the founder**. Small independent tribes appear in the wilderness with **2–5 seeded, named people**, tribal leaders and simple camps. Visit the camp or click its people and huts to meet the leader. Their names and locations reproduce from the saved world seed. Tribes remember discovery, Trust, fulfilled requests and relocation through saves and terrain streaming. **Peaceful recruitment is now playable:** bring a tribal leader three requested sets of carried supplies (berries, wood and stone), earn 35 Trust per successful request, then invite the whole tribe when Trust reaches 100 and your village has enough open housing for everyone. The tribe dismantles its original camp, which remains an abandoned clearing and never respawns as an active settlement. Recruits become saved named residents visible in your village and the stockpile's People roster. Razing, combat, individual negotiations, happiness, traits and villager jobs are later milestones. Other home-village NPCs appear only for residents actually recorded in the save; older villages retain their saved residents. Recruitment, births, and villager jobs are planned for later. A Family Hut adds housing capacity, not residents.
+New games start with **one resident: the founder**. Small independent tribes appear in the wilderness with **2–5 seeded, named people**, tribal leaders and simple camps. Visit the camp or click its people and huts to meet the leader. Their names and locations reproduce from the saved world seed. Tribes remember discovery, Trust, fulfilled requests and relocation through saves and terrain streaming. **Peaceful recruitment is now playable:** bring a tribal leader three requested sets of carried supplies (berries, wood and stone), earn 35 Trust per successful request, then invite the whole tribe when Trust reaches 100 and your village has enough open housing for everyone. The tribe dismantles its original camp, which remains an abandoned clearing and never respawns as an active settlement. Recruits become saved named residents visible in your village and the stockpile's People roster. Razing, combat, individual negotiations, happiness, traits and villager jobs are later milestones.
+
+**Phase 3: people and housing.** The stockpile now has a **People** section with the founder, each named villager, a population summary, and actual occupancy for the communal camp and every Family Hut. Click **View profile**, or click a villager/nameplate in the 3D world, to inspect their story, origin tribe, arrival year, original tribal leadership, former clanmates and current housemates. The founder uses one of the five communal spaces; up to four other villagers can live in the camp, and each Family Hut provides three more beds. You can **assign a resident to any home with an available bed**; assignments instantly reposition that villager in the village, are recorded in their personal chronicle, and survive reloads and succession. Migrated saves receive compatible names and housing records. Housing moves are instantaneous for now: walking home, relationships beyond shared clan/household history, jobs and mood simulation are future development stages. Other home-village NPCs appear only for residents actually recorded in the save; older villages retain their saved residents. Recruitment, births, and villager jobs are planned for later. A Family Hut adds housing capacity, not residents.
 
 The title screen offers New Game, Continue, and three independent local save slots. Founder appearance is chosen when starting a new game and cannot be edited afterward. Descendants inherit related appearance traits. There is no global Village, Technology, Culture, Dynasty, or Character tab.
 
@@ -57,6 +60,8 @@ The title screen offers New Game, Continue, and three independent local save slo
 | Shift-click berry bush / Shift + E nearby | Permanently clear a bush for vines |
 | Click a tribal leader, sign or camp shelter | Approach the tribe; bring supply requests in your backpack, earn Trust, and invite people if housing is available |
 | E near a tribal leader | Open a nearby tribe encounter (if no gatherable resource takes priority) |
+| Click a named villager or overhead nameplate | Open their saved personal profile |
+| E beside a villager | Inspect the closest villager if no gatherable resource takes priority |
 | Hold arrow keys (outside build mode) | Smoothly rotate left/right or tilt up/down, easing to a stop |
 | Right mouse drag / mouse wheel | Optional camera rotation / zoom |
 | I / K | Toggle Inventory / Skills |
@@ -86,7 +91,7 @@ Progress autosaves after state changes. The game menu also offers **Save game** 
 
 ## Current limits and assets
 
-Housing capacity increases immediately; peaceful recruitment through supply requests is implemented, but household assignment, worker jobs, cooking, combat, hunting, branching conversations, complex diplomacy, rival civilization AI, births, additional ages, multiplayer, accounts, and synced saves are not yet implemented. Research and Culture are functional building activities; automatic building production bonuses remain planned. Desktop play is the main target, with responsive panels and on-screen placement controls; complete touch movement still needs work.
+Housing capacity increases immediately; peaceful recruitment, individual villager profiles, remembered arrival stories, shared clan/household connections and housing assignments are implemented. Worker jobs, food/happiness needs, personality traits, births, deaths, combat, hunting, branching conversations, complex diplomacy, rival civilization AI, additional ages, multiplayer, accounts, and synced saves are not yet implemented. Research and Culture are functional building activities; automatic building production bonuses remain planned. Desktop play is the main target, with responsive panels and on-screen placement controls; complete touch movement still needs work.
 
 Characters use Quaternius Universal Base Characters Standard **CC0** assets with real skinned rigs, separate hairstyles, and authored idle/walk/run clips. Source credit, license, pinned import revision, and rebuild instructions are in [assets/characters/QUATERNIUS.md](./assets/characters/QUATERNIUS.md). Previous original GLBs remain as fallback art. Stone Age clothing and animation polish are future visual work; the founder creator currently uses a stylized reference portrait.
 

@@ -1,6 +1,6 @@
-import {GameState} from "./state.js?v=20261114m";
-import {World} from "./world.js?v=20261114m";
-import {UI} from "./ui.js?v=20261114m";
+import {GameState} from "./state.js?v=20261114n";
+import {World} from "./world.js?v=20261114n";
+import {UI} from "./ui.js?v=20261114n";
 import {TitleScreen} from "./title-screen.js?v=20261114b";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
@@ -30,7 +30,8 @@ async function startEpoch({slot,newGame=false,founder=null}){
      onDiscover:tribe=>{if(state.discoverTribe(tribe))ui?.toast("Discovered "+tribe.name);},
      onInteract:tribe=>ui?.openTribe(tribe),
      getRecord:id=>state.tribeRecord(id),
-     getHome:()=>state.data.village.stockpile
+     getHome:()=>state.data.village.stockpile,
+     onResidentSelect:id=>ui?.openResident(id)
     });
   ui=new UI(state,world);
   sessionStarted=true;
@@ -49,7 +50,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
   // Expose a read-only inspection aid for development without exposing mutation methods.
   Object.defineProperty(globalThis,"epochDebug",{value:()=>({
     slot:state.slot,heroName:state.data.hero.name,year:state.formatYear(),generation:state.data.generation,
-    ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal},
+    ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal,activeResidentId:ui.activeResidentId},
     forest:world.terrain.status,
     resourceNodes:state.resourceStatistics(),
     resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
@@ -66,6 +67,8 @@ async function startEpoch({slot,newGame=false,founder=null}){
       position:world.fireLight?{x:world.fireLight.position.x,z:world.fireLight.position.z}:null},
     settlement:{plots:{...state.data.village.plots},population:state.data.village.population,capacity:state.villageCapacity(),
       residents:(state.data.village.residents||[]).map(v=>({...v})),
+      housing:state.villageHousing(),
+      people:world.people.map(p=>({id:p.id,name:p.name,homeId:p.homeId,x:p.x,z:p.z})),
       buildings:state.data.village.buildings.map(b=>({...b})),
       renderedBuildings:world.villageBuildings.size,
       stockpile:state.stockpileInfo(),

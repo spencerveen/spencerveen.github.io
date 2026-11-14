@@ -457,3 +457,18 @@ body > footer { position: absolute; left: 20px; bottom: 18px; z-index: 4; displa
  .epoch-founder-preview { padding: 12px; }
  .epoch-founder-preview p { margin: 7px 0 0; }
 }
+
+
+/* Phase 3: individual villager profile and housing controls. */
+.resident-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.resident-row > div { min-width:0; }
+.resident-row button { flex:0 0 auto; min-height:40px; padding:8px 11px; font-size:12px; }
+.resident-home-options { display:grid; gap:8px; margin-bottom:14px; }
+.resident-home-choice { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid #c3bb8a3c; border-radius:8px; background:#c4b9830b; }
+.resident-home-choice span { display:flex; flex-direction:column; gap:4px; }
+.resident-home-choice strong { font-size:13px; color:#f0e6d0; }
+.resident-home-choice small { color:var(--muted); font-size:11px; }
+.resident-home-choice button { flex:0 0 auto; padding:8px 12px; margin:0; min-width:94px; font-size:12px; }
+.resident-link { display:inline-flex; margin:4px 6px 6px 0; padding:7px 10px; border:1px solid #b4a07666; border-radius:6px; background:#8570411f; color:#f1e1bf; font-size:12px; }
+.resident-link:hover { background:#8570413f; }
+@media(max-width:480px) { .resident-row {align-items:flex-start;flex-direction:column;} .resident-row button{width:100%;} .resident-home-choice{gap:7px;} }

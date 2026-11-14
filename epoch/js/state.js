@@ -10,7 +10,8 @@ import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261
 import {harvestAtNode} from "./harvest.js?v=20261113k";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114m";
-import {legacyResidents,normalizeResidents} from "./residents.js?v=20261114m";
+import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
+ moveResidentHome,residentConnections} from "./residents.js?v=20261114n";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113k";
@@ -95,6 +96,19 @@ export class GameState{
   const previousResidents=Array.isArray(data?.village?.residents)?
    data.village.residents:legacyResidents(previousPopulation-1);
   this.data.village.residents=normalizeResidents(previousResidents,capacity(this.data.village)-1);
+  for(const resident of this.data.village.residents){
+   if(resident.originTribeId&&!resident.originTribeName){
+    const coordinates=resident.originTribeId.slice(6).split(",").map(Number);
+    const tribe=coordinates.length===2&&coordinates.every(Number.isInteger)?
+     tribeAtChunk(this.data.worldSeed,coordinates[0],coordinates[1]):null;
+    resident.originTribeName=tribe?.name||"an independent tribe";
+   }
+   if(!resident.memories.length)resident.memories=[
+    {year:resident.joinedYear,text:resident.recruitment==="peaceful"?
+     "Welcomed peacefully from "+resident.originTribeName+".":"Resident of the original settlement."}
+   ];
+  }
+  normalizeHomes(this.data.village);
   this.data.village.population=this.data.village.residents.length+1;
   // Legacy villages keep previously achieved progress; they must not receive
   // retroactive first-build bonuses when the new progression system loads.
@@ -247,13 +261,37 @@ export class GameState{
   // One transaction: the entire tribe relocates or none of it does.
   const arrivals=tribe.members.map(member=>({
    id:member.id,name:member.name,sex:member.sex,age:member.age,
-   originTribeId:tribe.id,recruitment:"peaceful",joinedYear:this.data.year
+   originTribeId:tribe.id,originTribeName:tribe.name,
+   role:member.role==="leader"?"formerLeader":"resident",recruitment:"peaceful",
+   joinedYear:this.data.year,homeId:null,
+   memories:[{year:this.data.year,text:"Welcomed peacefully from "+tribe.name+"."}]
   }));
   this.data.village.residents.push(...arrivals);
+  normalizeHomes(this.data.village);
   this.data.village.population=this.data.village.residents.length+1;
   this.data.tribes[id].status="relocated";
   this.changed(tribe.name+" peacefully joined "+this.data.hero.name+"'s village. "+
    arrivals.length+" new residents arrived; their former camp was dismantled.");
+  return true;
+ }
+ residentProfile(id){
+  const resident=this.data.village.residents.find(r=>r.id===id);
+  if(!resident)return null;
+  const homes=housingUnits(this.data.village);
+  return {
+   resident:{...resident,memories:resident.memories.map(m=>({...m}))},
+   home:homes.find(h=>h.id===resident.homeId)||null,
+   homes,
+   connections:residentConnections(this.data.village,id)
+  };
+ }
+ villageHousing(){return housingUnits(this.data.village)}
+ assignResidentHome(id,homeId){
+  const changed=moveResidentHome(this.data.village,id,homeId,this.data.year);
+  if(!changed)return false;
+  const resident=this.data.village.residents.find(r=>r.id===id);
+  const unit=housingUnits(this.data.village).find(h=>h.id===homeId);
+  this.changed(resident.name+" moved to "+unit.label+".");
   return true;
  }
  gainXP(skill,amount){this.data.skills[skill]=(this.data.skills[skill]||0)+amount}

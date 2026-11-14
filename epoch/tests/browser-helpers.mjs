@@ -43,24 +43,26 @@ export async function finishWalking(page){
  });
 }
 
-export async function clickWorldObject(page,{stockpile=false,buildingId=null,tribeId=null,beforeClick=null}={}){
- await page.evaluate(({stockpile,buildingId,tribeId})=>{
+export async function clickWorldObject(page,{stockpile=false,buildingId=null,tribeId=null,residentId=null,beforeClick=null}={}){
+ await page.evaluate(({stockpile,buildingId,tribeId,residentId})=>{
   const w=window.__epochTestWorld;
   if(stockpile)w.focusStockpile?.();
   else if(tribeId)w.focusTribe?.(tribeId);
+  else if(residentId)w.focusResident?.(residentId);
   else w.focusBuilding?.(buildingId);
   w.engine.resize();
   w.camera.alpha=-Math.PI/2;w.camera.beta=.8;w.camera.radius=24;
   w.camera.inertialAlphaOffset=0;w.camera.inertialBetaOffset=0;w.camera.inertialRadiusOffset=0;
   for(let i=0;i<60;i++)w.update(1/60);
   w.camera.getViewMatrix(true);w.camera.getProjectionMatrix(true);w.scene.updateTransformMatrix(true);
- },{stockpile,buildingId,tribeId});
+ },{stockpile,buildingId,tribeId,residentId});
  await page.waitForTimeout(180);
- const point=await page.evaluate(({stockpile,buildingId,tribeId})=>{
+ const point=await page.evaluate(({stockpile,buildingId,tribeId,residentId})=>{
   const w=window.__epochTestWorld,B=window.BABYLON,scene=w.scene,engine=w.engine;
   const canvas=scene.getEngine().getRenderingCanvas(),rect=canvas.getBoundingClientRect();
   const matches=mesh=>stockpile?!!mesh?.metadata?.stockpile:
    tribeId?mesh?.metadata?.tribeId===tribeId:
+   residentId?mesh?.metadata?.residentId===residentId:
    mesh?.metadata?.buildingId===buildingId;
   const meshes=scene.meshes.filter(m=>m.isEnabled()&&m.isVisible&&m.isPickable&&matches(m));
   const project=position=>B.Vector3.Project(position,B.Matrix.Identity(),scene.getTransformMatrix(),scene.activeCamera.viewport.toGlobal(engine.getRenderWidth(),engine.getRenderHeight()));
@@ -74,10 +76,10 @@ export async function clickWorldObject(page,{stockpile=false,buildingId=null,tri
    if(pick?.hit&&matches(pick.pickedMesh))return {x,y};
   }
   return null;
- },{stockpile,buildingId,tribeId});
+ },{stockpile,buildingId,tribeId,residentId});
  if(!point){
   const state=await page.evaluate(()=>({viewport:{width:innerWidth,height:innerHeight},ui:window.epochDebug().ui,camera:{alpha:window.__epochTestWorld.camera.alpha,beta:window.__epochTestWorld.camera.beta}}));
-  throw new Error("No unobstructed screen position for "+(stockpile?"stockpile":tribeId||buildingId)+" "+JSON.stringify(state));
+  throw new Error("No unobstructed screen position for "+(stockpile?"stockpile":tribeId||residentId||buildingId)+" "+JSON.stringify(state));
  }
  if(beforeClick)await beforeClick(page);
  await page.mouse.click(point.x,point.y);

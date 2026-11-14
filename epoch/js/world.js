@@ -17,6 +17,7 @@ export class World {
   this.canvas=canvas;this.onGather=onGather;this.onStatus=onStatus;this.getResourceStatus=getResourceStatus;this.onFoundStockpile=onFoundStockpile;this.onOpenStockpile=onOpenStockpile;this.onBuild=onBuild;this.getBuildStatus=getBuildStatus;this.onPlacementChange=onPlacementChange;this.worldSeed=seed>>>0;
   this.onTribeDiscover=tribeHandlers.onDiscover||(()=>{});
   this.onTribeInteract=tribeHandlers.onInteract||(()=>{});
+  this.onResidentSelect=tribeHandlers.onResidentSelect||(()=>{});
   this.getTribeRecord=tribeHandlers.getRecord||(()=>null);
   this.getTribeHome=tribeHandlers.getHome||(()=>null);
   this.discoveredTribes=new Set();this.tribeTarget=null;
@@ -130,29 +131,66 @@ export class World {
   // are instantiated, excluding the player character.
   this.people=[];
  }
+ makeResidentNameplate(human,resident){
+  const name=resident.name,scene=this.scene;
+  const panel=B.MeshBuilder.CreatePlane("Village resident: "+name,{width:1.9,height:.41},scene);
+  panel.parent=human.root;panel.position=V(0,2.37,0);
+  panel.billboardMode=B.Mesh.BILLBOARDMODE_ALL;
+  const texture=new B.DynamicTexture("Resident label "+resident.id,{width:384,height:90},scene,false);
+  texture.hasAlpha=true;
+  const ctx=texture.getContext();
+  ctx.clearRect(0,0,384,90);ctx.fillStyle="rgba(16,31,22,.92)";ctx.fillRect(2,2,380,86);
+  ctx.strokeStyle="#b4a076";ctx.lineWidth=2;ctx.strokeRect(3,3,378,84);
+  ctx.font="bold 32px Arial";ctx.fillStyle="#f0e6d0";ctx.textAlign="center";
+  ctx.fillText(name,192,57,356);texture.update();
+  const material=new B.StandardMaterial("Resident label "+resident.id,scene);
+  material.diffuseTexture=texture;material.emissiveTexture=texture;
+  material.diffuseColor=B.Color3.White();material.emissiveColor=B.Color3.White();
+  material.specularColor=B.Color3.Black();material.useAlphaFromDiffuseTexture=true;
+  material.backFaceCulling=false;material.disableLighting=true;
+  panel.material=material;panel.metadata={residentId:resident.id};panel.isPickable=true;
+  panel.onDisposeObservable.addOnce(()=>{material.dispose();texture.dispose()});
+ }
  syncVillagers(village){
   const residents=(village?.residents||[]).slice(0,60);
   const wanted=new Set(residents.map(v=>v.id));
   for(const prior of this.people.filter(p=>!wanted.has(p.id)))prior.human.dispose();
-  const old=new Map(this.people.filter(p=>wanted.has(p.id)).map(p=>[p.id,p]));
+  const previous=new Map(this.people.filter(p=>wanted.has(p.id)).map(p=>[p.id,p]));
+  const camp=village?.stockpile||LEGACY_HOME;
+  const huts=new Map((village?.buildings||[]).filter(b=>b.kind==="family").map(b=>[b.id,b]));
+  const homeCounts=new Map();
   this.people=residents.map((resident,i)=>{
-   let person=old.get(resident.id);
+   let person=previous.get(resident.id);
    if(!person){
-    const positions=[[-5,7],[-10,-5],[6,10],[13,-5]];
-    const [x,z]=positions[i]||[Math.cos(i*2.4)*(7+(i%3)*2),Math.sin(i*2.4)*(7+(i%3)*2)];
     const profile=randomAppearance("epoch:villager:"+resident.id,resident.sex);
     const human=createQuaterniusHuman(this.scene,profile,null,resident.name);
     human.root.rotation.y=i*1.55;
-    person={...resident,x,z,profile,human,phase:i*2.6};
+    person={...resident,profile,human,phase:i*2.6};
+    this.makeResidentNameplate(human,resident);
+    human.ready?.then(()=>{
+     if(human.root.isDisposed?.())return;
+     for(const mesh of human.root.getChildMeshes())
+      if(mesh.isPickable)mesh.metadata={...(mesh.metadata||{}),residentId:resident.id};
+    }).catch(error=>console.warn("Villager model could not load",error));
    }
+   // Updating assignment must move an existing model, never create a duplicate.
+   person.homeId=resident.homeId;
+   const home=resident.homeId||"camp";
+   const index=homeCounts.get(home)||0;homeCounts.set(home,index+1);
+   let x,z;
+   const hut=huts.get(home);
+   if(hut){
+    const angle=index*Math.PI*2/3+.45;
+    x=hut.x+Math.cos(angle)*3.5;z=hut.z+Math.sin(angle)*3.5;
+   }else{
+    const offsets=[[-5,7],[-10,-5],[6,10],[13,-5]];
+    const point=offsets[index]||[Math.cos(index*2.4)*(7+(index%3)*2),Math.sin(index*2.4)*(7+(index%3)*2)];
+    x=point[0]+camp.x-LEGACY_HOME.x;z=point[1]+camp.z-LEGACY_HOME.z;
+   }
+   person.x=x;person.z=z;
+   person.human.root.position=V(x,this.groundY(x,z),z);
    return person;
   });
-  const home=village?.stockpile||LEGACY_HOME;
-  const dx=home.x-LEGACY_HOME.x,dz=home.z-LEGACY_HOME.z;
-  for(const person of this.people){
-   const x=person.x+dx,z=person.z+dz;
-   person.human.root.position=V(x,this.groundY(x,z),z);
-  }
  }
  makeCamera(){
   const c=new B.ArcRotateCamera("adventurer camera",-Math.PI/2,1.13,18,V(0,1,0),this.scene);
@@ -260,6 +298,10 @@ export class World {
  focusTribe(id){
   const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===id);
   return camp?this.focusLocation(camp.leader.x,camp.leader.z):false;
+ }
+ focusResident(id){
+  const person=this.people.find(p=>p.id===id);
+  return person?this.focusLocation(person.x,person.z):false;
  }
  walkToTribe(id){
   const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===id);
@@ -525,13 +567,16 @@ export class World {
    }
    if(e.type===B.PointerEventTypes.POINTERMOVE){
     const meta=pick?.pickedMesh?.metadata;
-    const key=meta?.stockpile?"stockpile":meta?.buildingId||meta?.tribeId||null;
+    const key=meta?.stockpile?"stockpile":meta?.buildingId||meta?.tribeId||meta?.residentId||null;
     this.canvas.style.cursor=key||meta?.resource?"pointer":"default";
     if(key&&key!==this.hoveredInteraction){
      if(meta.stockpile)this.onStatus("Village stockpile","Click to open village storage and construction.");
      else if(meta.tribeId){
       const camp=[...this.tribeCamps.values()].find(c=>c.tribe.id===meta.tribeId);
       if(camp)this.onStatus(camp.tribe.name,"Click to approach the tribe and meet its leader.");
+     }else if(meta.residentId){
+      const resident=this.people.find(p=>p.id===meta.residentId);
+      if(resident)this.onStatus(resident.name,"Click to see this villager's story, connections and home.");
      }else{
       const kind=meta.buildingKind;
       const destination={lore:"Technology",council:"Culture",family:"Dynasty",hearth:"Cooking Hearth"}[kind]||"Building";
@@ -544,6 +589,10 @@ export class World {
    if(!pick?.hit)return;
    const mesh=pick.pickedMesh;
    if(mesh?.metadata?.tribeId){this.walkToTribe(mesh.metadata.tribeId);return}
+   if(mesh?.metadata?.residentId){
+    this.path=[];this.target=null;this.tribeTarget=null;
+    this.stockpileTarget=false;this.onResidentSelect(mesh.metadata.residentId);return;
+   }
    this.tribeTarget=null;
    if(mesh?.metadata?.stockpile){this.walkToStockpile();return}
    if(mesh?.metadata?.buildingId){
@@ -569,6 +618,9 @@ export class World {
    .sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
   if(near)this.walkToResource(near,action);
   else if(action==="gather"){
+   const resident=this.people.find(person=>
+    Math.hypot(person.x-p.x,person.z-p.z)<2.9);
+   if(resident){this.onResidentSelect(resident.id);return}
    const camp=[...this.tribeCamps.values()]
     .find(c=>Math.hypot(c.leader.x-p.x,c.leader.z-p.z)<TRIBE_INTERACT_RANGE);
    if(camp)this.walkToTribe(camp.tribe.id);

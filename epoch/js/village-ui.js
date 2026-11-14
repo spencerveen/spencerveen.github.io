@@ -79,14 +79,36 @@ function storagePanel(ui){
  }
  html+=`</div><p class="context-note">${atHome?"Within reach · transfers available":"Move within "+STOCKPILE_INTERACT_RANGE+" m to transfer supplies."}</p>
  <div class="village-population"><div><small>VILLAGERS</small><strong>${state.data.village.population} / ${state.villageCapacity()}</strong></div><span>${state.data.village.buildings.length} buildings · ${VILLAGE_RADIUS} m territory</span></div>`;
- html+='<h3 class="section-heading">Your people</h3><div class="timeline"><b>'+esc(state.data.hero.name)+
-  '</b><span>Founder · Leader</span></div>';
- for(const resident of state.data.village.residents||[]){
-  const source=resident.originTribeId?"Joined peacefully from "+resident.originTribeId.replace(/^tribe:/,"tribe "):"Longtime village resident";
-  html+='<div class="timeline"><b>'+esc(resident.name)+'</b><span>Age '+resident.age+' · '+esc(source)+'</span></div>';
+ html+='<div class="entry"><h3>Your people</h3><p>'+
+  (state.data.village.residents.length?
+   state.data.village.residents.length+" other villagers call this settlement home.":"You are still the only resident of this village.")+
+  '</p><button type="button" data-action="village-section" data-section="people">Meet your people →</button></div>';
+ return html;
+}
+function peoplePanel(ui){
+ const state=ui.state,people=state.data.village.residents||[],homes=state.villageHousing();
+ let html='<div class="village-population"><div><small>SETTLEMENT POPULATION</small><strong>'+
+  state.data.village.population+' / '+state.villageCapacity()+
+  '</strong></div><span>'+people.length+' other residents</span></div>'+
+  '<p class="context-note">Each villager has their own identity, story and place to live. Select someone to learn about them or move them between available homes.</p>'+
+  '<h3 class="section-heading">Housing</h3>';
+ for(const h of homes){
+  html+='<div class="timeline"><b>'+esc(h.label)+'</b><span>'+
+   (h.id==="camp"?"Founder + ":"")+h.occupied+' / '+h.capacity+
+   ' resident beds occupied</span></div>';
  }
- if(!(state.data.village.residents||[]).length)
-  html+='<p class="context-note">You are the only resident. Explore and help other tribes to invite new villagers.</p>';
+ html+='<h3 class="section-heading">Village residents</h3>'+
+  '<div class="entry"><h3>'+esc(state.data.hero.name)+'</h3><p>Village leader · Generation '+
+  state.data.generation+' · Communal camp</p><small>The active character you control.</small></div>';
+ if(!people.length)html+='<p class="context-note">Your founder is alone. Befriend a wilderness tribe to invite your first neighbors.</p>';
+ for(const person of people){
+  const home=homes.find(h=>h.id===person.homeId);
+  const source=person.originTribeName||"Original settler";
+  html+='<div class="entry resident-row"><div><h3>'+esc(person.name)+'</h3><p>Age '+person.age+
+   ' · '+esc(home?.label||"Communal camp")+'</p><small>'+
+   (person.recruitment==="peaceful"?"Welcomed from "+esc(source):"Longtime villager")+
+   '</small></div><button type="button" data-action="view-resident" data-id="'+esc(person.id)+'">View profile</button></div>';
+ }
  return html;
 }
 function buildPanel(ui){
@@ -132,9 +154,9 @@ export function villagePanel(ui){
   <small>Free to place · 2 m grid · Clear, level ground</small>
   <button type="button" data-action="place-stockpile">Choose a location</button>
   <button type="button" class="game-button alt" data-action="found-nearby-stockpile">Use a nearby clearing</button></div>`;
- const section=["storage","build","buildings"].includes(ui.villageSection)?ui.villageSection:"storage";
- return `<nav class="section-tabs" aria-label="Village activities">${[["storage","Storage"],["build","Build"],["buildings","Buildings"]].map(([id,label])=>`<button type="button" data-action="village-section" data-section="${id}" class="${section===id?"active":""}" aria-pressed="${section===id}">${label}</button>`).join("")}</nav>`+
-  (section==="build"?buildPanel(ui):section==="buildings"?buildingsPanel(ui):storagePanel(ui));
+ const section=["storage","build","buildings","people"].includes(ui.villageSection)?ui.villageSection:"storage";
+ return `<nav class="section-tabs" aria-label="Village activities">${[["storage","Storage"],["build","Build"],["buildings","Buildings"],["people","People"]].map(([id,label])=>`<button type="button" data-action="village-section" data-section="${id}" class="${section===id?"active":""}" aria-pressed="${section===id}">${label}</button>`).join("")}</nav>`+
+  (section==="build"?buildPanel(ui):section==="buildings"?buildingsPanel(ui):section==="people"?peoplePanel(ui):storagePanel(ui));
 }
 export function selectVillageBuilding(ui,id){return ui.openBuildingPanel(id)}
 export function openStockpile(ui){
@@ -149,9 +171,12 @@ export function handleVillageAction(ui,btn){
   return true;
  }
  if(action==="village-section"){
-  if(["storage","build","buildings"].includes(btn.dataset.section))ui.villageSection=btn.dataset.section;
+  if(["storage","build","buildings","people"].includes(btn.dataset.section))ui.villageSection=btn.dataset.section;
   ui.resetScroll=true;
   ui.render();return true;
+ }
+ if(action==="view-resident"){
+  ui.openResident(btn.dataset.id);return true;
  }
  if(action==="place-stockpile"){
   if(world.beginStockpilePlacement())ui.toast("Choose clear ground, then confirm your stockpile.");

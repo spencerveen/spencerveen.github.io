@@ -26,6 +26,8 @@ jobs:
         run: node epoch/tests/check-tribes.mjs
       - name: Validate peaceful tribe quests, housing and resident migration
         run: node epoch/tests/check-recruitment.mjs
+      - name: Validate individual resident profiles, housing and legacy migrations
+        run: node epoch/tests/check-residents.mjs
       - name: Validate title save slots, migration and character creation locks
         run: node epoch/tests/check-save-slots.mjs
       - name: Validate permanent resource depletion and berry regeneration

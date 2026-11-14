@@ -125,6 +125,55 @@ try{
  },tribe);
  const oldCamp=await page.evaluate(id=>window.epochDebug().tribes.loaded.some(t=>t.id===id),tribe.id);
  assert.equal(oldCamp,false,"relocated camps never respawn after streaming");
- assert.deepEqual(errors,[],"tribe encounters and recruitment produce no browser runtime errors");
- console.log("PASS browser tribes: seeded people, trust quests, peaceful relocation, saved residents, chunk streaming and reload");
+ // Phase 3: residents have individually inspectable stories and assignable homes.
+ await page.evaluate(()=>{
+  const w=window.__epochTestWorld;
+  w.player.position.x=3;w.player.position.z=9;
+  w.terrain.update(w.player.position.x,w.player.position.z);w.update(1/60);
+ });
+ await clickWorldObject(page,{stockpile:true});
+ await page.waitForFunction(()=>window.epochDebug()?.ui?.context==="village"&&window.epochDebug()?.ui?.panelOpen,null,{timeout:9000});
+ await page.locator('[data-action="village-section"][data-section="people"]').click();
+ assert((await page.locator("#panel").innerText()).includes("Housing"),"the People section shows available homes");
+ assert.equal(await page.locator('[data-action="view-resident"]').count(),tribe.population,"all recruits have selectable personal records");
+ const residentId=afterJoin.settlement.residents[0].id;
+ const residentName=afterJoin.settlement.residents[0].name;
+ const hutId=afterJoin.settlement.buildings.find(b=>b.kind==="family").id;
+ await page.locator('[data-action="view-resident"][data-id="'+residentId+'"]').click();
+ await page.locator("#modal:not(.hidden)").waitFor({timeout:9000});
+ assert.equal(await page.locator("#dialog-title").innerText(),residentName);
+ const profileText=await page.locator("#guide").innerText();
+ assert(profileText.includes("Personal chronicle")&&profileText.includes("Former clanmates"));
+ assert(profileText.includes("Housing assignment")&&profileText.includes(tribe.name));
+ assert(await page.locator('[data-action="resident-home"][data-home="'+hutId+'"]').isEnabled(),
+  "the unfilled Family Hut can house an existing villager");
+ await page.locator('[data-action="resident-home"][data-home="'+hutId+'"]').click();
+ const moved=await page.evaluate(()=>window.epochDebug());
+ assert.equal(moved.settlement.residents.find(r=>r.id===residentId).homeId,hutId);
+ assert.equal(moved.settlement.residents.find(r=>r.id===residentId).memories.length,2);
+ assert.equal(moved.settlement.people.find(r=>r.id===residentId).homeId,hutId);
+ assert.equal(moved.settlement.population,1+tribe.population,"reassignment never affects population");
+ const connected=page.locator('#guide [data-action="view-resident"]');
+ assert(await connected.count()>0,"the recruit remembers former clanmates");
+ await connected.first().click();
+ assert.notEqual(await page.locator("#dialog-title").innerText(),residentName,
+  "a villager's relationship list links to another real individual");
+ await page.locator("#close-modal").click();
+ await page.locator("#close-panel").click();
+ // Inspect the named person directly by clicking their actual Babylon scene mesh.
+ await clickWorldObject(page,{residentId});
+ await page.locator("#modal:not(.hidden)").waitFor({timeout:9000});
+ assert.equal(await page.locator("#dialog-title").innerText(),residentName,
+  "clicking a resident in the 3D village opens the same persistent profile");
+ await page.locator("#close-modal").click();
+ await page.reload({waitUntil:"domcontentloaded",timeout:45000});
+ await continueGame(page);
+ const afterHousingReload=await page.evaluate(()=>window.epochDebug());
+ assert.equal(afterHousingReload.settlement.residents.find(r=>r.id===residentId).homeId,hutId,
+  "assigned homes survive reopening the game");
+ assert.equal(afterHousingReload.settlement.residents.find(r=>r.id===residentId).memories.length,2);
+ assert.equal(afterHousingReload.settlement.people.find(r=>r.id===residentId).homeId,hutId,
+  "the same resident's world model reappears near their saved home");
+ assert.deepEqual(errors,[],"tribe encounters and resident profiles produce no browser runtime errors");
+ console.log("PASS browser tribes and residents: peaceful recruitment, profiles, relationships, housing, click-to-inspect and reload");
 }finally{await browser.close()}
