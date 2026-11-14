@@ -8,6 +8,7 @@ import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view2";
 import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
 import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs2";
+import {normalizeCargo,normalizeHaulPosition,cargoCount,landRoute,HAUL_WATER_DEPTH} from "./villager-hauling.js?v=20261114haul1";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114textures1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
@@ -24,7 +25,8 @@ export class World {
   this.onTribeDiscover=tribeHandlers.onDiscover||(()=>{});
   this.onTribeInteract=tribeHandlers.onInteract||(()=>{});
   this.onResidentSelect=tribeHandlers.onResidentSelect||(()=>{});
-  this.onVillagerWork=tribeHandlers.onVillagerWork||(()=>({ok:false}));
+  this.onVillagerCollect=tribeHandlers.onVillagerCollect||(()=>({ok:false}));
+  this.onVillagerDeliver=tribeHandlers.onVillagerDeliver||(()=>({ok:false}));
   this.getWildlifeStatus=tribeHandlers.getWildlifeStatus||(()=>null);
   this.onWildlifeHunt=tribeHandlers.onWildlifeHunt||(()=>({ok:false,reason:"Hunting unavailable."}));
   this.onWildlifeHarvest=tribeHandlers.onWildlifeHarvest||(()=>({ok:false,reason:"Harvest unavailable."}));
@@ -203,10 +205,72 @@ export class World {
   panel.material=material;panel.metadata={residentId:resident.id};panel.isPickable=true;
   panel.onDisposeObservable.addOnce(()=>{material.dispose();texture.dispose()});
  }
+ /** Low-poly packs make carried supplies visible on the character's back.
+  * The payload comes only from the save-backed resident cargo manifest.
+  */
+ syncVillagerCargo(person){
+  const cargo=normalizeCargo(person.cargo);
+  const types=Object.keys(cargo).sort();
+  const signature=types.join("|");
+  if(!types.length){
+   if(person.cargoVisual)person.cargoVisual.setEnabled(false);
+   return;
+  }
+  if(person.cargoVisual&&person.cargoKind===signature){
+   person.cargoVisual.setEnabled(true);return;
+  }
+  if(person.cargoVisual)person.cargoVisual.dispose(false,false);
+  const pack=new B.TransformNode("Cargo carried by "+person.name,this.scene);
+  pack.parent=person.human.root;pack.position=V(-.18,1.18,-.42);
+  const addBox=(name,pos,scale,material)=>{
+   const mesh=B.MeshBuilder.CreateBox(name,{size:1},this.scene);
+   mesh.parent=pack;mesh.position=V(...pos);mesh.scaling=V(...scale);
+   mesh.material=material;mesh.isPickable=false;return mesh;
+  };
+  const addSphere=(name,pos,scale,material)=>{
+   const mesh=B.MeshBuilder.CreateSphere(name,{segments:6,diameter:1},this.scene);
+   mesh.parent=pack;mesh.position=V(...pos);mesh.scaling=V(...scale);
+   mesh.material=material;mesh.isPickable=false;return mesh;
+  };
+  const primary=types.includes("wood")?"wood":types.includes("stone")?"stone":
+   types.includes("berries")?"berries":types.includes("fish_meat")?"fish_meat":
+   types.includes("animal_meat")?"animal_meat":types[0];
+  const frame=addBox("Woven villager carrying basket",[0,-.07,0],[.72,.51,.48],this.m.woodLight);
+  frame.rotation.z=.08;
+  for(const x of [-.29,.29]){
+   addBox("Cargo basket rim",[x,.19,0],[.07,.08,.54],this.m.wood);
+  }
+  if(primary==="wood"){
+   for(const [i,x] of [-.2,0,.2].entries()){
+    const log=B.MeshBuilder.CreateCylinder("Carried timber "+i,{height:.78,diameter:.18,tessellation:7},this.scene);
+    log.parent=pack;log.position=V(x,.31,0);log.rotation.x=Math.PI/2;
+    log.material=this.m.wood;log.isPickable=false;
+   }
+  }else if(primary==="stone"){
+   for(const [x,y,z,size] of [[-.17,.22,0,.31],[.15,.25,-.05,.27],[0,.43,.09,.25]])
+    addSphere("Carried stone",[x,y,z],[size,size*.78,size*.86],this.m.stoneDark);
+  }else if(primary==="berries"){
+   for(const [x,z] of [[-.22,-.11],[0,.12],[.23,-.06],[-.02,-.13]])
+    addSphere("Foraged berries",[x,.30,z],[.18,.17,.17],this.m.berries);
+  }else if(primary==="fish_meat"){
+   for(const x of [-.17,.14]){
+    const fish=addSphere("Caught fish",[x,.30,0],[.16,.17,.48],this.m.fishBody);
+    fish.rotation.x=.22;
+   }
+  }else{
+   addSphere("Hauled supplies",[0,.25,0],[.39,.33,.29],
+    primary==="animal_meat"?this.m.berries:this.m.cloth);
+  }
+  person.cargoVisual=pack;
+  person.cargoKind=signature;
+ }
  syncVillagers(village){
   const residents=(village?.residents||[]).slice(0,60);
   const wanted=new Set(residents.map(v=>v.id));
-  for(const prior of this.people.filter(p=>!wanted.has(p.id)))prior.human.dispose();
+  for(const prior of this.people.filter(p=>!wanted.has(p.id))){
+   prior.cargoVisual?.dispose(false,false);
+   prior.human.dispose();
+  }
   const previous=new Map(this.people.filter(p=>wanted.has(p.id)).map(p=>[p.id,p]));
   const camp=village?.stockpile||LEGACY_HOME;
   const huts=new Map((village?.buildings||[]).filter(b=>b.kind==="family").map(b=>[b.id,b]));
@@ -228,6 +292,8 @@ export class World {
    }
    person.homeId=resident.homeId;
    person.job=resident.job||"idle";
+   person.cargo=normalizeCargo(resident.cargo);
+   const carrying=cargoCount(person.cargo)>0;
    const home=resident.homeId||"camp";
    const index=homeCounts.get(home)||0;homeCounts.set(home,index+1);
    let x,z;
@@ -241,53 +307,108 @@ export class World {
     x=point[0]+camp.x-LEGACY_HOME.x;z=point[1]+camp.z-LEGACY_HOME.z;
    }
    person.homeX=x;person.homeZ=z;
-   // Re-rendering UI or changing stockpile quantities must never teleport
-   // someone who is currently traveling to a work site.
-   if(!previous.has(resident.id)||oldHome!==resident.homeId){
+   if(!previous.has(resident.id)){
+    const recovery=carrying?normalizeHaulPosition(resident.haulPosition):null;
+    person.x=recovery?.x??x;person.z=recovery?.z??z;
+    person.human.root.position=V(person.x,this.groundY(person.x,person.z),person.z);
+   }else if(oldHome!==resident.homeId&&!carrying&&person.work?.mode==="idle"){
     person.x=x;person.z=z;
     person.human.root.position=V(x,this.groundY(x,z),z);
    }
-   if(!person.work||oldHome!==resident.homeId||oldJob!==person.job)
-    person.work={mode:"idle",task:null,timer:0,retry:1+(i%4)*.4,moving:false,stalled:0,noProgress:0};
+   // Changes to job/home must not erase cargo or interrupt a delivery.
+   if(!person.work){
+    person.work={mode:carrying?"returning":"idle",task:null,timer:0,
+     retry:1+(i%4)*.4,moving:false,stalled:0,noProgress:0,
+     route:null,routeGoal:null,dropoff:null};
+   }else if(oldHome!==resident.homeId||oldJob!==person.job){
+    person.work.task=null;
+    person.work.mode=carrying?"returning":"idle";
+    person.work.route=null;person.work.routeGoal=null;person.work.dropoff=null;
+    person.work.stalled=0;person.work.noProgress=0;
+   }else if(carrying&&["idle","outbound","working"].includes(person.work.mode)){
+    person.work.mode="returning";person.work.task=null;
+   }
+   this.syncVillagerCargo(person);
    return person;
   });
  }
- /** Walk workers across actual terrain without teleporting on routine saves.
-  * Short detours dodge tree trunks, stones and waterlogged ground.
+ /** A small, dry, collision-free receiving point beside the stockpile.
+  * Each villager gets a different approach to avoid crowding the same side.
+  */
+ villagerDropoff(person,pile){
+  const number=this.people.indexOf(person);
+  const candidates=[];
+  for(let i=0;i<12;i++){
+   const a=(number+i)*Math.PI/6;
+   const point={x:pile.x+Math.cos(a)*3.55,z:pile.z+Math.sin(a)*3.55};
+   if(this.isBlocked(point.x,point.z)||
+     this.terrain.waterAt(point.x,point.z).depth>HAUL_WATER_DEPTH)continue;
+   candidates.push(point);
+  }
+  candidates.sort((a,b)=>Math.hypot(a.x-person.x,a.z-person.z)-
+   Math.hypot(b.x-person.x,b.z-person.z));
+  return candidates[0]||{x:pile.x+2.7,z:pile.z+2.7};
+ }
+ /** Cache a dry A* route for each journey. Nearby straight lines still avoid
+  * the grid, but rivers, steep slopes and tree clusters cause local detours.
   */
  moveVillager(person,destination,dt,stop=2.1){
-  const dx=destination.x-person.x,dz=destination.z-person.z,dist=Math.hypot(dx,dz);
-  if(dist<=stop){person.work.moving=false;return true}
-  const step=Math.min(JOB_SPEED*dt,Math.max(0,dist-stop)),heading=Math.atan2(dx,dz);
-  const candidates=[0,.42,-.42,.85,-.85,1.35,-1.35,Math.PI];
-  for(const offset of candidates){
-   const a=heading+offset,nx=person.x+Math.sin(a)*step,nz=person.z+Math.cos(a)*step;
-   if(this.isBlocked(nx,nz)||this.terrain.waterAt(nx,nz).depth>.10||
-      Math.abs(this.groundY(nx,nz)-this.groundY(person.x,person.z))>.66)continue;
-   person.x=nx;person.z=nz;
-   const root=person.human.root;
-   root.position.x=nx;root.position.z=nz;root.position.y=this.groundY(nx,nz);
-   root.rotation.y=a;
-   person.work.moving=true;person.work.stalled=0;
-   const remaining=Math.hypot(destination.x-nx,destination.z-nz);
-   person.work.noProgress=remaining<dist-.004?0:(person.work.noProgress||0)+dt;
+  const work=person.work,dist=Math.hypot(destination.x-person.x,destination.z-person.z);
+  if(dist<=stop){work.moving=false;work.route=null;return true}
+  if(!work.route||!work.routeGoal||
+      Math.hypot(work.routeGoal.x-destination.x,work.routeGoal.z-destination.z)>3.5){
+   work.route=landRoute(this,{x:person.x,z:person.z},destination,stop);
+   work.routeGoal={x:destination.x,z:destination.z};
+  }
+  if(!work.route?.length){
+   work.moving=false;work.stalled+=dt;
    return false;
   }
-  person.work.moving=false;person.work.stalled+=dt;
+  // The final waypoint can be within stop distance of an obstacle,
+  // including a tree trunk or the stockpile itself.
+  while(work.route.length>1&&Math.hypot(work.route[0].x-person.x,
+   work.route[0].z-person.z)<.8)work.route.shift();
+  const goal=work.route[0];
+  const dx=goal.x-person.x,dz=goal.z-person.z,len=Math.hypot(dx,dz);
+  if(len<.4){
+   work.route.shift();work.moving=false;return false;
+  }
+  const heading=Math.atan2(dx,dz),step=Math.min(JOB_SPEED*dt,len);
+  const candidates=[0,.31,-.31,.65,-.65,1.05,-1.05];
+  let advanced=false;
+  for(const offset of candidates){
+   const a=heading+offset,nx=person.x+Math.sin(a)*step,nz=person.z+Math.cos(a)*step;
+   if(this.isBlocked(nx,nz)||this.terrain.waterAt(nx,nz).depth>HAUL_WATER_DEPTH||
+      Math.abs(this.groundY(nx,nz)-this.groundY(person.x,person.z))>.56)continue;
+   person.x=nx;person.z=nz;
+   person.human.root.position=V(nx,this.groundY(nx,nz),nz);
+   person.human.root.rotation.y=a;
+   work.moving=true;work.stalled=0;advanced=true;
+   const remain=Math.hypot(goal.x-nx,goal.z-nz);
+   work.noProgress=remain<len-.006?0:(work.noProgress||0)+dt;
+   if(remain<.7&&work.route.length>1)work.route.shift();
+   break;
+  }
+  if(!advanced){
+   work.moving=false;work.stalled+=dt;
+   if(work.stalled>1.1){work.route=null;work.routeGoal=null}
+  }
   return false;
  }
  updateVillagerJobs(dt){
   const pile=this.currentVillage?.stockpile;
   if(!pile||this.inputBlocked)return;
-  // When the player explores beyond the streamed village, suspend local work.
-  // Workers never create distant resource nodes or generate off-screen loot.
+  // Workers stop simulating while the player is beyond the local streamed area.
   if(Math.hypot(this.player.position.x-pile.x,this.player.position.z-pile.z)>100)return;
   for(const person of this.people){
    const work=person.work;
    if(!work)continue;
    work.moving=false;
-   if(person.job==="idle"){
-    work.mode="idle";work.task=null;
+   const carrying=cargoCount(person.cargo)>0;
+   if(carrying&&!["returning","waiting","stuck"].includes(work.mode)){
+    work.mode="returning";work.task=null;work.route=null;work.routeGoal=null;
+   }
+   if(work.mode==="idle"&&person.job==="idle"&&!carrying){
     if(Number.isFinite(person.homeX)&&Number.isFinite(person.homeZ))
      this.moveVillager(person,{x:person.homeX,z:person.homeZ},dt,.7);
     continue;
@@ -300,31 +421,31 @@ export class World {
     const task=findVillagerWork(this,person,claimed);
     if(!task){work.retry=5;continue}
     work.task=task;work.mode="outbound";work.stalled=0;work.noProgress=0;
+    work.route=null;work.routeGoal=null;
    }
    if(work.mode==="outbound"){
     const task=work.task;
     if(!task){work.mode="idle";continue}
     if(task.kind==="hunt"){
      const animal=this.animals.find(a=>a.id===task.id&&!a.dead);
-     if(!animal){work.mode="idle";work.task=null;work.retry=3;continue}
+     if(!animal){work.mode="idle";work.task=null;work.retry=4;continue}
      task.x=animal.node.position.x;task.z=animal.node.position.z;
     }
     if(this.moveVillager(person,task,dt,task.kind==="fish"?.55:2.1)){
      work.mode="working";work.timer=JOB_WORK_SECONDS[person.job]||4;
+     work.route=null;work.routeGoal=null;
     }
    }else if(work.mode==="working"){
     work.timer-=dt;
-    if(work.timer<=0){work.mode="returning";work.stalled=0;work.noProgress=0}
-   }else if(work.mode==="returning"){
-    const point={x:pile.x+2.5,z:pile.z+2.5};
-    if(this.moveVillager(person,point,dt,1.15)){
+    if(work.timer<=0){
      const task=work.task;
-     // Reset before the synchronous state callback triggers a UI/world resync.
-     work.mode="idle";work.task=null;work.retry=1.5;
-     const outcome=task?this.onVillagerWork(person.id,task):null;
-     if(outcome?.ok){
+     // Set return state before the synchronous onChange() resynchronizes models.
+     work.mode="returning";work.task=null;work.stalled=0;work.noProgress=0;
+     work.route=null;work.routeGoal=null;work.dropoff=null;
+     const result=task?this.onVillagerCollect(person.id,task,person.x,person.z):null;
+     if(result?.ok){
       if(task.kind==="resource"){
-       if(outcome.removed)this.terrain.removeResource(task.id,task.chunkKey);
+       if(result.removed)this.terrain.removeResource(task.id,task.chunkKey);
        else if(task.resource==="food")this.terrain.refreshBerries();
       }else if(task.kind==="fish"){
        const fish=this.fish.find(f=>f.id===task.id);
@@ -333,11 +454,41 @@ export class World {
        const animal=this.animals.find(a=>a.id===task.id);
        if(animal){animal.node.dispose(false,false);this.animals=this.animals.filter(a=>a!==animal)}
       }
-     }else work.retry=outcome?.reason==="Stockpile is full."?10:3;
+     }else{
+      work.mode="idle";work.retry=4;
+     }
+    }
+   }else if(work.mode==="returning"){
+    if(!work.dropoff)work.dropoff=this.villagerDropoff(person,pile);
+    if(this.moveVillager(person,work.dropoff,dt,.85)){
+     work.mode="waiting";work.retry=0;
     }
    }
-   if(work.stalled>4||work.noProgress>8){
-    work.mode="idle";work.task=null;work.retry=6;work.stalled=0;work.noProgress=0;
+   if(work.mode==="waiting"){
+    work.retry-=dt;
+    if(work.retry<=0){
+     const drop=this.onVillagerDeliver(person.id);
+     if(drop?.remaining===0){
+      work.mode="idle";work.task=null;work.dropoff=null;
+      work.route=null;work.routeGoal=null;work.retry=2;
+     }else work.retry=drop?.reason==="Stockpile is full."?4:2.5;
+    }
+   }
+   // Failed land routes hold physical cargo safely until a new path opens.
+   if(work.stalled>4||work.noProgress>9){
+    if(cargoCount(person.cargo)>0){
+     work.mode="stuck";work.retry=5;
+    }else{
+     work.mode="idle";work.task=null;work.retry=6;
+    }
+    work.route=null;work.routeGoal=null;
+    work.stalled=0;work.noProgress=0;work.dropoff=null;
+   }
+   if(work.mode==="stuck"){
+    work.retry-=dt;
+    if(work.retry<=0){
+     work.mode="returning";work.retry=0;
+    }
    }
   }
  }
