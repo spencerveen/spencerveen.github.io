@@ -91,6 +91,12 @@ The item catalog now defines **nine foundational resources** (Wood, Stone, Vines
 
 The **Inventory** panel still has ten carried slots. New gear such as clubs, axes, spears and armor occupies one slot per item when carried; stackable materials and arrows use stacks of twelve. Under the backpack is a compact **Equipment** section with **Main Hand, Body Armor and Ammunition** slots. Click carried gear to **Equip**; click a slot's **Unequip** button to return it to the backpack. Swapping a weapon places the previous one directly into the vacated backpack slot; unequipping requires space. Equipped items do not count toward backpack capacity. Existing saves with a crafted Stone Axe automatically migrate it into Main Hand, and the woodcutting bonus applies **only while the axe is equipped**. Material storage at the village stockpile accepts new materials and arrows, not equipped weapons or armor. Inventory, equipment and old saves retain their item quantities and identities.
 
+## Temporary developer panel (press L)
+
+During a running game, press **L** to open or close the developer panel. It contains independent toggles for **Unlimited Sprint** (only Shift-running is free; gathering and weapon actions still cost stamina), **Unlimited Health** (blocks damage and fills health, but does not prevent old age), **Unlimited Hunger** (keeps hunger at 100%) and **Never Die** (prevents lethal damage and the age-100 player death). Escape also closes it.
+
+These are deliberately temporary, session-only test switches in `js/dev-cheats.js`. They default to off every time Epoch opens, are not stored in save slots, and do not undo an already completed game-over. Players' villages, normal saves and death/permadeath rules when the toggles are off remain intact. The dev-only module, UI controls and state hooks can all be removed before release.
+
 ## Phase 4B.2 — Rivers, lakes and water
 
 The same saved **world seed** now creates connected, meandering rivers and lakes that widen sections of the river corridor. Water generation uses continuous **world coordinates**, not independent chunk endpoints, so rivers remain seamless as you walk between the existing 32-meter terrain chunks. Water surfaces are translucent, with sandy shore transitions and a recessed river/lake bed. Water meshes load and unload with the same 5×5 chunk window as the rest of the forest.

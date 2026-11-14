@@ -504,6 +504,18 @@ body.epoch-game-over #scene{filter:grayscale(.8) brightness(.65)}
 @media(max-height:690px){#left{max-height:calc(100dvh - 185px);overflow:auto;scrollbar-width:thin}}
 
 
+/* Temporary developer test controls (remove with dev-cheats.js). */
+.dev-cheat-list{display:grid;gap:9px;margin:16px 0}
+.dev-cheat-toggle{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;padding:12px 14px;text-align:left;border:1px solid #9aa88b57;border-radius:10px;background:#0c1c14a8;color:#eee6cf;cursor:pointer}
+.dev-cheat-toggle:hover,.dev-cheat-toggle:focus-visible{border-color:#c3b27c}
+.dev-cheat-toggle.active{border-color:#c5ad71b5;background:#47533866}
+.dev-cheat-info{display:grid;gap:4px;min-width:0}
+.dev-cheat-info strong{font-size:14px}
+.dev-cheat-info small{color:#acbea8;font-size:12px;line-height:1.35}
+.dev-cheat-state{flex:0 0 auto;min-width:48px;text-align:center;padding:6px 9px;border-radius:99px;background:#28372a;color:#b7c4ae;font-size:11px;font-weight:800;letter-spacing:.07em}
+.dev-cheat-toggle.active .dev-cheat-state{background:#d2b878;color:#122018}
+.dev-cheat-warning{font-size:12px!important;line-height:1.55!important;color:#c8bc91!important;margin:12px 0 16px}
+
 /* The tutorial prompt is only needed before the first village stockpile. */
 #objective-guide[hidden] { display:none!important; }
 body.village-established #left {

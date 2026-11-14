@@ -3,6 +3,7 @@ import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
 import {BUILDINGS} from "./settlement.js?v=20261114u";
 import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114x";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114x";
+import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -302,6 +303,15 @@ export class UI{
    if(action==="gameover-title"){this.state.save();window.location.reload()}
    return;
   }
+  if(action==="dev-cheat"){
+   if(this.modal!=="developer")return;
+   const key=btn.dataset.cheat,enabled=!this.state.devCheats[key];
+   if(this.state.setDevCheat(key,enabled)){
+    this.developerPanel(key);
+    this.toast(DEV_CHEATS.find(c=>c.key===key).label+(enabled?" enabled.":" disabled."));
+   }
+   return;
+  }
   if(handlePackAction(this,btn)||handleVillageAction(this,btn))return;
   if(action==="name-successor"){
    if(this.modal!=="resident"||this.activeResidentId!==btn.dataset.id)return;
@@ -349,10 +359,27 @@ export class UI{
  }
  showDialog(kind,title,html){
   if(!this.modal)this.dialogReturnFocus=document.activeElement;this.modal=kind;this.world.inputBlocked=true;
-  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":kind==="death"?"A LIFE ENDS, A LEADER RISES":kind==="gameover"?"THE END OF A CIVILIZATION":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
+  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="developer"?"DEVELOPMENT ONLY":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":kind==="death"?"A LIFE ENDS, A LEADER RISES":kind==="gameover"?"THE END OF A CIVILIZATION":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
   $("modal").classList.toggle("is-game-over",kind==="gameover");
   for(const id of ["scene","left","hud-tools","right","toggle"])$(id).inert=true;$("toggle").setAttribute("aria-expanded","true");
   ($("guide").querySelector("button:not(:disabled)")||$("close-modal")).focus({preventScroll:true});
+ }
+ developerPanel(focusKey=null){
+  if(this.state.data.survival.gameOver)return;
+  const list=DEV_CHEATS.map(({key,label,note})=>{
+   const enabled=this.state.devCheats[key];
+   return '<button type="button" class="dev-cheat-toggle'+(enabled?' active':'')+
+    '" data-action="dev-cheat" data-cheat="'+key+
+    '" role="switch" aria-checked="'+String(enabled)+'"><span class="dev-cheat-info"><strong>'+
+    esc(label)+'</strong><small>'+esc(note)+'</small></span><span class="dev-cheat-state">'+
+    (enabled?'ON':'OFF')+'</span></button>';
+  }).join('');
+  this.showDialog("developer","Developer Panel",
+   '<p class="context-note">Temporary testing tools · Press L or Escape to close. Switches reset when you reload the game.</p>'+
+   '<div class="dev-cheat-list">'+list+'</div>'+
+   '<p class="dev-cheat-warning">Unlimited Health blocks damage, but only Never Die blocks death at age 100. Cheats cannot revive an ended save.</p>'+
+   '<button type="button" class="game-button" data-action="resume">Back to the world</button>');
+  if(focusKey)$("guide").querySelector('[data-cheat="'+focusKey+'"]')?.focus({preventScroll:true});
  }
  menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
  help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Use WASD to move; clicking terrain does not move your character. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills. Click inventory items for actions and hover for a short description. Craft tools under Village → Craft.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile. Move people between homes with free beds from their profiles.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Hut → Housing.</strong> See its current residents and available beds. Assign successors from the People profiles.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Walk up using WASD, then click a tribal leader, resident, hut or sign (or press E near the leader) to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Walk close to a tree, rock or berry bush, then click or press E to gather. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
@@ -363,10 +390,16 @@ export class UI{
  keydown(e){
   if(!$("start-screen").classList.contains("hidden"))return;
   if(this.modal){
+   if(this.modal==="developer"&&e.key.toLowerCase()==="l"&&!e.repeat){
+    e.preventDefault();this.close();return;
+   }
    if(e.key==="Escape"){e.preventDefault();this.close();return}
    if(e.key==="Tab"){const items=[...$("modal").querySelectorAll("button:not(:disabled),a,input,select,[tabindex='0']")].filter(n=>!n.hidden),first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}return;
   }
   if(e.defaultPrevented||["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName))return;const key=e.key.toLowerCase();
+  if(key==="l"&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+   e.preventDefault();this.developerPanel();return;
+  }
   if(key==="i"||key==="k"){e.preventDefault();const tab=key==="i"?"pack":"skills";if(this.panelOpen&&this.tab===tab)this.closePanel();else this.openPanel(tab)}else if(key==="escape"){e.preventDefault();if(this.panelOpen)this.closePanel();else this.menu()}
  }
 }

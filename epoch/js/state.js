@@ -1,5 +1,6 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
 import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeBerries} from "./survival.js?v=20261114s";
+import {newDevCheats,validDevCheat} from "./dev-cheats.js?v=20261114devpanel1";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
 import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114w";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114y";
@@ -185,6 +186,8 @@ export class GameState{
   // Untouched procedural nodes are implicit. Save only modified resource IDs.
   this.data.resourceNodes=data?.resourceNodes&&typeof data.resourceNodes==="object"
    &&!Array.isArray(data.resourceNodes)?{...data.resourceNodes}:{};
+  // Temporary development switches stay in memory, never in browser saves.
+  this.devCheats=newDevCheats();
   this.onChange=()=>{};
   this.onVitals=()=>{};
   this.sprintedThisTick=false;this.vitalSaveClock=0;
@@ -373,9 +376,28 @@ export class GameState{
   const vitals=this.data.survival;
   return {...vitals,maxStamina:maxStamina(vitals)};
  }
- canSpendStamina(amount){const v=this.data.survival;return !v.gameOver&&v.health>0&&v.stamina+1e-8>=amount}
+ setDevCheat(key,enabled){
+  if(!validDevCheat(key)||typeof enabled!=="boolean"||this.data.survival.gameOver)return false;
+  this.devCheats[key]=enabled;
+  const v=this.data.survival;
+  if(enabled&&key==="unlimitedHealth")v.health=SURVIVAL.health;
+  if(enabled&&key==="unlimitedHunger")v.hunger=SURVIVAL.hunger;
+  if(enabled&&key==="neverDie")v.health=Math.max(1,v.health);
+  this.onVitals();
+  return true;
+ }
+ canSpendStamina(amount){
+  const v=this.data.survival;
+  return !v.gameOver&&v.health>0&&v.stamina+1e-8>=amount;
+ }
  spendStamina(amount,reason=""){
-  if(!spendStamina(this.data.survival,amount))return false;
+  const v=this.data.survival;
+  if(reason==="sprint"&&this.devCheats.unlimitedSprint){
+   if(v.gameOver||v.health<=0||!Number.isFinite(amount)||amount<=0)return false;
+   this.sprintedThisTick=true;
+   return true;
+  }
+  if(!spendStamina(v,amount))return false;
   if(reason==="sprint")this.sprintedThisTick=true;
   this.onVitals();
   return true;
@@ -408,13 +430,20 @@ export class GameState{
  damageHero(amount,reason="an injury"){
   const v=this.data.survival;
   if(v.gameOver||!Number.isFinite(amount)||amount<=0||v.health<=0)return false;
-  v.health=Math.max(0,v.health-amount);
+  if(this.devCheats.unlimitedHealth)return false;
+  v.health=Math.max(this.devCheats.neverDie?1:0,v.health-amount);
   if(v.health<=0)return this.heroDies(reason);
+  this.onVitals();
   this.changed(this.data.hero.name+" was injured.");
   return true;
  }
  heroDies(reason="a fatal injury"){
   const v=this.data.survival;
+  if(this.devCheats.neverDie&&!v.gameOver){
+   v.health=Math.max(1,v.health);
+   this.onVitals();
+   return false;
+  }
   if(v.gameOver||v.health>0)return false;
   // A deceased or already 100-year-old villager cannot become the next leader.
   const agedOut=this.ageResidents(0);
@@ -636,12 +665,18 @@ export class GameState{
   if(d.survival.gameOver)return;
   // Older saves may contain an already-100-year-old leader. Resolve that on
   // their first live tick instead of allowing an immortal founder.
-  if(d.hero.age>=NATURAL_DEATH_AGE){
+  if(d.hero.age>=NATURAL_DEATH_AGE&&!this.devCheats.neverDie){
    d.survival.health=0;
    this.heroDies("old age");
    return;
   }
+  // Cheats take effect before the normal survival tick so a satiated founder
+  // also gets the normal stamina-regeneration rules.
+  if(this.devCheats.unlimitedHealth)d.survival.health=SURVIVAL.health;
+  if(this.devCheats.unlimitedHunger)d.survival.hunger=SURVIVAL.hunger;
   const survivalChanged=advanceVitals(d.survival,seconds,this.sprintedThisTick);
+  if(this.devCheats.unlimitedHealth)d.survival.health=SURVIVAL.health;
+  if(this.devCheats.unlimitedHunger)d.survival.hunger=SURVIVAL.hunger;
   this.sprintedThisTick=false;
   if(survivalChanged){
    this.onVitals();
@@ -666,7 +701,7 @@ export class GameState{
    const memorial=deceased.length?
     " "+deceased.map(p=>p.name).join(", ")+" died of old age.":"";
    d.hero.age++;
-   if(d.hero.age>=NATURAL_DEATH_AGE){
+   if(d.hero.age>=NATURAL_DEATH_AGE&&!this.devCheats.neverDie){
     if(memorial)d.history.unshift(memorial.trim());
     d.survival.health=0;
     this.heroDies("old age");

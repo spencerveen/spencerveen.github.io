@@ -29,6 +29,7 @@ jobs:
           node --check epoch/js/harvest.js
           node --check epoch/js/inventory-ui.js
           node --check epoch/js/equipment.js
+          node --check epoch/js/dev-cheats.js
           node --check epoch/js/water-generation.js
           node --check epoch/js/water-corridors.js
           node --check epoch/js/mountain-generation.js
@@ -52,6 +53,8 @@ jobs:
         run: node epoch/tests/check-huts.mjs
       - name: Validate hunger, stamina, berries, injuries and survivor succession
         run: node epoch/tests/check-survival.mjs
+      - name: Validate temporary developer cheats without corrupting saves
+        run: node epoch/tests/check-dev-cheats.mjs
       - name: Validate annual villager aging, natural death and succession at age 100
         run: node epoch/tests/check-aging.mjs
       - name: Validate title save slots, migration and character creation locks
