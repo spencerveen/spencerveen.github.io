@@ -187,10 +187,11 @@ try{
  await page.keyboard.up("ArrowRight");
  assert.equal((await readCamera()).alpha,buildAngle,"grid arrows do not rotate the camera");
  assert.equal(await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate.x),buildX+2,"grid arrows still move one cell");
+ const nudged=await page.evaluate(()=>({...window.epochDebug().settlement.buildingCandidate}));
  await page.mouse.move(550,700);
- assert.deepEqual(await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate),pinned.candidate,"moving toward controls preserves the clicked location");
+ assert.deepEqual(await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate),nudged,"moving toward controls preserves the nudged location");
  await page.mouse.down({button:"right"});await page.mouse.move(620,620,{steps:5});await page.mouse.up({button:"right"});
- assert.deepEqual(await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate),pinned.candidate,"orbiting the camera preserves placement");
+ assert.deepEqual(await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate),nudged,"orbiting the camera preserves placement");
  await page.locator('[data-tab="pack"]').click();
  assert.equal(await page.evaluate(()=>window.epochDebug().settlement.placingBuilding),null,"personal tabs cancel the previous construction mode");
  assert.equal(await page.evaluate(()=>window.__epochTestWorld.focusTarget),null,"leaving construction restores the follow-camera target");
