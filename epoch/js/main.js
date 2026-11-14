@@ -1,35 +1,45 @@
-import {GameState} from "./state.js?v=20261113l";
-import {World} from "./world.js?v=20261113l";
-import {UI} from "./ui.js?v=20261113l";
+import {GameState} from "./state.js?v=20261113m";
+import {World} from "./world.js?v=20261113m";
+import {UI} from "./ui.js?v=20261113m";
+import {TitleScreen} from "./title-screen.js?v=20261113m";
+import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
-try{
-  if(!globalThis.BABYLON)throw new Error("Babylon.js failed to load. Check your internet connection.");
+// Load the 3D game ONLY when a save is selected or a new founder is created.
+// The title screen and character creator therefore appear before gameplay.
+let sessionStarted=false;
+async function startEpoch({slot,newGame=false,founder=null}){
+ if(sessionStarted)throw new Error("A game is already running.");
+ if(!newGame&&!readSlot(slot))throw new Error("That save slot is empty or unavailable.");
+ if(!globalThis.BABYLON)throw new Error("Babylon.js failed to load. Check your connection.");
+ loading.classList.remove("hidden");
+ try{
   const canvas=document.getElementById("scene");
-  const state=new GameState();
+  const state=new GameState({slot,newGame,founder});
+  if(newGame&&!state.save())throw new Error("Could not save your new game in browser storage.");
   let ui;
   const world=new World(canvas,
-    (resource,action)=>{const result=state.harvestResource(resource,action);if(result)ui.toast(result.label);return result},
+    (resource,action)=>{const result=state.harvestResource(resource,action);if(result)ui?.toast(result.label);return result},
     (title,details)=>ui?.status(title,details),
     id=>ui?.selectPlot(id),state.data.worldSeed,meta=>state.resourceStatus(meta),
     (x,z)=>state.foundStockpile(x,z),
     ()=>ui?.openStockpile());
   ui=new UI(state,world);
+  sessionStarted=true;
+  state.save();
   window.setInterval(()=>state.advance(1),1000);
   window.addEventListener("pagehide",()=>state.save());
-  // Keep the loading screen until the actual player model is in the scene.
-  // A timeout ensures the game remains playable if the asset network stalls.
-  let loaded=false;
-  const reveal=()=>{if(loaded)return;loaded=true;loading.classList.add("hidden");};
+  let revealed=false;
+  const reveal=()=>{if(revealed)return;revealed=true;loading.classList.add("hidden");};
   Promise.race([
     world.character.ready,
     new Promise(resolve=>window.setTimeout(()=>resolve(false),8000))
   ]).then(result=>{
     reveal();
-    ui.toast(result?"The new adventurer models are ready.":"Epoch opened. Character art may still be loading.");
+    ui.toast(result?"Your story begins.":"Epoch opened. Character art may still be loading.");
   }).catch(error=>{console.error("Epoch character load error:",error);reveal();});
   // Expose a read-only inspection aid for development without exposing mutation methods.
   Object.defineProperty(globalThis,"epochDebug",{value:()=>({
-    year:state.formatYear(),generation:state.data.generation,
+    slot:state.slot,heroName:state.data.hero.name,year:state.formatYear(),generation:state.data.generation,
     forest:world.terrain.status,
     resourceNodes:state.resourceStatistics(),
     resourceStates:Object.fromEntries(Object.entries(state.data.resourceNodes).slice(0,30).map(([id,v])=>[id,{...v}])),
@@ -44,23 +54,12 @@ try{
     hairAttachment:world.character?.attachmentStatus?.()||null,
     npcAttachments:world.people.map(person=>person.human.attachmentStatus?.()||null),
     position:{x:world.player.position.x,z:world.player.position.z}
+
   }),configurable:true});
-}catch(error){
+ }catch(error){
+  loading.classList.add("hidden");
   console.error("Epoch failed to initialize:",error);
-  const report=[
-    "Epoch build 20261113l",
-    error?.stack || String(error),
-    "Browser: "+navigator.userAgent
-  ].join("\n\n");
-  loading.querySelector("h2").textContent="Unable to open Epoch";
-  loading.querySelector("p").textContent=String(error?.message||error);
-  const code=document.createElement("pre");
-  code.className="startup-diagnostics";
-  code.textContent=report;
-  loading.append(code);
-  const copy=document.createElement("button");
-  copy.className="diagnostics-copy";
-  copy.textContent="Copy error details";
-  copy.addEventListener("click",()=>navigator.clipboard?.writeText(report).catch(()=>{}));
-  loading.append(copy);
+  throw error;
+ }
 }
+new TitleScreen({onStart:startEpoch});
