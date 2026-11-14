@@ -34,8 +34,9 @@ export class World {
    if(this.camera){this.camera.inertialAlphaOffset=0;this.camera.inertialBetaOffset=0;this.camera.inertialRadiusOffset=0;}
    if(this.canvas)this.canvas.style.cursor="default";
   }else if(this.camera){
-   this.camera.attachControl(this.canvas,true);
+   // Configure the orbit button before reattaching after a modal closes.
    if(this.camera.inputs.attached.pointers)this.camera.inputs.attached.pointers.buttons=[2];
+   this.camera.attachControl(this.canvas,true);
   }
  }
  groundY(x,z){return this.terrain?this.terrain.heightAt(x,z):terrainHeight(x,z,this.worldSeed)}
@@ -128,8 +129,10 @@ export class World {
  makeCamera(){
   const c=new B.ArcRotateCamera("adventurer camera",-Math.PI/2,1.13,18,V(0,1,0),this.scene);
   c.lowerRadiusLimit=6;c.upperRadiusLimit=34;c.lowerBetaLimit=.48;c.upperBetaLimit=1.48;c.wheelDeltaPercentage=.016;c.panningSensibility=0;c.inertia=.72;
-  c.attachControl(this.canvas,true);if(c.inputs.attached.pointers)c.inputs.attached.pointers.buttons=[2];
-  // Arrow keys belong to building controls and focused interface controls.
+  // Right-drag orbits with the mouse; left-click remains world interaction.
+  if(c.inputs.attached.pointers)c.inputs.attached.pointers.buttons=[2];
+  c.attachControl(this.canvas,true);
+  // The game's keyboard handler lets arrows orbit unless a building is being placed.
   c.inputs.removeByType("ArcRotateCameraKeyboardMoveInput");
   this.camera=c;this.canvas.addEventListener("contextmenu",e=>e.preventDefault());
  }
@@ -306,6 +309,8 @@ export class World {
   return result;
  }
  cancelBuildingPlacement(){
+  // A temporary village focus must not survive a completed/cancelled placement.
+  if(this.placingBuilding)this.focusTarget=null;
   this.placingBuilding=null;this.buildingCandidate=null;this.village=null;this.placementPinned=false;
   showVillagePreview(this,null);
   this.onPlacementChange();
@@ -354,6 +359,15 @@ export class World {
      return;
     }
     if(key==="e")return;
+   }
+   // Keep keyboard camera orbit during exploration without stealing arrow keys
+   // from placement controls, text fields or focused interface buttons.
+   const orbit={arrowleft:[-.11,0],arrowright:[.11,0],arrowup:[0,-.08],arrowdown:[0,.08]}[key];
+   if(orbit&&(document.activeElement===this.canvas||document.activeElement===document.body)){
+    e.preventDefault();
+    this.camera.alpha+=orbit[0];
+    this.camera.beta=clamp(this.camera.beta+orbit[1],this.camera.lowerBetaLimit,this.camera.upperBetaLimit);
+    return;
    }
    if(["w","a","s","d","shift","e"].includes(key)){e.preventDefault();this.keys[key]=true;}
    if(key==="e")this.interactNearby(e.shiftKey?"cut":"gather");

@@ -56,6 +56,24 @@ try{
  assert.equal((await page.evaluate(()=>window.epochDebug().ui)).panelOpen,false,"exploration begins without an open panel");
  assert.deepEqual(await page.locator("[data-tab]").evaluateAll(nodes=>nodes.map(n=>n.dataset.tab)),["pack","skills"],"only Inventory and Skills are global tabs");
 
+ // The HUD must not steal mouse orbit, zoom or keyboard camera input.
+ await page.locator("#scene").focus();
+ const readCamera=()=>page.evaluate(()=>{const c=window.__epochTestWorld.camera;return {alpha:c.alpha,beta:c.beta,radius:c.radius}});
+ const orbitStart=await readCamera();
+ await page.mouse.move(630,460);
+ await page.mouse.down({button:"right"});
+ await page.mouse.move(730,500,{steps:8});
+ await page.mouse.up({button:"right"});
+ await page.waitForTimeout(160);
+ const orbitEnd=await readCamera();
+ assert(Math.abs(orbitEnd.alpha-orbitStart.alpha)>.03,"right mouse drag orbits the camera");
+ await page.mouse.wheel(0,450);
+ await page.waitForTimeout(160);
+ assert(Math.abs((await readCamera()).radius-orbitEnd.radius)>.1,"mouse wheel zooms the camera");
+ const arrowStart=await readCamera();
+ await page.keyboard.press("ArrowRight");
+ assert(Math.abs((await readCamera()).alpha-arrowStart.alpha)>.05,"arrow key orbit remains available outside build mode");
+
  await page.locator('[data-tab="pack"]').click();
  assert.equal(await page.locator(".pack-slot").count(),10);
  assert.equal(await page.locator('[data-action="chop-bush"]').count(),0,"no bush-cut control in Inventory");
@@ -115,6 +133,14 @@ try{
  await page.keyboard.press("Tab");
  assert(await page.evaluate(()=>!!document.activeElement.closest("#modal")),"keyboard focus stays inside the open dialog");
  await page.locator("#close-modal").click();
+ // The menu's input isolation must not leave the camera disconnected.
+ const afterMenuBefore=await readCamera();
+ await page.mouse.move(640,460);
+ await page.mouse.down({button:"right"});
+ await page.mouse.move(730,460,{steps:7});
+ await page.mouse.up({button:"right"});
+ await page.waitForTimeout(160);
+ assert(Math.abs((await readCamera()).alpha-afterMenuBefore.alpha)>.03,"camera orbit resumes after closing the game dialog");
 
  await clickWorldObject(page,{stockpile:true});
  await page.waitForFunction(()=>window.epochDebug().ui.context==="village",null,{timeout:5000});
@@ -139,6 +165,7 @@ try{
  assert.deepEqual(await page.evaluate(()=>window.epochDebug().settlement.buildingCandidate),pinned.candidate,"orbiting the camera preserves placement");
  await page.locator('[data-tab="pack"]').click();
  assert.equal(await page.evaluate(()=>window.epochDebug().settlement.placingBuilding),null,"personal tabs cancel the previous construction mode");
+ assert.equal(await page.evaluate(()=>window.__epochTestWorld.focusTarget),null,"leaving construction restores the follow-camera target");
  await page.locator("#close-panel").click();
 
  for(const [width,height] of [[768,1024],[390,844],[320,640]]){
