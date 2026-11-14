@@ -48,7 +48,7 @@ try{
  await page.keyboard.press("e");
  assert.equal((await page.evaluate(()=>window.epochDebug())).inventory.used,0);
  assert.equal((await page.evaluate(()=>window.epochDebug())).survival.hunger,hunger);
- assert((await page.locator("#toasts").innerText()).includes("No berries in your backpack"));
+ assert((await page.locator("#toasts").innerText()).includes("No ready-to-eat food in your backpack"));
  await page.keyboard.press("i");
  assert.equal((await page.evaluate(()=>window.epochDebug())).ui.panelOpen,false);
 

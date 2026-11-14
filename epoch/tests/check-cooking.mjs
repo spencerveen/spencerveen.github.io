@@ -82,7 +82,7 @@ assert(stored.cookRecipe("roasted_meat",hx,hz).ok,"stockpile-supplied ingredient
 assert.equal(stored.data.village.stockpile.items.wood,0);
 assert.equal(stored.data.village.stockpile.items.animal_meat,0);
 assert.equal(stored.inventoryCount("cooked_meat"),2);
-const unbuilt=new GameState({slot:4,newGame:true});
+const unbuilt=new GameState({slot:3,newGame:true});
 unbuilt.data.technologies.push("fire");
 assert(!unbuilt.cookRecipe("roasted_meat",hx,hz).ok);
 console.log("PASS cooking: hearth and research gating, raw/cooked food, fuel, mixed supplies, full-pack atomicity, nutrition, E priority and saves");
