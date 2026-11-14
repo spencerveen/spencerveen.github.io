@@ -79,6 +79,14 @@ function storagePanel(ui){
  }
  html+=`</div><p class="context-note">${atHome?"Within reach · transfers available":"Move within "+STOCKPILE_INTERACT_RANGE+" m to transfer supplies."}</p>
  <div class="village-population"><div><small>VILLAGERS</small><strong>${state.data.village.population} / ${state.villageCapacity()}</strong></div><span>${state.data.village.buildings.length} buildings · ${VILLAGE_RADIUS} m territory</span></div>`;
+ html+='<h3 class="section-heading">Your people</h3><div class="timeline"><b>'+esc(state.data.hero.name)+
+  '</b><span>Founder · Leader</span></div>';
+ for(const resident of state.data.village.residents||[]){
+  const source=resident.originTribeId?"Joined peacefully from "+resident.originTribeId.replace(/^tribe:/,"tribe "):"Longtime village resident";
+  html+='<div class="timeline"><b>'+esc(resident.name)+'</b><span>Age '+resident.age+' · '+esc(source)+'</span></div>';
+ }
+ if(!(state.data.village.residents||[]).length)
+  html+='<p class="context-note">You are the only resident. Explore and help other tribes to invite new villagers.</p>';
  return html;
 }
 function buildPanel(ui){

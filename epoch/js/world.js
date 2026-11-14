@@ -1,14 +1,14 @@
 import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113k";
 import {createQuaterniusHuman} from "./quaternius-models.js?v=20261113k";
-import {BUILDINGS} from "./settlement.js?v=20261114b";
+import {BUILDINGS} from "./settlement.js?v=20261114m";
 import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114b";
 import {stockpileValidation,nearStockpile,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114a";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114b";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261113k";
-import {ForestChunks} from "./forest-chunks.js?v=20261114l";
-import {createTribeWorld} from "./tribe-world.js?v=20261114l";
-import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114l";
+import {ForestChunks} from "./forest-chunks.js?v=20261114m";
+import {createTribeWorld} from "./tribe-world.js?v=20261114m";
+import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -130,25 +130,24 @@ export class World {
   // are instantiated, excluding the player character.
   this.people=[];
  }
- syncVillagers(population){
-  const others=Math.max(0,Math.min(24,Math.floor(Number(population)||1)-1));
-  const initial=[
-   {name:"Tala",sex:"female",x:-5,z:7},
-   {name:"Bren",sex:"male",x:-10,z:-5},
-   {name:"Kira",sex:"female",x:6,z:10},
-   {name:"Oren",sex:"male",x:13,z:-5}
-  ];
-  while(this.people.length>others)this.people.pop().human.dispose();
-  while(this.people.length<others){
-   const i=this.people.length;
-   const person=initial[i]||{name:"Settler "+(i+2),sex:i%2?"male":"female",
-    x:Math.cos(i*2.4)*(7+(i%3)*2),z:Math.sin(i*2.4)*(7+(i%3)*2)};
-   const profile=randomAppearance("epoch:tribe:"+person.name,person.sex);
-   const human=createQuaterniusHuman(this.scene,profile,null,person.name);
-   human.root.rotation.y=i*1.55;
-   this.people.push({...person,profile,human,phase:i*2.6});
-  }
-  const home=this.currentVillage?.stockpile||LEGACY_HOME;
+ syncVillagers(village){
+  const residents=(village?.residents||[]).slice(0,60);
+  const wanted=new Set(residents.map(v=>v.id));
+  for(const prior of this.people.filter(p=>!wanted.has(p.id)))prior.human.dispose();
+  const old=new Map(this.people.filter(p=>wanted.has(p.id)).map(p=>[p.id,p]));
+  this.people=residents.map((resident,i)=>{
+   let person=old.get(resident.id);
+   if(!person){
+    const positions=[[-5,7],[-10,-5],[6,10],[13,-5]];
+    const [x,z]=positions[i]||[Math.cos(i*2.4)*(7+(i%3)*2),Math.sin(i*2.4)*(7+(i%3)*2)];
+    const profile=randomAppearance("epoch:villager:"+resident.id,resident.sex);
+    const human=createQuaterniusHuman(this.scene,profile,null,resident.name);
+    human.root.rotation.y=i*1.55;
+    person={...resident,x,z,profile,human,phase:i*2.6};
+   }
+   return person;
+  });
+  const home=village?.stockpile||LEGACY_HOME;
   const dx=home.x-LEGACY_HOME.x,dz=home.z-LEGACY_HOME.z;
   for(const person of this.people){
    const x=person.x+dx,z=person.z+dz;
@@ -244,10 +243,15 @@ export class World {
   syncStockpileWorld(this,pile);
   this.obstacles=this.obstacles.filter(o=>!o.stockpile);
   if(pile)this.obstacles.push({x:pile.x,z:pile.z,r:1.65,stockpile:true});
-  this.syncVillagers(village?.population??1);
+  this.syncVillagers(village);
   // A newly founded village cannot occupy the same clearing as a tribe.
-  for(const camp of [...this.tribeCamps.values()])
-   if(!this.isTribeSiteActive(camp.tribe))this.removeTribeCamp(camp.chunk);
+  for(const camp of [...this.tribeCamps.values()]){
+   if(!this.isTribeSiteActive(camp.tribe)){
+    this.removeTribeCamp(camp.chunk);
+    if(this.getTribeRecord(camp.tribe.id)?.status==="relocated")
+     this.spawnAbandonedTribeCamp?.(camp.tribe,camp.chunk);
+   }
+  }
  }
  isTribeSiteActive(tribe){
   const record=this.getTribeRecord(tribe.id);

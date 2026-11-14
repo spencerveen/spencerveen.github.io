@@ -17,7 +17,7 @@ export const PLOTS=[
 export const PLOT_BY_ID=Object.fromEntries(PLOTS.map(plot=>[plot.id,plot]));
 export const VILLAGE_START_POPULATION=1; // The founder starts alone; recruitment comes later.
 export const VILLAGE_START_CAPACITY=5;   // Temporary sleeping places around camp.
-export function emptyVillage(){return {plots:{},buildings:[],nextBuildingNumber:1,population:VILLAGE_START_POPULATION,stockpile:null}}
+export function emptyVillage(){return {plots:{},buildings:[],nextBuildingNumber:1,population:VILLAGE_START_POPULATION,residents:[],stockpile:null}}
 /** Keep plot IDs stable, but move their starter blueprint with the home base. */
 export function plotAtHome(village,id){
  const plot=PLOT_BY_ID[id];

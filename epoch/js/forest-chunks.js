@@ -1,6 +1,6 @@
 import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeight,
  forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261113j";
-import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114l";
+import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 
@@ -44,8 +44,11 @@ export class ForestChunks{
   if(chunk.detailed)return;
   const world=this.world,{cx,cz,key}=chunk,scene=world.scene;
   const candidate=world.spawnTribeCamp?tribeAtChunk(this.seed,cx,cz):null;
-  const tribe=candidate&&world.isTribeSiteActive?.(candidate)?candidate:null;
-  const withinCamp=(x,z,extra=0)=>tribe&&Math.hypot(x-tribe.x,z-tribe.z)<TRIBE_CLEARING_RADIUS+extra;
+  const active=candidate&&world.isTribeSiteActive?.(candidate);
+  const relocated=candidate&&world.getTribeRecord?.(candidate.id)?.status==="relocated";
+  const tribe=active?candidate:null;
+  const reservation=active||relocated?candidate:null;
+  const withinCamp=(x,z,extra=0)=>reservation&&Math.hypot(x-reservation.x,z-reservation.z)<TRIBE_CLEARING_RADIUS+extra;
   for(const item of forestObjects(this.seed,cx,cz)){
    if(withinCamp(item.x,item.z))continue;
    // Generated positions repeat, but harvesting changes persist by stable ID.
@@ -68,12 +71,14 @@ export class ForestChunks{
   for(const animal of forestAnimals(this.seed,cx,cz))
    if(!withinCamp(animal.x,animal.z,2))world.makeAnimal(animal.x,animal.z,key);
   if(tribe)world.spawnTribeCamp(tribe,key);
+  else if(relocated)world.spawnAbandonedTribeCamp?.(candidate,key);
   chunk.detailed=true;
  }
  hideDetails(chunk){
   if(!chunk.detailed)return;
   const key=chunk.key,world=this.world;
   world.removeTribeCamp?.(key);
+  world.removeAbandonedTribeCamp?.(key);
   if(world.target?.chunkKey===key){
    world.target=null;world.path=[];
   }

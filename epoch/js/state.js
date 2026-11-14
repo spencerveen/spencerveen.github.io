@@ -1,6 +1,6 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance} from "./characters.js?v=20261113m";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
-import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114b";
+import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114m";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  STOCKPILE_CAPACITY,stockpileHas,payStockpile,nearStockpile,withinVillage,
@@ -8,7 +8,9 @@ import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats} from "./resource-nodes.js?v=20261113k";
 import {harvestAtNode} from "./harvest.js?v=20261113k";
-import {tribeAtChunk,normalizeTribeRecords} from "./tribes.js?v=20261114l";
+import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
+ TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114m";
+import {legacyResidents,normalizeResidents} from "./residents.js?v=20261114m";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked} from "./inventory.js?v=20261113k";
@@ -88,8 +90,12 @@ export class GameState{
    ...this.data.village.buildings.map(b=>{
     const m=/^building_([0-9]+)$/.exec(b.id);return m?Number(m[1])+1:1;
    }));
-  this.data.village.population=Math.max(1,
-   Math.min(capacity(this.data.village),Number(this.data.village.population)||1));
+  const previousPopulation=Math.max(1,Math.min(capacity(this.data.village),
+   Number(this.data.village.population)||1));
+  const previousResidents=Array.isArray(data?.village?.residents)?
+   data.village.residents:legacyResidents(previousPopulation-1);
+  this.data.village.residents=normalizeResidents(previousResidents,capacity(this.data.village)-1);
+  this.data.village.population=this.data.village.residents.length+1;
   // Legacy villages keep previously achieved progress; they must not receive
   // retroactive first-build bonuses when the new progression system loads.
   if(Array.isArray(data?.knowledgeClaims)){
@@ -198,10 +204,56 @@ export class GameState{
   const tribe=tribeAtChunk(this.data.worldSeed,candidate.cx,candidate.cz);
   if(!tribe||tribe.id!==candidate.id)return false;
   const previous=this.data.tribes[tribe.id];
-  if(previous?.discovered)return false;
+  if(previous?.discovered||previous?.status==="relocated"||previous?.status==="razed")return false;
   this.data.tribes[tribe.id]={status:previous?.status||"active",
-   discovered:true,discoveredYear:this.data.year};
+   discovered:true,discoveredYear:this.data.year,
+   trust:tribeTrust(tribe,previous),completed:previous?.completed||0};
   this.changed("Discovered "+tribe.name+" in the wilderness.");
+  return true;
+ }
+ tribeDefinition(id){
+  const match=/^tribe:(-?\d+),(-?\d+)$/.exec(String(id));
+  if(!match)return null;
+  const tribe=tribeAtChunk(this.data.worldSeed,Number(match[1]),Number(match[2]));
+  return tribe?.id===id?tribe:null;
+ }
+ tribeProgress(id){
+  const tribe=this.tribeDefinition(id),record=this.data.tribes[id];
+  if(!tribe||!record?.discovered)return null;
+  const trust=tribeTrust(tribe,record),request=record.status==="active"?tribeAidRequest(tribe,record):null;
+  return {tribe,record:{...record},trust,request,
+   ready:record.status==="active"&&trust>=TRIBE_TRUST_GOAL,
+   space:this.villageCapacity()-this.data.village.population};
+ }
+ aidTribe(id,expectedStage){
+  const progress=this.tribeProgress(id);
+  if(!progress||progress.record.status!=="active"||!progress.request||progress.ready||
+   !Number.isInteger(expectedStage)||expectedStage!==progress.record.completed)return false;
+  if(!this.enough(progress.request.cost)||!this.pay(progress.request.cost))return false;
+  const record=this.data.tribes[id];
+  record.trust=Math.min(TRIBE_TRUST_GOAL,progress.trust+TRIBE_AID_TRUST);
+  record.completed=(record.completed||0)+1;
+  this.changed("Helped "+progress.tribe.name+" with "+progress.request.name.toLowerCase()+
+   ". Trust "+record.trust+"/"+TRIBE_TRUST_GOAL+".");
+  return true;
+ }
+ inviteTribe(id){
+  const progress=this.tribeProgress(id);
+  if(!progress||!progress.ready||!this.data.village.stockpile)return false;
+  const {tribe,space}=progress;
+  if(space<tribe.population)return false;
+  const existing=new Set(this.data.village.residents.map(v=>v.id));
+  if(tribe.members.some(m=>existing.has(m.id)))return false;
+  // One transaction: the entire tribe relocates or none of it does.
+  const arrivals=tribe.members.map(member=>({
+   id:member.id,name:member.name,sex:member.sex,age:member.age,
+   originTribeId:tribe.id,recruitment:"peaceful",joinedYear:this.data.year
+  }));
+  this.data.village.residents.push(...arrivals);
+  this.data.village.population=this.data.village.residents.length+1;
+  this.data.tribes[id].status="relocated";
+  this.changed(tribe.name+" peacefully joined "+this.data.hero.name+"'s village. "+
+   arrivals.length+" new residents arrived; their former camp was dismantled.");
   return true;
  }
  gainXP(skill,amount){this.data.skills[skill]=(this.data.skills[skill]||0)+amount}

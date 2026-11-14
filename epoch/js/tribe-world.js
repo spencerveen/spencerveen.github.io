@@ -2,7 +2,7 @@
  * Small, streamed Stone Age camps for the procedural tribes in tribes.js.
  * Visual roots and skinned characters are disposed when their chunk unloads.
  */
-import {TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114l";
+import {TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114m";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 
@@ -56,6 +56,30 @@ export function createTribeWorld(world,createHuman){
  mats.fire.emissiveColor=new B.Color3(.7,.27,.03);
  world.tribeMaterials=mats;
  world.tribeCamps=new Map();
+ world.abandonedTribeCamps=new Map();
+ world.spawnAbandonedTribeCamp=function(tribe,chunk){
+  if(this.abandonedTribeCamps.has(chunk))return;
+  const root=new B.TransformNode("Abandoned settlement: "+tribe.name,this.scene);
+  root.position=V(tribe.x,this.groundY(tribe.x,tribe.z),tribe.z);
+  const ground=add(this,"Abandoned tribal clearing","cylinder",root,[0,.04,0],
+   [TRIBE_CLEARING_RADIUS*1.5,.07,TRIBE_CLEARING_RADIUS*1.5],mats.earth,tribe);
+  ground.isPickable=false;ground.metadata=null;
+  // The old homes are dismantled, not razed. Scattered timber and cold ashes
+  // signal a peaceful departure without leaving a usable settlement behind.
+  for(const [x,z] of [[-3,-2],[3,-2],[-.5,-5]]){
+   const log=add(this,"Dismantled timber","box",root,[x,.23,z],[2.7,.35,.42],mats.wood,tribe);
+   log.isPickable=false;log.metadata=null;
+  }
+  const ashes=add(this,"Cold tribal hearth","cylinder",root,[0,.11,-.5],[1.5,.2,1.5],mats.ash,tribe);
+  ashes.isPickable=false;ashes.metadata=null;
+  this.abandonedTribeCamps.set(chunk,{tribe,root});
+ };
+ world.removeAbandonedTribeCamp=function(chunk){
+  const remains=this.abandonedTribeCamps.get(chunk);
+  if(!remains)return;
+  remains.root.dispose(false,false);
+  this.abandonedTribeCamps.delete(chunk);
+ };
  world.spawnTribeCamp=function(tribe,chunk){
   if(!tribe||this.tribeCamps.has(chunk))return null;
   const root=new B.TransformNode("Independent tribe: "+tribe.name,this.scene);

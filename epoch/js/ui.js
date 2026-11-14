@@ -1,6 +1,7 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114j";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114m";
+import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
 import {BUILDINGS} from "./settlement.js?v=20261114b";
-import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114k";
+import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261114m";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114b";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
@@ -11,7 +12,7 @@ const titles={pack:["YOUR ADVENTURER","Inventory"],skills:["LEARN BY DOING","Ski
 const skillNotes={woodcutting:"Practice by gathering wood from trees.",mining:"Practice by gathering stone from deposits.",foraging:"Practice by picking wild berries.",crafting:"Practice by crafting equipment.",construction:"Practice by constructing village buildings.",survival:"Grow through gathering and life in the wilderness."};
 export class UI{
  constructor(state,world){
-  this.state=state;this.world=world;this.tab="pack";this.panelOpen=false;this.villageSection="storage";this.sourceBuildingId=null;this.selectedBuildingId=null;this.selectedSlot=null;this.modal=null;this.panelMarkup=null;
+  this.state=state;this.world=world;this.tab="pack";this.panelOpen=false;this.villageSection="storage";this.sourceBuildingId=null;this.selectedBuildingId=null;this.selectedSlot=null;this.modal=null;this.activeTribeId=null;this.panelMarkup=null;
   document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{if(this.panelOpen&&this.tab===button.dataset.tab)this.closePanel();else this.openPanel(button.dataset.tab)}));
   $("toggle").addEventListener("click",()=>this.modal?this.close():this.menu());
   $("close-panel").addEventListener("click",()=>this.closePanel());
@@ -34,20 +35,66 @@ export class UI{
  openStockpile(){return openStockpile(this)}
  openTribe(tribe){
   if(!tribe||!tribe.members?.length)return false;
-  // Encounter panels are always tied to a person in the world, not a global
-  // tribe menu. Discovery is persisted by GameState before opening.
   this.state.discoverTribe(tribe);
-  const leader=tribe.members.find(member=>member.role==="leader")||tribe.members[0];
+  this.activeTribeId=tribe.id;
+  return this.renderTribeEncounter(tribe);
+ }
+ renderTribeEncounter(tribe){
+  const progress=this.state.tribeProgress(tribe.id);
+  if(!progress||progress.record.status!=="active")return false;
+  const leader=tribe.members.find(m=>m.role==="leader")||tribe.members[0];
   const members=tribe.members.map(member=>
    '<div class="timeline"><b>'+esc(member.name)+'</b><span>'+esc(member.role==="leader"?"Tribal leader":"Tribesperson")+' · Age '+member.age+'</span></div>').join("");
   const disposition=tribe.disposition[0].toUpperCase()+tribe.disposition.slice(1);
-  this.showDialog("tribe",tribe.name,
-   '<div class="building-context"><span class="stat-pill">'+esc(disposition)+' tribe</span><p>A small independent settlement beyond your village.</p></div>'+
-   '<div class="entry"><h3>Meet '+esc(leader.name)+'</h3><p>This tribe has '+tribe.population+' people living in the wilderness. You have discovered their home, but no diplomatic relationship has been established yet.</p></div>'+
-   '<h3 class="section-heading">People of '+esc(tribe.name)+'</h3>'+members+
-   '<p class="context-note">Phase 1: this encounter is for exploration only. Conversations, trust, quests, recruitment and combat are coming in later phases.</p>'+
-   '<button type="button" class="game-button" data-action="resume">Return to the wilderness</button>');
+  const trust=progress.trust,space=progress.space;
+  let interaction="";
+  if(!progress.ready && progress.request){
+   const request=progress.request;
+   const supplies=Object.entries(request.cost).map(([id,need])=>{
+    const have=this.state.inventoryCount(id);
+    return '<span class="cost-chip '+(have>=need?"met":"missing")+'">'+
+     esc(id==="berries"?"Berries":id[0].toUpperCase()+id.slice(1))+
+     ' <b>'+have+' / '+need+'</b></span>';
+   }).join("");
+   interaction='<div class="entry"><h3>'+esc(request.name)+'</h3><p>'+esc(request.description)+
+    '</p><div class="research-costs cost-list">'+supplies+'</div>'+
+    '<p class="context-note">Bring these supplies in your backpack to this tribal leader. Stored village supplies must be withdrawn first.</p>'+
+    '<button type="button" data-action="tribe-aid" data-stage="'+(progress.record.completed||0)+'" '+
+    (!this.state.enough(request.cost)?"disabled":"")+
+    '>Offer supplies · +35 Trust</button></div>';
+  }else if(progress.ready){
+   const housing=space>=tribe.population;
+   interaction='<div class="entry"><h3>Invite the tribe to settle with you</h3>'+
+    '<p>'+esc(leader.name)+' now trusts you enough to relocate their entire tribe. The old camp will be dismantled and its people will become permanent residents.</p>'+
+    '<p class="context-note">Free housing '+space+' · Arriving '+tribe.population+'. '+
+    (!this.state.data.village.stockpile?"Establish your village stockpile before inviting anyone.":
+     !housing?"Build more Family Huts to make room for the entire tribe.":"Your village has room for everyone.")+'</p>'+
+    '<button type="button" data-action="tribe-invite" '+
+    (!housing||!this.state.data.village.stockpile?"disabled":"")+
+    '>Welcome '+tribe.population+' villagers</button></div>';
+  }else{
+   interaction='<div class="entry"><p>This tribe has no further requests at present.</p></div>';
+  }
+  const html='<div class="building-context"><span class="stat-pill">'+esc(disposition)+
+   ' tribe · '+tribe.population+' residents</span><p>Meet '+esc(leader.name)+
+   ', the leader of this wilderness settlement.</p></div>'+
+   '<div class="entry"><div class="research-heading"><h3>Trust</h3><strong>'+trust+
+   ' / '+TRIBE_TRUST_GOAL+'</strong></div>'+
+   '<div class="bar" role="progressbar" aria-label="Tribal trust" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+trust+
+   '"><span style="width:'+trust+'%"></span></div>'+
+   '<small>Helping the tribe earns trust. Three unique requests can establish a peaceful alliance.</small></div>'+
+   interaction+'<h3 class="section-heading">People of '+esc(tribe.name)+'</h3>'+members+
+   '<p class="context-note">Peaceful recruitment only. Combat, loyalty and villager jobs are planned for later phases.</p>'+
+   '<button type="button" class="game-button alt" data-action="resume">Return to the wilderness</button>';
+  this.showDialog("tribe",tribe.name,html);
   return true;
+ }
+ tribeInReach(){
+  if(this.modal!=="tribe"||!this.activeTribeId)return null;
+  const camp=[...this.world.tribeCamps.values()].find(c=>c.tribe.id===this.activeTribeId);
+  if(!camp)return null;
+  const p=this.world.player.position;
+  return Math.hypot(p.x-camp.leader.x,p.z-camp.leader.z)<TRIBE_INTERACT_RANGE+.3?camp.tribe:null;
  }
  openFounding(){return !this.state.data.village.stockpile&&this.openPanel("village")}
  openPanel(tab,{buildingId=null}={}){
@@ -116,6 +163,26 @@ export class UI{
  handleAction(e){
   const btn=e.target.closest("[data-action]");if(!btn||btn.disabled)return;const action=btn.dataset.action;let message="";
   if(handlePackAction(this,btn)||handleVillageAction(this,btn))return;
+  if(action==="tribe-aid"||action==="tribe-invite"){
+   const tribe=this.tribeInReach();
+   if(!tribe){this.toast("Speak with the tribal leader to continue.");return}
+   if(action==="tribe-aid"){
+    if(this.state.aidTribe(tribe.id,Number(btn.dataset.stage))){
+     this.renderTribeEncounter(tribe);
+     this.toast("Your gift was accepted. Tribal trust increased.");
+    }else this.toast("You need the requested supplies in your backpack.");
+   }else if(this.state.inviteTribe(tribe.id)){
+    const people=tribe.members.map(m=>esc(m.name)).join(", ");
+    this.showDialog("arrival","A new chapter for your village",
+     '<div class="entry"><h3>'+esc(tribe.name)+' has joined your settlement!</h3>'+
+     '<p>'+tribe.population+' villagers have settled peacefully at your home. Their former camp has been dismantled.</p>'+
+     '<p>'+people+'</p>'+
+     '<p class="context-note">These individuals now belong to your permanent village population and will remain after saving and reloading.</p></div>'+
+     '<button type="button" data-action="resume">Return to the world</button>');
+    this.activeTribeId=null;
+   }else this.toast("You need enough housing and full tribal trust to invite everyone.");
+   return;
+  }
   if(action==="axe")message=this.state.craftAxe()?"Stone axe crafted. More wood with every swing.":"You need the technology and carried supplies.";
   else if(action==="unlock"){if(!this.canUseContext(btn.dataset.kind==="tech"?"tech":"culture")){this.toast("Visit the appropriate village building to continue.");return}message=this.state.unlock(btn.dataset.kind,btn.dataset.key)?"A new chapter of knowledge begins.":"Check prerequisites, inventory and stockpile supplies."}
   else if(action==="next"){
@@ -137,7 +204,7 @@ export class UI{
  menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
  help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Click the ground to walk there. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies and place buildings.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Family Hut → Dynasty.</strong> Follow your lineage and plan succession.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Click their people, huts or leader signs to approach and meet them. Press E near a leader to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Click a tree, rock or berry bush to gather; E gathers nearby. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
  close(){
-  if(!this.modal)return;this.modal=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
+  if(!this.modal)return;this.modal=null;this.activeTribeId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
   const target=this.dialogReturnFocus;(target?.isConnected&&!target.closest("[inert]")?target:$("toggle")).focus({preventScroll:true});
  }
  keydown(e){

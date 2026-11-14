@@ -9,6 +9,29 @@ export const TRIBE_CLEARING_RADIUS=9.5;
 export const TRIBE_DISCOVERY_RANGE=20;
 export const TRIBE_INTERACT_RANGE=5.5;
 export const TRIBE_STATUSES=Object.freeze(["active","relocated","razed"]);
+export const TRIBE_TRUST_GOAL=100;
+export const TRIBE_AID_TRUST=35;
+// These first requests intentionally fit a ten-slot backpack and use carried
+// materials only: you must bring the actual supplies to the tribal leader.
+export const TRIBE_AID_REQUESTS=Object.freeze([
+ Object.freeze({name:"Share wild food",description:"The camp needs berries to feed its people.",cost:Object.freeze({berries:8})}),
+ Object.freeze({name:"Help repair shelters",description:"The tribe needs timber to reinforce its huts.",cost:Object.freeze({wood:8})}),
+ Object.freeze({name:"Supply their toolmaker",description:"Bring stone and berries for their tools and meals.",cost:Object.freeze({stone:5,berries:4})})
+]);
+export function tribeBaseTrust(tribe){
+ return tribe?.disposition==="peaceful"?20:tribe?.disposition==="neutral"?10:0;
+}
+export function tribeTrust(tribe,record){
+ const score=Number(record?.trust);
+ return Math.max(0,Math.min(TRIBE_TRUST_GOAL,Number.isFinite(score)&&record?.trust!==null?score:tribeBaseTrust(tribe)));
+}
+export function tribeAidRequest(tribe,record){
+ const completed=Math.max(0,Math.min(TRIBE_AID_REQUESTS.length,Number(record?.completed)||0));
+ if(completed===TRIBE_AID_REQUESTS.length)return null;
+ const shift=(((((tribe?.cx||0)*11+(tribe?.cz||0)*7)%TRIBE_AID_REQUESTS.length)+TRIBE_AID_REQUESTS.length)%TRIBE_AID_REQUESTS.length);
+ return TRIBE_AID_REQUESTS[(completed+shift)%TRIBE_AID_REQUESTS.length];
+}
+
 const FIRST=["Ash","Dawn","Briar","Moss","Red","Stone","Wolf","Mist","Fern","River","Oak","Amber","Pine","Frost","Willow","Flint"];
 const LAST=["wood","fell","brook","vale","thorn","ridge","haven","water","clan","heart","bough","crest"];
 const NAMES=["Eira","Toran","Bren","Kira","Sela","Mara","Darin","Nessa","Oren","Kellan","Lina","Runa","Cai","Tala","Elowen","Roran","Asha","Fenn","Tavia","Halen","Yara","Borin"];
@@ -59,7 +82,11 @@ export function normalizeTribeRecords(raw){
   const status=TRIBE_STATUSES.includes(record.status)?record.status:"active";
   const discovered=record.discovered===true;
   const year=Number(record.discoveredYear);
-  result[id]={status,discovered,discoveredYear:discovered&&Number.isInteger(year)?year:null};
+  const trust=record.trust===null||record.trust===undefined?null:Number(record.trust);
+  const completed=Number(record.completed);
+  result[id]={status,discovered,discoveredYear:discovered&&Number.isInteger(year)?year:null,
+   trust:trust===null||!Number.isFinite(trust)?null:Math.max(0,Math.min(100,Math.floor(trust))),
+   completed:Number.isInteger(completed)?Math.max(0,Math.min(TRIBE_AID_REQUESTS.length,completed)):0};
  }
  return result;
 }
