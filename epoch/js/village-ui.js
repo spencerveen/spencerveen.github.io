@@ -93,7 +93,7 @@ function peoplePanel(ui){
  const state=ui.state,people=state.data.village.residents||[],homes=state.villageHousing();
  let html='<div class="village-population"><div><small>SETTLEMENT POPULATION</small><strong>'+
   state.data.village.population+' / '+state.villageCapacity()+
-  '</strong></div><span>'+people.length+' other residents</span></div>'+
+  '</strong></div><span>'+people.length+' other residents · '+people.filter(p=>p.job&&p.job!=="idle").length+' workers</span></div>'+
   '<p class="context-note">Assign jobs through individual profiles. Villagers travel to nearby work sites and bring gathered supplies back to your stockpile.</p>'+
   '<h3 class="section-heading">Housing</h3>';
  for(const h of homes){
