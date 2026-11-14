@@ -4,7 +4,8 @@
 
 **Static site path:** `/epoch/`
 
-**Design:** [GAME_DESIGN.md](./GAME_DESIGN.md)
+**Design:** [GAME_DESIGN.md](./GAME_DESIGN.md)  
+**Civilization roadmap:** [Tribes, Recruitment, Fear, Diplomacy & Generations — Issue #27](https://github.com/spencerveen/spencerveen.github.io/issues/27)
 
 Epoch is a third-person browser RPG about gathering, founding a village, discovering technologies and traditions, and passing control to descendants. Village activities open from buildings in the world. **Inventory** and **Skills** are the only global gameplay tabs.
 
