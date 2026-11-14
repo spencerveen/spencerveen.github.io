@@ -35,16 +35,22 @@ export function oceanAt(x,z,seed=STARTER_SEED,protectedSites=[],mountainSites=[]
  const coast=coastlineX(z,seed),distance=x-coast;
  // Skip costly mountain math in the vast, unchanged continental interior.
  if(distance < -COAST_SHELF-2)return null;
- const land=mountainTerrainHeight(x,z,seed,mountainSites);
- const dryDistance=Math.max(0,-distance);
- const shoreApproach=smooth(dryDistance/COAST_SHELF);
- const coastalLand=mix(SEA_LEVEL,Math.max(land,SEA_LEVEL+.18),shoreApproach);
  const protectedFraction=landSanctuary(x,z,protectedSites);
  const exposure=1-protectedFraction;
  const outToSea=Math.max(0,distance);
  const rawDepth=Math.min(14,outToSea*.165+Math.max(0,outToSea-8)*.016);
  const depth=rawDepth*exposure;
  const openBed=SEA_LEVEL-rawDepth;
+ // Most ocean chunks have no land and require no expensive inland river or
+ // mountain queries. This fast path keeps exploration fast far offshore.
+ if(distance>0&&exposure===1)return {distance,coastX:coast,
+  groundY:openBed,beach:0,depth:depth>.025?depth:0,
+  bedY:openBed,surfaceY:SEA_LEVEL,shore:Math.abs(distance),
+  protectedFraction};
+ const land=mountainTerrainHeight(x,z,seed,mountainSites);
+ const dryDistance=Math.max(0,-distance);
+ const shoreApproach=smooth(dryDistance/COAST_SHELF);
+ const coastalLand=mix(SEA_LEVEL,Math.max(land,SEA_LEVEL+.18),shoreApproach);
  // An existing village over what would become ocean rises smoothly into a
  // permanent island of its old land rather than being moved or submerged.
  const groundY=distance<=0?mix(land,coastalLand,exposure):

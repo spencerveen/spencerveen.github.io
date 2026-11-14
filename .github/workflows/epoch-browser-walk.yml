@@ -42,6 +42,8 @@ jobs:
         run: node epoch/tests/browser-equipment.mjs
       - name: Validate water meshes, deep-water collision and chunk cleanup
         run: node epoch/tests/browser-water.mjs
+      - name: Explore ocean shore, wading, open water and streaming in Chromium
+        run: node epoch/tests/browser-ocean.mjs
       - name: Inspect exposed mountain rock and vegetation streaming in Chromium
         run: node epoch/tests/browser-mountain-appearance.mjs
       - name: Validate natural aging, death succession, memorials and a clean HUD

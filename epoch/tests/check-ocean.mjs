@@ -70,7 +70,7 @@ assert.deepEqual(new GameState({slot:1}).data.oceanProtectedSites,migrated.data.
  "later construction does not change the coast");
 const newWorld=new GameState({slot:2,newGame:true});
 assert.deepEqual(newWorld.data.oceanProtectedSites,[]);
-const dryWorld={player:{position:{x:siteX-35,z:0}},groundY:(x,z)=>waterTerrainHeight(x,z,STARTER_SEED),
+const dryWorld={player:{position:{x:siteX-8,z:0}},groundY:(x,z)=>waterTerrainHeight(x,z,STARTER_SEED),
  obstacles:[],terrain:{waterAt:(x,z)=>waterAt(x,z,STARTER_SEED)}};
 assert(stockpileValidation(dryWorld,siteX,0).reason.includes("dry ground"),
  "stockpile placement rejects the deep ocean");
