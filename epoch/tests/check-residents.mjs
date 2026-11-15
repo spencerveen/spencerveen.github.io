@@ -37,22 +37,26 @@ assert.equal(profile.resident.memories.length,1);
 assert(profile.resident.memories[0].text.includes(tribe.name));
 assert.equal(profile.connections.clanmates.length,tribe.population-1,"other recruits share a known tribe history");
 assert(profile.connections.clanmates.some(p=>p.id===second.id));
-assert.equal(profile.home.label,"Communal camp");
+assert.equal(profile.home.label,"Hut 1","new recruits prefer a built Hut over the open camp");
 const units=original.villageHousing();
 assert.equal(units.length,2);
 assert.equal(units.reduce((n,u)=>n+u.occupied,0),tribe.population,"every recruit has exactly one home assignment");
 assert.equal(units.reduce((n,u)=>n+u.capacity,0),original.villageCapacity()-1,"founder consumes the remaining camp bed");
 assert(!original.assignResidentHome(first.id,"not_a_home"),"unknown homes are rejected");
-assert(!original.assignResidentHome(first.id,"camp"),"reassigning to the same home is a no-op");
+assert(!original.assignResidentHome(first.id,hut.building.id),"reassigning to the same Hut is a no-op");
 const family=units.find(u=>u.id===hut.building.id);
 assert(family);
 const before=original.data.village.population;
-assert(original.assignResidentHome(first.id,family.id),"resident may be moved to a hut with a free bed");
+assert(original.assignResidentHome(first.id,"camp"),"resident can move out of a Hut to camp");
 assert.equal(original.data.village.population,before);
-assert.equal(original.residentProfile(first.id).resident.homeId,family.id);
-assert.equal(original.residentProfile(first.id).resident.memories.length,2,"housing changes enter individual history");
-assert(original.residentProfile(first.id).connections.housemates.every(p=>p.id!==second.id),"the second recruit still lives elsewhere");
-assert(original.assignResidentHome(second.id,family.id),"another villager can move into the same hut");
+assert.equal(original.residentProfile(first.id).resident.homeId,"camp");
+assert.equal(original.residentProfile(first.id).resident.memories.length,2,
+ "housing changes enter individual history");
+assert(original.assignResidentHome(first.id,family.id),"return to the available Hut bed");
+assert.equal(original.residentProfile(first.id).resident.memories.length,3);
+if(original.residentProfile(second.id).resident.homeId===family.id)
+ assert(original.assignResidentHome(second.id,"camp"),"housemate can also leave the Hut");
+assert(original.assignResidentHome(second.id,family.id),"a resident can use an available Hut bed");
 assert(original.residentProfile(first.id).connections.housemates.some(v=>v.id===second.id),"housemates reflect actual shared housing");
 assert.equal(original.residentProfile(first.id).connections.clanmates.length,tribe.population-1,"moving homes does not sever known clan ties");
 original.save();
@@ -70,13 +74,17 @@ const legacy={version:1,worldSeed:12000,hero:{name:"Legacy"},village:{
 store.set("epoch.stoneage.slot.2",JSON.stringify(legacy));
 const migrated=new GameState({slot:2});
 assert.equal(migrated.data.village.residents.length,4);
-assert(migrated.data.village.residents.every(v=>v.homeId==="camp"),"existing residents initially belong to camp");
-assert.equal(migrated.villageHousing()[0].occupied,4);
-assert(migrated.assignResidentHome("legacy:resident:0","old_family"));
-assert.equal(migrated.villageHousing()[0].occupied,3);
+assert.equal(migrated.villageHousing()[1].occupied,3,
+ "newly migrated unassigned residents now fill the constructed Hut first");
+assert.equal(migrated.villageHousing()[0].occupied,1,
+ "overflow residents still sleep at the communal camp");
+assert.equal(migrated.residentProfile("legacy:resident:0").resident.homeId,"old_family");
+assert(!migrated.assignResidentHome("legacy:resident:0","old_family"),
+ "keeping the same room is a no-op");
+assert(migrated.assignResidentHome("legacy:resident:0","camp"));
+assert.equal(migrated.villageHousing()[1].occupied,2);
 assert(!migrated.assignResidentHome("legacy:resident:0","invalid"),"invalid housing never changes the roster");
-assert(migrated.assignResidentHome("legacy:resident:1","old_family"));
-assert(migrated.assignResidentHome("legacy:resident:2","old_family"));
+assert(migrated.assignResidentHome("legacy:resident:0","old_family"));
 assert.equal(migrated.villageHousing()[1].occupied,3);
 assert(!migrated.assignResidentHome("legacy:resident:3","old_family"),"full huts never accept an extra occupant");
 assert.equal(migrated.residentProfile("legacy:resident:3").resident.homeId,"camp");
