@@ -8,7 +8,8 @@ globalThis.localStorage={
  setItem:(key,value)=>store.set(key,value),
  removeItem:key=>store.delete(key)
 };
-const endOfYear=state=>{state.data.calendarProgress=89/90;state.advance(2)};
+// One game year now lasts 432 real seconds, not the legacy 90 seconds.
+const endOfYear=state=>{state.data.calendarProgress=1-1/432;state.advance(2)};
 assert.equal(NATURAL_DEATH_AGE,100);
 const village=new GameState({slot:1,newGame:true});
 const first=legacyResidents(2);
