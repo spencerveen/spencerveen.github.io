@@ -1012,7 +1012,7 @@ export class GameState{
    const activity=this.getVillagerActivity(villager.id)||
     {mode:"idle",atHome:true,local:true,moving:false};
    const next=advanceVillagerEnergy(villager,activity,seconds,shift);
-   if(Math.abs(villager.energy-next.energy)>1e-7||
+   if(!Number.isFinite(villager.energy)||Math.abs(villager.energy-next.energy)>1e-7||
       villager.resting!==next.resting){
     villager.energy=next.energy;
     villager.resting=next.resting;
