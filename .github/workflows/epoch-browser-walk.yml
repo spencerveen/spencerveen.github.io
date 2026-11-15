@@ -35,6 +35,8 @@ jobs:
         run: node epoch/tests/check-villager-hauling.mjs
       - name: Verify villager work shifts, saved energy, exhaustion and sleep recovery
         run: node epoch/tests/check-villager-routines.mjs
+      - name: Verify rotated Hut doors, camp bedrolls and sleep recovery
+        run: node epoch/tests/check-villager-sleep-homes.mjs
       - name: Verify edible food stockpile transactions, hunger and save migration
         run: node epoch/tests/check-villager-food.mjs
       - name: Verify village leisure planning, real hearth sites and priority rules
