@@ -1,23 +1,24 @@
 import assert from "node:assert/strict";
 import {launchBrowser,gameUrl,continueGame,clickWorldObject} from "./browser-helpers.mjs";
 import {legacyResidents} from "../js/residents.js";
+import {progressAtHour} from "../js/game-clock.js";
 
 const browser=await launchBrowser();
 try{
  const page=await browser.newPage({viewport:{width:1280,height:850},ignoreHTTPSErrors:true});
  const errors=[];
  page.on("pageerror",error=>errors.push(String(error)));
- await page.addInitScript(residents=>{
+ await page.addInitScript(({residents,progress})=>{
   if(localStorage.getItem("epoch.stoneage.slot.1"))return;
   localStorage.setItem("epoch.stoneage.slot.1",JSON.stringify({
-   version:1,worldSeed:12000,hero:{name:"Village Founder",age:25},
+   version:1,worldSeed:12000,calendarProgress:progress,hero:{name:"Village Founder",age:25},
    village:{population:3,plots:{},buildings:[],residents,
     stockpile:{x:0,z:8,items:{wood:0,stone:0,berries:0,vines:0}}},
    survival:{health:100,stamina:100,hunger:100,gameOver:false},
    lastSavedAt:Date.now()
   }));
   localStorage.setItem("epoch.stoneage.legacy.migrated","no-legacy");
- },legacyResidents(2));
+ },{residents:legacyResidents(2),progress:progressAtHour(10)});
  await page.goto(gameUrl,{waitUntil:"domcontentloaded",timeout:45000});
  await continueGame(page,{model:true});
  assert.equal(windowIsDefined(await page.evaluate(()=>window.epochDebug().villagerCount)),true);
