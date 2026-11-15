@@ -16,6 +16,7 @@ import {villagerDayPhase,villagerCanBeginWork,VILLAGER_EXHAUSTED_AT} from "./vil
 import {availableVillageMeals,VILLAGER_MEAL_AT,VILLAGER_CRITICAL_HUNGER} from "./villager-nutrition.js?v=20261115food1";
 import {villagerMaySocialize,villagerLeisureChoice,villageGatherCenter,isLeisureMode,VILLAGE_GATHER_RADIUS,VILLAGE_WANDER_RADIUS} from "./village-life.js?v=20261115life1";
 import {workerGatherDurationMultiplier} from "./village-development.js?v=20261114development1";
+import {hutDoorApproach,villagerBedtimeTarget} from "./villager-sleep-homes.js?v=20261115sleepindoors1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -215,31 +216,23 @@ export class World {
   panel.material=material;panel.metadata={residentId:resident.id};panel.isPickable=true;
   panel.onDisposeObservable.addOnce(()=>{material.dispose();texture.dispose()});
  }
- /** A small floating sleep indicator, attached to the NPC rather than
-  * the terrain, so it does not interfere with clicking people or buildings.
-  * Exterior beds/interiors can replace this representation in a later phase.
+ /** Communal-camp residents do not have an enclosed Hut yet. During the
+  * night a physical bedroll shows where each person sleeps; their standing
+  * avatar disappears until morning. Bedrolls never block paths or picking.
   */
- makeVillagerSleepMarker(human,resident){
-  const marker=B.MeshBuilder.CreatePlane("Villager sleeping "+resident.id,
-   {width:1.12,height:.42},this.scene);
-  marker.parent=human.root;marker.position=V(0,2.88,0);
-  marker.billboardMode=B.Mesh.BILLBOARDMODE_ALL;marker.isPickable=false;
-  const texture=new B.DynamicTexture("Sleep indicator "+resident.id,
-   {width:256,height:96},this.scene,false);
-  texture.hasAlpha=true;
-  const ctx=texture.getContext();
-  ctx.clearRect(0,0,256,96);
-  ctx.fillStyle="rgba(26,36,64,.77)";ctx.fillRect(18,5,220,78);
-  ctx.strokeStyle="#889ac4";ctx.lineWidth=3;ctx.strokeRect(20,7,216,74);
-  ctx.font="bold 42px Arial";ctx.textAlign="center";ctx.fillStyle="#d4e4ff";
-  ctx.fillText("Zzz",128,63);texture.update();
-  const mat=new B.StandardMaterial("Sleep sign "+resident.id,this.scene);
-  mat.diffuseTexture=texture;mat.emissiveTexture=texture;
-  mat.useAlphaFromDiffuseTexture=true;mat.disableLighting=true;
-  mat.backFaceCulling=false;marker.material=mat;
-  marker.setEnabled(false);
-  marker.onDisposeObservable.addOnce(()=>{mat.dispose();texture.dispose()});
-  return marker;
+ makeVillagerBedroll(person){
+  const root=new B.TransformNode("Communal bedroll for "+person.id,this.scene);
+  const add=(name,at,size,material)=>{
+   const mesh=B.MeshBuilder.CreateBox(name,{size:1},this.scene);
+   mesh.parent=root;mesh.position=V(...at);mesh.scaling=V(...size);
+   mesh.material=material;mesh.isPickable=false;return mesh;
+  };
+  add("Woven sleeping mat",[0,.065,0],[.96,.12,1.75],this.villageMats.thatch);
+  add("Rolled fur blanket",[0,.18,.16],[.86,.18,1.14],this.villageMats.fur);
+  add("Bedroll pillow",[0,.18,-.66],[.74,.20,.32],this.villageMats.mud);
+  root.rotation.y=person.phase||0;
+  root.setEnabled(false);
+  return root;
  }
  /** A tiny conversational marker appears only while actively socializing.
   * Like the sleep sign, this is decorative and never consumes mouse clicks.
@@ -330,6 +323,7 @@ export class World {
   const wanted=new Set(residents.map(v=>v.id));
   for(const prior of this.people.filter(p=>!wanted.has(p.id))){
    prior.cargoVisual?.dispose(false,false);
+   prior.campBedroll?.dispose(false,false);
    prior.human.dispose();
   }
   const previous=new Map(this.people.filter(p=>wanted.has(p.id)).map(p=>[p.id,p]));
@@ -345,7 +339,6 @@ export class World {
     human.root.rotation.y=i*1.55;
     person={...resident,profile,human,phase:i*2.6};
     this.makeResidentNameplate(human,resident);
-    person.sleepMarker=this.makeVillagerSleepMarker(human,resident);
     person.socialMarker=this.makeVillagerSocialMarker(human,resident);
     human.ready?.then(()=>{
      if(human.root.isDisposed?.())return;
@@ -372,6 +365,9 @@ export class World {
     x=point[0]+camp.x-LEGACY_HOME.x;z=point[1]+camp.z-LEGACY_HOME.z;
    }
    person.homeX=x;person.homeZ=z;
+   // Night destination is the actual rotated Hut entrance, not the
+   // exterior home idle spot. A resident without a Hut uses their camp.
+   person.hutEntrance=hut?hutDoorApproach(hut,index):null;
    if(!previous.has(resident.id)){
     const recovery=carrying?normalizeHaulPosition(resident.haulPosition):null;
     person.x=recovery?.x??x;person.z=recovery?.z??z;
@@ -558,7 +554,10 @@ export class World {
    const needs=this.getVillagerEnergy(person.id)||{energy:100,resting:false,hunger:100};
    const tired=needs.resting===true||needs.energy<=VILLAGER_EXHAUSTED_AT;
    const canStart=villagerCanBeginWork(hour,needs.energy,needs.resting,person.job,needs.hunger??100);
-   const atHome=()=>Math.hypot(person.homeX-person.x,person.homeZ-person.z)<=1.1;
+   const atHome=()=>{const home=sleeping?villagerBedtimeTarget(person):
+     {x:person.homeX,z:person.homeZ};
+    return Math.hypot(home.x-person.x,home.z-person.z)<=(sleeping?.85:1.1);
+   };
    const resetRoute=()=>{
     work.route=null;work.routeGoal=null;work.stalled=0;work.noProgress=0;
    };
@@ -620,7 +619,9 @@ export class World {
     }
    }
    if(work.mode==="goingHome"){
-    if(this.moveVillager(person,{x:person.homeX,z:person.homeZ},dt,1.05)){
+    const target=sleeping?villagerBedtimeTarget(person):
+     {x:person.homeX,z:person.homeZ};
+    if(this.moveVillager(person,target,dt,sleeping&&person.hutEntrance?.55:1.05)){
      work.mode=sleeping?"sleeping":tired?"resting":"offDuty";
      work.retry=Math.max(1.5,work.pauseAfterSocial||0);
      work.pauseAfterSocial=0;
@@ -726,9 +727,29 @@ export class World {
   }
  }
  updateVillagerSleepMarkers(){
+  const sleepingHuts=new Set();
   for(const person of this.people){
-   person.sleepMarker?.setEnabled(person.work?.mode==="sleeping");
-   person.socialMarker?.setEnabled(person.work?.mode==="socializing");
+   const sleeping=person.work?.mode==="sleeping";
+   // Hide the whole NPC hierarchy (body, nameplate, clothing and cargo)
+   // only AFTER the resident has finished traveling to their own home.
+   if(person.hiddenForSleep!==sleeping){
+    person.human.root.setEnabled(!sleeping);
+    person.hiddenForSleep=sleeping;
+   }
+   if(sleeping&&person.hutEntrance) sleepingHuts.add(person.homeId);
+   // No invisible Hut is invented for a resident assigned to the camp.
+   // A simple bedding roll represents sleeping in the open-air shelter.
+   if(sleeping&&!person.hutEntrance){
+    if(!person.campBedroll)person.campBedroll=this.makeVillagerBedroll(person);
+    person.campBedroll.position=V(person.x,
+     this.groundY(person.x,person.z)+.08,person.z);
+    person.campBedroll.setEnabled(true);
+   }else person.campBedroll?.setEnabled(false);
+   person.socialMarker?.setEnabled(!sleeping&&person.work?.mode==="socializing");
+  }
+  // One sign per OCCUPIED sleeping Hut, not a crowd of hovering nameplates.
+  for(const [id,structure] of this.villageBuildings||[]){
+   structure.sleepIndicator?.setEnabled(sleepingHuts.has(id));
   }
  }
  makeCamera(){
@@ -1582,7 +1603,9 @@ export class World {
   // Move the target vector in place to retain rotation and zoom.
   c.target.copyFrom(B.Vector3.Lerp(c.target,aim,Math.min(1,dt*6)));
   const t=performance.now()/1000;
-  this.people.forEach(person=>person.human.animate(t+person.phase,!!person.work?.moving));
+  this.people.forEach(person=>{
+   if(!person.hiddenForSleep)person.human.animate(t+person.phase,!!person.work?.moving);
+  });
   for(const camp of this.tribeCamps.values())
    camp.humans.forEach((human,i)=>human.animate(t+i*1.25,false));
   if(this.flame?.isEnabled())this.flame.scaling.y=1.05+.12*Math.sin(t*8);
