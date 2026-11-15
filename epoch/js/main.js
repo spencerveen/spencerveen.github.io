@@ -18,6 +18,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
   const state=new GameState({slot,newGame,founder});
   if(newGame&&!state.save())throw new Error("Could not save your new game in browser storage.");
   let ui;
+  let revealed=false;
   const world=new World(canvas,
     (resource,action)=>{const result=state.harvestResource(resource,action);if(result)ui?.toast(result.label);return result},
     (title,details)=>ui?.status(title,details),
@@ -56,7 +57,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
   // contains a whole 24-hour day and advances character ages by one year.
   world.getClockReading=()=>({
    progress:state.data.calendarProgress,
-   paused:!!ui?.modal||state.data.survival.gameOver
+   paused:!revealed||!!ui?.modal||state.data.survival.gameOver
   });
   const clockHUD=document.getElementById("game-clock");
   const syncClockHUD=()=>{
@@ -75,11 +76,10 @@ async function startEpoch({slot,newGame=false,founder=null}){
   sessionStarted=true;
   state.save();
   window.setInterval(()=>{
-   if(!ui?.modal)state.advance(1);
+   if(revealed&&!ui?.modal)state.advance(1);
    syncClockHUD();
   },1000);
   window.addEventListener("pagehide",()=>state.save());
-  let revealed=false;
   const reveal=()=>{if(revealed)return;revealed=true;loading.classList.add("hidden");};
   Promise.race([
     world.character.ready,
