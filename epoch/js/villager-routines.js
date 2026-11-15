@@ -6,6 +6,7 @@
  * One full year is 432 real seconds. Overnight sleep (20:00–05:00) restores
  * 100 energy from exhaustion even in the communal camp.
  */
+import {leisureStatus} from "./village-life.js?v=20261115life1";
 export const VILLAGER_MAX_ENERGY=100;
 export const VILLAGER_EXHAUSTED_AT=15;
 export const VILLAGER_RESTED_AT=65;
@@ -44,7 +45,9 @@ export const villagerCanBeginWork=(hour,energy,resting,job,hunger=100)=>
  // A hungry forager must still be able to rescue a food-starved village.
  (hunger>15||job==="forager");
 
-export const villagerActivityText=(mode,shift,resting=false)=>{
+export const villagerActivityText=(mode,shift,resting=false,siteKind=null)=>{
+ const leisure=leisureStatus(mode,siteKind);
+ if(leisure)return leisure;
  if(mode==="sleeping")return "Sleeping";
  if(mode==="goingHome")return "Returning home";
  if(mode==="resting"||resting&&mode==="idle")return "Resting to recover";
@@ -72,14 +75,15 @@ export function advanceVillagerEnergy(person,activity,seconds,shift){
  let rate=0;
  if(!active)return {energy,resting};
  if(mode==="working")rate=VILLAGER_ENERGY_RATES.working;
- else if(["outbound","returning","goingHome","stuck"].includes(mode)&&moving)
+ else if(["outbound","returning","goingHome","stuck","socialWalk","wandering"].includes(mode)&&moving)
   rate=VILLAGER_ENERGY_RATES.traveling;
  else if(home){
   if(shift==="night")rate=VILLAGER_ENERGY_RATES.sleeping;
   else if(shift==="morning")rate=VILLAGER_ENERGY_RATES.morningRest;
   else if(shift==="evening")rate=VILLAGER_ENERGY_RATES.eveningRest;
   else rate=VILLAGER_ENERGY_RATES.awakeRest;
- }else if(mode==="stuck"||mode==="waiting")
+ }else if(mode==="socializing")rate=.12;
+ else if(mode==="stuck"||mode==="waiting")
   rate=VILLAGER_ENERGY_RATES.strandedRest;
  // Empty stomachs make sleep less restorative; starvation also saps
  // strength even when villagers aren't gathering.
