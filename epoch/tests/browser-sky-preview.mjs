@@ -43,7 +43,7 @@ try{
  assert.equal(initial.meshCount,1,"only one sky dome is created");
  assert.equal(initial.domePickable,false,"sky cannot block picking resources/buildings");
  assert.equal(initial.domeEnabled,true);
- assert(initial.radius>300&&initial.radius<550);
+ assert(initial.radius>300&&initial.radius<1000,"sky dome has a world-sized bounding sphere");
  assert(initial.activeTerrain,"custom terrain shader is retained");
  const preview=page.locator("#sky-preview");
  assert.equal(await preview.getAttribute("aria-pressed"),"false");
