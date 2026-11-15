@@ -1,4 +1,4 @@
-import {BUILDINGS} from "./settlement.js?v=20261114development1";
+import {BUILDINGS} from "./settlement.js?v=20261115council1";
 import {BUILDING_RADIUS,footprint} from "./village-placement.js?v=20261114development1";
 import {BUILD_GRID,VILLAGE_RADIUS} from "./stockpile.js?v=20261114development1";
 // Low-poly architectural placeholders for the first settlement-building slice.
