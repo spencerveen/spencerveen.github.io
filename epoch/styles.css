@@ -38,15 +38,15 @@ body > header { position: absolute; inset: 0 0 auto; z-index: 5; display: flex; 
 .stats { display: flex; align-items: center; justify-content: center; gap: 23px; margin-left: auto; color: var(--gold); font-size: 12px; font-weight: 650; letter-spacing: .07em; white-space: nowrap; }
 #toggle { display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 44px; min-height: 44px; padding: 9px 13px; border: 1px solid #bed0b63b; border-radius: 9px; background: #1e3327; color: #e5ebde; font-size: 13px; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
-#sky-preview {display:flex;align-items:center;justify-content:center;gap:7px;
- min-width:94px;min-height:38px;padding:6px 11px;
- border:1px solid #c3d1c05a;border-radius:9px;
- background:#1d3429;color:#e9e9d1;font-weight:650;font-size:12px;white-space:nowrap}
-#sky-preview[data-mode="night"] {background:#253049;border-color:#8195bb65;color:#dce8fc}
-#sky-preview[data-phase="sunset"], #sky-preview[data-phase="sunrise"] {background:#48352e;border-color:#d2a0788c;color:#ffe2b7}
-#sky-preview[data-phase="sunset"] .sky-preview-icon {color:#ffa86c}
-#sky-preview[data-phase="sunrise"] .sky-preview-icon {color:#ffd394}
-.sky-preview-icon {font-size:18px;line-height:1}
+.game-clock {display:flex;align-items:center;justify-content:center;gap:8px;min-width:101px;
+ min-height:38px;padding:6px 11px;border:1px solid #c3d1c05a;border-radius:9px;
+ background:#1d3429;color:#e9e9d1;font-weight:650;font-size:12px;white-space:nowrap;
+ font-variant-numeric:tabular-nums}
+.game-clock[data-phase="night"] {background:#253049;border-color:#8195bb65;color:#dce8fc}
+.game-clock[data-phase="sunset"],.game-clock[data-phase="sunrise"] {background:#48352e;border-color:#d2a0788c;color:#ffe2b7}
+.game-clock[data-phase="sunset"] .game-clock-icon {color:#ffa86c}
+.game-clock[data-phase="sunrise"] .game-clock-icon {color:#ffd394}
+.game-clock-icon {font-size:18px;line-height:1}
 
 /* A compact objective provides direction without becoming a second management panel. */
 #left { position: absolute; top: 87px; left: 20px; z-index: 3; width: 288px; padding: 18px; border: 1px solid #c8d4ba32; border-radius: 13px; background: linear-gradient(145deg, #15271ef0, #102017ed); box-shadow: 0 12px 35px #06100c30; backdrop-filter: blur(14px); }
@@ -325,8 +325,8 @@ body > footer { position: absolute; left: 20px; bottom: 18px; z-index: 4; displa
  #close-modal { top: 12px; right: 12px; }
 }
 @media (max-width: 700px) {
- #sky-preview {min-width:40px;width:40px;padding:6px}
- #sky-preview .sky-preview-label {display:none}
+ .game-clock {min-width:85px;padding:6px 8px;gap:5px;font-size:11px}
+ .game-clock-icon {font-size:15px}
 }
 @media (max-width: 370px) {
  .branding small { display: none; }
