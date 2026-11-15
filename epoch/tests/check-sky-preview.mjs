@@ -31,5 +31,5 @@ assert(script.includes("dome.isPickable=false"),"sky never intercepts object sel
 assert(script.includes("createSkyAtmosphere"),"sky controller exports a constructor");
 const world=readFileSync(path.join(here,"..","js","world.js"),"utf8");
 assert(world.includes("createSkyAtmosphere(B,this.scene,this)"));
-assert(world.includes("this.skyAtmosphere.update(this.camera)"));
+assert(world.includes("this.skyAtmosphere.update(this.camera,dt)"),"sky updates with frame delta for gradual transitions");
 console.log("PASS skyboxes: two CC0 2K local WebP files, static preview modes, shader, fog and lighting");
