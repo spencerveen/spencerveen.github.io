@@ -7,7 +7,7 @@ import {BUILDINGS} from "./settlement.js?v=20261114cook1";
 import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261115food1";
 import {VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
 import {cargoLabel,cargoCount} from "./villager-hauling.js?v=20261114haul1";
-import {villagerDayPhase,villagerActivityText,normalizedEnergy} from "./villager-routines.js?v=20261115food1";
+import {villagerDayPhase,villagerActivityText,normalizedEnergy} from "./villager-routines.js?v=20261115life1";
 import {normalizedHunger,hungryStatus,VILLAGER_FOOD_PRIORITY} from "./villager-nutrition.js?v=20261115food1";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114fish1";
 import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
@@ -71,6 +71,17 @@ export class UI{
     if(fill)fill.style.width=hunger+"%";
     const value=meter.querySelector(".resident-hunger-value");
     if(value)value.textContent=hunger+"% · "+hungryStatus(person.hunger);
+   }
+   const socialCount=$("panel").querySelector("[data-village-social-count]");
+   if(socialCount)socialCount.textContent=
+    world.people.filter(p=>p.work?.mode==="socializing").length+" socializing";
+   for(const el of $("panel").querySelectorAll("[data-resident-activity]")){
+    const actor=world.people.find(p=>p.id===el.dataset.residentActivity);
+    const resident=residents.get(el.dataset.residentActivity);
+    if(!resident)continue;
+    el.textContent=villagerActivityText(actor?.work?.mode||"idle",
+     villagerDayPhase(state.clockInfo().hour),resident.resting,
+     actor?.work?.leisure?.kind||null);
    }
   };
   world.onWaterModeChange=()=>this.renderVitals();
@@ -146,7 +157,8 @@ export class UI{
   const selected=this.state.data.successorId===resident.id;
   const worker=this.world.people.find(p=>p.id===resident.id);
   const workStatus=villagerActivityText(worker?.work?.mode||"idle",
-   villagerDayPhase(this.state.clockInfo().hour),resident.resting);
+   villagerDayPhase(this.state.clockInfo().hour),resident.resting,
+   worker?.work?.leisure?.kind||null);
   const energy=Math.round(normalizedEnergy(resident.energy));
   const hunger=Math.round(normalizedHunger(resident.hunger));
   const meal=VILLAGER_FOOD_PRIORITY.find(food=>food.id===resident.lastMeal)?.label||"None yet";
@@ -179,7 +191,7 @@ export class UI{
    '<p><strong>Last meal:</strong> '+esc(meal)+'</p>'+
    '<p><strong>Personal cargo:</strong> '+(load?esc(load)+' ('+cargoCount(resident.cargo)+' / 8)':"Empty (0 / 8)")+'</p>'+ 
    '<p><strong>Joined:</strong> '+year(resident.joinedYear)+'</p>'+
-   '<p class="context-note">Villagers collect food from village stockpile when hungry (below 50). Only berries and roasted meals are edible. Hungry villagers recover energy more slowly, and starving villagers may be unable to work. Delivery and personal inventory remain separate.</p></div>'+  
+   '<p class="context-note">Villagers collect food from village storage when hungry. In free time they visit a constructed Cooking Hearth, gather near the communal clearing, or stroll around the settlement. Meals, work, fatigue, cargo deliveries and sleep always take priority.</p></div>'+  
    '<h3 class="section-heading">Work assignment</h3>'+
    '<p class="context-note">Choose a Stone Age profession. Unassigned villagers remain at home.</p>'+
    '<div class="resident-job-options">'+Object.entries(VILLAGER_JOBS).map(([id,job])=>
@@ -485,7 +497,7 @@ export class UI{
   if(focusKey)$("guide").querySelector('[data-cheat="'+focusKey+'"]')?.focus({preventScroll:true});
  }
  menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
- help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Swim through deep rivers, lakes and oceans with WASD; Shift swims faster at a greater stamina cost. Stop moving to float and recover when tired. Use WASD to move; clicking terrain does not move your character. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills. Click inventory items for actions and hover for a short description. Press E to eat one cooked meal or berry from your backpack (berry-roasted meat, roasted meat, roasted fish, then berries). Press F to gather or interact nearby, or collect a carcass; Shift+F clears berry bushes for vines. Press H beside wildlife to hunt or beside visible fish in shallow water to catch them with a Stone Spear. Deer and rabbits flee, and cornered boars can hurt you. Craft Wooden Clubs, Stone Axes, and Stone Spears under Village → Craft. Equipped axes lose durability when chopping wood.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile, assign a Stone Age job, or move them between homes. Woodcutters, Stone Gatherers, Foragers, Hunters, and Fishers visit nearby work sites and return with supplies. Workers carry visible loads, return home at sunset and sleep overnight. Personal energy and hunger affect their ability to work. Villagers walk to stockpile for berries or cooked meals and return to rest.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Cooking Hearth → Cooking.</strong> Roast hunted meat with Wood for fuel. Combine meat with berries for richer meals. Raw meat cannot be eaten.</p><p><strong>Hut → Housing.</strong> See its current residents and available beds. Assign successors from the People profiles.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Walk up using WASD, then click a tribal leader, resident, hut or sign (or press F near the leader) to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Walk close to a tree, rock or berry bush, then click or press F to gather. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
+ help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Swim through deep rivers, lakes and oceans with WASD; Shift swims faster at a greater stamina cost. Stop moving to float and recover when tired. Use WASD to move; clicking terrain does not move your character. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills. Click inventory items for actions and hover for a short description. Press E to eat one cooked meal or berry from your backpack (berry-roasted meat, roasted meat, roasted fish, then berries). Press F to gather or interact nearby, or collect a carcass; Shift+F clears berry bushes for vines. Press H beside wildlife to hunt or beside visible fish in shallow water to catch them with a Stone Spear. Deer and rabbits flee, and cornered boars can hurt you. Craft Wooden Clubs, Stone Axes, and Stone Spears under Village → Craft. Equipped axes lose durability when chopping wood.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile, assign a Stone Age job, or move them between homes. Woodcutters, Stone Gatherers, Foragers, Hunters, and Fishers visit nearby work sites and return with supplies. Workers carry visible loads, return home at sunset and sleep overnight. Personal energy and hunger affect their ability to work. Villagers walk to stockpile for berries or cooked meals, gather near a built Cooking Hearth and stroll around the settlement during free time, then head home for sleep.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Cooking Hearth → Cooking.</strong> Roast hunted meat with Wood for fuel. Combine meat with berries for richer meals. Raw meat cannot be eaten.</p><p><strong>Hut → Housing.</strong> See its current residents and available beds. Assign successors from the People profiles.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Walk up using WASD, then click a tribal leader, resident, hut or sign (or press F near the leader) to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Walk close to a tree, rock or berry bush, then click or press F to gather. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
  close(){
   if(!this.modal||this.modal==="gameover")return;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
   const target=this.dialogReturnFocus;(target?.isConnected&&!target.closest("[inert]")?target:$("toggle")).focus({preventScroll:true});
