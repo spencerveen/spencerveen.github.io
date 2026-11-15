@@ -288,6 +288,141 @@ export class UI{
   const p=this.world.player.position;
   return Math.hypot(p.x-camp.leader.x,p.z-camp.leader.z)<TRIBE_INTERACT_RANGE+.3?camp.tribe:null;
  }
+ /** Open the full-width settlement planning screen from anywhere.
+  * Unlike physical transfers, village administration doesn't require
+  * standing next to each individual hut or workbench.
+  */
+ openSettlement(section="overview"){
+  if(this.state.data.survival.gameOver)return false;
+  if(this.modal==="settlement"){this.close();return false}
+  if(this.modal)this.close();
+  if(this.panelOpen)this.closePanel();
+  this.settlementSection=MANAGEMENT_SECTIONS.includes(section)?section:"overview";
+  this.settlementFilter="all";this.settlementSearch="";
+  this.showDialog("settlement","Settlement management",
+   settlementManagementPage(this,this.settlementSection));
+  return true;
+ }
+ renderSettlement({resetScroll=false}={}){
+  if(this.modal!=="settlement")return;
+  const root=$("guide"),viewport=root.querySelector(".sm-content");
+  const scroll=resetScroll?0:viewport?.scrollTop||0;
+  const active=document.activeElement,previous=root.contains(active)?active:null;
+  const focusData=previous?{...previous.dataset}:null;
+  const focusSearch=previous?.id==="sm-search";
+  root.innerHTML=settlementManagementPage(this,this.settlementSection);
+  root.querySelector(".sm-content")?.scrollTo({top:scroll});
+  if(focusSearch)root.querySelector("#sm-search")?.focus({preventScroll:true});
+  else if(focusData&&Object.keys(focusData).length){
+   const matches=[...root.querySelectorAll("button,select,input")];
+   const target=matches.find(el=>Object.entries(focusData).every(([k,v])=>el.dataset[k]===v));
+   target?.focus({preventScroll:true});
+  }
+  this.applySettlementFilter();
+ }
+ applySettlementFilter(){
+  if(this.modal!=="settlement"||this.settlementSection!=="people")return;
+  const query=this.settlementSearch.toLowerCase().trim(),filter=this.settlementFilter;
+  let visible=0;
+  for(const row of $("guide").querySelectorAll("[data-sm-person]")){
+   const match=row.dataset.smSearch?.includes(query)&&
+    (filter==="all"||filter==="workers"&&row.dataset.smWorker==="true"||
+     filter==="needs"&&row.dataset.smNeeds==="true");
+   row.hidden=!match;if(match)visible++;
+  }
+  const empty=$("guide").querySelector("#sm-no-results");
+  if(empty)empty.hidden=visible>0||this.state.data.village.residents.length===0;
+  for(const button of $("guide").querySelectorAll("[data-action='settlement-filter']")){
+   const active=button.dataset.filter===filter;
+   button.classList.toggle("active",active);
+   button.setAttribute("aria-pressed",String(active));
+  }
+ }
+ handleSettlementSearch(e){
+  if(this.modal!=="settlement"||e.target?.id!=="sm-search")return;
+  this.settlementSearch=e.target.value;
+  this.applySettlementFilter();
+ }
+ handleSettlementChange(e){
+  if(this.modal!=="settlement")return;
+  const id=e.target?.dataset?.settlementJob;
+  const home=e.target?.dataset?.settlementHome;
+  if(!id&&!home)return;
+  const okay=id?this.state.assignResidentJob(id,e.target.value):
+   this.state.assignResidentHome(home,e.target.value);
+  this.toast(okay?id?"Work assignment updated.":"Home assignment updated.":
+   id?"Job assignment unchanged.":"That home has no available beds.");
+  if(!okay)this.renderSettlement();
+ }
+ handleSettlementAction(btn){
+  if(this.modal!=="settlement")return false;
+  const action=btn.dataset.action,section=btn.dataset.section;
+  if(action==="settlement-section"){
+   this.settlementSection=MANAGEMENT_SECTIONS.includes(section)?section:"overview";
+   this.renderSettlement({resetScroll:true});
+   $("guide").querySelector('[data-action="settlement-section"].active')?.focus({preventScroll:true});
+   return true;
+  }
+  if(action==="settlement-filter"){
+   if(["all","workers","needs"].includes(btn.dataset.filter)){
+    this.settlementFilter=btn.dataset.filter;
+    this.applySettlementFilter();
+   }
+   return true;
+  }
+  if(action==="settlement-upgrade"){
+   const result=this.state.upgradeVillage(btn.dataset.id,0,0,{fromSettlement:true});
+   this.toast(result.reason);
+   if(!result.ok)this.renderSettlement();
+   return true;
+  }
+  if(action==="settlement-deposit-all"){
+   const p=this.world.player.position;
+   const count=this.state.depositAllToStockpile(p.x,p.z);
+   this.toast(count?"Deposited "+count+" materials.":"Nothing transferred. Move closer or check storage capacity.");
+   if(!count)this.renderSettlement();
+   return true;
+  }
+  if(action==="settlement-transfer"){
+   const p=this.world.player.position,id=btn.dataset.item;
+   const n=btn.dataset.direction==="deposit"?
+    this.state.depositToStockpile(id,12,p.x,p.z):
+    this.state.withdrawFromStockpile(id,12,p.x,p.z);
+   this.toast(n?(btn.dataset.direction==="deposit"?"Deposited ":"Took ")+n+" "+(ITEMS[id]?.name||id):
+    "No items transferred. Check stockpile proximity, inventory and capacity.");
+   if(!n)this.renderSettlement();
+   return true;
+  }
+  if(action==="settlement-profile"){
+   this.settlementReturn=true;
+   this.openResident(btn.dataset.id);
+   return true;
+  }
+  if(action==="settlement-building"){
+   this.close();
+   this.openBuildingPanel(btn.dataset.id);
+   return true;
+  }
+  if(action==="settlement-start-building"){
+   this.close();
+   this.villageSection="build";this.openPanel("village");
+   this.toast("Select a blueprint to place it physically in your village.");
+   return true;
+  }
+  if(action==="settlement-found"){
+   this.close();this.openFounding();
+   this.world.beginStockpilePlacement();
+   this.render();
+   return true;
+  }
+  if(action==="settlement-find-stockpile"){
+   this.close();
+   this.world.focusStockpile?.();
+   this.toast("Follow the view to your village stockpile. Move closer to transfer items.");
+   return true;
+  }
+  return false;
+ }
  openFounding(){return !this.state.data.village.stockpile&&this.openPanel("village")}
  openPanel(tab,{buildingId=null}={}){
   if(!titles[tab])return false;
