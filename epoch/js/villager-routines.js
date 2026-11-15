@@ -38,9 +38,11 @@ export function villagerDayPhase(hour){
  if(h>=VILLAGER_SLEEP_START||h<VILLAGER_WAKE_HOUR)return "night";
  return "morning";
 }
-export const villagerCanBeginWork=(hour,energy,resting,job)=>
+export const villagerCanBeginWork=(hour,energy,resting,job,hunger=100)=>
  job&&job!=="idle"&&villagerDayPhase(hour)==="work"&&
- normalizedEnergy(energy)>VILLAGER_EXHAUSTED_AT&&!resting;
+ normalizedEnergy(energy)>VILLAGER_EXHAUSTED_AT&&!resting&&
+ // A hungry forager must still be able to rescue a food-starved village.
+ (hunger>15||job==="forager");
 
 export const villagerActivityText=(mode,shift,resting=false)=>{
  if(mode==="sleeping")return "Sleeping";
@@ -78,6 +80,12 @@ export function advanceVillagerEnergy(person,activity,seconds,shift){
   else rate=VILLAGER_ENERGY_RATES.awakeRest;
  }else if(mode==="stuck"||mode==="waiting")
   rate=VILLAGER_ENERGY_RATES.strandedRest;
+ // Empty stomachs make sleep less restorative; starvation also saps
+ // strength even when villagers aren't gathering.
+ const hunger=typeof person.hunger==="number"&&Number.isFinite(person.hunger)?
+  Math.max(0,Math.min(100,person.hunger)):100;
+ if(rate>0)rate*=hunger===0?.22:hunger<25?.4:hunger<50?.72:1;
+ if(hunger===0)rate-=.23;
  const next=normalizedEnergy(energy+rate*dt);
  resting=normalizedResting(resting,next);
  return {energy:next,resting};
