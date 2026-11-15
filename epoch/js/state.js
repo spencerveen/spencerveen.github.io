@@ -1,13 +1,13 @@
 import {founderAppearance,descendantAppearance,normalizeAppearance,randomAppearance} from "./characters.js?v=20261113m";
 import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advanceVitals,consumeFood,FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
-import {COOKING_RECIPES,COOKING_REACH,prepareCooking} from "./cooking.js?v=20261114fish2";
+import {COOKING_RECIPES,COOKING_REACH,prepareCooking} from "./cooking.js?v=20261114development1";
 import {newDevCheats,validDevCheat} from "./dev-cheats.js?v=20261114devpanel1";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
-import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114w";
-import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114y";
+import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114development1";
+import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114development1";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
- STOCKPILE_CAPACITY,stockpileSpace,stockpileHas,payStockpile,nearStockpile,withinVillage,
- depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261114fish1";
+ stockpileCapacity,STOCKPILE_CAPACITY,stockpileSpace,stockpileHas,payStockpile,nearStockpile,withinVillage,
+ depositStockpile,depositAllStockpile,withdrawStockpile} from "./stockpile.js?v=20261114development1";
 import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats,recordResourceNode} from "./resource-nodes.js?v=20261114flint1";
 import {harvestAtNode} from "./harvest.js?v=20261114flint1";
@@ -15,7 +15,7 @@ import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  moveResidentHome,assignResidentJob,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
- NATURAL_DEATH_AGE} from "./residents.js?v=20261115life1";
+ NATURAL_DEATH_AGE} from "./residents.js?v=20261114development1";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114fish1";
@@ -27,6 +27,9 @@ import {REAL_SECONDS_PER_YEAR,clockAtProgress,normalizeCalendarProgress} from ".
 import {advanceVillagerEnergy,villagerDayPhase} from "./villager-routines.js?v=20261115life1";
 import {advanceVillagerHunger,consumeVillagerMeal,availableVillageMeals,
  normalizedHunger,VILLAGER_MEAL_AT,VILLAGER_CRITICAL_HUNGER} from "./villager-nutrition.js?v=20261115food1";
+import {VILLAGE_UPGRADES,DEVELOPMENT_MAX_LEVEL,structureLevel,stockpileLevel,upgradedBuilding,
+ hearthExtraServing,workshopKnowledgeMultiplier,councilYearCulture}
+ from "./village-development.js?v=20261114development1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["cooking","Cooking"],["fishing","Fishing"],["construction","Construction"],["survival","Survival"]
@@ -825,7 +828,7 @@ export class GameState{
   if(!Number.isFinite(x)||!Number.isFinite(z)||
      Math.hypot(x-hearth.x,z-hearth.z)>COOKING_REACH)
    return {ok:false,reason:"Move within "+COOKING_REACH+"m of the Cooking Hearth."};
-  return prepareCooking(recipeId,this.data.inventory,village.stockpile);
+  return prepareCooking(recipeId,this.data.inventory,village.stockpile,hearthExtraServing(village));
  }
  cookRecipe(recipeId,x,z){
   const ready=this.cookingPreview(recipeId,x,z);
@@ -835,13 +838,13 @@ export class GameState{
   this.syncResources();
   this.gainXP("cooking",ready.recipe.xp);
   this.changed(this.data.hero.name+" prepared "+ready.recipe.name.toLowerCase()+" at the Cooking Hearth.");
-  return {ok:true,reason:"Prepared "+ready.recipe.output.qty+" "+ITEMS[ready.recipe.output.id].name+
-   ". Open Inventory or press E to eat.",item:ready.recipe.output.id,qty:ready.recipe.output.qty};
+  return {ok:true,reason:"Prepared "+ready.outputQty+" "+ITEMS[ready.recipe.output.id].name+
+   ". Open Inventory or press E to eat.",item:ready.recipe.output.id,qty:ready.outputQty};
  }
  stockpileInfo(){
   const pile=this.data.village.stockpile;
   return {placed:!!pile,x:pile?.x??null,z:pile?.z??null,
-   capacity:STOCKPILE_CAPACITY,used:stockpileUsed(pile),
+   capacity:stockpileCapacity(pile),level:stockpileLevel(pile),used:stockpileUsed(pile),
    items:pile?{...pile.items}:null};
  }
  foundStockpile(x,z){
@@ -894,7 +897,7 @@ export class GameState{
   if(!payStockpile(village.stockpile,blueprint.cost))
    return {ok:false,reason:"Village resources changed; try again."};
   const id="building_"+village.nextBuildingNumber++;
-  const entry={id,kind,x:check.x,z:check.z,turn:check.turn};
+  const entry={id,kind,x:check.x,z:check.z,turn:check.turn,level:1};
   village.buildings.push(entry);
   if(kind==="family")this.data.shelter=true;
   this.gainXP("construction",kind==="family"?55:65);
@@ -976,7 +979,7 @@ export class GameState{
   // An operational shelter slowly generates Knowledge during active play.
   // Villager assignments and offline research are future mechanics.
   if(this.researchRate()){
-   d.researchSeconds+=seconds;
+   d.researchSeconds+=seconds*workshopKnowledgeMultiplier(d.village);
    if(d.researchSeconds>=RESEARCH_SECONDS_PER_KNOWLEDGE){
     const gained=Math.floor(d.researchSeconds/RESEARCH_SECONDS_PER_KNOWLEDGE);
     d.researchSeconds-=gained*RESEARCH_SECONDS_PER_KNOWLEDGE;
@@ -988,6 +991,7 @@ export class GameState{
   // Treat this as one full day, so aging never takes an extra second.
   if(d.calendarProgress>=1-1e-10){
    d.calendarProgress=Math.max(0,d.calendarProgress-1);d.year++;
+   d.culture+=councilYearCulture(d.village);
    const deceased=this.ageResidents(1);
    const memorial=deceased.length?
     " "+deceased.map(p=>p.name).join(", ")+" died of old age.":"";
