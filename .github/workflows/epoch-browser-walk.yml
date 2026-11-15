@@ -37,6 +37,8 @@ jobs:
         run: node epoch/tests/check-villager-routines.mjs
       - name: Verify edible food stockpile transactions, hunger and save migration
         run: node epoch/tests/check-villager-food.mjs
+      - name: Verify village leisure planning, real hearth sites and priority rules
+        run: node epoch/tests/check-village-life.mjs
       - name: Validate locally bundled CC0 sky textures and rendering setup
         run: |
           node epoch/tests/check-sky-preview.mjs
@@ -54,6 +56,8 @@ jobs:
         run: node epoch/tests/browser-villager-sleep.mjs
       - name: Verify villagers travel for meals and show hunger in Chromium
         run: node epoch/tests/browser-villager-food.mjs
+      - name: Verify villagers gather, stroll, socialize and return home at bedtime
+        run: node epoch/tests/browser-village-life.mjs
       - name: Verify villager jobs, movement, and saved assignments in Chromium
         run: node epoch/tests/browser-villager-jobs.mjs
       - name: Verify visible supplies travel to village storage and survive reload
