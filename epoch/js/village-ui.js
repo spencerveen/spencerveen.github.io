@@ -99,10 +99,12 @@ function storagePanel(ui){
 }
 function peoplePanel(ui){
  const state=ui.state,people=state.data.village.residents||[],homes=state.villageHousing();
+ const chatting=ui.world.people.filter(p=>p.work?.mode==="socializing").length;
  let html='<div class="village-population"><div><small>SETTLEMENT POPULATION</small><strong>'+
   state.data.village.population+' / '+state.villageCapacity()+
   '</strong></div><span>'+people.length+' other residents · '+people.filter(p=>p.job&&p.job!=="idle").length+' workers</span></div>'+
-  '<p class="context-note">Work 8 AM–6 PM · Sleep 8 PM–5 AM. Villagers now need food from the stockpile, and low hunger reduces energy recovery.</p>'+ 
+  '<p class="context-note">Work 8 AM–6 PM · Sleep 8 PM–5 AM. In free time villagers gather by the built Cooking Hearth, visit the communal stockpile clearing, or explore local footpaths. Meals, deliveries and sleep take priority.</p>'+ 
+  '<div class="haul-snapshot"><span>Village conversations</span><strong data-village-social-count>'+chatting+' socializing</strong></div>'+  
   '<div class="haul-snapshot"><span>Village meals · Hungry residents</span><strong>'+state.villageFoodStatus().meals+' available · '+state.villageFoodStatus().hungry+' hungry</strong></div>'+ 
   '<h3 class="section-heading">Housing</h3>';
  for(const h of homes){
@@ -120,16 +122,17 @@ function peoplePanel(ui){
   const source=person.originTribeName||"Original settler";
   const actor=ui.world.people.find(p=>p.id===person.id);
   const mode=actor?.work?.mode||"idle";
-  const status=villagerActivityText(mode,villagerDayPhase(state.clockInfo().hour),person.resting);
+  const status=villagerActivityText(mode,villagerDayPhase(state.clockInfo().hour),person.resting,
+   actor?.work?.leisure?.kind||null);
   const load=cargoLabel(person.cargo);
-  const workNote=load?" · Carrying "+esc(load):" · "+status;
+  const workNote=load?" · Carrying "+esc(load):"";
   const energy=Math.round(normalizedEnergy(person.energy));
   const hunger=Math.round(normalizedHunger(person.hunger));
   const hungerLabel=hungryStatus(person.hunger);
   html+='<div class="entry resident-row"><div><h3>'+esc(person.name)+'</h3><p>Age '+person.age+
    ' · '+esc(home?.label||"Communal camp")+'</p><small>'+esc(VILLAGER_JOBS[person.job]?.name||"Unassigned")+workNote+' · '+
    (person.recruitment==="peaceful"?"Welcomed from "+esc(source):"Longtime villager")+
-   '</small><div class="resident-energy-meter" data-resident-energy="'+esc(person.id)+'" role="progressbar" aria-label="'+esc(person.name)+' energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+energy+'"><span class="resident-energy-track"><span class="resident-energy-fill" style="width:'+energy+'%"></span></span><span class="resident-energy-value">'+energy+'% energy</span></div>'+
+   '</small><small class="resident-live-activity" data-resident-activity="'+esc(person.id)+'">'+esc(status)+'</small><div class="resident-energy-meter" data-resident-energy="'+esc(person.id)+'" role="progressbar" aria-label="'+esc(person.name)+' energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+energy+'"><span class="resident-energy-track"><span class="resident-energy-fill" style="width:'+energy+'%"></span></span><span class="resident-energy-value">'+energy+'% energy</span></div>'+
    '<div class="resident-hunger-meter" data-resident-hunger="'+esc(person.id)+'" role="progressbar" aria-label="'+esc(person.name)+' hunger" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+hunger+'"><span class="resident-hunger-track"><span class="resident-hunger-fill" style="width:'+hunger+'%"></span></span><span class="resident-hunger-value">'+hunger+'% · '+esc(hungerLabel)+'</span></div>'+
    '</div><button type="button" data-action="view-resident" data-id="'+esc(person.id)+'">View profile</button></div>';
  }
