@@ -34,9 +34,13 @@ Quick navigation opens the council's other functions.
 
 **People & Jobs:** Search or filter the full villager roster; assign jobs,
 change housing with capacity protection, inspect energy/hunger/cargo and
-directly designate or clear a successor. This uses the original saved
-GameState job/home/succession actions, so no workers, cargo, homes or
-memories are recreated. Time pauses during administration.
+directly designate or clear a successor. If existing campers can fit into
+constructed Huts, **Move campers into Huts** assigns all available beds in
+one action without disturbing residents already housed. New unassigned
+arrivals prefer available Hut beds; saved explicit camp assignments persist.
+This uses the original saved GameState job/home/succession actions, so no
+workers, cargo, homes or memories are recreated. Time pauses during
+administration.
 
 **Traditions & Leadership:** Inspect the current civic stage and its
 upgrade materials, view the chosen successor and recent tribal history,
