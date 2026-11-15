@@ -1,4 +1,4 @@
-# Epoch — Phase 6C.3–4: Villager Energy, Sleep and Food
+# Epoch — Phase 6C.3–5: Villager Routines, Hunger and Village Life
 
 ## What happens every year
 
@@ -102,12 +102,58 @@ silently consume stockpile supplies.
 Tests: `tests/check-villager-food.mjs` and
 `tests/browser-villager-food.mjs`.
 
+## Phase 6C.5 — A living village (implemented)
+
+Villagers now spend **free time** in small, staggered activities:
+
+- **Morning (5–8 AM):** villagers may visit the communal area and chat
+  before the work shift.
+- **Daytime (8 AM–6 PM):** unassigned villagers can gather or take short
+  walks. Assigned workers continue their actual resource jobs instead.
+- **Evening (6–8 PM):** villagers finishing deliveries can gather around a
+  constructed Cooking Hearth, meet near the stockpile, or stroll along nearby
+  footpaths.
+- **Night (8 PM–5 AM):** leisure ends immediately. Villagers return to their
+  home location and display the existing Zzz marker.
+
+If the settlement has a **built Cooking Hearth**, social gatherings form in
+small groups around its real world coordinates and face the fire or nearby
+friends. Without a hearth they gather around the **communal clearing near
+village storage**, not at a magically generated campfire. Some villagers
+instead walk to two nearby points before returning home. They display a small
+non-clickable conversation marker when actively chatting.
+
+Leisure locations are chosen deterministically for each villager and visit.
+They use the existing dry-land navigation and reject blocked or submerged
+destinations. Social motion is lightweight, purely local, and does **not**
+generate food, fire, resources or arbitrary extra villagers. Casual walking
+consumes ordinary travel energy; standing and conversing allows modest
+recovery. There are no new saved friendship points or happiness modifiers
+in this phase.
+
+**Priority:** cargo delivery, work shifts, food trips, exhaustion and
+sleep take precedence. Very hungry, tired or resource-carrying villagers
+do not start social activities. A job reassignment or the beginning of
+the workday interrupts leisure safely; dusk visitors head home at
+nightfall.
+
+Village → People includes live activity statuses such as *Walking to the
+hearth*, *Gathering around the fire*, *Meeting villagers* or *Exploring
+the village*. The conversation count and each resident's status refresh
+with the existing village needs update. The individual profile describes
+their activity when viewed.
+
+Code: `js/village-life.js`, `js/world.js`,
+`js/villager-routines.js`, `js/village-ui.js`, and `js/ui.js`.
+
+Tests: `tests/check-village-life.mjs` and
+`tests/browser-village-life.mjs`.
+
 ## Future phase
 
-Phase 6C.5 can add more complex camp and hut routines, socializing,
-bonfires, cooking and dining animations, food rationing policies, and
-eventual starvation/health consequences. Phase 6C.4 hunger and
-stockpile meal consumption are now implemented.
+Next improvements may add richer gestures, true hut interiors, social
+relationships, shared cooking and dining animations, and food rationing
+policies. Food hunger and basic village social routines are implemented.
 
 Implementation: `js/villager-routines.js`, `js/residents.js`,
 `js/state.js`, `js/world.js` and the People panels.
