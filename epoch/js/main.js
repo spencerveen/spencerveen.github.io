@@ -1,4 +1,4 @@
-import {GameState} from "./state.js?v=20261114haul1";
+import {GameState} from "./state.js?v=20261114clock1";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {World} from "./world.js?v=20261114clock1";
 import {UI} from "./ui.js?v=20261114haul1";
