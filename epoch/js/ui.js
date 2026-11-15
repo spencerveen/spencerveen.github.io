@@ -220,6 +220,7 @@ export class UI{
    connectionList(connections.housemates,"No other named residents share this home.")+
    '<p class="context-note">These are known shared connections, not confirmed family relationships.</p></div>'+
    '<h3 class="section-heading">Personal chronicle</h3>'+story+
+   (this.settlementReturn?'<button type="button" class="game-button" data-action="settlement-back">← Back to People &amp; Jobs</button>':'')+
    '<button type="button" class="game-button alt" data-action="resume">Return to the village</button>';
   this.showDialog("resident",resident.name,html);
   return true;
@@ -557,6 +558,13 @@ export class UI{
    }
    return;
   }
+  if(this.modal==="settlement"&&this.handleSettlementAction(btn))return;
+  if(action==="settlement-from-menu"&&this.modal==="menu"){
+   this.close();this.openSettlement();return;
+  }
+  if(action==="settlement-back"&&this.modal==="resident"&&this.settlementReturn){
+   this.settlementReturn=false;this.close();this.openSettlement("people");return;
+  }
   if(handlePackAction(this,btn)||handleVillageAction(this,btn))return;
   if(action==="cook-recipe"){
    if(!this.canUseContext("building")||this.contextBuilding()?.kind!=="hearth"){
@@ -620,8 +628,9 @@ export class UI{
  }
  showDialog(kind,title,html){
   if(!this.modal)this.dialogReturnFocus=document.activeElement;this.modal=kind;this.world.inputBlocked=true;
-  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="developer"?"DEVELOPMENT ONLY":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":kind==="death"?"A LIFE ENDS, A LEADER RISES":kind==="gameover"?"THE END OF A CIVILIZATION":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
+  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="settlement"?"YOUR SETTLEMENT · ALL IN ONE PLACE":kind==="developer"?"DEVELOPMENT ONLY":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":kind==="death"?"A LIFE ENDS, A LEADER RISES":kind==="gameover"?"THE END OF A CIVILIZATION":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
   $("modal").classList.toggle("is-game-over",kind==="gameover");
+  $("modal").classList.toggle("is-settlement",kind==="settlement");
   for(const id of ["scene","left","hud-tools","right","toggle"])$(id).inert=true;$("toggle").setAttribute("aria-expanded","true");
   ($("guide").querySelector("button:not(:disabled)")||$("close-modal")).focus({preventScroll:true});
  }
@@ -642,15 +651,17 @@ export class UI{
    '<button type="button" class="game-button" data-action="resume">Back to the world</button>');
   if(focusKey)$("guide").querySelector('[data-cheat="'+focusKey+'"]')?.focus({preventScroll:true});
  }
- menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
+ menu(){this.showDialog("menu","A moment to pause",'<p class="context-note">Slot '+(this.state.slot||1)+' · '+esc(this.state.data.hero.name)+' · Browser-local world</p><div class="menu-grid"><button type="button" class="menu-button" data-action="settlement-from-menu">Manage settlement <span>V</span></button><button type="button" class="menu-button" data-action="resume">Return to the world <span>Esc</span></button><button type="button" class="menu-button" data-action="save">Save game <span>↓</span></button><button type="button" class="menu-button" data-action="help">Controls & field notes <span>?</span></button><button type="button" class="menu-button" data-action="title">Save & return to title <span>↗</span></button></div><p id="save-status" class="save-indicator">Progress is saved in this browser. Keep this device’s site data to retain your worlds.</p>')}
  help(){this.showDialog("help","Find your way",'<div class="entry"><h3>Move through the world</h3><p>WASD to walk, Shift to sprint. Swim through deep rivers, lakes and oceans with WASD; Shift swims faster at a greater stamina cost. Stop moving to float and recover when tired. Use WASD to move; clicking terrain does not move your character. Hold arrow keys to smoothly rotate or tilt the camera; right-drag also works. Scroll to zoom. I opens Inventory, K opens Skills. Click inventory items for actions and hover for a short description. Press E to eat one cooked meal or berry from your backpack (berry-roasted meat, roasted meat, roasted fish, then berries). Press F to gather or interact nearby, or collect a carcass; Shift+F clears berry bushes for vines. Press H beside wildlife to hunt or beside visible fish in shallow water to catch them with a Stone Spear. Deer and rabbits flee, and cornered boars can hurt you. Craft Wooden Clubs, Stone Axes, and Stone Spears under Village → Craft. Equipped axes lose durability when chopping wood.</p></div><div class="entry"><h3>Let your village guide you</h3><p><strong>Stockpile → Village.</strong> Deposit supplies, construct buildings, and open People to manage named residents and housing.</p><p><strong>Village residents.</strong> Click their 3D character or nameplate to inspect a profile, assign a Stone Age job, or move them between homes. Woodcutters, Stone Gatherers, Foragers, Hunters, and Fishers visit nearby work sites and return with supplies. Workers carry visible loads, return home at sunset and sleep overnight. Personal energy and hunger affect their ability to work. Villagers walk to stockpile for berries or cooked meals, gather near a built Cooking Hearth and stroll around the settlement during free time, then head home for sleep.</p><p><strong>Toolmaker’s Shelter → Technology.</strong> Research discoveries.</p><p><strong>Council Lodge → Culture.</strong> Establish traditions.</p><p><strong>Cooking Hearth → Cooking.</strong> Roast hunted meat with Wood for fuel. Combine meat with berries for richer meals. Raw meat cannot be eaten.</p><p><strong>Hut → Housing.</strong> See its current residents and available beds. Assign successors from the People profiles.</p><p><strong>Wilderness tribes.</strong> Explore beyond your village to find independent camps. Walk up using WASD, then click a tribal leader, resident, hut or sign (or press F near the leader) to interact.</p></div><div class="entry"><h3>Gather and build</h3><p>Walk close to a tree, rock or berry bush, then click or press F to gather. Trees and stone are finite; berries regrow after two minutes. Shift-click a bush to clear it for vines.</p><p>Place a free stockpile using Establish camp. Deposit gathered supplies there. During construction, click to pin a location, use arrows to adjust, R to rotate, Enter to confirm or Escape to cancel.</p></div><button type="button" class="game-button" data-action="resume">Back to the world</button>')}
  close(){
-  if(!this.modal||this.modal==="gameover")return;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
+  if(!this.modal||this.modal==="gameover")return;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;this.settlementReturn=false;
+  $("modal").classList.remove("is-settlement");$("modal").classList.add("hidden");for(const id of ["scene","left","hud-tools","toggle"])$(id).inert=false;$("right").inert=!this.panelOpen;this.world.inputBlocked=false;$("toggle").setAttribute("aria-expanded","false");
   const target=this.dialogReturnFocus;(target?.isConnected&&!target.closest("[inert]")?target:$("toggle")).focus({preventScroll:true});
  }
  keydown(e){
   if(!$("start-screen").classList.contains("hidden"))return;
   if(this.modal){
+   if(this.modal==="settlement"&&e.key.toLowerCase()==="v"&&!e.repeat){e.preventDefault();this.close();return;}
    if(this.modal==="developer"&&e.key.toLowerCase()==="l"&&!e.repeat){
     e.preventDefault();this.close();return;
    }
@@ -669,6 +680,9 @@ export class UI{
   }
   if(key==="l"&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
    e.preventDefault();this.developerPanel();return;
+  }
+  if(key==="v"&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+   e.preventDefault();this.openSettlement();return;
   }
   if(key==="i"||key==="k"){e.preventDefault();const tab=key==="i"?"pack":"skills";if(this.panelOpen&&this.tab===tab)this.closePanel();else this.openPanel(tab)}else if(key==="escape"){e.preventDefault();if(this.panelOpen)this.closePanel();else this.menu()}
  }
