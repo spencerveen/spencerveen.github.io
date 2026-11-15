@@ -43,11 +43,13 @@ assert(storage.includes('data-action="deposit-stockpile"'),"Stockpile context ex
 assert(storage.indexOf('data-action="deposit-all-stockpile"')<storage.indexOf('data-action="deposit-stockpile"'),"Deposit all is the first stockpile transfer action");
 assert.equal([...storage.matchAll(/data-action="deposit-all-stockpile"/g)].length,1,"Deposit all appears exactly once");
 assert(storage.includes('data-action="village-section"'),"Village tasks have local sections instead of global tabs");
+assert(!storage.includes('data-section="people"'),"Stockpile does not have a duplicate People tab");
+assert(storage.includes('data-action="find-council"'),"The stockpile points to the built Council Lodge");
 ui.villageSection="build";
 const construction=villagePanel(ui);
 assert(construction.includes('data-kind="family"'),"The village can add more housing");
 assert(construction.includes("Open Technology"),"A completed research building opens its activity instead of offering a duplicate");
-assert(construction.includes("Open Culture"),"A completed culture building opens its activity instead of offering a duplicate");
+assert(construction.includes("Open Council Lodge"),"Constructed Council Lodge opens the tribe management hall");
 ui.villageSection="craft";
 const crafting=villagePanel(ui);
 assert(crafting.includes('data-action="village-craft-axe"'),"crafting is available at the stockpile's Craft section");
@@ -68,6 +70,7 @@ assert.equal(ui.villageSection,"storage","A fresh stockpile interaction starts w
 
 const html=fs.readFileSync(fileURLToPath(new URL("../index.html",import.meta.url)),"utf8");
 assert.deepEqual([...html.matchAll(/data-tab="([^"]+)"/g)].map(match=>match[1]).sort(),["pack","skills"],"Only Inventory and Skills are globally available tabs");
+assert(!html.includes("data-open-settlement"),"No global Settlement HUD shortcut remains");
 // Technology and Culture share supplies from backpack and stockpile, but not
 // crafting costs. Spend the whole cost atomically, with carried items first.
 game.data.knowledge=50;game.data.culture=30;
