@@ -86,11 +86,32 @@ export function normalizeHomes(village){
    available.set(person.homeId,available.get(person.homeId)-1);
   }else{person.homeId=null;waiting.push(person)}
  }
+ // Assign *new* and previously unassigned villagers to real Huts first.
+ // Already valid saved housing is retained, including intentionally chosen
+ // camp assignments. No existing home is silently changed during a reload.
+ const preferred=[...units.filter(u=>u.id!==CAMP_HOME),
+  ...units.filter(u=>u.id===CAMP_HOME)];
  for(const person of waiting){
-  const unit=units.find(u=>available.get(u.id)>0);
+  const unit=preferred.find(u=>available.get(u.id)>0);
   if(!unit)throw Error("Village capacity is smaller than its resident roster");
   person.homeId=unit.id;available.set(unit.id,available.get(unit.id)-1);
  }
+}
+/** A user-requested single-click transfer of camp residents to spare Hut beds.
+ * Each assignment uses the regular per-resident move validation and history.
+ * An explicit camp assignment is not changed automatically on save load.
+ */
+export function houseCampResidents(village,year){
+ if(!village?.stockpile||!Array.isArray(village.residents))return 0;
+ const campers=village.residents.filter(r=>r.homeId===CAMP_HOME);
+ let moved=0;
+ for(const resident of campers){
+  const unit=housingUnits(village).find(h=>h.id!==CAMP_HOME&&
+   h.occupied<h.capacity);
+  if(!unit)break;
+  if(moveResidentHome(village,resident.id,unit.id,year))moved++;
+ }
+ return moved;
 }
 export function moveResidentHome(village,id,newHomeId,year){
  const resident=(village?.residents||[]).find(r=>r.id===id);
