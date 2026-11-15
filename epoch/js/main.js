@@ -1,7 +1,7 @@
-import {GameState} from "./state.js?v=20261114development1";
+import {GameState} from "./state.js?v=20261114manager1";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {World} from "./world.js?v=20261114development1";
-import {UI} from "./ui.js?v=20261114development2";
+import {UI} from "./ui.js?v=20261114manager1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
@@ -111,7 +111,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
     slot:state.slot,heroName:state.data.hero.name,heroAge:state.data.hero.age,year:state.formatYear(),generation:state.data.generation,
     survival:state.survivalStatus(),successorId:state.data.successorId,
     lastDeath:state.data.lastDeath?{...state.data.lastDeath}:null,
-    ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal,activeResidentId:ui.activeResidentId},
+    ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal,settlementSection:ui.modal==="settlement"?ui.settlementSection:null,activeResidentId:ui.activeResidentId},
     forest:world.terrain.status,
     sky:world.skyAtmosphere?.status()||null,
     clock:state.clockInfo(),
