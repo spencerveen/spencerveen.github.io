@@ -2,7 +2,7 @@
  * Persisted village resident identities, home assignments and life events.
  * Relationships in Phase 3 are factual shared histories, not invented kinship.
  */
-import {BUILDINGS,VILLAGE_START_CAPACITY} from "./settlement.js?v=20261114development1";
+import {BUILDINGS,VILLAGE_START_CAPACITY} from "./settlement.js?v=20261115council1";
 import {upgradedHutBeds} from "./village-development.js?v=20261114development1";
 import {validVillagerJob,VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
 import {normalizeCargo,normalizeHaulPosition,transferCargo} from "./villager-hauling.js?v=20261114haul1";
