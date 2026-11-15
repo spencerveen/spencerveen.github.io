@@ -11,6 +11,7 @@ import {villagerDayPhase,villagerActivityText,normalizedEnergy} from "./villager
 import {normalizedHunger,hungryStatus,VILLAGER_FOOD_PRIORITY} from "./villager-nutrition.js?v=20261115food1";
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114fish1";
 import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
+import {structureLevel,hearthExtraServing} from "./village-development.js?v=20261114development1";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -330,7 +331,7 @@ export class UI{
   const unit=this.state.villageHousing().find(home=>home.id===building.id);
   if(!unit)return '<p class="context-note">This Hut has no housing record.</p>';
   const residents=(this.state.data.village.residents||[]).filter(p=>p.homeId===building.id);
-  let html='<div class="building-context"><span class="stat-pill">Village housing</span>'+
+  let html='<div class="building-context"><span class="stat-pill">Village housing · Level '+structureLevel(building)+' / 2</span>'+
    '<h3>'+esc(unit.label)+'</h3><p>A home for up to '+unit.capacity+' villagers.</p></div>'+
    '<div class="village-population"><div><small>OCCUPIED BEDS</small><strong>'+
    unit.occupied+' / '+unit.capacity+'</strong></div><span>'+
@@ -346,7 +347,7 @@ export class UI{
     '<button type="button" data-action="view-resident" data-id="'+esc(person.id)+
     '">View profile</button></div>';
   }
-  html+='<p class="context-note">To assign or move someone into this Hut, open Stockpile → People and select their profile. Designate future leaders from villager profiles; leadership changes happen when the current character dies.</p>';
+  html+='<p class="context-note">Upgrade this Hut in Stockpile → Buildings to expand its beds. To assign or move someone into this Hut, open Stockpile → People and select their profile. Designate future leaders from villager profiles; leadership changes happen when the current character dies.</p>';
   return html;
  }
  building(){
@@ -355,12 +356,13 @@ export class UI{
    return '<p class="context-note">Return to your constructed Cooking Hearth to prepare food.</p>';
   const pos=this.world.player.position,state=this.state;
   const close=Math.hypot(pos.x-station.x,pos.z-station.z)<=6;
-  let html='<div class="building-context"><span class="stat-pill">Stone Age cooking · '+(close?"Fire ready":"Move closer")+
+  let html='<div class="building-context"><span class="stat-pill">Stone Age cooking · Level '+structureLevel(station)+' / 2 · '+(close?"Fire ready":"Move closer")+
    '</span><h3>Cooking Hearth</h3><p>Roast hunted meat using Wood for fuel. Ingredients are taken from your backpack first, then village storage.</p></div>'+
    '<p class="context-note">Prepared food goes into your backpack. Raw meat and raw fish cannot be eaten. Cooking is immediate for now.</p>'+
    '<div class="village-build-catalog">';
   for(const [id,recipe] of Object.entries(COOKING_RECIPES)){
    const ready=state.cookingPreview(id,pos.x,pos.z),effect=FOOD_EFFECTS[recipe.output.id];
+   const servings=recipe.output.qty+hearthExtraServing(state.data.village);
    const cost=Object.entries(recipe.cost).map(([item,n])=>{
     const have=state.inventoryCount(item)+(state.data.village.stockpile?.items?.[item]||0);
     return '<span class="cost-chip '+(have>=n?"met":"missing")+'">'+
@@ -368,7 +370,7 @@ export class UI{
    }).join("");
    html+='<div class="entry village-build-card"><div class="research-heading"><h3>'+
     ITEMS[recipe.output.id].icon+' '+esc(recipe.name)+'</h3><span class="tag">×'+
-    recipe.output.qty+'</span></div><p>'+esc(recipe.description)+'</p>'+
+    servings+'</span></div><p>'+esc(recipe.description)+'</p>'+
     '<small class="building-purpose">Per serving: +'+effect.hunger+' Hunger · +'+effect.stamina+
     ' Stamina · +'+effect.health+' Health'+(effect.berryBoost?' · Berry stamina boost':'')+
     '</small><div class="cost-list">'+cost+'</div>'+
@@ -377,6 +379,9 @@ export class UI{
     '<button type="button" data-action="cook-recipe" data-recipe="'+id+'" '+
     (!ready.ok?'disabled':'')+'>Cook '+esc(recipe.name)+'</button></div>';
   }
+  html+='<p class="context-note">'+(hearthExtraServing(state.data.village)?
+   'Improved hearth: +1 extra serving from the same recipe ingredients.':
+   'Expand your Cooking Hearth at Stockpile → Buildings for an extra serving per recipe.')+'</p>';
   return html+'</div>';
  }
  render(){
