@@ -40,10 +40,11 @@ async function startEpoch({slot,newGame=false,founder=null}){
      onResidentSelect:id=>ui?.openResident(id),
      onVillagerCollect:(id,task,x,z)=>state.collectVillagerCargo(id,task,x,z),
      onVillagerDeliver:id=>state.deliverVillagerCargo(id),
+     onVillagerEat:id=>state.feedVillager(id),
      getVillagerEnergy:id=>{
       const person=state.data.village.residents.find(v=>v.id===id);
-      return person?{energy:person.energy,resting:person.resting}:
-       {energy:100,resting:false};
+      return person?{energy:person.energy,resting:person.resting,hunger:person.hunger}:
+       {energy:100,resting:false,hunger:100};
      },
      spendSprint:amount=>state.spendStamina(amount,"sprint"),
      spendSwim:amount=>state.spendStamina(amount,"swim"),
@@ -143,10 +144,12 @@ async function startEpoch({slot,newGame=false,founder=null}){
        work:p.work?.mode||"idle",target:p.work?.task?.id||null,x:p.x,z:p.z,
        energy:state.data.village.residents.find(v=>v.id===p.id)?.energy??100,
        resting:state.data.village.residents.find(v=>v.id===p.id)?.resting??false,
+       hunger:state.data.village.residents.find(v=>v.id===p.id)?.hunger??100,
        sleeping:!!p.sleepMarker?.isEnabled(),
        cargo:{...p.cargo},cargoVisible:!!p.cargoVisual?.isEnabled(),
        routeLength:p.work?.route?.length||0})),
       hauling:state.villageHaulingStatus(),
+      food:state.villageFoodStatus(),
       buildings:state.data.village.buildings.map(b=>({...b})),
       renderedBuildings:world.villageBuildings.size,
       stockpile:state.stockpileInfo(),
