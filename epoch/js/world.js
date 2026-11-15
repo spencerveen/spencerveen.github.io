@@ -460,6 +460,85 @@ export class World {
   }
   return false;
  }
+ /** Select local, dry gathering spots near a constructed hearth or
+  * the communal stockpile. The same paths/collisions protect work hauling.
+  */
+ findVillagerLeisureSpot(person,choice,offset=0){
+  const center=villageGatherCenter(this.currentVillage);
+  if(!center)return null;
+  const wander=choice.kind==="wander";
+  const radius=wander?6.6+choice.ring*1.5:
+   VILLAGE_GATHER_RADIUS+(choice.ring%2)*.48;
+  const angle=choice.angle+offset;
+  const pile=this.currentVillage.stockpile;
+  for(let i=0;i<18;i++){
+   const a=angle+i*.39;
+   const x=center.x+Math.cos(a)*radius,z=center.z+Math.sin(a)*radius;
+   if(Math.hypot(x-pile.x,z-pile.z)>28)continue;
+   if(this.isBlocked(x,z)||this.terrain.waterAt(x,z).depth>HAUL_WATER_DEPTH)continue;
+   if(this.people.some(other=>other!==person&&other.work?.leisure?.spot&&
+     Math.hypot(other.work.leisure.spot.x-x,other.work.leisure.spot.z-z)<1.25))continue;
+   return {x,z,center,kind:wander?"wander":center.kind};
+  }
+  return null;
+ }
+ beginVillagerLeisure(person,shift,dt){
+  const work=person.work;
+  work.retry-=dt;
+  if(work.retry>0)return false;
+  const hasHearth=!!(this.currentVillage?.buildings||[]).find(b=>b.kind==="hearth");
+  const session=(shift==="morning"?1:shift==="evening"?3:2)+
+   (work.leisureVisit++%8)*7;
+  const choice=villagerLeisureChoice(person.id,session,hasHearth);
+  const spot=this.findVillagerLeisureSpot(person,choice);
+  if(!spot){work.retry=9;return false}
+  work.mode="socialWalk";work.task=null;work.dropoff=null;
+  work.leisure={...choice,spot,center:spot.center,visited:0};
+  work.stalled=0;work.noProgress=0;work.route=null;work.routeGoal=null;
+  return true;
+ }
+ endVillagerLeisure(person,delay=0){
+  const work=person.work;
+  work.leisure=null;work.mode="goingHome";work.task=null;
+  work.pauseAfterSocial=delay||8;
+  work.route=null;work.routeGoal=null;work.stalled=0;work.noProgress=0;
+ }
+ updateVillagerLeisure(person,dt){
+  const work=person.work,leisure=work.leisure;
+  if(!leisure){this.endVillagerLeisure(person,9);return}
+  if(work.mode==="socialWalk"){
+   if(this.moveVillager(person,leisure.spot,dt,.9)){
+    work.mode=leisure.kind==="wander"?"wandering":"socializing";
+    work.timer=leisure.kind==="wander"?2:leisure.duration;
+    work.route=null;work.routeGoal=null;
+    work.stalled=0;work.noProgress=0;
+   }else if(work.stalled>3.5||work.noProgress>6)
+    this.endVillagerLeisure(person,15);
+   return;
+  }
+  if(work.mode==="socializing"){
+   // Face the nearest friend at the gathering, or face the hearth/clearing.
+   const friend=this.people.find(p=>p!==person&&p.work?.mode==="socializing"&&
+    Math.hypot(p.x-person.x,p.z-person.z)<6);
+   const target=friend||leisure.center;
+   const dx=target.x-person.x,dz=target.z-person.z;
+   if(Math.hypot(dx,dz)>.2)person.human.root.rotation.y=Math.atan2(dx,dz);
+   work.timer-=dt;
+   if(work.timer<=0)this.endVillagerLeisure(person,leisure.pause);
+  }else if(work.mode==="wandering"){
+   work.timer-=dt;
+   if(work.timer>0)return;
+   if(leisure.visited===0){
+    const second=this.findVillagerLeisureSpot(person,leisure,1.1);
+    if(second&&Math.hypot(second.x-person.x,second.z-person.z)>2.1){
+     leisure.visited=1;leisure.spot=second;work.mode="socialWalk";
+     work.route=null;work.routeGoal=null;work.stalled=0;
+     return;
+    }
+   }
+   this.endVillagerLeisure(person,leisure.pause);
+  }
+ }
  updateVillagerJobs(dt){
   const pile=this.currentVillage?.stockpile;
   if(!pile||this.inputBlocked)return;
