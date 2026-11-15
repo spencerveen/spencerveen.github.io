@@ -12,7 +12,8 @@ import {normalizedHunger,hungryStatus,VILLAGER_FOOD_PRIORITY} from "./villager-n
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114fish1";
 import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
 import {structureLevel,hearthExtraServing} from "./village-development.js?v=20261114development1";
-import {settlementManagementPage,MANAGEMENT_SECTIONS,manageSearchText} from "./settlement-management.js?v=20261114manager1";
+import {settlementManagementPage,MANAGEMENT_SECTIONS} from "./settlement-management.js?v=20261115council1";
+import {councilLodge} from "./council-evolution.js?v=20261115council1";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -27,7 +28,6 @@ export class UI{
   this.lastSeenDeath=state.data.lastDeath?.id||0;
   document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{if(this.panelOpen&&this.tab===button.dataset.tab)this.closePanel();else this.openPanel(button.dataset.tab)}));
   $("toggle").addEventListener("click",()=>this.modal?this.close():this.menu());
-  document.querySelector("[data-open-settlement]")?.addEventListener("click",()=>this.openSettlement());
   $("close-panel").addEventListener("click",()=>this.closePanel());
   $("objective-action").addEventListener("click",()=>this.followObjective());
   $("close-modal").addEventListener("click",()=>this.close());
@@ -145,7 +145,8 @@ export class UI{
  contextBuilding(){return this.state.data.village.buildings.find(b=>b.id===this.sourceBuildingId)||null}
  canUseContext(tab){return this.panelOpen&&this.tab===tab&&contexts[this.contextBuilding()?.kind]===tab}
  selectBuilding(id){return selectVillageBuilding(this,id)}
- openBuildingPanel(id){const b=this.state.data.village.buildings.find(b=>b.id===id);if(!b||!contexts[b.kind])return false;this.selectedBuildingId=id;return this.openPanel(contexts[b.kind],{buildingId:id})}
+ openBuildingPanel(id){const b=this.state.data.village.buildings.find(b=>b.id===id);if(!b||!contexts[b.kind])return false;this.selectedBuildingId=id;
+  return b.kind==="council"?this.openSettlement("overview"):this.openPanel(contexts[b.kind],{buildingId:id});}
  openResident(id){
   const profile=this.state.residentProfile(id);
   if(!profile)return false;
@@ -289,18 +290,20 @@ export class UI{
   const p=this.world.player.position;
   return Math.hypot(p.x-camp.leader.x,p.z-camp.leader.z)<TRIBE_INTERACT_RANGE+.3?camp.tribe:null;
  }
- /** Open the full-width settlement planning screen from anywhere.
-  * Unlike physical transfers, village administration doesn't require
-  * standing next to each individual hut or workbench.
+ /** Council management is only available through a constructed lodge.
+  * Building IDs remain stable across upgrades and later ages.
   */
  openSettlement(section="overview"){
   if(this.state.data.survival.gameOver)return false;
-  if(this.modal==="settlement"){this.close();return false}
+  const lodge=councilLodge(this.state.data.village);
+  if(!lodge)return false;
+  if(this.modal==="settlement")return false;
   if(this.modal)this.close();
   if(this.panelOpen)this.closePanel();
   this.settlementSection=MANAGEMENT_SECTIONS.includes(section)?section:"overview";
   this.settlementFilter="all";this.settlementSearch="";
-  this.showDialog("settlement","Settlement management",
+  this.selectedBuildingId=lodge.id;
+  this.showDialog("settlement","Council Lodge",
    settlementManagementPage(this,this.settlementSection));
   return true;
  }
@@ -372,7 +375,9 @@ export class UI{
    return true;
   }
   if(action==="settlement-upgrade"){
-   const result=this.state.upgradeVillage(btn.dataset.id,0,0,{fromSettlement:true});
+   const lodge=councilLodge(this.state.data.village);
+   if(!lodge||btn.dataset.id!==lodge.id)return true;
+   const result=this.state.upgradeVillage(lodge.id,0,0,{fromSettlement:true});
    this.toast(result.reason);
    if(!result.ok)this.renderSettlement();
    return true;
@@ -392,6 +397,23 @@ export class UI{
    this.toast(n?(btn.dataset.direction==="deposit"?"Deposited ":"Took ")+n+" "+(ITEMS[id]?.name||id):
     "No items transferred. Check stockpile proximity, inventory and capacity.");
    if(!n)this.renderSettlement();
+   return true;
+  }
+  if(action==="council-successor"){
+   const resident=this.state.data.village.residents.find(p=>p.id===btn.dataset.id);
+   if(!resident)return true;
+   const chosen=this.state.data.successorId===resident.id?null:resident.id;
+   if(this.state.chooseSuccessor(chosen)){
+    this.toast(chosen?resident.name+" designated as successor.":"Successor designation cleared.");
+    this.renderSettlement();
+   }else this.toast("Could not change succession.");
+   return true;
+  }
+  if(action==="council-open-culture"){
+   const lodge=councilLodge(this.state.data.village);
+   if(!lodge)return true;
+   this.close();
+   this.openPanel("culture",{buildingId:lodge.id});
    return true;
   }
   if(action==="settlement-profile"){
@@ -559,9 +581,6 @@ export class UI{
    return;
   }
   if(this.modal==="settlement"&&this.handleSettlementAction(btn))return;
-  if(action==="settlement-from-menu"&&this.modal==="menu"){
-   this.close();this.openSettlement();return;
-  }
   if(action==="settlement-back"&&this.modal==="resident"&&this.settlementReturn){
    this.settlementReturn=false;this.close();this.openSettlement("people");return;
   }
@@ -628,7 +647,7 @@ export class UI{
  }
  showDialog(kind,title,html){
   if(!this.modal)this.dialogReturnFocus=document.activeElement;this.modal=kind;this.world.inputBlocked=true;
-  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="settlement"?"YOUR SETTLEMENT · ALL IN ONE PLACE":kind==="developer"?"DEVELOPMENT ONLY":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":kind==="death"?"A LIFE ENDS, A LEADER RISES":kind==="gameover"?"THE END OF A CIVILIZATION":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
+  $("dialog-title").textContent=title;$("dialog-eyebrow").textContent=kind==="settlement"?"COUNCIL LODGE · TRIBAL AFFAIRS":kind==="developer"?"DEVELOPMENT ONLY":kind==="help"?"FIELD NOTES":kind==="tribe"?"ENCOUNTER IN THE WILDERNESS":kind==="resident"?"PEOPLE OF YOUR VILLAGE":kind==="death"?"A LIFE ENDS, A LEADER RISES":kind==="gameover"?"THE END OF A CIVILIZATION":"A MOMENT BY THE FIRE";$("guide").innerHTML=html;$("modal").classList.remove("hidden");
   $("modal").classList.toggle("is-game-over",kind==="gameover");
   $("modal").classList.toggle("is-settlement",kind==="settlement");
   for(const id of ["scene","left","hud-tools","right","toggle"])$(id).inert=true;$("toggle").setAttribute("aria-expanded","true");
@@ -661,7 +680,6 @@ export class UI{
  keydown(e){
   if(!$("start-screen").classList.contains("hidden"))return;
   if(this.modal){
-   if(this.modal==="settlement"&&e.key.toLowerCase()==="v"&&!e.repeat){e.preventDefault();this.close();return;}
    if(this.modal==="developer"&&e.key.toLowerCase()==="l"&&!e.repeat){
     e.preventDefault();this.close();return;
    }
@@ -680,9 +698,6 @@ export class UI{
   }
   if(key==="l"&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
    e.preventDefault();this.developerPanel();return;
-  }
-  if(key==="v"&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
-   e.preventDefault();this.openSettlement();return;
   }
   if(key==="i"||key==="k"){e.preventDefault();const tab=key==="i"?"pack":"skills";if(this.panelOpen&&this.tab===tab)this.closePanel();else this.openPanel(tab)}else if(key==="escape"){e.preventDefault();if(this.panelOpen)this.closePanel();else this.menu()}
  }
