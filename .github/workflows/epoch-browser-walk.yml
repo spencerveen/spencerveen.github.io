@@ -39,6 +39,8 @@ jobs:
         run: node epoch/tests/check-villager-food.mjs
       - name: Verify village leisure planning, real hearth sites and priority rules
         run: node epoch/tests/check-village-life.mjs
+      - name: Verify one-time development upgrades, capacity and production bonuses
+        run: node epoch/tests/check-village-development.mjs
       - name: Validate locally bundled CC0 sky textures and rendering setup
         run: |
           node epoch/tests/check-sky-preview.mjs
@@ -58,6 +60,8 @@ jobs:
         run: node epoch/tests/browser-villager-food.mjs
       - name: Verify villagers gather, stroll, socialize and return home at bedtime
         run: node epoch/tests/browser-village-life.mjs
+      - name: Upgrade settlement structures and verify rendering and saved benefits
+        run: node epoch/tests/browser-village-development.mjs
       - name: Verify villager jobs, movement, and saved assignments in Chromium
         run: node epoch/tests/browser-villager-jobs.mjs
       - name: Verify visible supplies travel to village storage and survive reload
