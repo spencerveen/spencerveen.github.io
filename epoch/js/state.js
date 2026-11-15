@@ -15,7 +15,7 @@ import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  moveResidentHome,assignResidentJob,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
- NATURAL_DEATH_AGE} from "./residents.js?v=20261115food1";
+ NATURAL_DEATH_AGE} from "./residents.js?v=20261115life1";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114fish1";
@@ -24,7 +24,7 @@ import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261
 import {VILLAGER_CARRY_CAPACITY,normalizeCargo,normalizeHaulPosition,cargoCount,transferCargo} from "./villager-hauling.js?v=20261114haul1";
 import {FISH_STAMINA_COST,FISH_CATCH_AMOUNT,normalizeFishCatches} from "./fishing.js?v=20261114fish1";
 import {REAL_SECONDS_PER_YEAR,clockAtProgress,normalizeCalendarProgress} from "./game-clock.js?v=20261115dusk1";
-import {advanceVillagerEnergy,villagerDayPhase} from "./villager-routines.js?v=20261115food1";
+import {advanceVillagerEnergy,villagerDayPhase} from "./villager-routines.js?v=20261115life1";
 import {advanceVillagerHunger,consumeVillagerMeal,availableVillageMeals,
  normalizedHunger,VILLAGER_MEAL_AT,VILLAGER_CRITICAL_HUNGER} from "./villager-nutrition.js?v=20261115food1";
 export const SKILLS=[
