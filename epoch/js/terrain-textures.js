@@ -50,6 +50,7 @@ uniform sampler2D sandSampler;
 uniform vec3 cameraPosition;
 uniform vec3 fogColor;
 uniform float fogDensity;
+uniform float skyBrightness;
 void main(void){
  // Subtle detail is modulated onto the existing slope/soil/sand vertex
  // palette; exposed mountains therefore stay rocky rather than green.
@@ -61,7 +62,7 @@ void main(void){
  float detailStrength=.84*(1.0-.94*clamp(vBiome.y,0.0,1.0));
  vec3 albedo=vColor.rgb*mix(vec3(1.0),detail,detailStrength);
  float light=.79+.21*max(0.0,dot(normalize(vNormalW),normalize(vec3(.34,.88,.30))));
- vec3 result=albedo*light;
+ vec3 result=albedo*light*skyBrightness;
  float d=length(vWorldPos-cameraPosition);
  float fog=1.0-exp(-d*d*fogDensity*fogDensity);
  result=mix(result,fogColor,clamp(fog,0.0,1.0));
@@ -86,12 +87,13 @@ export function setupSurfaceTextures(B,scene,materials){
  const ground=new B.ShaderMaterial("Epoch grass-to-sand terrain",scene,
   {vertex:"epochTerrain",fragment:"epochTerrain"},
   {attributes:["position","normal","color","uv","uv2"],
-   uniforms:["world","worldViewProjection","cameraPosition","fogColor","fogDensity"],
+   uniforms:["world","worldViewProjection","cameraPosition","fogColor","fogDensity","skyBrightness"],
    samplers:["grassSampler","sandSampler"]});
  ground.setTexture("grassSampler",grass);
  ground.setTexture("sandSampler",sand);
  ground.setColor3("fogColor",scene.fogColor);
  ground.setFloat("fogDensity",scene.fogDensity);
+ ground.setFloat("skyBrightness",1);
  ground.backFaceCulling=true;
  ground.onError=(effect,error)=>{
   console.warn("Epoch terrain shader unavailable, using vertex-color fallback",error);
