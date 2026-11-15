@@ -57,15 +57,19 @@ async function startEpoch({slot,newGame=false,founder=null}){
   const skyPreview=document.getElementById("sky-preview");
   if(skyPreview){
    const syncSkyButton=()=>{
+    const sky=world.skyAtmosphere.status();
     const night=world.skyMode==="night";
     skyPreview.dataset.mode=world.skyMode;
+    skyPreview.dataset.phase=sky.phase;
     skyPreview.setAttribute("aria-pressed",String(night));
     skyPreview.setAttribute("aria-label",night?
      "Switch to day sky preview":"Switch to night sky preview");
     skyPreview.querySelector(".sky-preview-icon").textContent=night?"☾":"☀";
-    skyPreview.querySelector(".sky-preview-label").textContent=night?"Night":"Day";
+    skyPreview.querySelector(".sky-preview-label").textContent=
+     sky.phase==="sunset"?"Sunset":sky.phase==="sunrise"?"Sunrise":night?"Night":"Day";
    };
    syncSkyButton();
+   world.onSkyPreviewComplete=syncSkyButton;
    skyPreview.addEventListener("click",()=>{
     world.setSkyPreview(world.skyMode==="day"?"night":"day");
     syncSkyButton();
