@@ -196,7 +196,7 @@ try{
  await page.waitForFunction(()=>window.epochDebug().ui.context==="hut",null,{timeout:5000});
  const generation=await page.evaluate(()=>window.epochDebug().generation);
  assert((await page.locator("#panel").innerText()).includes("Who lives here?"),"Hut opens the household panel");
- assert((await page.locator("#panel").innerText()).includes("Unoccupied Hut"),"vacant huts explain how to assign residents");
+ assert((await page.locator("#panel").innerText()).includes("3 / 3"),"new arrivals use actual Hut beds before the open camp");
  assert.equal(await page.locator('[data-action="next"],[data-action="confirm-next"]').count(),0,"a hut has no manual death or succession action");
  assert.equal(await page.evaluate(()=>window.epochDebug().generation),generation);
  await page.screenshot({animations:"disabled",path:path.join(output,"epoch-context-hut.png")});
@@ -205,14 +205,18 @@ try{
  await clickWorldObject(page,{buildingId:"test_council"});
  await page.locator('.sm-sidebar [data-section="people"]').click();
  const firstRow=page.locator('[data-sm-person]').first();
- const firstResident=await firstRow.locator('[data-settlement-job]').getAttribute("data-settlement-job");
- const residentName=await firstRow.locator(".sm-person-head strong").innerText();
- await firstRow.locator('[data-settlement-home="'+firstResident+'"]').selectOption("test_home");
+ const outgoingId=await firstRow.locator('[data-settlement-job]').getAttribute("data-settlement-job");
+ await firstRow.locator('[data-settlement-home="'+outgoingId+'"]').selectOption("camp");
+ // The first move opens one actual bed, so a camper can move in instead.
+ const camper=page.locator('[data-sm-person]').last();
+ const firstResident=await camper.locator('[data-settlement-job]').getAttribute("data-settlement-job");
+ const residentName=await camper.locator(".sm-person-head strong").innerText();
+ await camper.locator('[data-settlement-home="'+firstResident+'"]').selectOption("test_home");
  await page.locator("#close-modal").click();
  await clickWorldObject(page,{buildingId:"test_home"});
  const household=await page.locator("#panel").innerText();
  assert(household.includes(residentName),"Hut lists its actual assigned villager");
- assert(household.includes("1 / 3"),"Hut occupancy reflects real residents");
+ assert(household.includes("3 / 3"),"Hut occupancy reflects full beds after the exchange");
  assert(await page.locator('[data-action="view-resident"][data-id="'+firstResident+'"]').isVisible(),"household offers a resident profile");
  assert.equal(await page.locator('[data-action="next"],[data-action="confirm-next"]').count(),0);
  assert.equal(await page.evaluate(()=>window.epochDebug().generation),generation,"visiting homes cannot advance generations");
