@@ -33,6 +33,9 @@ export const skyTwilightWeight=mix=>Math.pow(
  */
 export function skyEnvironmentAt(mix,phase,day,night){
  const x=clamp(mix);
+ // Exact endpoints avoid floating-point drift in static day/night settings.
+ if(x===0||x===1)return Object.fromEntries(Object.entries(x===0?day:night)
+  .map(([key,value])=>[key,Array.isArray(value)?[...value]:value]));
  const weight=skyTwilightWeight(x);
  const accent=SKY_TWILIGHT[phase==="dawn"?"dawn":"dusk"];
  const out={};
