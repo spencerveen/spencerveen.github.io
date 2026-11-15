@@ -1,7 +1,7 @@
 import {GameState} from "./state.js?v=20261114manager1";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {World} from "./world.js?v=20261114development1";
-import {UI} from "./ui.js?v=20261114manager2";
+import {UI} from "./ui.js?v=20261115council1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
 const loading=document.getElementById("loading");
