@@ -180,10 +180,12 @@ try{
  await page.locator("#close-panel").click();
 
  await clickWorldObject(page,{buildingId:"test_council"});
+ await page.locator("#modal.is-settlement .sm-layout").waitFor();
+ await page.locator('[data-action="council-open-culture"]').first().click();
  await page.waitForFunction(()=>window.epochDebug().ui.context==="culture",null,{timeout:5000});
  assert(await page.locator('[data-action="unlock"][data-kind="civic"][data-key="community"]').isEnabled(),"stockpile berries enable culture with one carried berry");
  await page.locator('[data-action="unlock"][data-kind="civic"][data-key="community"]').click();
- assert((await page.evaluate(()=>window.epochDebug().civics)).includes("community"),"Council Lodge opens Culture and unlocks the first civic");
+ assert((await page.evaluate(()=>window.epochDebug().civics)).includes("community"),"Council Lodge links to Culture and unlocks the first civic");
  const cultureFunds=await page.evaluate(()=>window.epochDebug());
  assert.equal(cultureFunds.resources.food,0,"research spends the last carried berry");
  assert.equal(cultureFunds.settlement.stockpile.items.berries,55,"culture draws remaining five berries from village storage");
@@ -199,15 +201,14 @@ try{
  assert.equal(await page.evaluate(()=>window.epochDebug().generation),generation);
  await page.screenshot({animations:"disabled",path:path.join(output,"epoch-context-hut.png")});
  await page.locator("#close-panel").click();
- // Assign a real existing villager to the Hut using the People profile.
- await clickWorldObject(page,{stockpile:true});
- await page.locator('nav.section-tabs [data-section="people"]').click();
- const firstResident=await page.locator('[data-action="view-resident"]').first().getAttribute("data-id");
- const residentName=await page.locator('[data-action="view-resident"]').first().locator("..").locator("h3").innerText();
- await page.locator('[data-action="view-resident"]').first().click();
- await page.locator('[data-action="resident-home"][data-home="test_home"]').click();
+ // Assign a real villager to the Hut directly from the Council Lodge.
+ await clickWorldObject(page,{buildingId:"test_council"});
+ await page.locator('.sm-sidebar [data-section="people"]').click();
+ const firstRow=page.locator('[data-sm-person]').first();
+ const firstResident=await firstRow.locator('[data-settlement-job]').getAttribute("data-settlement-job");
+ const residentName=await firstRow.locator(".sm-person-head strong").innerText();
+ await firstRow.locator('[data-settlement-home="'+firstResident+'"]').selectOption("test_home");
  await page.locator("#close-modal").click();
- await page.locator("#close-panel").click();
  await clickWorldObject(page,{buildingId:"test_home"});
  const household=await page.locator("#panel").innerText();
  assert(household.includes(residentName),"Hut lists its actual assigned villager");
@@ -243,10 +244,16 @@ try{
  await page.waitForFunction(()=>window.epochDebug().ui.context==="village",null,{timeout:5000});
  assert(await page.locator("#objective-guide").isHidden(),"finished village no longer displays the old chapter prompt");
  assert.equal(await page.locator("#survival-hud .survival-stat").count(),3,"only three survival bars remain");
- await page.locator('nav.section-tabs [data-section="people"]').click();
- const peopleText=await page.locator("#panel").innerText();
- assert(peopleText.includes("Context Founder")&&peopleText.includes("Age 18"),"the leader's name and age live in People");
- await page.locator('nav.section-tabs [data-section="storage"]').click();
+ assert.equal(await page.locator('nav.section-tabs [data-section="people"]').count(),0,
+  "People management is no longer at the stockpile");
+ await page.locator("#close-panel").click();
+ await clickWorldObject(page,{buildingId:"test_council"});
+ await page.locator('.sm-sidebar [data-section="people"]').click();
+ const peopleText=await page.locator("#guide").innerText();
+ assert(peopleText.includes("Context Founder")&&peopleText.includes("Age 18"),
+  "Council Lodge displays the leader's identity and age");
+ await page.locator("#close-modal").click();
+ await clickWorldObject(page,{stockpile:true});
  const deposit=page.locator('[data-action="deposit-stockpile"][data-item="wood"]');
  assert.equal(await deposit.isDisabled(),false,"stockpile opens with working resource transfers");
  await page.locator("#panel").focus();
