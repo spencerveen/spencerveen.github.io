@@ -5,6 +5,7 @@ import {CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 import {VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
 import {cargoLabel} from "./villager-hauling.js?v=20261114haul1";
+import {villagerDayPhase,villagerActivityText,normalizedEnergy} from "./villager-routines.js?v=20261115sleep1";
 const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
 const prereq=id=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[id]||id);
 const near=ui=>nearStockpile(ui.state.data.village.stockpile,ui.world.player.position.x,ui.world.player.position.z);
@@ -98,7 +99,7 @@ function peoplePanel(ui){
  let html='<div class="village-population"><div><small>SETTLEMENT POPULATION</small><strong>'+
   state.data.village.population+' / '+state.villageCapacity()+
   '</strong></div><span>'+people.length+' other residents · '+people.filter(p=>p.job&&p.job!=="idle").length+' workers</span></div>'+
-  '<p class="context-note">Give villagers jobs in their profiles. Watch them travel, collect, and carry real supplies back to the stockpile. Carried supplies survive reloads.</p>'+
+  '<p class="context-note">Work shift: 8 AM–6 PM. Villagers deliver carried materials, return home and sleep at night (8 PM–5 AM). Rest restores their saved energy.</p>'+
   '<h3 class="section-heading">Housing</h3>';
  for(const h of homes){
   html+='<div class="timeline"><b>'+esc(h.label)+'</b><span>'+
@@ -115,14 +116,14 @@ function peoplePanel(ui){
   const source=person.originTribeName||"Original settler";
   const actor=ui.world.people.find(p=>p.id===person.id);
   const mode=actor?.work?.mode||"idle";
-  const status={idle:"At home",outbound:"Traveling to work",working:"Gathering",
-   returning:"Carrying supplies home",waiting:"Waiting to unload",stuck:"Seeking a safe route"}[mode]||"At home";
+  const status=villagerActivityText(mode,villagerDayPhase(state.clockInfo().hour),person.resting);
   const load=cargoLabel(person.cargo);
   const workNote=load?" · Carrying "+esc(load):" · "+status;
+  const energy=Math.round(normalizedEnergy(person.energy));
   html+='<div class="entry resident-row"><div><h3>'+esc(person.name)+'</h3><p>Age '+person.age+
    ' · '+esc(home?.label||"Communal camp")+'</p><small>'+esc(VILLAGER_JOBS[person.job]?.name||"Unassigned")+workNote+' · '+
    (person.recruitment==="peaceful"?"Welcomed from "+esc(source):"Longtime villager")+
-   '</small></div><button type="button" data-action="view-resident" data-id="'+esc(person.id)+'">View profile</button></div>';
+   '</small><div class="resident-energy-meter" data-resident-energy="'+esc(person.id)+'" role="progressbar" aria-label="'+esc(person.name)+' energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+energy+'"><span class="resident-energy-track"><span class="resident-energy-fill" style="width:'+energy+'%"></span></span><span class="resident-energy-value">'+energy+'% energy</span></div></div><button type="button" data-action="view-resident" data-id="'+esc(person.id)+'">View profile</button></div>';
  }
  const remembered=(state.data.village.deceased||[]);
  if(remembered.length){
