@@ -56,6 +56,9 @@ void main(void){
   smoothstep(-.08,.72,direction.y));
  vec3 dayColor=mix(dayFallback,texture2D(daySampler,coords).rgb,dayReady);
  vec3 nightColor=mix(nightFallback,texture2D(nightSampler,coords).rgb,nightReady);
+ // The source is a tonemapped night HDRI with bright exposure. Restore a
+ // moonlit darkness instead of displaying its photographic preview as day.
+ nightColor=pow(max(nightColor,vec3(0.0)),vec3(1.18))*vec3(.35,.43,.62);
  vec3 horizon=mix(vec3(.62,.71,.62),vec3(.085,.12,.19),nightMix);
  vec3 sky=mix(dayColor,nightColor,nightMix);
  // Pure-sky panoramas can include lower-hemisphere reflection artifacts.
