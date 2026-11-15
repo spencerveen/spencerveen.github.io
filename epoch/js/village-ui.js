@@ -5,7 +5,7 @@ import {CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
 import {VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
 import {cargoLabel} from "./villager-hauling.js?v=20261114haul1";
-import {villagerDayPhase,villagerActivityText,normalizedEnergy} from "./villager-routines.js?v=20261115food1";
+import {villagerDayPhase,villagerActivityText,normalizedEnergy} from "./villager-routines.js?v=20261115life1";
 import {normalizedHunger,hungryStatus} from "./villager-nutrition.js?v=20261115food1";
 const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[v]));
 const prereq=id=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[id]||id);
