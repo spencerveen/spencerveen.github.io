@@ -10,6 +10,7 @@ try{
  const page=await browser.newPage({viewport:{width:1300,height:900},ignoreHTTPSErrors:true});
  const errors=[];page.on("pageerror",e=>errors.push(String(e)));
  const people=legacyResidents(2);people[0].hunger=24;people[1].energy=38;
+ people[0].homeId="camp";people[1].homeId="camp";
  await page.addInitScript(({residents,progress})=>{
   if(localStorage.getItem("epoch.stoneage.slot.1"))return;
   localStorage.setItem("epoch.stoneage.slot.1",JSON.stringify({
@@ -50,6 +51,12 @@ try{
  await page.locator('[data-settlement-home="'+first.id+'"]').selectOption("building_1");
  await page.waitForFunction(id=>window.epochDebug().settlement.residents
   .find(r=>r.id===id)?.homeId==="building_1",first.id);
+ const bulk=page.locator('[data-action="council-house-camp"]');
+ assert(await bulk.isVisible(),"Council offers a one-click transfer for remaining campers");
+ await bulk.click();
+ await page.waitForFunction(id=>window.epochDebug().settlement.residents
+  .find(r=>r.id===id)?.homeId==="building_1",second.id);
+ assert.equal(await bulk.count(),0,"bulk transfer disappears when no campers remain");
  const search=page.locator("#sm-search");
  await search.fill(first.name.toLowerCase());
  assert(await page.locator('[data-settlement-job="'+first.id+'"]').isVisible());
@@ -120,6 +127,8 @@ try{
  assert.equal(saved.settlement.buildings.find(b=>b.kind==="council").level,2);
  assert.equal(saved.settlement.residents[0].job,"forager");
  assert.equal(saved.settlement.residents[0].homeId,"building_1");
+ assert.equal(saved.settlement.residents[1].homeId,"building_1",
+  "bulk Council housing assignment persists on reload");
  assert.equal(saved.successorId,second.id);
  await clickWorldObject(page,{buildingId:"building_2"});
  assert.equal(await page.locator("#dialog-title").innerText(),"Elders' Council",
