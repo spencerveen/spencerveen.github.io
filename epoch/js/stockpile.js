@@ -4,6 +4,7 @@
  * personal ten-slot carry limit. Materials for hut construction come from here.
  */
 import {STOCKPILE_ITEM_IDS,canonicalItem,addItems,countItem,removeItems,itemCapacity} from "./inventory.js?v=20261114fish1";
+import {stockpileLevel,STOCKPILE_EXPANSION} from "./village-development.js?v=20261114development1";
 export const STOCKPILE_CAPACITY=480; // Total individual items, not stacks.
 export const STOCKPILE_INTERACT_RANGE=5;
 export const VILLAGE_RADIUS=24;
@@ -17,7 +18,7 @@ export function normalStockpile(raw){
  if(!raw||!Number.isFinite(Number(raw.x))||!Number.isFinite(Number(raw.z)))return null;
  const items={};
  for(const id of STOCKPILE_ITEM_IDS)items[id]=safe(raw.items?.[id]??(id==="berries"?raw.items?.food:0));
- return {x:snapGrid(Number(raw.x)),z:snapGrid(Number(raw.z)),items};
+ return {x:snapGrid(Number(raw.x)),z:snapGrid(Number(raw.z)),level:stockpileLevel(raw),items};
 }
 export function createStockpile(x,z){
  return normalStockpile({x,z,items:{}});
@@ -28,8 +29,10 @@ export function stockpileCount(stockpile,id){
 export function stockpileUsed(stockpile){
  return stockpile?STOCKPILE_ITEM_IDS.reduce((sum,id)=>sum+stockpileCount(stockpile,id),0):0;
 }
+export const stockpileCapacity=stockpile=>stockpile?
+ STOCKPILE_CAPACITY+(stockpileLevel(stockpile)-1)*STOCKPILE_EXPANSION:STOCKPILE_CAPACITY;
 export function stockpileSpace(stockpile){
- return stockpile?Math.max(0,STOCKPILE_CAPACITY-stockpileUsed(stockpile)):0;
+ return stockpile?Math.max(0,stockpileCapacity(stockpile)-stockpileUsed(stockpile)):0;
 }
 export function stockpileHas(stockpile,cost){
  return !!stockpile&&Object.entries(cost).every(([id,n])=>stockpileCount(stockpile,id)>=n);
