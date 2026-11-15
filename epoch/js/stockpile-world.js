@@ -1,4 +1,5 @@
-import {VILLAGE_RADIUS} from "./stockpile.js?v=20261113k";
+import {VILLAGE_RADIUS} from "./stockpile.js?v=20261114development1";
+import {stockpileLevel} from "./village-development.js?v=20261114development1";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 function material(scene,name,hex,alpha=1){
@@ -84,6 +85,23 @@ export function createStockpileWorld(world){
   loops.rotation.x=.5;loops.material=vine;loops.metadata={stockpile:true};
   items.vines.push(loops);
  }
+ // Raised storage racks represent a real level-two stockpile improvement.
+ // They do not extend collision geometry or interfere with picking storage.
+ const extension=[];
+ for(const x of [-3.24,3.24]){
+  const platform=box(s,"Raised granary storage platform",root,[x,.45,0],
+   [1.45,.23,3.8],timber);extension.push(platform);
+  for(const z of [-1.35,1.35]){
+   extension.push(box(s,"Granary elevated support",root,[x,.28,z],
+    [.22,.54,.24],rails));
+  }
+  extension.push(box(s,"Granary reed roof",root,[x,1.92,0],
+   [1.73,.18,4.05],basket));
+  for(const z of [-1.4,1.4])
+   extension.push(box(s,"Granary corner post",root,[x,1.1,z],
+    [.16,1.62,.17],rails));
+ }
+ for(const mesh of extension){mesh.isPickable=false;mesh.setEnabled(false)}
  floatingLabel(world,root);
  const perimeter=B.MeshBuilder.CreateTorus("Village territory boundary",
   {diameter:VILLAGE_RADIUS*2,thickness:.075,tessellation:92},s);
@@ -96,13 +114,14 @@ export function createStockpileWorld(world){
  ghost.isPickable=false;
  root.setEnabled(false);ground.setEnabled(false);ghost.setEnabled(false);
  world.stockpileWorld={
-  root,ground,ghost,valid,invalid,items,lastPosition:null
+  root,ground,ghost,valid,invalid,items,extension,lastPosition:null
  };
 }
 export function syncStockpileWorld(world,stockpile){
  const view=world.stockpileWorld;if(!view)return;
  view.root.setEnabled(!!stockpile);
  if(!stockpile){view.lastPosition=null;return}
+ for(const mesh of view.extension||[])mesh.setEnabled(stockpileLevel(stockpile)>=2);
  const key=stockpile.x+","+stockpile.z;
  if(key!==view.lastPosition){
   view.root.position=V(stockpile.x,world.groundY(stockpile.x,stockpile.z)+.03,stockpile.z);
