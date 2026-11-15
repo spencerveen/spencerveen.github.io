@@ -39,7 +39,7 @@ try{
  assert.equal(original.settlement.stockpile.capacity,480);
  assert.equal(original.settlement.capacity,8);
  assert(original.settlement.buildings.every(b=>b.level===1));
- const openBuildings=page.locator('[data-action="village-section"][data-section="buildings"]');
+ const openBuildings=page.locator('nav.section-tabs [data-action="village-section"][data-section="buildings"]');
  await openBuildings.click();
  assert.equal(await page.locator("[data-upgrade-id]").count(),5,
   "stockpile and each built structure are independently upgradeable");
