@@ -492,6 +492,13 @@ body > footer { position: absolute; left: 20px; bottom: 18px; z-index: 4; displa
 .resident-home-options { display:grid; gap:8px; margin-bottom:14px; }
 .haul-snapshot {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:10px 0;border:1px solid #c5b47f42;border-radius:8px;background:#a8934617;font-size:12px;color:#cbd1bb}
 .haul-snapshot strong {color:#f3deb1;font-size:13px;white-space:nowrap}
+.resident-energy-meter {display:flex;align-items:center;gap:9px;margin-top:8px;min-width:0;max-width:310px}
+.resident-energy-track {display:block;overflow:hidden;width:124px;height:8px;flex:0 0 124px;border-radius:999px;background:#172e29;border:1px solid #9c9a705e}
+.resident-energy-fill {display:block;height:100%;background:linear-gradient(90deg,#9b8750,#d5c37e);border-radius:999px;transition:width .25s ease}
+.resident-energy-value {font-size:11px;color:#d9d2ae;white-space:nowrap;font-variant-numeric:tabular-nums}
+.resident-energy-detail {max-width:100%;margin:0 0 12px}
+.resident-energy-detail .resident-energy-track {width:180px;flex-basis:180px;height:11px}
+@media(max-width:440px){.resident-energy-track{width:100px;flex-basis:100px}.resident-energy-detail .resident-energy-track{width:140px;flex-basis:140px}}
 .resident-job-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:0 0 18px; }
 .resident-job-options button { min-height:40px; font-size:12px; padding:8px 10px; border:1px solid #c3bb8a50; background:#c4b98312; color:#e6e1ca; }
 .resident-job-options button.active { border-color:#d0bf88; background:#b198543d; color:#fff0c4; }
