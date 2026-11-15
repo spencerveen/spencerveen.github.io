@@ -8,7 +8,7 @@
  * Sources and conversion: ../assets/sky/SOURCES.md
  */
 import {createSkyPreviewTransition,skyEnvironmentAt,skyTwilightWeight} from "./sky-transitions.js?v=20261114twilight1";
-import {skyAtHour} from "./game-clock.js?v=20261114clock1";
+import {skyAtHour} from "./game-clock.js?v=20261115dusk1";
 export const SKY_ASSETS=Object.freeze({
  day:"./assets/sky/day.webp?v=20261114sky1",
  night:"./assets/sky/night.webp?v=20261114sky1"
@@ -65,15 +65,16 @@ void main(void){
  nightColor=pow(max(nightColor,vec3(0.0)),vec3(1.18))*vec3(.35,.43,.62);
  vec3 horizon=mix(vec3(.62,.71,.62),vec3(.085,.12,.19),nightMix);
  vec3 sky=mix(dayColor,nightColor,nightMix);
- // Sunlit clouds and a low warm horizon slowly develop at dusk/dawn.
- // Use a localized golden glow, preserving cloud structure in the HDRIs.
+ // Warm the whole low-to-middle sky during dawn and dusk, while
+ // concentrating orange near the setting or rising sun. Keeping this
+ // effect only at the horizon leaves normal blue clouds above the player.
  vec2 solarAxis=mix(vec2(-.72,.69),vec2(.82,-.57),duskWeight);
  float facing=max(0.0,dot(normalize(direction.xz+vec2(.0001)),normalize(solarAxis)));
- float horizonGlow=exp(-pow((direction.y-.035)*5.0,2.0));
+ float horizonGlow=exp(-pow((direction.y-.13)*2.15,2.0));
  float solarGlow=pow(facing,3.0);
  vec3 twilightColor=mix(vec3(1.0,.69,.47),vec3(1.0,.42,.24),duskWeight);
- sky=mix(sky,sky*vec3(1.05,.78,.72)+twilightColor*(.16+.51*solarGlow)*horizonGlow,
-  twilightGlow*.78);
+ sky=mix(sky,sky*vec3(1.08,.74,.67)+twilightColor*(.16+.48*solarGlow)*horizonGlow,
+  twilightGlow*.84);
  // Pure-sky panoramas can include lower-hemisphere reflection artifacts.
  // Hide those below the natural horizon instead of inventing far terrain.
  sky=mix(horizon,sky,smoothstep(-.12,.035,direction.y));
