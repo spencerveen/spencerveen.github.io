@@ -68,6 +68,7 @@ function storagePanel(ui){
  const hauling=state.villageHaulingStatus(),food=state.villageFoodStatus();
  let html=`<div class="pack-capacity"><span>Village storage</span><strong>${storage.used} / ${storage.capacity}</strong></div>
   <p class="context-note">Only delivered materials can be used for construction. Workers physically haul harvested supplies back to this store. <b>Granary level ${storage.level} / 2</b>.</p>
+  <button type="button" class="game-button alt" data-action="open-settlement-manager">⌂ Open Settlement Management · Jobs, buildings &amp; supplies</button>
   <button type="button" class="game-button alt" data-action="village-section" data-section="buildings">Improve village buildings &amp; storage</button>
   <div class="haul-snapshot"><span>Worker cargo in transit</span><strong>${hauling.inTransit} items</strong></div>
   <div class="haul-snapshot"><span>Villager meals in storage</span><strong>${food.meals} ready</strong></div>
@@ -274,6 +275,9 @@ export function openStockpile(ui){
 }
 export function handleVillageAction(ui,btn){
  const action=btn.dataset.action,world=ui.world,state=ui.state;
+ if(action==="open-settlement-manager"){
+  ui.openSettlement("overview");return true;
+ }
  if(action==="open-village"){
   if(!state.data.village.stockpile)ui.openFounding();
   else{world.focusStockpile?.();ui.toast("Walk to your stockpile with WASD, then click it to manage the village.");}
