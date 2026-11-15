@@ -1,4 +1,4 @@
-# Epoch Sky & Atmosphere — Phase 6C.1A–C
+# Epoch Sky & Atmosphere — Phase 6C.1A–D
 
 ## Shipped
 
@@ -21,9 +21,9 @@ per game session. Switching sky preview modes only changes shader uniforms,
 environment color, light intensities, and fog; no terrain regeneration or
 new sky mesh is required.
 
-To test, start or continue a game and click the **Day / Night** button in the
-top header. This is intentionally a *preview*; it does not move the calendar,
-change a villager's routine, or save a permanent time-of-day.
+The previous Day/Night preview control has been replaced by a live game clock.
+The clock automatically drives this sky controller. See
+[CLOCK_SYSTEM.md](CLOCK_SYSTEM.md) for the cycle schedule and aging rules.
 
 ## Lighting integration
 
@@ -58,14 +58,15 @@ existing saved calendar and villager schedules are not altered.** Sun and
 moon images are still fixed within the source sky panoramas; moving discs
 and an astronomical sky are separate future work.
 
-## Next milestone
+## Phase 6C.1D — Complete
 
-**6C.1D:** add a persistent in-game 24-hour clock that controls the new
-atmospheric transitions. Keep day/night progress separate from the
-existing 90-real-second in-game year and population aging; introduce a
-deliberate relationship between time of day and long-term aging before
-work shifts are built.
+The automatic game clock now drives sunrise, daytime, sunset and night. One
+24-hour cycle is one calendar year and takes 7 minutes 12 seconds of active
+play; the previous manual preview button is replaced by a live HUD clock.
+
+See [CLOCK_SYSTEM.md](CLOCK_SYSTEM.md) for the time and age balance,
+save/reload integration, the 24-hour schedule and next-phase villager shifts.
 
 Automated checks: `tests/check-sky-preview.mjs`,
-`tests/check-sky-transitions.mjs` and
+`tests/check-sky-transitions.mjs`, `tests/check-game-clock.mjs` and
 `tests/browser-sky-preview.mjs`.
