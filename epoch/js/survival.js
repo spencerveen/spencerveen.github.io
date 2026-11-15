@@ -1,7 +1,7 @@
 // Player survival rules. Future meals and weapons can extend these tables.
 export const SURVIVAL=Object.freeze({
  health:100,stamina:100,hunger:100,
- hungerDrain:.11,staminaRegen:1.5,starvingRegen:1.2,healthRegen:.15,
+ hungerDrain:.11,staminaRegen:2,starvingRegen:1.2,healthRegen:.15,
  staminaCostMultiplier:.9,
  sprintCost:11,
  starvingStaminaMax:45,
