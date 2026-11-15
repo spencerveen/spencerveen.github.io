@@ -80,6 +80,25 @@ try{
  assert.notDeepEqual(phases[0].fog,phases[2].fog,
   "dawn and dusk have distinct atmospheric colors");
  assert.equal(phases[3].intensity,initial.intensity);
+ // Screenshot-regression case: the report was 6:23 PM looking like midday.
+ const earlySunset=await page.evaluate(()=>{
+  const w=window.__epochTestWorld;
+  const hour=18+23/60;
+  const progress=((((hour-7)%24)+24)%24)/24;
+  w.getClockReading=()=>({progress,paused:true});
+  w.updateClockSky(.016);
+  return {phase:w.skyAtmosphere.status().phase,
+   mix:w.skyAtmosphere.nightMix,intensity:w.skySun.intensity,
+   fog:[w.scene.fogColor.r,w.scene.fogColor.g,w.scene.fogColor.b],
+   shaderError:w.skyAtmosphere.status().shaderError};
+ });
+ assert.equal(earlySunset.phase,"sunset");
+ assert(earlySunset.mix>.25&&earlySunset.mix<.35,
+  "sky must not remain over 90% midday at 6:23 PM");
+ assert(earlySunset.intensity<initial.intensity,
+  "sunlight must visibly change by 6:23 PM");
+ assert.equal(earlySunset.shaderError,"");
+ await page.screenshot({path:path.join(folder,"epoch-clock-sunset-623pm.png"),animations:"disabled"});
  // Test an actual saved fractional year, not a volatile visual override.
  // The game saves on pagehide. Seed the evening checkpoint in the
  // next document before Epoch constructs GameState, after pagehide finishes.
