@@ -10,7 +10,7 @@ import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
 import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs2";
 import {normalizeCargo,normalizeHaulPosition,cargoCount,landRoute,HAUL_WATER_DEPTH} from "./villager-hauling.js?v=20261114haul1";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114sky1";
-import {createSkyAtmosphere} from "./sky-atmosphere.js?v=20261114sky1";
+import {createSkyAtmosphere} from "./sky-atmosphere.js?v=20261114twilight1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -1189,7 +1189,12 @@ export class World {
  setSkyPreview(mode){return this.skyAtmosphere?.setMode(mode)||false}
  get skyMode(){return this.skyAtmosphere?.mode||"day"}
  update(dt){
-  if(this.skyAtmosphere&&this.camera)this.skyAtmosphere.update(this.camera);
+  if(this.skyAtmosphere&&this.camera){
+   const before=this.skyAtmosphere.status().transitioning;
+   this.skyAtmosphere.update(this.camera,dt);
+   if(before&&!this.skyAtmosphere.status().transitioning)
+    this.onSkyPreviewComplete?.();
+  }
   if(this.m.waterTexture){
    this.m.waterTexture.uOffset=(this.m.waterTexture.uOffset+dt*.006)%1;
    this.m.waterTexture.vOffset=(this.m.waterTexture.vOffset+dt*.003)%1;
