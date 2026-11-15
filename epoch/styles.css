@@ -43,6 +43,9 @@ body > header { position: absolute; inset: 0 0 auto; z-index: 5; display: flex; 
  border:1px solid #c3d1c05a;border-radius:9px;
  background:#1d3429;color:#e9e9d1;font-weight:650;font-size:12px;white-space:nowrap}
 #sky-preview[data-mode="night"] {background:#253049;border-color:#8195bb65;color:#dce8fc}
+#sky-preview[data-phase="sunset"], #sky-preview[data-phase="sunrise"] {background:#48352e;border-color:#d2a0788c;color:#ffe2b7}
+#sky-preview[data-phase="sunset"] .sky-preview-icon {color:#ffa86c}
+#sky-preview[data-phase="sunrise"] .sky-preview-icon {color:#ffd394}
 .sky-preview-icon {font-size:18px;line-height:1}
 
 /* A compact objective provides direction without becoming a second management panel. */
