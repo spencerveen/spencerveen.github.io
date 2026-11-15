@@ -20,7 +20,7 @@ try{
    version:1,year:-11995,worldSeed:12000,
    hero:{name:"Aren",age:27},
    village:{population:3,plots:{},buildings:[
-    {id:"test_council",kind:"council",x:-10,z:10,turn:0}],
+    {id:"test_council",kind:"council",x:0,z:-8,turn:0}],
     residents:people,relationships,stockpile:{
      x:0,z:8,items:{wood:10,stone:10,berries:10,vines:10}}},
    survival:{health:100,stamina:100,hunger:100,gameOver:false},
@@ -44,7 +44,7 @@ try{
  assert(profile.includes("Partner · 58/100"));
  assert(profile.includes(people[1].name));
  assert(profile.includes("3 shared Hut years"),"shared household history is visible");
- await page.locator('.resident-link[data-id="'+people[1].id+'"]').click();
+ await page.locator('.resident-link[data-id="'+people[1].id+'"]').first().click();
  assert((await page.locator("#dialog-title").innerText()).includes(people[1].name),
   "reciprocal relationship links open the other resident's profile");
  assert((await page.locator("#guide").innerText()).includes(people[0].name),
