@@ -42,7 +42,8 @@ assert(g.setDevCheat("neverDie",true));
 assert(g.damageHero(10000));
 assert.equal(g.data.survival.health,1,"never die keeps one health without filling the meter");
 assert.equal(g.data.survival.gameOver,false);
-g.data.hero.age=99;g.data.calendarProgress=89/90;
+// Start just before the new 432-second annual rollover.
+g.data.hero.age=99;g.data.calendarProgress=1-1/432;
 g.advance(2);
 assert.equal(g.data.hero.age,100);
 assert.equal(g.data.survival.gameOver,false,"age 100 is not fatal while never die is enabled");
