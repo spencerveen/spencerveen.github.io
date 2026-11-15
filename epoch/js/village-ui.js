@@ -1,5 +1,6 @@
-import {BUILDINGS} from "./settlement.js?v=20261114u";
-import {nearStockpile,STOCKPILE_CAPACITY,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114fish1";
+import {BUILDINGS} from "./settlement.js?v=20261114development1";
+import {VILLAGE_UPGRADES,structureLevel,stockpileLevel} from "./village-development.js?v=20261114development1";
+import {nearStockpile,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114development1";
 import {STOCKPILE_ITEM_IDS,ITEMS,itemCapacity,toolMaxDurability,toolCondition} from "./inventory.js?v=20261114fish1";
 import {CRAFTING_PLANS} from "./equipment.js?v=20261114craft1";
 import {UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114b";
@@ -65,14 +66,14 @@ const placementPanel=(candidate,stockpile,ui)=>{
 function storagePanel(ui){
  const state=ui.state,pile=state.data.village.stockpile,storage=state.stockpileInfo(),atHome=near(ui);
  const hauling=state.villageHaulingStatus(),food=state.villageFoodStatus();
- let html=`<div class="pack-capacity"><span>Village storage</span><strong>${storage.used} / ${STOCKPILE_CAPACITY}</strong></div>
-  <p class="context-note">Only delivered materials can be used for construction. Workers physically haul harvested supplies back to this store.</p>
+ let html=`<div class="pack-capacity"><span>Village storage</span><strong>${storage.used} / ${storage.capacity}</strong></div>
+  <p class="context-note">Only delivered materials can be used for construction. Workers physically haul harvested supplies back to this store. <b>Granary level ${storage.level} / 2</b>.</p>
   <div class="haul-snapshot"><span>Worker cargo in transit</span><strong>${hauling.inTransit} items</strong></div>
   <div class="haul-snapshot"><span>Villager meals in storage</span><strong>${food.meals} ready</strong></div>
   ${food.critical?`<p class="context-note" role="status">⚠ ${food.critical} villager${food.critical===1?"":"s"} critically hungry. Add berries or roasted meals to village storage.</p>`:""}
   ${hauling.carriers.length?'<p class="context-note">'+hauling.carriers.map(p=>esc(p.name)+": "+esc(cargoLabel(p.items))).join(" · ")+'</p>':""}
   <div class="stockpile-primary-actions">
-   <button type="button" data-action="deposit-all-stockpile" ${!atHome||state.inventoryUsed()===0||storage.used>=STOCKPILE_CAPACITY?"disabled":""}>Deposit all materials</button>
+   <button type="button" data-action="deposit-all-stockpile" ${!atHome||state.inventoryUsed()===0||storage.used>=storage.capacity?"disabled":""}>Deposit all materials</button>
    ${!atHome?'<p class="context-note">Move closer with WASD to use storage.</p>':""}
   </div>
   <div class="stockpile-resource-list">`;
@@ -80,7 +81,7 @@ function storagePanel(ui){
   ["wood","stone","berries","vines"].includes(id)||
   state.inventoryCount(id)>0||(storage.items[id]||0)>0||(hauling.byItem[id]||0)>0)){
   const carried=state.inventoryCount(id),stored=storage.items[id]||0;
-  const deposit=Math.min(12,carried,STOCKPILE_CAPACITY-storage.used);
+  const deposit=Math.min(12,carried,storage.capacity-storage.used);
   const take=Math.min(12,stored,itemCapacity(state.data.inventory,id));
   html+=`<div class="stockpile-resource-row"><span>${ITEMS[id].icon} ${esc(ITEMS[id].name)}</span>
    <span class="stockpile-balance">Stored <b>${stored}</b> · Workers carrying <b>${hauling.byItem[id]||0}</b> · Your pack <b>${carried}</b></span>
@@ -208,16 +209,45 @@ function buildPanel(ui){
  }
  return html+"</div>";
 }
+/** An individual saved structure costs real supplies to improve. The action
+ * is always revalidated by GameState, even when the button was enabled.
+ */
+function improvementCard(ui,id,kind,level){
+ const def=VILLAGE_UPGRADES[kind];
+ if(!def)return "";
+ const state=ui.state,items=state.data.village.stockpile?.items||{};
+ const pos=ui.world.player.position;
+ const complete=level>=2;
+ const result=complete?{ok:false,reason:"Maximum level reached."}:
+  state.canUpgradeVillage(id,pos.x,pos.z);
+ const needs=complete?"":requiredMaterials(def.cost,items);
+ return `<div class="village-improvement" data-upgrade-id="${esc(id)}">
+  <div class="research-heading"><h3>${esc(def.title)}</h3><span class="tag">Level ${level} / 2</span></div>
+  <p>${esc(def.description)}</p>
+  <small class="building-purpose">${esc(def.benefit)}</small>
+  ${needs}
+  ${complete?'<small class="context-note">✓ Improvement complete</small>':
+   `<button type="button" data-action="upgrade-structure" data-id="${esc(id)}"
+    ${!result.ok?"disabled":""}>Improve ${esc(kind==="stockpile"?"Stockpile":BUILDINGS[kind].name)}</button>
+    ${!result.ok?`<small class="context-note">${esc(result.reason)}</small>`:""}`}
+ </div>`;
+}
 function buildingsPanel(ui){
- const buildings=ui.state.data.village.buildings;
- if(!buildings.length)return '<div class="empty-state"><h3>Your village begins here</h3><p>Build a shelter for discovery, a lodge for culture, or more homes for your people.</p><button type="button" data-action="village-section" data-section="build">Browse blueprints</button></div>';
- let html='<p class="context-note">Click these buildings in the world to return to their activities.</p>';
+ const state=ui.state,village=state.data.village;
+ const buildings=village.buildings;
+ let html='<p class="context-note">Build new structures in Build. Improve existing ones here with supplies already delivered to the stockpile. Each upgrade has a real gameplay effect, lasts through save files and costs materials only once.</p>';
+ html+='<h3 class="section-heading">Village storage</h3><div class="entry village-built-item">'+
+  improvementCard(ui,"stockpile","stockpile",stockpileLevel(village.stockpile))+
+  '</div>';
+ if(!buildings.length)html+='<p class="context-note">Build a Hut, Cooking Hearth, Toolmaker’s Shelter or Council Lodge to unlock their development improvements.</p>';
  for(const building of buildings){
   const definition=BUILDINGS[building.kind];
   if(!definition)continue;
   html+=`<div class="entry village-built-item ${ui.selectedBuildingId===building.id?"chosen":""}">
-   <strong>${kindIcon[building.kind]} ${esc(definition.name)}</strong><span class="tag">${destination[building.kind]}</span>
+   <div class="research-heading"><strong>${kindIcon[building.kind]} ${esc(definition.name)}</strong>
+   <span class="tag">Level ${structureLevel(building)} / 2</span></div>
    <small>X ${building.x} · Z ${building.z} · ${building.turn*90}°</small>
+   ${improvementCard(ui,building.id,building.kind,structureLevel(building))}
    <button type="button" class="game-button alt" data-action="select-building" data-id="${esc(building.id)}">Open ${destination[building.kind]}</button>
   </div>`;
  }
@@ -304,6 +334,13 @@ export function handleVillageAction(ui,btn){
   const result=world.confirmBuildingPlacement();
   ui.toast(result.ok?BUILDINGS[result.building.kind].name+" built. Click it to open "+destination[result.building.kind]+".":result.reason);
   ui.render();return true;
+ }
+ if(action==="upgrade-structure"){
+  const p=world.player.position;
+  const result=state.upgradeVillage(btn.dataset.id,p.x,p.z);
+  ui.toast(result.reason);
+  ui.render();
+  return true;
  }
  if(action==="select-building"){selectVillageBuilding(ui,btn.dataset.id);return true}
  if(["deposit-all-stockpile","deposit-stockpile","withdraw-stockpile"].includes(action)){
