@@ -1,4 +1,5 @@
-import {LEGACY_HOME} from "./stockpile.js?v=20261113k";
+import {LEGACY_HOME} from "./stockpile.js?v=20261114development1";
+import {upgradedHutBeds} from "./village-development.js?v=20261114development1";
 // Stone Age building types and original plot coordinates kept solely to
 // migrate existing constructed villages. New construction uses free 2m grid.
 export const BUILDINGS={
@@ -30,7 +31,8 @@ export function villagePlots(village){return PLOTS.map(p=>plotAtHome(village,p.i
 export function capacity(village){
  if(Array.isArray(village?.buildings))
   return VILLAGE_START_CAPACITY+
-   village.buildings.filter(building=>building.kind==="family").length*BUILDINGS.family.capacity;
+   village.buildings.filter(building=>building.kind==="family").reduce((beds,building)=>
+    beds+upgradedHutBeds(building),0);
  return VILLAGE_START_CAPACITY+PLOTS.reduce((sum,plot)=>
   sum+(village?.plots?.[plot.id]==="family"?BUILDINGS.family.capacity:0),0);
 }
