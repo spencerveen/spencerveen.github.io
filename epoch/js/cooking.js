@@ -16,7 +16,7 @@ export const COOKING_RECIPES=Object.freeze({
  cooked_fish:Object.freeze({name:"Roasted Fish",description:"Roast your fresh catch on the communal fire.",
   cost:Object.freeze({fish_meat:2,wood:1}),output:Object.freeze({id:"cooked_fish",qty:2}),xp:23})
 });
-export function prepareCooking(recipeId,inventory,pile){
+export function prepareCooking(recipeId,inventory,pile,extraServings=0){
  const recipe=COOKING_RECIPES[recipeId];
  if(!recipe||!pile||!Array.isArray(inventory))return {ok:false,reason:"No available cooking recipe."};
  const pack=inventory.map(item=>item?{...item}:null);
@@ -31,7 +31,8 @@ export function prepareCooking(recipeId,inventory,pile){
   if(used)removeItems(pack,id,used);
   supplies[canonicalItem(id)]-=amount-used;
  }
- const produced=addItems(pack,recipe.output.id,recipe.output.qty);
- if(produced!==recipe.output.qty)return {ok:false,reason:"Backpack full. Make space for the prepared meal."};
- return {ok:true,pack,supplies,recipe};
+ const outputQty=recipe.output.qty+(extraServings===1?1:0);
+ const produced=addItems(pack,recipe.output.id,outputQty);
+ if(produced!==outputQty)return {ok:false,reason:"Backpack full. Make space for the prepared meal."};
+ return {ok:true,pack,supplies,recipe,outputQty};
 }
