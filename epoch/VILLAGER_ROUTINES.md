@@ -45,9 +45,22 @@ simulation pause rather than simulating imaginary distant work.
 
 ## Visuals and controls
 
-Villagers walk back to their assigned hut or communal camp, settle at home,
-and show a floating **Zzz** indicator while sleeping. Hut interior beds and
-lying-down animations are intentionally not included in this first pass.
+Villagers **walk to the entrance of their assigned Hut**, accounting for the
+Hut's saved 90° rotation. They disappear inside when they reach the doorway
+rather than standing outside under a floating Zzz marker. One rooftop **Zzz**
+sign indicates that the constructed Hut is occupied by sleeping residents,
+regardless of how many occupants are inside. At dawn everyone emerges again
+and resumes their usual daily routine, retaining their saved housing, jobs,
+hunger, energy and cargo.
+
+Residents assigned to the **communal camp** sleep on visible woven bedrolls
+rather than standing in the field. We do not yet have modeled Hut interiors,
+so entry is a short doorway transition rather than an animated bed interior.
+Sleeping accommodation is visual only and never adds artificial homes or
+changes the actual population cap. New arrivals prefer spare Hut beds over the
+communal camp. Existing explicit home assignments are retained on reload; the
+Council Lodge can **Move campers into Huts** with one click when beds are
+available.
 
 Open the constructed **Council Lodge → People & Jobs** to see each resident’s energy bar.
 Click **View profile** to see the exact energy, exhaustion and sleep status.
