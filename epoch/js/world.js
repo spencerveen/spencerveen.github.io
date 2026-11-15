@@ -10,7 +10,8 @@ import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
 import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs2";
 import {normalizeCargo,normalizeHaulPosition,cargoCount,landRoute,HAUL_WATER_DEPTH} from "./villager-hauling.js?v=20261114haul1";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114sky1";
-import {createSkyAtmosphere} from "./sky-atmosphere.js?v=20261114twilight1";
+import {createSkyAtmosphere} from "./sky-atmosphere.js?v=20261114clock1";
+import {REAL_SECONDS_PER_YEAR,hourAtProgress} from "./game-clock.js?v=20261114clock1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -1188,13 +1189,27 @@ export class World {
  }
  setSkyPreview(mode){return this.skyAtmosphere?.setMode(mode)||false}
  get skyMode(){return this.skyAtmosphere?.mode||"day"}
- update(dt){
-  if(this.skyAtmosphere&&this.camera){
-   const before=this.skyAtmosphere.status().transitioning;
-   this.skyAtmosphere.update(this.camera,dt);
-   if(before&&!this.skyAtmosphere.status().transitioning)
-    this.onSkyPreviewComplete?.();
+ updateClockSky(dt){
+  const clock=this.getClockReading?.();
+  if(!clock||!this.skyAtmosphere)return;
+  const saved=Number.isFinite(clock.progress)?
+   Math.max(0,Math.min(1-Number.EPSILON,clock.progress)):0;
+  if(this.clockVisualProgress===undefined)this.clockVisualProgress=saved;
+  else if(clock.paused)this.clockVisualProgress=saved;
+  else{
+   // Smoothly follow one-second calendar ticks, without making render frames
+   // authoritative for saved years or aging.
+   const diff=((saved-this.clockVisualProgress+1.5)%1)-.5;
+   if(Math.abs(diff)>.015)this.clockVisualProgress=saved;
+   else this.clockVisualProgress=(this.clockVisualProgress+
+    Math.min(dt,.05)/REAL_SECONDS_PER_YEAR+
+    diff*Math.min(.2,Math.max(0,dt)*.45)+1)%1;
   }
+  this.skyAtmosphere.setClockHour(hourAtProgress(this.clockVisualProgress));
+ }
+ update(dt){
+  this.updateClockSky(dt);
+  if(this.skyAtmosphere&&this.camera)this.skyAtmosphere.update(this.camera,dt);
   if(this.m.waterTexture){
    this.m.waterTexture.uOffset=(this.m.waterTexture.uOffset+dt*.006)%1;
    this.m.waterTexture.vOffset=(this.m.waterTexture.vOffset+dt*.003)%1;
