@@ -1,11 +1,11 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261115tribefamily1";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261115tribefamily2";
 import {COOKING_RECIPES} from "./cooking.js?v=20261114fish2";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
 import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261115tribefamily1";
 import {tribeFamilySummary,tribeFamilyDescription} from "./tribe-families.js?v=20261115tribefamily1";
 import {BUILDINGS} from "./settlement.js?v=20261115council1";
-import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261115council1";
+import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261115tribefamily1";
 import {VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
 import {cargoLabel,cargoCount} from "./villager-hauling.js?v=20261114haul1";
 import {villagerDayPhase,villagerActivityText,normalizedEnergy} from "./villager-routines.js?v=20261115life1";
@@ -13,7 +13,7 @@ import {normalizedHunger,hungryStatus,VILLAGER_FOOD_PRIORITY} from "./villager-n
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114fish1";
 import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
 import {structureLevel,hearthExtraServing} from "./village-development.js?v=20261114development1";
-import {settlementManagementPage,MANAGEMENT_SECTIONS} from "./settlement-management.js?v=20261115relations1";
+import {settlementManagementPage,MANAGEMENT_SECTIONS} from "./settlement-management.js?v=20261115tribefamily1";
 import {councilLodge,councilStage} from "./council-evolution.js?v=20261115council1";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));

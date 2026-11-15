@@ -12,12 +12,12 @@ import {STARTER_SEED} from "./forest-generation.js?v=20261113k";
 import {resourceNodeStatus,resourceStateStats,recordResourceNode} from "./resource-nodes.js?v=20261114flint1";
 import {harvestAtNode} from "./harvest.js?v=20261115staminabalance1";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
- TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
+ TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261115tribefamily1";
 import {normalizeRelationships,advanceSocialRelationships,advanceHouseholdRelationships,pruneRelationships,
  residentRelationships,relationshipSummary,seedTribePartnerships} from "./relationships.js?v=20261115tribefamily1";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  moveResidentHome,houseCampResidents,assignResidentJob,residentConnections,residentFamily,ageVillageResidents,normalizeDeceasedResidents,
- NATURAL_DEATH_AGE} from "./residents.js?v=20261115sleepindoors2";
+ NATURAL_DEATH_AGE} from "./residents.js?v=20261115tribefamily1";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114fish1";
