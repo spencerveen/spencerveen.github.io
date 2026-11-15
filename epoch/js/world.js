@@ -12,7 +12,7 @@ import {normalizeCargo,normalizeHaulPosition,cargoCount,landRoute,HAUL_WATER_DEP
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114sky1";
 import {createSkyAtmosphere} from "./sky-atmosphere.js?v=20261115dusk1";
 import {REAL_SECONDS_PER_YEAR,hourAtProgress} from "./game-clock.js?v=20261115dusk1";
-import {villagerDayPhase,villagerCanBeginWork,VILLAGER_EXHAUSTED_AT} from "./villager-routines.js?v=20261115food1";
+import {villagerDayPhase,villagerCanBeginWork,VILLAGER_EXHAUSTED_AT} from "./villager-routines.js?v=20261115life1";
 import {availableVillageMeals,VILLAGER_MEAL_AT,VILLAGER_CRITICAL_HUNGER} from "./villager-nutrition.js?v=20261115food1";
 import {villagerMaySocialize,villagerLeisureChoice,villageGatherCenter,isLeisureMode,VILLAGE_GATHER_RADIUS,VILLAGE_WANDER_RADIUS} from "./village-life.js?v=20261115life1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
