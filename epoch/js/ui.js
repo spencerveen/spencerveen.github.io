@@ -382,23 +382,6 @@ export class UI{
    if(!result.ok)this.renderSettlement();
    return true;
   }
-  if(action==="settlement-deposit-all"){
-   const p=this.world.player.position;
-   const count=this.state.depositAllToStockpile(p.x,p.z);
-   this.toast(count?"Deposited "+count+" materials.":"Nothing transferred. Move closer or check storage capacity.");
-   if(!count)this.renderSettlement();
-   return true;
-  }
-  if(action==="settlement-transfer"){
-   const p=this.world.player.position,id=btn.dataset.item;
-   const n=btn.dataset.direction==="deposit"?
-    this.state.depositToStockpile(id,12,p.x,p.z):
-    this.state.withdrawFromStockpile(id,12,p.x,p.z);
-   this.toast(n?(btn.dataset.direction==="deposit"?"Deposited ":"Took ")+n+" "+(ITEMS[id]?.name||id):
-    "No items transferred. Check stockpile proximity, inventory and capacity.");
-   if(!n)this.renderSettlement();
-   return true;
-  }
   if(action==="council-successor"){
    const resident=this.state.data.village.residents.find(p=>p.id===btn.dataset.id);
    if(!resident)return true;
@@ -419,29 +402,6 @@ export class UI{
   if(action==="settlement-profile"){
    this.settlementReturn=true;
    this.openResident(btn.dataset.id);
-   return true;
-  }
-  if(action==="settlement-building"){
-   this.close();
-   this.openBuildingPanel(btn.dataset.id);
-   return true;
-  }
-  if(action==="settlement-start-building"){
-   this.close();
-   this.villageSection="build";this.openPanel("village");
-   this.toast("Select a blueprint to place it physically in your village.");
-   return true;
-  }
-  if(action==="settlement-found"){
-   this.close();this.openFounding();
-   this.world.beginStockpilePlacement();
-   this.render();
-   return true;
-  }
-  if(action==="settlement-find-stockpile"){
-   this.close();
-   this.world.focusStockpile?.();
-   this.toast("Follow the view to your village stockpile. Move closer to transfer items.");
    return true;
   }
   return false;
