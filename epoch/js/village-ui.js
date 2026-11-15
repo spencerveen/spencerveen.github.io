@@ -1,4 +1,4 @@
-import {BUILDINGS} from "./settlement.js?v=20261114development1";
+import {BUILDINGS} from "./settlement.js?v=20261115council1";
 import {VILLAGE_UPGRADES,structureLevel,stockpileLevel} from "./village-development.js?v=20261114development1";
 import {nearStockpile,VILLAGE_RADIUS,STOCKPILE_INTERACT_RANGE} from "./stockpile.js?v=20261114development1";
 import {STOCKPILE_ITEM_IDS,ITEMS,itemCapacity,toolMaxDurability,toolCondition} from "./inventory.js?v=20261114fish1";
