@@ -15,7 +15,7 @@ import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  moveResidentHome,assignResidentJob,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
- NATURAL_DEATH_AGE} from "./residents.js?v=20261115sleep1";
+ NATURAL_DEATH_AGE} from "./residents.js?v=20261115food1";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114fish1";
@@ -24,7 +24,9 @@ import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261
 import {VILLAGER_CARRY_CAPACITY,normalizeCargo,normalizeHaulPosition,cargoCount,transferCargo} from "./villager-hauling.js?v=20261114haul1";
 import {FISH_STAMINA_COST,FISH_CATCH_AMOUNT,normalizeFishCatches} from "./fishing.js?v=20261114fish1";
 import {REAL_SECONDS_PER_YEAR,clockAtProgress,normalizeCalendarProgress} from "./game-clock.js?v=20261115dusk1";
-import {advanceVillagerEnergy,villagerDayPhase} from "./villager-routines.js?v=20261115sleep1";
+import {advanceVillagerEnergy,villagerDayPhase} from "./villager-routines.js?v=20261115food1";
+import {advanceVillagerHunger,consumeVillagerMeal,availableVillageMeals,
+ normalizedHunger,VILLAGER_MEAL_AT,VILLAGER_CRITICAL_HUNGER} from "./villager-nutrition.js?v=20261115food1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["cooking","Cooking"],["fishing","Fishing"],["construction","Construction"],["survival","Survival"]
@@ -413,7 +415,7 @@ export class GameState{
    id:member.id,name:member.name,sex:member.sex,age:member.age,
    originTribeId:tribe.id,originTribeName:tribe.name,
    role:member.role==="leader"?"formerLeader":"resident",recruitment:"peaceful",
-   joinedYear:this.data.year,homeId:null,job:"idle",energy:100,resting:false,cargo:{},haulPosition:null,
+   joinedYear:this.data.year,homeId:null,job:"idle",energy:100,resting:false,hunger:100,lastMeal:null,cargo:{},haulPosition:null,
    memories:[{year:this.data.year,text:"Welcomed peacefully from "+tribe.name+"."}]
   }));
   this.data.village.residents.push(...arrivals);
@@ -1011,6 +1013,14 @@ export class GameState{
   for(const villager of roster){
    const activity=this.getVillagerActivity(villager.id)||
     {mode:"idle",atHome:true,local:true,moving:false};
+   // Hunger and energy move together on the single authoritative clock.
+   // The player's own hunger and inventory are never modified here.
+   const before=normalizedHunger(villager.hunger);
+   const after=advanceVillagerHunger(villager,activity,seconds,shift);
+   if(!Number.isFinite(villager.hunger)||Math.abs(after-before)>1e-7){
+    villager.hunger=after;
+    changed=true;
+   }
    const next=advanceVillagerEnergy(villager,activity,seconds,shift);
    if(!Number.isFinite(villager.energy)||Math.abs(villager.energy-next.energy)>1e-7||
       villager.resting!==next.resting){
@@ -1028,6 +1038,31 @@ export class GameState{
    this.onVillagerNeeds();
   }
   return changed;
+ }
+ /** Only a resident physically arriving beside the stockpile can eat.
+  * The AI invokes this once after its meal animation. The transaction
+  * decrements exactly one food item before refreshing dependent UI.
+  */
+ feedVillager(id){
+  const resident=this.data.village.residents.find(p=>p.id===id);
+  const stockpile=this.data.village.stockpile;
+  if(!resident||!stockpile||this.data.survival.gameOver)
+   return {ok:false,reason:"No available village meal."};
+  if(normalizedHunger(resident.hunger)>VILLAGER_MEAL_AT)
+   return {ok:false,reason:"Not hungry."};
+  const meal=consumeVillagerMeal(resident,stockpile);
+  if(!meal)return {ok:false,reason:"Village food stores are empty."};
+  this.changed();
+  return {ok:true,...meal};
+ }
+ villageFoodStatus(){
+  const people=this.data.village.residents||[];
+  return {
+   meals:availableVillageMeals(this.data.village.stockpile),
+   hungry:people.filter(v=>normalizedHunger(v.hunger)<=VILLAGER_MEAL_AT).length,
+   critical:people.filter(v=>normalizedHunger(v.hunger)<=VILLAGER_CRITICAL_HUNGER).length,
+   total:people.length
+  };
  }
  clockInfo(){return clockAtProgress(this.data.calendarProgress)}
  formatYear(){return this.data.year<0?`${Math.abs(this.data.year).toLocaleString()} BCE`:`${this.data.year+1} CE`}
