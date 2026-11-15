@@ -23,6 +23,7 @@ import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack,CR
 import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261114hunt1";
 import {VILLAGER_CARRY_CAPACITY,normalizeCargo,normalizeHaulPosition,cargoCount,transferCargo} from "./villager-hauling.js?v=20261114haul1";
 import {FISH_STAMINA_COST,FISH_CATCH_AMOUNT,normalizeFishCatches} from "./fishing.js?v=20261114fish1";
+import {REAL_SECONDS_PER_YEAR,clockAtProgress,normalizeCalendarProgress} from "./game-clock.js?v=20261114clock1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["cooking","Cooking"],["fishing","Fishing"],["construction","Construction"],["survival","Survival"]
@@ -74,6 +75,9 @@ export class GameState{
    skills:{...base.skills,...data.skills}}:base;
   // Existing pre-chunk saves get one stable forest seed. New games and
   // explicitly reset games receive a new seed, persisted with their world.
+  // Keep fractional year progress from older saves. Only the duration
+  // changes: the saved position in the year is preserved.
+  this.data.calendarProgress=normalizeCalendarProgress(Number(this.data.calendarProgress));
   this.data.worldSeed=data?.worldSeed===undefined&&data?.version===1
    ?STARTER_SEED:(Number(this.data.worldSeed)>>>0)||STARTER_SEED;
   this.data.hero.appearance=normalizeAppearance(this.data.hero.appearance||founderAppearance());
@@ -962,7 +966,7 @@ export class GameState{
    this.vitalSaveClock+=seconds;
    if(this.vitalSaveClock>=8){this.vitalSaveClock=0;this.save()}
   }
-  d.calendarProgress+=seconds/90;
+  d.calendarProgress+=seconds/REAL_SECONDS_PER_YEAR;
   // An operational shelter slowly generates Knowledge during active play.
   // Villager assignments and offline research are future mechanics.
   if(this.researchRate()){
@@ -989,6 +993,7 @@ export class GameState{
    this.changed(`${d.hero.name} celebrates another year of life.`+memorial);
   }
  }
+ clockInfo(){return clockAtProgress(this.data.calendarProgress)}
  formatYear(){return this.data.year<0?`${Math.abs(this.data.year).toLocaleString()} BCE`:`${this.data.year+1} CE`}
  reset(){
   // Only the active save can be reset, never other slots. New Game should
