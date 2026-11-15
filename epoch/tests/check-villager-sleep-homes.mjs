@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {hutDoorApproach,villagerBedtimeTarget,sleepingAccommodation,
  HUT_DOOR_DISTANCE,HUT_DOOR_REACH} from "../js/villager-sleep-homes.js";
-import {normalizeHomes,legacyResidents} from "../js/residents.js";
+import {normalizeHomes,legacyResidents,houseCampResidents} from "../js/residents.js";
 import {advanceVillagerEnergy} from "../js/villager-routines.js";
 assert(HUT_DOOR_DISTANCE>2.66,"night approach must be outside Hut collision");
 assert(HUT_DOOR_REACH>0&&HUT_DOOR_REACH<.9);
@@ -34,6 +34,24 @@ const village={
 normalizeHomes(village);
 assert(village.residents.some(p=>p.homeId==="camp"));
 assert(village.residents.some(p=>p.homeId===hut.id));
+assert.equal(village.residents.filter(p=>p.homeId===hut.id).length,3,
+ "new arrivals fill Hut beds before communal camp");
+assert.equal(village.residents.filter(p=>p.homeId==="camp").length,2);
+const explicitlyCamp=legacyResidents(1);
+explicitlyCamp[0].homeId="camp";
+const manual={residents:explicitlyCamp,buildings:[hut]};
+normalizeHomes(manual);
+assert.equal(manual.residents[0].homeId,"camp",
+ "existing deliberate camp assignments survive house normalization");
+village.buildings.push({...hut,id:"hut_b",x:18,z:20});
+village.stockpile={x:0,z:8,items:{}};
+assert.equal(houseCampResidents(village,-11999),2,
+ "Council bulk assignment fills the second Hut without creating residents");
+assert.equal(village.residents.filter(p=>p.homeId==="hut_b").length,2);
+assert.equal(village.residents.filter(p=>p.homeId===hut.id).length,3,
+ "already assigned households are never disturbed");
+assert.equal(houseCampResidents(village,-11999),0,
+ "a second action cannot move already housed villagers again");
 const savedEnergy=advanceVillagerEnergy({energy:30,hunger:100,resting:true},
  {mode:"sleeping",moving:false,atHome:true,local:true},5,"night");
 assert(savedEnergy.energy>30,"sleeping inside hut retains old energy recovery");
