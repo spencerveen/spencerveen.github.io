@@ -29,7 +29,7 @@ assert.equal(sleepingAccommodation({work:{mode:"sleeping"},hutEntrance:p0}),"hut
 assert.equal(sleepingAccommodation({work:{mode:"sleeping"},hutEntrance:null}),"camp");
 assert.equal(sleepingAccommodation({work:{mode:"goingHome"},hutEntrance:p0}),"awake");
 const village={
- buildings:[hut],residents:legacyResidents(2)
+ buildings:[hut],residents:legacyResidents(5)
 };
 normalizeHomes(village);
 assert(village.residents.some(p=>p.homeId==="camp"));
