@@ -1,7 +1,8 @@
 // Player survival rules. Future meals and weapons can extend these tables.
 export const SURVIVAL=Object.freeze({
  health:100,stamina:100,hunger:100,
- hungerDrain:.11,staminaRegen:1,starvingRegen:.8,healthRegen:.15,
+ hungerDrain:.11,staminaRegen:1.5,starvingRegen:1.2,healthRegen:.15,
+ staminaCostMultiplier:.9,
  sprintCost:11,
  starvingStaminaMax:45,
  berryHunger:24,berryStamina:12,berryBonus:20,berryDuration:120,
@@ -24,10 +25,12 @@ export function normalizeSurvival(raw){
  if(result.gameOver)result.health=0;
  return result;
 }
+export function effectiveStaminaCost(amount){return amount*SURVIVAL.staminaCostMultiplier}
 export function spendStamina(vitals,amount){
  if(!Number.isFinite(amount)||amount<=0)return false;
- if(vitals.gameOver||vitals.health<=0||vitals.stamina+1e-8<amount)return false;
- vitals.stamina=Math.max(0,vitals.stamina-amount);
+ const cost=effectiveStaminaCost(amount);
+ if(vitals.gameOver||vitals.health<=0||vitals.stamina+1e-8<cost)return false;
+ vitals.stamina=Math.max(0,vitals.stamina-cost);
  return true;
 }
 export function advanceVitals(vitals,seconds,sprinting=false){
