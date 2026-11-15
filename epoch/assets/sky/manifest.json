@@ -1,0 +1,24 @@
+{
+  "license": "CC0-1.0",
+  "origin": "https://polyhaven.com",
+  "resolution": [
+    2048,
+    1024
+  ],
+  "panoramas": {
+    "day": {
+      "polyhaven_id": "kloofendal_48d_partly_cloudy_puresky",
+      "page": "https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky",
+      "file": "day.webp",
+      "bytes": 63856,
+      "sha256": "5c99c6ad7c615307b8e21db205c04bb77891701ec6c2ab23916369f2c9dcb586"
+    },
+    "night": {
+      "polyhaven_id": "kloppenheim_02_puresky",
+      "page": "https://polyhaven.com/a/kloppenheim_02_puresky",
+      "file": "night.webp",
+      "bytes": 139668,
+      "sha256": "86c46410efbfbe4c4c0c52a2795af13c07bc43ecd19eba10f3ff65e863559d2e"
+    }
+  }
+}
