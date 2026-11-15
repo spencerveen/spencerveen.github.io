@@ -12,11 +12,11 @@ const esc=x=>String(x).replace(/[&<>"']/g,v=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 const prereq=id=>({fire:"Control of Fire",tools:"Stone Toolmaking",community:"Tribal Community"}[id]||id);
 const near=ui=>nearStockpile(ui.state.data.village.stockpile,ui.world.player.position.x,ui.world.player.position.z);
 const kindIcon={family:"⌂",hearth:"♨",lore:"✦",council:"❖"};
-const destination={family:"Housing",lore:"Technology",council:"Culture",hearth:"Hearth"};
+const destination={family:"Housing",lore:"Technology",council:"Council Lodge",hearth:"Hearth"};
 const purpose={
  family:"A home for three villagers. Open it to see who lives here and check available beds.",
  lore:"Your place of discovery. Open it to research technologies for your people.",
- council:"The heart of shared tradition. Open it to develop culture and inheritance.",
+ council:"Your tribal leadership hall. Click to assign jobs, manage housing, name a successor and develop traditions.",
  hearth:"A communal fire for roasting hunted meat into nourishing food."
 };
 const itemName=id=>ITEMS[id]?.name||id;
@@ -68,7 +68,7 @@ function storagePanel(ui){
  const hauling=state.villageHaulingStatus(),food=state.villageFoodStatus();
  let html=`<div class="pack-capacity"><span>Village storage</span><strong>${storage.used} / ${storage.capacity}</strong></div>
   <p class="context-note">Only delivered materials can be used for construction. Workers physically haul harvested supplies back to this store. <b>Granary level ${storage.level} / 2</b>.</p>
-  <button type="button" class="game-button alt" data-action="open-settlement-manager">⌂ Open Settlement Management · Jobs, buildings &amp; supplies</button>
+  <p class="context-note">People and leadership are managed at a constructed Council Lodge. The Stockpile handles storage, tools and construction.</p>
   <button type="button" class="game-button alt" data-action="village-section" data-section="buildings">Improve village buildings &amp; storage</button>
   <div class="haul-snapshot"><span>Worker cargo in transit</span><strong>${hauling.inTransit} items</strong></div>
   <div class="haul-snapshot"><span>Villager meals in storage</span><strong>${food.meals} ready</strong></div>
@@ -97,7 +97,9 @@ function storagePanel(ui){
  html+='<div class="entry"><h3>Your people</h3><p>'+
   (state.data.village.residents.length?
    state.data.village.residents.length+" other villagers call this settlement home.":"You are still the only resident of this village.")+
-  '</p><button type="button" data-action="village-section" data-section="people">Meet your people →</button></div>';
+  '</p>'+(state.data.village.buildings.some(b=>b.kind==="council")?
+   '<button type="button" data-action="find-council">Find Council Lodge · Manage villagers →</button>':
+   '<button type="button" data-action="village-section" data-section="build">Build a Council Lodge to manage your people →</button>')+'</div>';
  return html;
 }
 function peoplePanel(ui){
@@ -264,9 +266,9 @@ export function villagePanel(ui){
   <small>Free to place · 2 m grid · Clear, level ground</small>
   <button type="button" data-action="place-stockpile">Choose a location</button>
   <button type="button" class="game-button alt" data-action="found-nearby-stockpile">Use a nearby clearing</button></div>`;
- const section=["storage","build","craft","buildings","people"].includes(ui.villageSection)?ui.villageSection:"storage";
- return `<nav class="section-tabs" aria-label="Village activities">${[["storage","Storage"],["build","Build"],["craft","Craft"],["buildings","Buildings"],["people","People"]].map(([id,label])=>`<button type="button" data-action="village-section" data-section="${id}" class="${section===id?"active":""}" aria-pressed="${section===id}">${label}</button>`).join("")}</nav>`+
-  (section==="build"?buildPanel(ui):section==="craft"?craftPanel(ui):section==="buildings"?buildingsPanel(ui):section==="people"?peoplePanel(ui):storagePanel(ui));
+ const section=["storage","build","craft","buildings"].includes(ui.villageSection)?ui.villageSection:"storage";
+ return `<nav class="section-tabs" aria-label="Village activities">${[["storage","Storage"],["build","Build"],["craft","Craft"],["buildings","Buildings"]].map(([id,label])=>`<button type="button" data-action="village-section" data-section="${id}" class="${section===id?"active":""}" aria-pressed="${section===id}">${label}</button>`).join("")}</nav>`+
+  (section==="build"?buildPanel(ui):section==="craft"?craftPanel(ui):section==="buildings"?buildingsPanel(ui):storagePanel(ui));
 }
 export function selectVillageBuilding(ui,id){return ui.openBuildingPanel(id)}
 export function openStockpile(ui){
@@ -275,8 +277,14 @@ export function openStockpile(ui){
 }
 export function handleVillageAction(ui,btn){
  const action=btn.dataset.action,world=ui.world,state=ui.state;
- if(action==="open-settlement-manager"){
-  ui.openSettlement("overview");return true;
+ if(action==="find-council"){
+  const lodge=state.data.village.buildings.find(b=>b.kind==="council");
+  if(lodge){
+   ui.closePanel();
+   world.focusBuilding?.(lodge.id);
+   ui.toast("Click your Council Lodge to manage the tribe.");
+  }else ui.toast("Build a Council Lodge to organize villagers.");
+  return true;
  }
  if(action==="open-village"){
   if(!state.data.village.stockpile)ui.openFounding();
@@ -284,7 +292,7 @@ export function handleVillageAction(ui,btn){
   return true;
  }
  if(action==="village-section"){
-  if(["storage","build","craft","buildings","people"].includes(btn.dataset.section))ui.villageSection=btn.dataset.section;
+  if(["storage","build","craft","buildings"].includes(btn.dataset.section))ui.villageSection=btn.dataset.section;
   ui.resetScroll=true;
   ui.render();return true;
  }
