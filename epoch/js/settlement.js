@@ -6,7 +6,7 @@ export const BUILDINGS={
  family:{name:"Hut",short:"Housing",description:"A home for up to three villagers. Click to see who lives here and their housing information.",cost:{wood:10,stone:6},requires:[],capacity:3},
  hearth:{name:"Cooking Hearth",short:"Cooking",description:"A communal firepit with a roasting spit. Cook hunted meat and berries into nourishing meals.",cost:{wood:6,stone:5},requires:["fire"],capacity:0},
  lore:{name:"Toolmaker's Shelter",short:"Technology",description:"Your place of discovery. Click this shelter to open Technology and research your first advances.",cost:{wood:12,stone:8},requires:[],capacity:0},
- council:{name:"Council Lodge",short:"Culture",description:"Your tribe's gathering place. Click this lodge to open Culture and establish lasting traditions.",cost:{wood:14,stone:8},requires:[],capacity:0}
+ council:{name:"Council Lodge",short:"Leadership",description:"Your tribal council. Click it to assign jobs, organize housing, plan succession and preserve traditions across generations.",cost:{wood:14,stone:8},requires:[],capacity:0}
 };
 export const PLOTS=[
  {id:"family_1",kind:"family",x:-8,z:4,rotation:0},
