@@ -20,7 +20,7 @@ try{
   localStorage.setItem("epoch.stoneage.slot.1",JSON.stringify({
    version:1,worldSeed:12000,year:-12000,calendarProgress:progress,
    hero:{name:"Village Founder",age:25},
-   village:{population:3,plots:{},buildings:[],residents:people,
+   village:{population:3,plots:{},buildings:[{id:"test_council",kind:"council",x:0,z:-8,turn:0,level:1}],residents:people,
     stockpile:{x:0,z:8,items:{wood:0,stone:0,berries:0,vines:0}}},
    survival:{health:100,stamina:100,hunger:100,gameOver:false},
    lastSavedAt:Date.now()
@@ -48,18 +48,17 @@ try{
  const recovered=await page.evaluate(()=>window.epochDebug().settlement.residents[0]);
  assert(recovered.energy>25,"overnight sleep restores saved energy in real game ticks");
  assert.equal(recovered.resting,true,"tired villagers wait until fully recovered");
- await clickWorldObject(page,{stockpile:true});
- await page.locator('nav.section-tabs [data-action="village-section"][data-section="people"]').click();
- const meter=page.locator('[data-resident-energy="'+residents[0].id+'"]');
- assert.equal(await meter.count(),1,"People tab displays each resident's energy");
- assert(Number(await meter.getAttribute("aria-valuenow"))>=25);
- await page.locator('[data-action="view-resident"][data-id="'+residents[0].id+'"]').click();
+ await clickWorldObject(page,{buildingId:"test_council"});
+ await page.locator('.sm-sidebar [data-section="people"]').click();
+ const row=page.locator('[data-sm-person]').filter({has:page.locator('[data-settlement-job="'+residents[0].id+'"]')});
+ assert.equal(await row.count(),1,"Council People tab shows the resident");
+ assert((await row.innerText()).includes("Energy"));
+ await page.locator('[data-action="settlement-profile"][data-id="'+residents[0].id+'"]').click();
  await page.locator("#modal:not(.hidden)").waitFor({timeout:10000});
  const profile=await page.locator("#guide").innerText();
  assert(profile.includes("Energy:")&&profile.includes("Sleeping"),
   "profile shows live energy and nighttime sleep status");
  await page.locator("#close-modal").click();
- await page.locator("#close-panel").click();
  // The same woodcutter should become available during the daytime after
  // recovering enough energy. Use a temporary test-only clock override.
  const daytime=await page.evaluate(async()=>{
