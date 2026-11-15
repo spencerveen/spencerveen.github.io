@@ -6,6 +6,7 @@ import {coastlineX,COAST_SHELF} from "../js/ocean-generation.js";
 import {waterAt,waterTerrainHeight,SHALLOW_LIMIT} from "../js/water-generation.js";
 import {terrainAppearanceAt} from "../js/mountain-appearance.js";
 import {GameState} from "../js/state.js";
+import {SURVIVAL} from "../js/survival.js";
 assert.equal(BEACH_MODEL_VERSION,1);
 assert(COAST_SHELF>=150);
 for(const seed of [STARTER_SEED,42,1337,987654321]){
@@ -71,7 +72,8 @@ const second=state.harvestResource(node,"gather",1794600001000);
 assert.equal(second.added,1);
 assert.equal(second.removed,true);
 assert.equal(state.inventoryCount("flint"),2);
-assert.equal(state.data.survival.stamina,26);
+assert.equal(state.data.survival.stamina,
+ 30-2*SURVIVAL.gatherCost.flint*SURVIVAL.staminaCostMultiplier);
 state.save();
 const after=new GameState({slot:1});
 assert(after.resourceStatus(node).removed,"collected beach flint remains depleted");
