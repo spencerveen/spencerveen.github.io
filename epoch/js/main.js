@@ -137,6 +137,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
       freeCampfires:world.scene.transformNodes.filter(n=>n.name==="campfire").length,
       position:world.fireLight?{x:world.fireLight.position.x,z:world.fireLight.position.z}:null},
     settlement:{plots:{...state.data.village.plots},population:state.data.village.population,capacity:state.villageCapacity(),
+      development:state.villageDevelopment(),
       residents:(state.data.village.residents||[]).map(v=>({...v})),
       deceased:(state.data.village.deceased||[]).map(v=>({...v})),
       housing:state.villageHousing(),
