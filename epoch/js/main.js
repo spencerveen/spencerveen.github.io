@@ -1,6 +1,6 @@
 import {GameState} from "./state.js?v=20261114haul1";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
-import {World} from "./world.js?v=20261114twilight1";
+import {World} from "./world.js?v=20261114clock1";
 import {UI} from "./ui.js?v=20261114haul1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
@@ -52,33 +52,32 @@ async function startEpoch({slot,newGame=false,founder=null}){
      getFishCaught:id=>state.fishCaught(id),
      onFishCatch:site=>state.catchFish(site)
     });
-  // The temporary preview eases through sunrise and sunset; no calendar changes.
-  // Calendar/aging, saved time, villagers, and other gameplay remain unchanged.
-  const skyPreview=document.getElementById("sky-preview");
-  if(skyPreview){
-   const syncSkyButton=()=>{
-    const sky=world.skyAtmosphere.status();
-    const night=world.skyMode==="night";
-    skyPreview.dataset.mode=world.skyMode;
-    skyPreview.dataset.phase=sky.phase;
-    skyPreview.setAttribute("aria-pressed",String(night));
-    skyPreview.setAttribute("aria-label",night?
-     "Switch to day sky preview":"Switch to night sky preview");
-    skyPreview.querySelector(".sky-preview-icon").textContent=night?"☾":"☀";
-    skyPreview.querySelector(".sky-preview-label").textContent=
-     sky.phase==="sunset"?"Sunset":sky.phase==="sunrise"?"Sunrise":night?"Night":"Day";
-   };
-   syncSkyButton();
-   world.onSkyPreviewComplete=syncSkyButton;
-   skyPreview.addEventListener("click",()=>{
-    world.setSkyPreview(world.skyMode==="day"?"night":"day");
-    syncSkyButton();
-   });
-  }
+  // One saved annual clock controls both the sky and the HUD. One cycle
+  // contains a whole 24-hour day and advances character ages by one year.
+  world.getClockReading=()=>({
+   progress:state.data.calendarProgress,
+   paused:!!ui?.modal||state.data.survival.gameOver
+  });
+  const clockHUD=document.getElementById("game-clock");
+  const syncClockHUD=()=>{
+   if(!clockHUD)return;
+   const clock=state.clockInfo();
+   const symbol=clock.phase==="night"?"☾":
+    clock.phase==="sunrise"?"◑":clock.phase==="sunset"?"◐":"☀";
+   clockHUD.dataset.phase=clock.phase;
+   clockHUD.querySelector(".game-clock-icon").textContent=symbol;
+   clockHUD.querySelector(".game-clock-time").textContent=clock.label;
+   clockHUD.setAttribute("aria-label",clock.label+", "+clock.phase+
+    ". One day and night cycle equals one in-game year.");
+  };
+  syncClockHUD();
   ui=new UI(state,world);
   sessionStarted=true;
   state.save();
-  window.setInterval(()=>{if(!ui?.modal)state.advance(1)},1000);
+  window.setInterval(()=>{
+   if(!ui?.modal)state.advance(1);
+   syncClockHUD();
+  },1000);
   window.addEventListener("pagehide",()=>state.save());
   let revealed=false;
   const reveal=()=>{if(revealed)return;revealed=true;loading.classList.add("hidden");};
@@ -97,6 +96,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
     ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal,activeResidentId:ui.activeResidentId},
     forest:world.terrain.status,
     sky:world.skyAtmosphere?.status()||null,
+    clock:state.clockInfo(),
     resourceNodes:state.resourceStatistics(),
     wildlife:world.animals.map(a=>({id:a.id,species:a.species,dead:a.dead,
      status:state.wildlifeStatus(a.definition),
