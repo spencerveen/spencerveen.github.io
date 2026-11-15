@@ -34,7 +34,9 @@ jobs:
       - name: Verify real carrying, stockpile capacity, persistence and dry routes
         run: node epoch/tests/check-villager-hauling.mjs
       - name: Validate locally bundled CC0 sky textures and rendering setup
-        run: node epoch/tests/check-sky-preview.mjs
+        run: |
+          node epoch/tests/check-sky-preview.mjs
+          node epoch/tests/check-sky-transitions.mjs
       - name: Install browser test dependency
         run: npm install --no-save --no-package-lock playwright@1.58.2
       - name: Launch Epoch static test server
