@@ -5,7 +5,7 @@
 import {BUILDINGS,VILLAGE_START_CAPACITY} from "./settlement.js?v=20261114u";
 import {validVillagerJob,VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
 import {normalizeCargo,normalizeHaulPosition,transferCargo} from "./villager-hauling.js?v=20261114haul1";
-import {normalizedEnergy,normalizedResting} from "./villager-routines.js?v=20261115food1";
+import {normalizedEnergy,normalizedResting} from "./villager-routines.js?v=20261115life1";
 import {normalizedHunger,normalizedLastMeal} from "./villager-nutrition.js?v=20261115food1";
 
 export const NATURAL_DEATH_AGE=100;
