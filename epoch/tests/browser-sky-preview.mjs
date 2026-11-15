@@ -11,7 +11,8 @@ try{
  await page.addInitScript(()=>{
   if(localStorage.getItem("epoch.stoneage.slot.1"))return;
   localStorage.setItem("epoch.stoneage.slot.1",JSON.stringify({
-   version:1,worldSeed:12000,hero:{name:"Sky Explorer",age:25},
+   version:1,worldSeed:12000,year:-12000,calendarProgress:0,
+   hero:{name:"Sky Explorer",age:25},
    village:{population:1,plots:{},buildings:[]},
    survival:{health:100,stamina:100,hunger:100,gameOver:false},
    lastSavedAt:Date.now()
@@ -25,113 +26,77 @@ try{
   return sky?.loaded?.day&&sky?.loaded?.night;
  },null,{timeout:45000});
  const initial=await page.evaluate(()=>{
-  const w=window.__epochTestWorld;
-  const sky=w.skyAtmosphere;
-  return {
-   mode:sky.mode,loaded:sky.status().loaded,error:sky.status().shaderError,
-   meshCount:w.scene.meshes.filter(m=>m.metadata?.skybox).length,
+  const w=window.__epochTestWorld,sky=w.skyAtmosphere;
+  return {clock:window.epochDebug().clock,mode:sky.mode,loaded:sky.status().loaded,
+   error:sky.status().shaderError,meshCount:w.scene.meshes.filter(m=>m.metadata?.skybox).length,
    domePickable:sky.dome.isPickable,domeEnabled:sky.dome.isEnabled(),
    intensity:w.skySun.intensity,ambient:w.skyHemi.intensity,
    fog:[w.scene.fogColor.r,w.scene.fogColor.g,w.scene.fogColor.b],
    radius:sky.dome.getBoundingInfo().boundingSphere.radius,
-   activeTerrain:!!w.m.terrainSurface?.setFloat
-  };
+   activeTerrain:!!w.m.terrainSurface?.setFloat};
  });
+ assert.equal(initial.clock.label,"7:00 AM");
+ assert.equal(initial.clock.phase,"day");
  assert.equal(initial.mode,"day");
- assert.deepEqual(initial.loaded,{day:true,night:true},"both sky panoramas load locally");
+ assert.deepEqual(initial.loaded,{day:true,night:true},"both sky panoramas loaded locally");
  assert.equal(initial.error,"","sky shader compiles without errors");
- assert.equal(initial.meshCount,1,"only one sky dome is created");
- assert.equal(initial.domePickable,false,"sky cannot block picking resources/buildings");
+ assert.equal(initial.meshCount,1);
+ assert.equal(initial.domePickable,false);
  assert.equal(initial.domeEnabled,true);
- assert(initial.radius>300&&initial.radius<1000,"sky dome has a world-sized bounding sphere");
- assert(initial.activeTerrain,"custom terrain shader is retained");
- const preview=page.locator("#sky-preview");
- assert.equal(await preview.getAttribute("aria-pressed"),"false");
+ assert(initial.radius>300&&initial.radius<1000);
+ assert(initial.activeTerrain);
+ assert.equal(await page.locator("#game-clock .game-clock-time").innerText(),"7:00 AM");
+ assert.equal(await page.locator("#sky-preview").count(),0,
+  "manual sky preview control replaced with a real clock");
  const folder=path.join("epoch","tests","artifacts");
  mkdirSync(folder,{recursive:true});
- await page.screenshot({path:path.join(folder,"epoch-sky-day.png"),animations:"disabled"});
- await preview.click();
- await page.waitForFunction(()=>window.epochDebug()?.sky?.phase==="sunset");
- const early=await page.evaluate(()=>{
-  const sky=window.epochDebug().sky;
-  return {mode:sky.mode,phase:sky.phase,mix:sky.nightMix};
- });
- assert.equal(early.mode,"night");
- assert(early.mix<.2,"switching modes begins near the daylight state without snapping");
- assert.equal(await preview.getAttribute("data-phase"),"sunset");
- const sunset=await page.evaluate(()=>{
-  const w=window.__epochTestWorld;
-  w.skyAtmosphere.update(w.camera,8);
-  const sky=w.skyAtmosphere.status();
-  return {mode:sky.mode,phase:sky.phase,mix:sky.nightMix,twilight:sky.twilight,
-   intensity:w.skySun.intensity,ambient:w.skyHemi.intensity,
-   fog:[w.scene.fogColor.r,w.scene.fogColor.g,w.scene.fogColor.b],
-   domeCount:w.scene.meshes.filter(m=>m.metadata?.skybox).length};
- });
- assert.equal(sunset.phase,"sunset");
- assert(sunset.mix>.4&&sunset.mix<.65,"sky passes through a visible twilight midpoint");
- assert(sunset.twilight>.7,"the horizon is warmer at dusk");
- assert(sunset.intensity<initial.intensity&&sunset.intensity>.16);
- assert.equal(sunset.domeCount,1);
- await page.screenshot({path:path.join(folder,"epoch-sky-sunset.png"),animations:"disabled"});
+ await page.screenshot({path:path.join(folder,"epoch-clock-day.png"),animations:"disabled"});
+ const phases=[];
+ for(const [hour,phase,expectedMix] of [[19,"sunset",.5],[22,"night",1],
+  [6,"sunrise",.5],[7,"day",0]]){
+  const state=await page.evaluate(hour=>{
+   const w=window.__epochTestWorld;
+   const progress=((((hour-7)%24)+24)%24)/24;
+   w.getClockReading=()=>({progress,paused:true});
+   w.updateClockSky(.016);
+   const sky=w.skyAtmosphere;
+   return {phase:sky.status().phase,mix:sky.nightMix,
+    intensity:w.skySun.intensity,ambient:w.skyHemi.intensity,
+    fog:[w.scene.fogColor.r,w.scene.fogColor.g,w.scene.fogColor.b],
+    meshCount:w.scene.meshes.filter(m=>m.metadata?.skybox).length,
+    error:sky.status().shaderError};
+  },hour);
+  assert.equal(state.phase,phase,phase+" should match the saved clock");
+  assert(Math.abs(state.mix-expectedMix)<1e-5,phase+" blend is clock-driven");
+  assert.equal(state.meshCount,1,"sky reuses the same dome across all hours");
+  assert.equal(state.error,"");
+  phases.push(state);
+  await page.screenshot({path:path.join(folder,"epoch-clock-"+phase+".png"),animations:"disabled"});
+ }
+ assert(phases[0].intensity<initial.intensity&&phases[0].intensity>phases[1].intensity);
+ assert(phases[1].ambient<initial.ambient);
+ assert(phases[1].fog[0]<initial.fog[0]);
+ assert.notDeepEqual(phases[0].fog,phases[2].fog,
+  "dawn and dusk have distinct atmospheric colors");
+ assert.equal(phases[3].intensity,initial.intensity);
+ // Test an actual saved fractional year, not a volatile visual override.
  await page.evaluate(()=>{
-  const w=window.__epochTestWorld;
-  w.skyAtmosphere.update(w.camera,16);
-  w.onSkyPreviewComplete?.();
+  const key="epoch.stoneage.slot.1";
+  const saved=JSON.parse(localStorage.getItem(key));
+  saved.calendarProgress=.5;
+  localStorage.setItem(key,JSON.stringify(saved));
  });
- const night=await page.evaluate(()=>{
-  const w=window.__epochTestWorld,sky=w.skyAtmosphere;
-  return {mode:sky.mode,phase:sky.status().phase,mix:sky.nightMix,
-   loaded:sky.status().loaded,error:sky.status().shaderError,
-   intensity:w.skySun.intensity,ambient:w.skyHemi.intensity,
-   fog:[w.scene.fogColor.r,w.scene.fogColor.g,w.scene.fogColor.b],
-   displayed:sky.dome.metadata.preview,
-   activeMeshes:w.scene.meshes.filter(m=>m.metadata?.skybox).length,
-   skyBrightness:w.m.terrainSurface._floats?.skyBrightness??null};
- });
- assert.equal(night.mode,"night");
- assert.equal(night.phase,"night");
- assert.equal(night.mix,1);
- assert.equal(night.displayed,"night");
- assert.equal(night.activeMeshes,1,"toggle must reuse the same sky dome");
- assert(night.intensity<initial.intensity&&night.ambient<initial.ambient,
-  "night lighting must be dimmer");
- assert(night.fog[0]<initial.fog[0],"night fog must match the dark sky");
- assert.equal(await preview.getAttribute("aria-pressed"),"true");
- assert.equal(await preview.getAttribute("data-phase"),"night");
- assert.equal(night.error,"");
- await page.screenshot({path:path.join(folder,"epoch-sky-night.png"),animations:"disabled"});
- await preview.click();
- await page.waitForFunction(()=>window.epochDebug()?.sky?.phase==="sunrise");
- const sunrise=await page.evaluate(()=>{
-  const w=window.__epochTestWorld;
-  w.skyAtmosphere.update(w.camera,8);
-  const sky=w.skyAtmosphere.status();
-  return {mode:sky.mode,phase:sky.phase,mix:sky.nightMix,
-   fog:[w.scene.fogColor.r,w.scene.fogColor.g,w.scene.fogColor.b]};
- });
- assert.equal(sunrise.mode,"day");
- assert.equal(sunrise.phase,"sunrise");
- assert(sunrise.mix>.35&&sunrise.mix<.6);
- assert.notDeepEqual(sunrise.fog,sunset.fog,"sunrise uses a distinct warm atmosphere");
- await page.screenshot({path:path.join(folder,"epoch-sky-sunrise.png"),animations:"disabled"});
- await page.evaluate(()=>{
-  const w=window.__epochTestWorld;
-  w.skyAtmosphere.update(w.camera,16);
-  w.onSkyPreviewComplete?.();
- });
- const reset=await page.evaluate(()=>{
-  const w=window.__epochTestWorld;
-  return {mode:w.skyMode,phase:w.skyAtmosphere.status().phase,
-   mix:w.skyAtmosphere.nightMix,intensity:w.skySun.intensity,
-   meshCount:w.scene.meshes.filter(m=>m.metadata?.skybox).length};
- });
- assert.equal(reset.mode,"day");
- assert.equal(reset.phase,"day");
- assert.equal(reset.mix,0);
- assert.equal(reset.intensity,initial.intensity);
- assert.equal(reset.meshCount,1);
- assert.equal(await preview.getAttribute("data-phase"),"day");
- assert.deepEqual(errors,[],"preview must not generate browser errors");
- console.log("PASS browser skyboxes: local panoramas, reversible dawn/dusk lighting, preview controls and one non-pickable dome");
+ await page.reload({waitUntil:"domcontentloaded",timeout:45000});
+ await continueGame(page);
+ await page.waitForFunction(()=>window.epochDebug()?.clock?.phase==="sunset",null,{timeout:15000});
+ const persisted=await page.evaluate(()=>window.epochDebug());
+ assert.equal(persisted.clock.phase,"sunset");
+ assert.equal(persisted.clock.hour24,19);
+ assert.equal(persisted.clock.nightMix,.5);
+ assert.equal(persisted.year,"12,000 BCE","previewing sky must not age the character");
+ assert.equal(persisted.heroAge,25);
+ assert.equal(await page.locator("#game-clock").getAttribute("data-phase"),"sunset");
+ assert.equal(await page.locator("#game-clock .game-clock-time").innerText(),"7:00 PM");
+ assert.deepEqual(errors,[],"automatic sky and clock should create no browser errors");
+ console.log("PASS browser 6C.1D: local sky, automatic hourly phases, lighting, live clock HUD and fractional-year reload");
 }finally{await browser.close()}
