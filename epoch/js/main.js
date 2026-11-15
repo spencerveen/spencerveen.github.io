@@ -40,6 +40,11 @@ async function startEpoch({slot,newGame=false,founder=null}){
      onResidentSelect:id=>ui?.openResident(id),
      onVillagerCollect:(id,task,x,z)=>state.collectVillagerCargo(id,task,x,z),
      onVillagerDeliver:id=>state.deliverVillagerCargo(id),
+     getVillagerEnergy:id=>{
+      const person=state.data.village.residents.find(v=>v.id===id);
+      return person?{energy:person.energy,resting:person.resting}:
+       {energy:100,resting:false};
+     },
      spendSprint:amount=>state.spendStamina(amount,"sprint"),
      spendSwim:amount=>state.spendStamina(amount,"swim"),
      getVitals:()=>({...state.survivalStatus(),
@@ -55,6 +60,18 @@ async function startEpoch({slot,newGame=false,founder=null}){
     });
   // One saved annual clock controls both the sky and the HUD. One cycle
   // contains a whole 24-hour day and advances character ages by one year.
+  state.getVillagerActivity=id=>{
+   const person=world.people.find(p=>p.id===id);
+   if(!person)return null;
+   const pile=world.currentVillage?.stockpile;
+   return {
+    mode:person.work?.mode||"idle",
+    moving:person.work?.moving===true,
+    atHome:Math.hypot(person.x-person.homeX,person.z-person.homeZ)<=1.5,
+    local:!pile||Math.hypot(world.player.position.x-pile.x,
+     world.player.position.z-pile.z)<=100
+   };
+  };
   world.getClockReading=()=>({
    progress:state.data.calendarProgress,
    paused:!revealed||!!ui?.modal||state.data.survival.gameOver
@@ -124,6 +141,9 @@ async function startEpoch({slot,newGame=false,founder=null}){
       housing:state.villageHousing(),
       people:world.people.map(p=>({id:p.id,name:p.name,homeId:p.homeId,job:p.job,
        work:p.work?.mode||"idle",target:p.work?.task?.id||null,x:p.x,z:p.z,
+       energy:state.data.village.residents.find(v=>v.id===p.id)?.energy??100,
+       resting:state.data.village.residents.find(v=>v.id===p.id)?.resting??false,
+       sleeping:!!p.sleepMarker?.isEnabled(),
        cargo:{...p.cargo},cargoVisible:!!p.cargoVisual?.isEnabled(),
        routeLength:p.work?.route?.length||0})),
       hauling:state.villageHaulingStatus(),
