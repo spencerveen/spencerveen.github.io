@@ -90,6 +90,29 @@ try{
  assert(await page.locator('[data-action="settlement-find-stockpile"]').isVisible());
  const withdraw=page.locator('[data-action="settlement-transfer"][data-direction="withdraw"][data-item="wood"]');
  assert(await withdraw.isDisabled(),"remote inventory transfers must remain physical");
+ // Returning to the real stockpile re-enables the same physical transaction,
+ // and a withdrawal followed by deposit cannot duplicate or lose items.
+ await page.evaluate(()=>{
+  const w=window.__epochTestWorld;
+  w.player.position.x=1;w.player.position.z=9;
+ });
+ await page.locator('.sm-sidebar [data-action="settlement-section"][data-section="overview"]').click();
+ await page.locator('.sm-sidebar [data-action="settlement-section"][data-section="supplies"]').click();
+ const nearbyWithdraw=page.locator('[data-action="settlement-transfer"][data-direction="withdraw"][data-item="wood"]');
+ assert(await nearbyWithdraw.isEnabled(),"physical transfers activate beside the stockpile");
+ const beforeTransfer=await page.evaluate(()=>window.epochDebug());
+ await nearbyWithdraw.click();
+ const afterWithdraw=await page.evaluate(()=>window.epochDebug());
+ assert.equal(afterWithdraw.settlement.stockpile.items.wood,
+  beforeTransfer.settlement.stockpile.items.wood-12);
+ assert.equal(afterWithdraw.inventory.slots.filter(s=>s?.id==="wood")
+  .reduce((sum,s)=>sum+s.qty,0),12);
+ const nearbyDeposit=page.locator('[data-action="settlement-transfer"][data-direction="deposit"][data-item="wood"]');
+ assert(await nearbyDeposit.isEnabled());
+ await nearbyDeposit.click();
+ const afterDeposit=await page.evaluate(()=>window.epochDebug());
+ assert.equal(afterDeposit.settlement.stockpile.items.wood,
+  beforeTransfer.settlement.stockpile.items.wood,"physical withdraw/deposit balances exactly");
  await page.setViewportSize({width:390,height:820});
  const mobile=await page.evaluate(()=>{
   const panel=document.querySelector("#modal.is-settlement .modal");
