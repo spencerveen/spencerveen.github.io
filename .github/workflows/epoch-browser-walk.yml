@@ -52,6 +52,8 @@ jobs:
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/epoch-http.log 2>&1 &
           sleep 1
+      - name: Upgrade settlement structures and verify rendering and saved benefits
+        run: node epoch/tests/browser-village-development.mjs
       - name: Verify automatic game clock, sunrise/sunset lighting and save persistence in Chromium
         run: node epoch/tests/browser-sky-preview.mjs
       - name: Verify sleeping villagers, energy displays and work shift boundaries
@@ -60,8 +62,6 @@ jobs:
         run: node epoch/tests/browser-villager-food.mjs
       - name: Verify villagers gather, stroll, socialize and return home at bedtime
         run: node epoch/tests/browser-village-life.mjs
-      - name: Upgrade settlement structures and verify rendering and saved benefits
-        run: node epoch/tests/browser-village-development.mjs
       - name: Verify villager jobs, movement, and saved assignments in Chromium
         run: node epoch/tests/browser-villager-jobs.mjs
       - name: Verify visible supplies travel to village storage and survive reload
