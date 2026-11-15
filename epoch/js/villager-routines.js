@@ -52,6 +52,7 @@ export const villagerActivityText=(mode,shift,resting=false)=>{
  return {
   outbound:"Traveling to work",working:"Gathering resources",
   returning:"Carrying supplies home",waiting:"Waiting to unload",
+  toMeal:"Walking to village stores",eating:"Eating a meal",
   stuck:"Finding a safe route",idle:"At home"
  }[mode]||"At home";
 };
