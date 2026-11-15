@@ -48,7 +48,7 @@ assert.equal(game.discoverTribe({...t,id:"tribe:999,999"}),false,"spoofed tribe 
 assert(game.discoverTribe(t),"approaching a valid site records discovery");
 assert.equal(game.discoverTribe(t),false,"discovery is awarded only once");
 assert.deepEqual(game.tribeRecord(t.id),{status:"active",discovered:true,discoveredYear:-12000,
- trust:t.disposition==="peaceful"?20:t.disposition==="neutral"?10:0,completed:0,placementVersion:2});
+ trust:t.disposition==="peaceful"?20:t.disposition==="neutral"?10:0,completed:0,placementVersion:2,familyVersion:1});
 assert.equal(game.data.village.population,1,"discovering a tribe never grants free villagers");
 assert.equal(game.data.knowledge,0,"discovering does not mint Knowledge");
 assert.equal(game.data.culture,0,"discovering does not mint Culture");
