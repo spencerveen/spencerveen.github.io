@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {GameState} from "../js/state.js";
 import {REAL_SECONDS_PER_YEAR,REAL_SECONDS_PER_GAME_HOUR,GAME_START_HOUR,
  GAME_HOURS_PER_YEAR,normalizeCalendarProgress,hourAtProgress,
- progressAtHour,clockAtProgress,skyAtHour} from "../js/game-clock.js";
+ progressAtHour,clockAtProgress,skyAtHour,sunsetBlend} from "../js/game-clock.js";
 
 const memory=new Map();
 globalThis.localStorage={
@@ -32,6 +32,17 @@ assert.equal(skyAtHour(7).nightMix,0);
 assert.equal(skyAtHour(12).nightMix,0);
 assert.equal(skyAtHour(18).nightMix,0);
 assert.equal(skyAtHour(19).nightMix,.5);
+assert.equal(sunsetBlend(0),0);
+assert.equal(sunsetBlend(.5),.5);
+assert.equal(sunsetBlend(1),1);
+for(let i=1;i<=100;i++)
+ assert(sunsetBlend(i/100)>=sunsetBlend((i-1)/100),"sunset stays monotonic");
+const evening=skyAtHour(18+23/60);
+assert.equal(evening.phase,"sunset");
+assert(evening.nightMix>.25&&evening.nightMix<.35,
+ "6:23 PM must visibly blend the sky, rather than leaving it 90% daytime");
+assert.equal(skyAtHour(17+59/60).nightMix,0);
+assert.equal(skyAtHour(20).nightMix,1);
 assert.equal(skyAtHour(20).nightMix,1);
 assert.equal(skyAtHour(22).nightMix,1);
 assert.equal(skyAtHour(6).phase,"sunrise");
@@ -77,4 +88,4 @@ loaded.devCheats.unlimitedHunger=true;
 loaded.advance(1);
 assert.equal(loaded.data.year,year+2,"legacy near-year-end saves roll over once");
 assert.equal(loaded.data.hero.age,age+2);
-console.log("PASS 6C.1D: 432-second annual clock, sunrise/sunset timetable, save persistence, and natural aging");
+console.log("PASS 6C.1D: clock, stronger 6:23 PM sunset, natural aging, save persistence and dawn/dusk");
