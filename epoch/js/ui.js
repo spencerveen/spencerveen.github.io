@@ -1,4 +1,4 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261115sleepindoors2";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261115relations1";
 import {COOKING_RECIPES} from "./cooking.js?v=20261114fish2";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
@@ -12,7 +12,7 @@ import {normalizedHunger,hungryStatus,VILLAGER_FOOD_PRIORITY} from "./villager-n
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114fish1";
 import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
 import {structureLevel,hearthExtraServing} from "./village-development.js?v=20261114development1";
-import {settlementManagementPage,MANAGEMENT_SECTIONS} from "./settlement-management.js?v=20261115sleepindoors2";
+import {settlementManagementPage,MANAGEMENT_SECTIONS} from "./settlement-management.js?v=20261115relations1";
 import {councilLodge,councilStage} from "./council-evolution.js?v=20261115council1";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
@@ -156,7 +156,7 @@ export class UI{
  }
  renderResidentProfile(profile){
   if(!profile)return false;
-  const {resident,home,homes,connections}=profile;
+  const {resident,home,homes,connections,relationships=[]}=profile;
   const year=y=>y<0?Math.abs(y).toLocaleString()+" BCE":(y+1)+" CE";
   const origin=resident.originTribeName||"the original settlement";
   const arrival=resident.recruitment==="peaceful"?
@@ -214,6 +214,15 @@ export class UI{
    '<h3 class="section-heading">Housing assignment</h3>'+
    '<p class="context-note">Move this resident to an available place without exceeding its bed capacity. The founder occupies one communal camp bed.</p>'+
    '<div class="resident-home-options">'+homesHtml+'</div>'+
+   '<h3 class="section-heading">Friendships &amp; partnerships</h3>'+
+   '<div class="entry"><p class="context-note">Relationships grow through real conversations and shared Hut life. Partnerships require a strong bond and adulthood; they do not automatically move villagers or create children.</p>'+
+   (relationships.length?relationships.map(bond=>
+    '<div class="timeline"><b>'+esc(bond.stage)+' · '+bond.affinity+'/100</b><span>'+
+     (bond.isLeader?'<strong>'+esc(bond.name)+' · Village leader</strong>':
+      '<button type="button" class="resident-link" data-action="view-resident" data-id="'+esc(bond.id)+'">'+esc(bond.name)+'</button>')+
+     (bond.sharedYears?' · '+bond.sharedYears+' shared Hut year'+(bond.sharedYears===1?'':'s'):'')+
+     '</span></div>').join(''):
+    '<p class="context-note">No established personal bonds yet. Villagers need time together to become friends.</p>')+'</div>'+
    '<h3 class="section-heading">People they know</h3>'+
    '<div class="entry"><h3>Former clanmates</h3>'+
    connectionList(connections.clanmates,"No other villagers from the same tribe.")+

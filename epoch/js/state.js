@@ -3,7 +3,7 @@ import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,effecti
 import {COOKING_RECIPES,COOKING_REACH,prepareCooking} from "./cooking.js?v=20261114development1";
 import {newDevCheats,validDevCheat} from "./dev-cheats.js?v=20261114devpanel1";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
-import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261115council1";
+import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261115relations1";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114development1";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  stockpileCapacity,STOCKPILE_CAPACITY,stockpileSpace,stockpileHas,payStockpile,nearStockpile,withinVillage,
@@ -13,6 +13,8 @@ import {resourceNodeStatus,resourceStateStats,recordResourceNode} from "./resour
 import {harvestAtNode} from "./harvest.js?v=20261115staminabalance1";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
+import {normalizeRelationships,advanceSocialRelationships,advanceHouseholdRelationships,pruneRelationships,
+ residentRelationships,relationshipSummary} from "./relationships.js?v=20261115relations1";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
  moveResidentHome,houseCampResidents,assignResidentJob,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
  NATURAL_DEATH_AGE} from "./residents.js?v=20261115sleepindoors2";
@@ -130,6 +132,8 @@ export class GameState{
    ];
   }
   normalizeHomes(this.data.village);
+  this.data.village.relationships=normalizeRelationships(
+   data?.village?.relationships,this.data.village,this.data.hero.sourceResidentId);
   // One-time migration: protect historical construction coordinates from
   // newly introduced water. New games retain fixed seed-only waterways.
   // Persist this snapshot so later building never reshapes nearby rivers.
@@ -237,6 +241,7 @@ export class GameState{
   this.onVitals=()=>{};
   this.onVillagerNeeds=()=>{};
   this.getVillagerActivity=()=>null;
+  this.getVillagerSocialPairs=()=>[];
   this.sprintedThisTick=false;this.vitalSaveClock=0;this.villagerEnergySaveClock=0;
   this.lastSave=0;
  }
@@ -437,12 +442,14 @@ export class GameState{
    resident:{...resident,memories:resident.memories.map(m=>({...m}))},
    home:homes.find(h=>h.id===resident.homeId)||null,
    homes,
-   connections:residentConnections(this.data.village,id)
+   connections:residentConnections(this.data.village,id),
+   relationships:residentRelationships(this.data.village,id,this.data.hero)
   };
  }
  ageResidents(years=1){
   const d=this.data,deaths=ageVillageResidents(d.village,years,d.year);
   if(deaths.length){
+   pruneRelationships(d.village,d.year,d.hero.sourceResidentId);
    d.village.population=d.village.residents.length+1;
    if(deaths.some(p=>p.id===d.successorId))d.successorId=null;
   }
@@ -542,6 +549,7 @@ export class GameState{
   return {...drop,removed:pick.removed,goods:pick.goods};
  }
  villageHousing(){return housingUnits(this.data.village)}
+ villageRelationshipSummary(){return relationshipSummary(this.data.village)}
  assignResidentHome(id,homeId){
   const changed=moveResidentHome(this.data.village,id,homeId,this.data.year);
   if(!changed)return false;
@@ -648,7 +656,8 @@ export class GameState{
   const agedOut=this.ageResidents(0);
   if(agedOut.length)this.data.history.unshift(
    agedOut.map(p=>p.name).join(", ")+" died of old age.");
-  const oldName=this.data.hero.name,roster=this.data.village.residents;
+  const oldName=this.data.hero.name,oldHeroId=this.data.hero.sourceResidentId,
+   roster=this.data.village.residents;
   const named=roster.find(r=>r.id===this.data.successorId);
   const chosen=named||roster[Math.floor(Math.random()*roster.length)]||null;
   const eventId=++v.deathCount;
@@ -668,6 +677,8 @@ export class GameState{
   this.data.village.population=this.data.village.residents.length+1;
   this.data.hero={name:chosen.name,age:chosen.age,
    appearance:randomAppearance("epoch:villager:"+chosen.id,chosen.sex),sourceResidentId:chosen.id};
+  pruneRelationships(this.data.village,this.data.year,chosen.id,
+   oldHeroId?{[oldHeroId]:oldName}:{});
   const inherited=this.data.civics.includes("apprenticeship")?.25:
     this.data.civics.includes("oral")?.15:.08;
   this.data.skills=Object.fromEntries(SKILLS.map(([id])=>[id,Math.round(this.data.skills[id]*inherited)]));
@@ -1055,6 +1066,8 @@ export class GameState{
    d.calendarProgress=Math.max(0,d.calendarProgress-1);d.year++;
    d.culture+=councilYearCulture(d.village);
    const deceased=this.ageResidents(1);
+   const householdEvents=advanceHouseholdRelationships(d.village,d.year);
+   if(householdEvents.length)d.history.unshift(...householdEvents);
    const memorial=deceased.length?
     " "+deceased.map(p=>p.name).join(", ")+" died of old age.":"";
    d.hero.age++;
@@ -1095,6 +1108,10 @@ export class GameState{
     changed=true;
    }
   }
+  const social=advanceSocialRelationships(this.data.village,
+   this.getVillagerSocialPairs(),seconds,this.data.year);
+  if(social.changed)changed=true;
+  if(social.events.length)this.changed(social.events.join(" "));
   if(changed){
    this.villagerEnergySaveClock+=seconds;
    if(this.villagerEnergySaveClock>=8){

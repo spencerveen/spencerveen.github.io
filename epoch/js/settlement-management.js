@@ -14,6 +14,7 @@ import {VILLAGE_UPGRADES,structureLevel} from "./village-development.js?v=202611
 import {normalizedHunger,hungryStatus} from "./villager-nutrition.js?v=20261115food1";
 import {normalizedEnergy,villagerActivityText,villagerDayPhase} from "./villager-routines.js?v=20261115life1";
 import {councilLodge,councilStage} from "./council-evolution.js?v=20261115council1";
+import {residentRelationships} from "./relationships.js?v=20261115relations1";
 
 export const MANAGEMENT_SECTIONS=Object.freeze(["overview","people","traditions"]);
 export const MANAGEMENT_SECTION_NAMES=Object.freeze({
@@ -51,6 +52,7 @@ function overview(ui,lodge,stage){
  const needs=roster.filter(managementNeedsAttention).length;
  const freeBeds=state.villageCapacity()-v.population;
  const shift=villagerDayPhase(state.clockInfo().hour);
+ const social=state.villageRelationshipSummary();
  const alerts=[];
  if(food.critical)alerts.push(`<li class="sm-alert warn">${food.critical} villager${food.critical===1?" is":"s are"} critically hungry. Prepare food at the Cooking Hearth and deliver it to the stockpile.</li>`);
  if(needs)alerts.push(`<li class="sm-alert">${needs} villager${needs===1?" needs":"s need"} food or rest.</li>`);
@@ -84,6 +86,7 @@ function overview(ui,lodge,stage){
  <p>Current leader · ${esc(state.data.hero.name)}</p>
  <p>Designated successor · ${esc(successorName(state)||"Not selected")}</p>
  <p>Home spaces · ${housing.reduce((sum,h)=>sum+h.capacity-h.occupied,0)} unoccupied</p>
+ <p>Friendships · ${social.friendships} · Partnerships · ${social.partnerships}</p>
  <button type="button" class="sm-link" data-action="settlement-section" data-section="traditions">Plan succession & traditions</button></section></div>
  <div class="sm-footer-actions"><span>For building improvements and inventory, visit the Stockpile. Huts manage their own households; the Toolmaker and Hearth keep their original functions.</span></div>`;
 }
@@ -109,12 +112,16 @@ function people(ui){
   const match=(filter==="all"||filter==="needs"&&critical||filter==="workers"&&p.job!=="idle")&&
    manageSearchText(p,VILLAGER_JOBS[p.job]?.name,home?.label).includes(query);
   const cargo=cargoCount(p.cargo);
+  const bonds=residentRelationships(v,p.id,state.data.hero);
+  const partner=bonds.find(b=>b.stage==="Partner");
+  const friendCount=bonds.filter(b=>b.affinity>=18).length;
   return `<article class="sm-person ${critical?"needs":""}" data-sm-person
    data-sm-search="${esc(manageSearchText(p,VILLAGER_JOBS[p.job]?.name,home?.label))}"
    data-sm-worker="${p.job!=="idle"?"true":"false"}" data-sm-needs="${critical?"true":"false"}"
    ${match?"":"hidden"}>
    <div class="sm-person-head"><div><strong>${esc(p.name)}</strong>
-    <small>Age ${Number(p.age)||0} · ${esc(home?.label||"Communal camp")} · ${esc(status)}</small></div>
+    <small>Age ${Number(p.age)||0} · ${esc(home?.label||"Communal camp")} · ${esc(status)}</small>
+    <small>${partner?"Partner of "+esc(partner.name)+" · ":""}${friendCount} friend${friendCount===1?"":"s"}</small></div>
     <span class="sm-pill ${chosen?"complete":critical?"attention":""}">${chosen?"Successor":critical?esc(hungryStatus(p.hunger)==="Fed"?"Needs rest":hungryStatus(p.hunger)):"Settler"}</span></div>
    <div class="sm-person-vitals">
     <div><span>Energy</span><strong>${energy}%</strong>${meter(energy,100)}</div>

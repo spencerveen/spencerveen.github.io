@@ -2,6 +2,8 @@
 
 **Status:** Playable Stone Age foundation / pre-alpha.
 
+**Phase 7A.1:** [Friendships and partnerships](./RELATIONSHIPS.md) now grow through real nearby conversations and shared Hut years. View reciprocal bonds in the Council Lodge and resident profiles. Family formation and births are future work.
+
 **Static site path:** `/epoch/`
 
 **Design:** [GAME_DESIGN.md](./GAME_DESIGN.md)  
@@ -236,7 +238,7 @@ Progress autosaves after state changes. The game menu also offers **Save game** 
 
 ## Current limits and assets
 
-Housing capacity increases immediately; peaceful recruitment, individual villager profiles, personal survival, food consumption and death/survivor succession are implemented. Worker jobs, villager hunger, happiness, personality traits, births, hostile combat, weapons, hunting, branching conversations, complex diplomacy, rival civilization AI, additional ages, multiplayer, accounts, and synced saves are not yet implemented. Research and Culture are functional building activities; automatic building production bonuses remain planned. Desktop play is the main target, with responsive panels and on-screen placement controls; complete touch movement still needs work.
+Housing capacity increases immediately; peaceful recruitment, individual villager profiles, personal survival, food consumption and death/survivor succession are implemented. Villager jobs, real transport, daily schedules, hunger, resting, hunting, cooking, fishing, building upgrades, and persistent social bonds are implemented. Children, family trees, happiness, personality traits, hostile tribe combat, complex diplomacy, rival civilization AI, additional ages, multiplayer, accounts and synced saves remain future work. Research and Culture are functional building activities; level-two structures provide working storage, production, housing and civic benefits. Desktop play is the main target, with responsive panels and on-screen placement controls; complete touch movement still needs work.
 
 Characters use Quaternius Universal Base Characters Standard **CC0** assets with real skinned rigs, separate hairstyles, and authored idle/walk/run clips. Source credit, license, pinned import revision, and rebuild instructions are in [assets/characters/QUATERNIUS.md](./assets/characters/QUATERNIUS.md). Previous original GLBs remain as fallback art. Stone Age clothing and animation polish are future visual work; the founder creator currently uses a stylized reference portrait.
 

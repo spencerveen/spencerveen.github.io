@@ -1,9 +1,10 @@
-import {GameState} from "./state.js?v=20261115staminaregen2";
+import {GameState} from "./state.js?v=20261115relations1";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {World} from "./world.js?v=20261115sleepindoors1";
-import {UI} from "./ui.js?v=20261115sleepindoors2";
+import {UI} from "./ui.js?v=20261115relations1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
+import {nearbySocialPairs} from "./relationships.js?v=20261115relations1";
 const loading=document.getElementById("loading");
 // Load the 3D game ONLY when a save is selected or a new founder is created.
 // The title screen and character creator therefore appear before gameplay.
@@ -75,6 +76,12 @@ async function startEpoch({slot,newGame=false,founder=null}){
     local:!pile||Math.hypot(world.player.position.x-pile.x,
      world.player.position.z-pile.z)<=100
    };
+  };
+  state.getVillagerSocialPairs=()=>{
+   const pile=world.currentVillage?.stockpile;
+   if(!pile||Math.hypot(world.player.position.x-pile.x,
+    world.player.position.z-pile.z)>100)return [];
+   return nearbySocialPairs(world.people);
   };
   world.getClockReading=()=>({
    progress:state.data.calendarProgress,
