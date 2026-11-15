@@ -81,6 +81,13 @@ assert(settlementManagementPage(ui,"overview").includes("ELDERS&#39; COUNCIL"));
 assert(settlementManagementPage(ui,"traditions").includes("Council improvement completed"));
 assert(state.assignResidentJob(first.id,"forager"));
 assert(state.assignResidentHome(first.id,"hut_1"));
+second.homeId="camp";
+assert(settlementManagementPage(ui,"people").includes('data-action="council-house-camp"'),
+ "the Council offers bulk housing when campers and spare beds exist");
+const housed=state.houseCampVillagers();
+assert(housed.ok&&housed.count===1);
+assert.equal(second.homeId,"hut_1");
+assert.equal(state.houseCampVillagers().count,0,"a repeated bulk assignment cannot move anyone twice");
 assert(state.chooseSuccessor(second.id));
 assert.equal(state.data.successorId,second.id);
 assert(settlementManagementPage(ui,"people").includes("Successor"));
