@@ -12,6 +12,7 @@ import {normalizedHunger,hungryStatus,VILLAGER_FOOD_PRIORITY} from "./villager-n
 import {inventoryPanel,handlePackAction} from "./inventory-ui.js?v=20261114fish1";
 import {DEV_CHEATS} from "./dev-cheats.js?v=20261114devpanel1";
 import {structureLevel,hearthExtraServing} from "./village-development.js?v=20261114development1";
+import {settlementManagementPage,MANAGEMENT_SECTIONS,manageSearchText} from "./settlement-management.js?v=20261114manager1";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const roman=n=>n<=12?["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][n]:String(n);
@@ -22,14 +23,18 @@ const skillNotes={woodcutting:"Practice by gathering wood from trees.",mining:"P
 export class UI{
  constructor(state,world){
   this.state=state;this.world=world;this.tab="pack";this.panelOpen=false;this.villageSection="storage";this.sourceBuildingId=null;this.selectedBuildingId=null;this.selectedSlot=null;this.modal=null;this.activeTribeId=null;this.activeResidentId=null;this.panelMarkup=null;
+  this.settlementSection="overview";this.settlementFilter="all";this.settlementSearch="";this.settlementReturn=false;
   this.lastSeenDeath=state.data.lastDeath?.id||0;
   document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{if(this.panelOpen&&this.tab===button.dataset.tab)this.closePanel();else this.openPanel(button.dataset.tab)}));
   $("toggle").addEventListener("click",()=>this.modal?this.close():this.menu());
+  document.querySelector("[data-open-settlement]")?.addEventListener("click",()=>this.openSettlement());
   $("close-panel").addEventListener("click",()=>this.closePanel());
   $("objective-action").addEventListener("click",()=>this.followObjective());
   $("close-modal").addEventListener("click",()=>this.close());
   $("modal").addEventListener("click",e=>{if(e.target===$("modal"))this.close()});
   $("panel").addEventListener("click",e=>this.handleAction(e));$("guide").addEventListener("click",e=>this.handleAction(e));
+  $("guide").addEventListener("change",e=>this.handleSettlementChange(e));
+  $("guide").addEventListener("input",e=>this.handleSettlementSearch(e));
   document.addEventListener("click",e=>{
    if(this.panelOpen&&this.tab==="pack"&&this.selectedSlot!==null&&!e.target.closest(".pack-slot-shell")){
     this.selectedSlot=null;this.render();
@@ -40,6 +45,7 @@ export class UI{
    world.setDiscovery(state.data.technologies.includes("fire"));
    world.syncVillage(state.data.village);world.applyAppearance(state.data.hero.appearance);
    this.render();
+   if(this.modal==="settlement")this.renderSettlement();
    const death=state.data.lastDeath;
    if(death&&death.id!==this.lastSeenDeath){
     this.lastSeenDeath=death.id;
