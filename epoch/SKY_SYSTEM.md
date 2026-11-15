@@ -1,4 +1,4 @@
-# Epoch Sky & Atmosphere — Phase 6C.1A/B
+# Epoch Sky & Atmosphere — Phase 6C.1A–C
 
 ## Shipped
 
@@ -37,15 +37,35 @@ change a villager's routine, or save a permanent time-of-day.
   move until a future sky system uses moving or separate celestial bodies.
 - Preview states are static. They do not fade automatically yet.
 
-## Next steps
+## Phase 6C.1C — Smooth sunrise and sunset (implemented)
 
-**6C.1C:** smooth dawn/dusk interpolation and matching sun, moon, fog, water,
-and terrain color. A future update should replace the fixed celestial
-hotspots with controllable sun/moon visuals if they are animated.
+The same top-bar **Day / Night** button now starts a **16-second transition**
+instead of an instantaneous swap. Sunrise and sunset have separate amber
+color palettes. The equirectangular panoramas crossfade while a localized
+twilight glow appears near the horizon. The controller also interpolates
+directional light direction and color, ambient hemisphere, fog, terrain shader
+brightness, water colors and sky background.
 
-**6C.1D:** persisted in-game 24-hour clock, separate from the existing
-year/aging system. Do not repurpose the existing calendar's age counter as
-the daily clock.
+The pure calculations live in `js/sky-transitions.js`, independent of
+Babylon.js. A preview can be reversed halfway through a sunset or sunrise,
+starting from its exact current blend without snapping. The transition's
+remaining duration scales with remaining travel so backtracking doesn't take
+an entire extra 16 seconds. The sky dome and textures are reused throughout.
 
-Automated tests: `tests/check-sky-preview.mjs` and
+The preview mode and detailed transition state (phase, blend, remaining
+seconds) are inspectable through the game's developer debug hooks. **The
+existing saved calendar and villager schedules are not altered.** Sun and
+moon images are still fixed within the source sky panoramas; moving discs
+and an astronomical sky are separate future work.
+
+## Next milestone
+
+**6C.1D:** add a persistent in-game 24-hour clock that controls the new
+atmospheric transitions. Keep day/night progress separate from the
+existing 90-real-second in-game year and population aging; introduce a
+deliberate relationship between time of day and long-term aging before
+work shifts are built.
+
+Automated checks: `tests/check-sky-preview.mjs`,
+`tests/check-sky-transitions.mjs` and
 `tests/browser-sky-preview.mjs`.
