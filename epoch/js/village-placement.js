@@ -2,7 +2,7 @@
  * Grid-snapped, individually placed Stone Age structures.
  * Saved structures are data, not predetermined buildable plot markers.
  */
-import {BUILDINGS,PLOTS} from "./settlement.js?v=20261114b";
+import {BUILDINGS,PLOTS} from "./settlement.js?v=20261114development1";
 import {structureLevel} from "./village-development.js?v=20261114development1";
 import {BUILD_GRID,VILLAGE_RADIUS,LEGACY_HOME,snapGrid} from "./stockpile.js?v=20261114y";
 export const BUILDING_RADIUS=Object.freeze({family:2.6,hearth:2.2,lore:2.5,council:3.3});
