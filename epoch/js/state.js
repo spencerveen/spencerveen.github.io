@@ -937,11 +937,13 @@ export class GameState{
   * This is an atomic state transaction: no cost is paid until all requirements
   * and the actual built target have been validated.
   */
- canUpgradeVillage(id,x,z){
+ canUpgradeVillage(id,x,z,{fromSettlement=false}={}){
   const village=this.data.village,pile=village.stockpile;
   if(this.data.survival.gameOver)return {ok:false,reason:"Your civilization has ended."};
   if(!pile)return {ok:false,reason:"Found your village stockpile first."};
-  if(!nearStockpile(pile,x,z))
+  // Settlement-wide planning is an explicit command. Physical stockpile
+  // interactions (crafting/transfers) still check actual player position.
+  if(!fromSettlement&&!nearStockpile(pile,x,z))
    return {ok:false,reason:"Visit the stockpile to manage construction."};
   const isStore=id==="stockpile";
   const target=isStore?pile:village.buildings.find(b=>b.id===id);
@@ -957,8 +959,8 @@ export class GameState{
     " to begin the upgrade."};
   return {ok:true,target,definition};
  }
- upgradeVillage(id,x,z){
-  const check=this.canUpgradeVillage(id,x,z);
+ upgradeVillage(id,x,z,{fromSettlement=false}={}){
+  const check=this.canUpgradeVillage(id,x,z,{fromSettlement});
   if(!check.ok)return {ok:false,reason:check.reason};
   if(!payStockpile(this.data.village.stockpile,check.definition.cost))
    return {ok:false,reason:"Village supplies changed before construction."};
