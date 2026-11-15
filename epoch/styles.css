@@ -492,6 +492,7 @@ body > footer { position: absolute; left: 20px; bottom: 18px; z-index: 4; displa
 .resident-home-options { display:grid; gap:8px; margin-bottom:14px; }
 .haul-snapshot {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:10px 0;border:1px solid #c5b47f42;border-radius:8px;background:#a8934617;font-size:12px;color:#cbd1bb}
 .haul-snapshot strong {color:#f3deb1;font-size:13px;white-space:nowrap}
+.resident-live-activity {display:inline-block;margin-top:5px;color:#d6c58f;font-size:11px;font-weight:600}
 .resident-energy-meter {display:flex;align-items:center;gap:9px;margin-top:8px;min-width:0;max-width:310px}
 .resident-energy-track {display:block;overflow:hidden;width:124px;height:8px;flex:0 0 124px;border-radius:999px;background:#172e29;border:1px solid #9c9a705e}
 .resident-energy-fill {display:block;height:100%;background:linear-gradient(90deg,#9b8750,#d5c37e);border-radius:999px;transition:width .25s ease}
