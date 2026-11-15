@@ -90,6 +90,8 @@ function overview(ui,lodge,stage){
 function people(ui){
  const state=ui.state,v=state.data.village,roster=v.residents||[],homes=state.villageHousing();
  const busy=roster.filter(p=>p.job!=="idle").length,needs=roster.filter(managementNeedsAttention).length;
+ const campers=roster.filter(p=>p.homeId==="camp").length;
+ const freeHutBeds=homes.filter(h=>h.id!=="camp").reduce((n,h)=>n+Math.max(0,h.capacity-h.occupied),0);
  const filter=ui.settlementFilter||"all",query=(ui.settlementSearch||"").toLowerCase().trim();
  const jobOptions=current=>Object.entries(VILLAGER_JOBS).map(([id,job])=>
   `<option value="${id}" ${id===current?"selected":""}>${esc(job.name)}</option>`).join("");
@@ -132,6 +134,11 @@ function people(ui){
  return `<div class="sm-section-intro"><div><span class="sm-eyebrow">PEOPLE & JOBS</span><h3>Everyone in the tribe</h3>
  <p>Assign jobs, move villagers into Huts, and designate your next leader. Changes save immediately.</p></div>
  <span class="sm-shift">${busy} assigned · ${needs} need attention</span></div>
+ ${freeHutBeds>0&&campers>0?`<div class="sm-footer-actions sm-house-camp">
+ <button type="button" class="sm-primary" data-action="council-house-camp">
+ Move ${Math.min(campers,freeHutBeds)} camper${Math.min(campers,freeHutBeds)===1?"":"s"} into Huts</button>
+ <span>Assign available real Hut beds in one step. Already housed families keep their rooms.</span>
+ </div>`:""}
  <div class="sm-people-tools"><label class="sm-search-label">Find resident
  <input id="sm-search" type="search" placeholder="Search names, jobs, homes" autocomplete="off" value="${esc(query)}"></label>
  <div class="sm-filters" role="group" aria-label="Filter villagers">
