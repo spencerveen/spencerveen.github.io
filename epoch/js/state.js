@@ -24,6 +24,7 @@ import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261
 import {VILLAGER_CARRY_CAPACITY,normalizeCargo,normalizeHaulPosition,cargoCount,transferCargo} from "./villager-hauling.js?v=20261114haul1";
 import {FISH_STAMINA_COST,FISH_CATCH_AMOUNT,normalizeFishCatches} from "./fishing.js?v=20261114fish1";
 import {REAL_SECONDS_PER_YEAR,clockAtProgress,normalizeCalendarProgress} from "./game-clock.js?v=20261115dusk1";
+import {advanceVillagerEnergy,villagerDayPhase} from "./villager-routines.js?v=20261115sleep1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["cooking","Cooking"],["fishing","Fishing"],["construction","Construction"],["survival","Survival"]
@@ -229,7 +230,9 @@ export class GameState{
   this.devCheats=newDevCheats();
   this.onChange=()=>{};
   this.onVitals=()=>{};
-  this.sprintedThisTick=false;this.vitalSaveClock=0;
+  this.onVillagerNeeds=()=>{};
+  this.getVillagerActivity=()=>null;
+  this.sprintedThisTick=false;this.vitalSaveClock=0;this.villagerEnergySaveClock=0;
   this.lastSave=0;
  }
  save(){
@@ -410,7 +413,7 @@ export class GameState{
    id:member.id,name:member.name,sex:member.sex,age:member.age,
    originTribeId:tribe.id,originTribeName:tribe.name,
    role:member.role==="leader"?"formerLeader":"resident",recruitment:"peaceful",
-   joinedYear:this.data.year,homeId:null,job:"idle",cargo:{},haulPosition:null,
+   joinedYear:this.data.year,homeId:null,job:"idle",energy:100,resting:false,cargo:{},haulPosition:null,
    memories:[{year:this.data.year,text:"Welcomed peacefully from "+tribe.name+"."}]
   }));
   this.data.village.residents.push(...arrivals);
@@ -967,6 +970,7 @@ export class GameState{
    if(this.vitalSaveClock>=8){this.vitalSaveClock=0;this.save()}
   }
   d.calendarProgress+=seconds/REAL_SECONDS_PER_YEAR;
+  this.advanceVillageEnergy(seconds);
   // An operational shelter slowly generates Knowledge during active play.
   // Villager assignments and offline research are future mechanics.
   if(this.researchRate()){
@@ -994,6 +998,36 @@ export class GameState{
    }
    this.changed(`${d.hero.name} celebrates another year of life.`+memorial);
   }
+ }
+ /** Saved villager needs follow active game seconds, not Babylon frame rate.
+  * Work activity is read from the already-existing NPC AI. If a save is
+  * inspected without a 3D world, its residents simply rest at home.
+  */
+ advanceVillageEnergy(seconds){
+  const roster=this.data.village.residents;
+  if(!roster?.length||seconds<=0)return false;
+  const shift=villagerDayPhase(this.clockInfo().hour);
+  let changed=false;
+  for(const villager of roster){
+   const activity=this.getVillagerActivity(villager.id)||
+    {mode:"idle",atHome:true,local:true,moving:false};
+   const next=advanceVillagerEnergy(villager,activity,seconds,shift);
+   if(Math.abs(villager.energy-next.energy)>1e-7||
+      villager.resting!==next.resting){
+    villager.energy=next.energy;
+    villager.resting=next.resting;
+    changed=true;
+   }
+  }
+  if(changed){
+   this.villagerEnergySaveClock+=seconds;
+   if(this.villagerEnergySaveClock>=8){
+    this.villagerEnergySaveClock=0;
+    this.save();
+   }
+   this.onVillagerNeeds();
+  }
+  return changed;
  }
  clockInfo(){return clockAtProgress(this.data.calendarProgress)}
  formatYear(){return this.data.year<0?`${Math.abs(this.data.year).toLocaleString()} BCE`:`${this.data.year+1} CE`}
