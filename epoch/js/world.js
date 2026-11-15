@@ -9,7 +9,8 @@ import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generatio
 import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
 import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs2";
 import {normalizeCargo,normalizeHaulPosition,cargoCount,landRoute,HAUL_WATER_DEPTH} from "./villager-hauling.js?v=20261114haul1";
-import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114textures1";
+import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114sky1";
+import {createSkyAtmosphere} from "./sky-atmosphere.js?v=20261114sky1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -56,6 +57,7 @@ export class World {
    // Keep this in sync with the terrain texture shader's fogDensity uniform.
    this.scene.fogMode=B.Scene.FOGMODE_EXP2;this.scene.fogDensity=.009;this.scene.fogColor=new B.Color3(.62,.71,.62);
   this.makeMaterials();this.makeGround();this.makeLight();
+  this.skyAtmosphere=createSkyAtmosphere(B,this.scene,this);
   createTribeWorld(this,(scene,member,tribe)=>createQuaterniusHuman(scene,
    randomAppearance("epoch:wilderness:"+this.worldSeed+":"+member.id,member.sex),null,member.name));
   this.makeLandscape();createVillageWorld(this,onBuildingSelect);createStockpileWorld(this);this.makePlayer();this.makeVillagers();this.makeCamera();this.bindInput();
@@ -110,6 +112,7 @@ export class World {
  makeLight(){
   const hemi=new B.HemisphericLight("soft sky",V(0,1,0),this.scene);hemi.intensity=.77;hemi.groundColor=new B.Color3(.32,.37,.29);
   const sun=new B.DirectionalLight("sun",V(-.5,-1,.4),this.scene);sun.intensity=.85;sun.diffuse=new B.Color3(1,.91,.75);
+  this.skyHemi=hemi;this.skySun=sun;
  }
  primitive(kind,name,parent,pos,sc,mat){
   const mesh=kind==="sphere"?B.MeshBuilder.CreateSphere(name,{diameter:1,segments:8},this.scene):
@@ -1183,7 +1186,10 @@ export class World {
   if(!this.isBlocked(ex,ez))path.push(V(ex,0,ez));
   return path;
  }
+ setSkyPreview(mode){return this.skyAtmosphere?.setMode(mode)||false}
+ get skyMode(){return this.skyAtmosphere?.mode||"day"}
  update(dt){
+  if(this.skyAtmosphere&&this.camera)this.skyAtmosphere.update(this.camera);
   if(this.m.waterTexture){
    this.m.waterTexture.uOffset=(this.m.waterTexture.uOffset+dt*.006)%1;
    this.m.waterTexture.vOffset=(this.m.waterTexture.vOffset+dt*.003)%1;
