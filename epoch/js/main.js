@@ -1,6 +1,6 @@
 import {GameState} from "./state.js?v=20261114haul1";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
-import {World} from "./world.js?v=20261114sky2";
+import {World} from "./world.js?v=20261114twilight1";
 import {UI} from "./ui.js?v=20261114haul1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
@@ -52,7 +52,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
      getFishCaught:id=>state.fishCaught(id),
      onFishCatch:site=>state.catchFish(site)
     });
-  // The temporary preview switches only sky appearance and lighting.
+  // The temporary preview eases through sunrise and sunset; no calendar changes.
   // Calendar/aging, saved time, villagers, and other gameplay remain unchanged.
   const skyPreview=document.getElementById("sky-preview");
   if(skyPreview){
