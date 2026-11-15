@@ -14,6 +14,7 @@ import {createSkyAtmosphere} from "./sky-atmosphere.js?v=20261115dusk1";
 import {REAL_SECONDS_PER_YEAR,hourAtProgress} from "./game-clock.js?v=20261115dusk1";
 import {villagerDayPhase,villagerCanBeginWork,VILLAGER_EXHAUSTED_AT} from "./villager-routines.js?v=20261115food1";
 import {availableVillageMeals,VILLAGER_MEAL_AT,VILLAGER_CRITICAL_HUNGER} from "./villager-nutrition.js?v=20261115food1";
+import {villagerMaySocialize,villagerLeisureChoice,villageGatherCenter,isLeisureMode,VILLAGE_GATHER_RADIUS,VILLAGE_WANDER_RADIUS} from "./village-life.js?v=20261115life1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -239,6 +240,31 @@ export class World {
   marker.onDisposeObservable.addOnce(()=>{mat.dispose();texture.dispose()});
   return marker;
  }
+ /** A tiny conversational marker appears only while actively socializing.
+  * Like the sleep sign, this is decorative and never consumes mouse clicks.
+  */
+ makeVillagerSocialMarker(human,resident){
+  const marker=B.MeshBuilder.CreatePlane("Villager chatting "+resident.id,
+   {width:.85,height:.37},this.scene);
+  marker.parent=human.root;marker.position=V(0,3.12,0);
+  marker.billboardMode=B.Mesh.BILLBOARDMODE_ALL;marker.isPickable=false;
+  const texture=new B.DynamicTexture("Conversation indicator "+resident.id,
+   {width:192,height:80},this.scene,false);
+  texture.hasAlpha=true;
+  const ctx=texture.getContext();
+  ctx.clearRect(0,0,192,80);
+  ctx.fillStyle="rgba(41,53,38,.83)";ctx.fillRect(14,4,164,68);
+  ctx.strokeStyle="#bba978";ctx.lineWidth=3;ctx.strokeRect(16,6,160,64);
+  ctx.textAlign="center";ctx.font="bold 39px Arial";ctx.fillStyle="#f5ddaa";
+  ctx.fillText("•••",96,55);texture.update();
+  const mat=new B.StandardMaterial("Conversation badge "+resident.id,this.scene);
+  mat.diffuseTexture=texture;mat.emissiveTexture=texture;
+  mat.useAlphaFromDiffuseTexture=true;mat.disableLighting=true;
+  mat.backFaceCulling=false;marker.material=mat;
+  marker.setEnabled(false);
+  marker.onDisposeObservable.addOnce(()=>{mat.dispose();texture.dispose()});
+  return marker;
+ }
  /** Low-poly packs make carried supplies visible on the character's back.
   * The payload comes only from the save-backed resident cargo manifest.
   */
@@ -319,6 +345,7 @@ export class World {
     person={...resident,profile,human,phase:i*2.6};
     this.makeResidentNameplate(human,resident);
     person.sleepMarker=this.makeVillagerSleepMarker(human,resident);
+    person.socialMarker=this.makeVillagerSocialMarker(human,resident);
     human.ready?.then(()=>{
      if(human.root.isDisposed?.())return;
      for(const mesh of human.root.getChildMeshes())
@@ -356,12 +383,13 @@ export class World {
    if(!person.work){
     person.work={mode:carrying?"returning":"idle",task:null,timer:0,
      retry:1+(i%4)*.4,moving:false,stalled:0,noProgress:0,
-     route:null,routeGoal:null,dropoff:null};
+     route:null,routeGoal:null,dropoff:null,leisure:null,leisureVisit:0};
    }else if(oldHome!==resident.homeId||oldJob!==person.job){
     person.work.task=null;
     person.work.mode=carrying?"returning":"idle";
     person.work.route=null;person.work.routeGoal=null;person.work.dropoff=null;
     person.work.stalled=0;person.work.noProgress=0;
+    person.work.leisure=null;
    }else if(carrying&&["idle","outbound","working"].includes(person.work.mode)){
     person.work.mode="returning";person.work.task=null;
    }
