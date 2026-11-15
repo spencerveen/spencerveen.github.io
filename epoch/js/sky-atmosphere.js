@@ -8,6 +8,7 @@
  * Sources and conversion: ../assets/sky/SOURCES.md
  */
 import {createSkyPreviewTransition,skyEnvironmentAt,skyTwilightWeight} from "./sky-transitions.js?v=20261114twilight1";
+import {skyAtHour} from "./game-clock.js?v=20261114clock1";
 export const SKY_ASSETS=Object.freeze({
  day:"./assets/sky/day.webp?v=20261114sky1",
  night:"./assets/sky/night.webp?v=20261114sky1"
@@ -110,6 +111,7 @@ export function createSkyAtmosphere(B,scene,world){
  const textures={day:null,night:null},loaded={day:false,night:false};
  const fade=createSkyPreviewTransition(0);
  let mode="day",error="";
+ let clockDriven=false,clockPhase="day",clockArc="dawn",clockMix=0;
  material.onError=(_,message)=>{
   error=String(message);
   console.warn("Epoch sky shader failed; using scene background color",message);
@@ -133,12 +135,11 @@ export function createSkyAtmosphere(B,scene,world){
   textures[key].wrapV=B.Texture.CLAMP_ADDRESSMODE;
   textures[key].anisotropicFilteringLevel=2;
  }
- function applyVisuals(){
-  const mix=fade.mix;
-  const setup=skyEnvironmentAt(mix,fade.phase,SKY_LIGHTING.day,SKY_LIGHTING.night);
+ function applyVisuals(mix=fade.mix,arc=fade.phase){
+  const setup=skyEnvironmentAt(mix,arc,SKY_LIGHTING.day,SKY_LIGHTING.night);
   material.setFloat("nightMix",mix);
   material.setFloat("twilightGlow",skyTwilightWeight(mix));
-  material.setFloat("duskWeight",fade.phase==="dusk"?1:0);
+  material.setFloat("duskWeight",arc==="dusk"?1:0);
   scene.clearColor.copyFromFloats(...setup.background,1);
   scene.fogColor.copyFromFloats(...setup.fog);
   if(world.skyHemi){
@@ -162,36 +163,55 @@ export function createSkyAtmosphere(B,scene,world){
     [.025,.045,.05]:[.006+.019*(1-mix),.012+.033*(1-mix),.022+.028*(1-mix)];
    world.m.river.emissiveColor.copyFromFloats(...emissive);
   }
-  dome.metadata.phase=fade.transitioning?(fade.phase==="dawn"?"sunrise":"sunset"):mode;
+  dome.metadata.phase=clockDriven?clockPhase:
+   fade.transitioning?(fade.phase==="dawn"?"sunrise":"sunset"):mode;
  }
  /** When the user changes direction mid-transition, resume from the current
   * blend, with proportional duration. No snapping or resource reloads.
   */
  function setMode(next,immediate=false){
   if(!SKY_PREVIEW_MODES.includes(next))return false;
+  clockDriven=false;
   mode=next;
   dome.metadata.preview=mode;
   fade.setTarget(mode==="night"?1:0,immediate);
   applyVisuals();
   return true;
  }
+ /** Direct, continuous annual time drives the same sky shaders and lights.
+  * No transition timer is created: the saved calendar decides the sky.
+  */
+ function setClockHour(hour){
+  const sky=skyAtHour(hour);
+  const changed=!clockDriven||clockPhase!==sky.phase||clockArc!==sky.arc||
+   Math.abs(clockMix-sky.nightMix)>0.00005;
+  clockDriven=true;
+  clockPhase=sky.phase;clockArc=sky.arc;clockMix=sky.nightMix;
+  mode=clockMix>=.5?"night":"day";
+  dome.metadata.preview=mode;
+  if(changed)applyVisuals(clockMix,clockArc);
+  return sky;
+ }
  function update(camera,dt=0){
   if(camera)dome.position.copyFrom(camera.position);
-  if(fade.transitioning&&dt>0){
+  if(!clockDriven&&fade.transitioning&&dt>0){
    fade.advance(dt);
    applyVisuals();
   }
  }
  function status(){
-  return {mode,phase:fade.transitioning?
+  const mix=clockDriven?clockMix:fade.mix;
+  return {mode,phase:clockDriven?clockPhase:fade.transitioning?
     (fade.phase==="dawn"?"sunrise":"sunset"):mode,
-   nightMix:fade.mix,twilight:skyTwilightWeight(fade.mix),
-   transitioning:fade.transitioning,secondsRemaining:fade.remaining,
+   nightMix:mix,twilight:skyTwilightWeight(mix),
+   clockDriven,transitioning:clockDriven?
+    ["sunrise","sunset"].includes(clockPhase):fade.transitioning,
+   secondsRemaining:clockDriven?0:fade.remaining,
    loaded:{...loaded},shaderError:error,
    domeVisible:dome.isEnabled(),usesLocalAssets:true};
  }
  setMode("day",true);
- return {dome,material,textures,loaded,setMode,update,status,
-  get mode(){return mode},get nightMix(){return fade.mix}};
+ return {dome,material,textures,loaded,setMode,setClockHour,update,status,
+  get mode(){return mode},get nightMix(){return clockDriven?clockMix:fade.mix}};
 
 }
