@@ -12,6 +12,15 @@ export const GAME_HOURS_PER_YEAR=24;
 export const REAL_SECONDS_PER_GAME_HOUR=REAL_SECONDS_PER_YEAR/GAME_HOURS_PER_YEAR;
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,Number.isFinite(n)?n:0));
 const smooth=t=>{const x=clamp(t);return x*x*(3-2*x)};
+/** Sunset should read as evening well before the clock reaches 7 PM.
+ * Front-load the first half of the dusk blend, while preserving the
+ * midpoint at 7 PM and full darkness at 8 PM.
+ */
+export const sunsetBlend=t=>{
+ const x=clamp(t);
+ return x<=.5?.5*Math.sin(Math.PI*x):
+  .5+.5*(1-Math.cos(Math.PI*(x-.5)));
+};
 export function normalizeCalendarProgress(value){
  return Number.isFinite(value)?clamp(value,0,1-Number.EPSILON):0;
 }
@@ -31,7 +40,7 @@ export function skyAtHour(hour){
   return {phase:"sunrise",arc:"dawn",nightMix:1-smooth((h-5)/2)};
  if(h>=7&&h<18)return {phase:"day",arc:"dawn",nightMix:0};
  if(h>=18&&h<20)
-  return {phase:"sunset",arc:"dusk",nightMix:smooth((h-18)/2)};
+  return {phase:"sunset",arc:"dusk",nightMix:sunsetBlend((h-18)/2)};
  return {phase:"night",arc:"dusk",nightMix:1};
 }
 export function clockAtProgress(progress){
