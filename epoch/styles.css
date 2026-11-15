@@ -496,6 +496,13 @@ body > footer { position: absolute; left: 20px; bottom: 18px; z-index: 4; displa
 .resident-energy-track {display:block;overflow:hidden;width:124px;height:8px;flex:0 0 124px;border-radius:999px;background:#172e29;border:1px solid #9c9a705e}
 .resident-energy-fill {display:block;height:100%;background:linear-gradient(90deg,#9b8750,#d5c37e);border-radius:999px;transition:width .25s ease}
 .resident-energy-value {font-size:11px;color:#d9d2ae;white-space:nowrap;font-variant-numeric:tabular-nums}
+.resident-hunger-meter {display:flex;align-items:center;gap:9px;margin-top:6px;min-width:0;max-width:310px}
+.resident-hunger-track {display:block;overflow:hidden;width:124px;height:8px;flex:0 0 124px;border-radius:999px;background:#253020;border:1px solid #a2906a5e}
+.resident-hunger-fill {display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#af7139,#e0b16d);transition:width .25s ease}
+.resident-hunger-value {font-size:11px;color:#e2ca9f;white-space:nowrap;font-variant-numeric:tabular-nums}
+.resident-hunger-detail {max-width:100%;margin:0 0 12px}
+.resident-hunger-detail .resident-hunger-track {width:180px;flex-basis:180px;height:11px}
+@media(max-width:440px){.resident-hunger-track{width:100px;flex-basis:100px}.resident-hunger-detail .resident-hunger-track{width:140px;flex-basis:140px}}
 .resident-energy-detail {max-width:100%;margin:0 0 12px}
 .resident-energy-detail .resident-energy-track {width:180px;flex-basis:180px;height:11px}
 @media(max-width:440px){.resident-energy-track{width:100px;flex-basis:100px}.resident-energy-detail .resident-energy-track{width:140px;flex-basis:140px}}
