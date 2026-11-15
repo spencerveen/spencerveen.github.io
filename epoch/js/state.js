@@ -14,8 +14,8 @@ import {harvestAtNode} from "./harvest.js?v=20261114flint1";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
- moveResidentHome,assignResidentJob,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
- NATURAL_DEATH_AGE} from "./residents.js?v=20261114development1";
+ moveResidentHome,houseCampResidents,assignResidentJob,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
+ NATURAL_DEATH_AGE} from "./residents.js?v=20261115sleepindoors2";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
  resourceTotals,occupiedSlots,unpackedCount,retrieveUnpacked,toolCondition,toolMaxDurability} from "./inventory.js?v=20261114fish1";
@@ -549,6 +549,20 @@ export class GameState{
   const unit=housingUnits(this.data.village).find(h=>h.id===homeId);
   this.changed(resident.name+" moved to "+unit.label+".");
   return true;
+ }
+ /** Council action: voluntarily fill spare Hut beds from communal camp.
+  * Does not relocate anyone on reload and does not disturb existing
+  * Hut families, ongoing deliveries, jobs, or backpack contents.
+  */
+ houseCampVillagers(){
+  if(!this.data.village.buildings.some(b=>b.kind==="council"))
+   return {ok:false,count:0,reason:"Build a Council Lodge first."};
+  const moved=houseCampResidents(this.data.village,this.data.year);
+  if(moved)this.changed(moved+" villagers moved into available Huts.");
+  return {ok:moved>0,count:moved,
+   reason:moved?moved+" villager"+(moved===1?" has":"s have")+
+    " moved from the communal camp into Huts.":
+    "No available Hut beds or camp residents to move."};
  }
  survivalStatus(){
   const vitals=this.data.survival;
