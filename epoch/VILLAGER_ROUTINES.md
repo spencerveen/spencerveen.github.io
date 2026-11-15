@@ -49,7 +49,7 @@ Villagers walk back to their assigned hut or communal camp, settle at home,
 and show a floating **Zzz** indicator while sleeping. Hut interior beds and
 lying-down animations are intentionally not included in this first pass.
 
-Open **Village Stockpile → People** to see each resident's energy bar.
+Open the constructed **Council Lodge → People & Jobs** to see each resident’s energy bar.
 Click **View profile** to see the exact energy, exhaustion and sleep status.
 
 The People panel refreshes only the small meter readouts on energy ticks;
@@ -88,8 +88,8 @@ except for foragers, who can still try to rescue the settlement by bringing
 back wild berries if they have the stamina to do so. Starvation currently
 affects work and recovery, not mortality (a separate future balancing step).
 
-Village → Storage shows the quantity of ready-to-eat meals and a warning
-for critically hungry residents. Village → People displays each villager's
+Stockpile → Storage shows the quantity of ready-to-eat meals and a warning
+for critically hungry residents. Council Lodge → People & Jobs displays each villager’s
 hunger and energy bars. Individual profiles show exact hunger status and
 the last meal eaten.
 
@@ -137,7 +137,7 @@ do not start social activities. A job reassignment or the beginning of
 the workday interrupts leisure safely; dusk visitors head home at
 nightfall.
 
-Village → People includes live activity statuses such as *Walking to the
+Council Lodge → People & Jobs includes live activity statuses such as *Walking to the
 hearth*, *Gathering around the fire*, *Meeting villagers* or *Exploring
 the village*. The conversation count and each resident's status refresh
 with the existing village needs update. The individual profile describes
