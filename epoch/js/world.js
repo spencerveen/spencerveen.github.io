@@ -12,6 +12,7 @@ import {normalizeCargo,normalizeHaulPosition,cargoCount,landRoute,HAUL_WATER_DEP
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114sky1";
 import {createSkyAtmosphere} from "./sky-atmosphere.js?v=20261115dusk1";
 import {REAL_SECONDS_PER_YEAR,hourAtProgress} from "./game-clock.js?v=20261115dusk1";
+import {villagerDayPhase,villagerCanBeginWork,VILLAGER_EXHAUSTED_AT} from "./villager-routines.js?v=20261115sleep1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -29,6 +30,7 @@ export class World {
   this.onResidentSelect=tribeHandlers.onResidentSelect||(()=>{});
   this.onVillagerCollect=tribeHandlers.onVillagerCollect||(()=>({ok:false}));
   this.onVillagerDeliver=tribeHandlers.onVillagerDeliver||(()=>({ok:false}));
+  this.getVillagerEnergy=tribeHandlers.getVillagerEnergy||(()=>({energy:100,resting:false}));
   this.getWildlifeStatus=tribeHandlers.getWildlifeStatus||(()=>null);
   this.onWildlifeHunt=tribeHandlers.onWildlifeHunt||(()=>({ok:false,reason:"Hunting unavailable."}));
   this.onWildlifeHarvest=tribeHandlers.onWildlifeHarvest||(()=>({ok:false,reason:"Harvest unavailable."}));
@@ -209,6 +211,32 @@ export class World {
   panel.material=material;panel.metadata={residentId:resident.id};panel.isPickable=true;
   panel.onDisposeObservable.addOnce(()=>{material.dispose();texture.dispose()});
  }
+ /** A small floating sleep indicator, attached to the NPC rather than
+  * the terrain, so it does not interfere with clicking people or buildings.
+  * Exterior beds/interiors can replace this representation in a later phase.
+  */
+ makeVillagerSleepMarker(human,resident){
+  const marker=B.MeshBuilder.CreatePlane("Villager sleeping "+resident.id,
+   {width:1.12,height:.42},this.scene);
+  marker.parent=human.root;marker.position=V(0,2.88,0);
+  marker.billboardMode=B.Mesh.BILLBOARDMODE_ALL;marker.isPickable=false;
+  const texture=new B.DynamicTexture("Sleep indicator "+resident.id,
+   {width:256,height:96},this.scene,false);
+  texture.hasAlpha=true;
+  const ctx=texture.getContext();
+  ctx.clearRect(0,0,256,96);
+  ctx.fillStyle="rgba(26,36,64,.77)";ctx.fillRect(18,5,220,78);
+  ctx.strokeStyle="#889ac4";ctx.lineWidth=3;ctx.strokeRect(20,7,216,74);
+  ctx.font="bold 42px Arial";ctx.textAlign="center";ctx.fillStyle="#d4e4ff";
+  ctx.fillText("Zzz",128,63);texture.update();
+  const mat=new B.StandardMaterial("Sleep sign "+resident.id,this.scene);
+  mat.diffuseTexture=texture;mat.emissiveTexture=texture;
+  mat.useAlphaFromDiffuseTexture=true;mat.disableLighting=true;
+  mat.backFaceCulling=false;marker.material=mat;
+  marker.setEnabled(false);
+  marker.onDisposeObservable.addOnce(()=>{mat.dispose();texture.dispose()});
+  return marker;
+ }
  /** Low-poly packs make carried supplies visible on the character's back.
   * The payload comes only from the save-backed resident cargo manifest.
   */
@@ -288,6 +316,7 @@ export class World {
     human.root.rotation.y=i*1.55;
     person={...resident,profile,human,phase:i*2.6};
     this.makeResidentNameplate(human,resident);
+    person.sleepMarker=this.makeVillagerSleepMarker(human,resident);
     human.ready?.then(()=>{
      if(human.root.isDisposed?.())return;
      for(const mesh of human.root.getChildMeshes())
@@ -297,6 +326,7 @@ export class World {
    person.homeId=resident.homeId;
    person.job=resident.job||"idle";
    person.cargo=normalizeCargo(resident.cargo);
+   person.energy=resident.energy??100;person.resting=resident.resting===true;
    const carrying=cargoCount(person.cargo)>0;
    const home=resident.homeId||"camp";
    const index=homeCounts.get(home)||0;homeCounts.set(home,index+1);
@@ -402,15 +432,55 @@ export class World {
  updateVillagerJobs(dt){
   const pile=this.currentVillage?.stockpile;
   if(!pile||this.inputBlocked)return;
-  // Workers stop simulating while the player is beyond the local streamed area.
+  // Only simulate local worker travel; neither terrain nor resources should
+  // be gathered or fabricated while their village isn't streamed.
   if(Math.hypot(this.player.position.x-pile.x,this.player.position.z-pile.z)>100)return;
+  const clock=this.getClockReading?.();
+  const hour=hourAtProgress(clock?.progress??0);
+  const shift=villagerDayPhase(hour);
+  const sleeping=shift==="night";
   for(const person of this.people){
    const work=person.work;
    if(!work)continue;
    work.moving=false;
    const carrying=cargoCount(person.cargo)>0;
+   const needs=this.getVillagerEnergy(person.id)||{energy:100,resting:false};
+   const tired=needs.resting===true||needs.energy<=VILLAGER_EXHAUSTED_AT;
+   const canStart=villagerCanBeginWork(hour,needs.energy,needs.resting,person.job);
+   const atHome=()=>Math.hypot(person.homeX-person.x,person.homeZ-person.z)<=1.1;
+   const resetRoute=()=>{
+    work.route=null;work.routeGoal=null;work.stalled=0;work.noProgress=0;
+   };
+   // End outbound trips without claiming resources, but finish active
+   // collections and all deliveries. Cargo is never dropped at sundown.
+   if(!canStart&&work.mode==="outbound"&&!carrying){
+    work.task=null;work.mode="goingHome";work.dropoff=null;resetRoute();
+   }
+   if(carrying&&["idle","offDuty","sleeping","resting","goingHome"].includes(work.mode)){
+    work.mode="returning";work.task=null;work.dropoff=null;resetRoute();
+   }
+   if(!carrying&&["idle","offDuty","sleeping","resting"].includes(work.mode)){
+    if(!canStart){
+     if(!atHome()){work.mode="goingHome";resetRoute()}
+     else work.mode=sleeping?"sleeping":tired?"resting":"offDuty";
+    }else if(work.mode!=="idle"){
+     work.mode="idle";work.retry=Math.min(work.retry||0,1);
+    }
+   }
+   if(work.mode==="goingHome"){
+    if(this.moveVillager(person,{x:person.homeX,z:person.homeZ},dt,1.05)){
+     work.mode=sleeping?"sleeping":tired?"resting":"offDuty";
+     work.retry=1.5;
+    }
+    continue;
+   }
+   if(["sleeping","offDuty","resting"].includes(work.mode))continue;
    if(carrying&&!["returning","waiting","stuck"].includes(work.mode)){
     work.mode="returning";work.task=null;work.route=null;work.routeGoal=null;
+   }
+   if(work.mode==="idle"&&!canStart&&!carrying){
+    work.mode="goingHome";work.task=null;resetRoute();
+    continue;
    }
    if(work.mode==="idle"&&person.job==="idle"&&!carrying){
     if(Number.isFinite(person.homeX)&&Number.isFinite(person.homeZ))
@@ -473,7 +543,7 @@ export class World {
     if(work.retry<=0){
      const drop=this.onVillagerDeliver(person.id);
      if(drop?.remaining===0){
-      work.mode="idle";work.task=null;work.dropoff=null;
+      work.mode=canStart?"idle":"goingHome";work.task=null;work.dropoff=null;
       work.route=null;work.routeGoal=null;work.retry=2;
      }else work.retry=drop?.reason==="Stockpile is full."?4:2.5;
     }
@@ -491,10 +561,14 @@ export class World {
    if(work.mode==="stuck"){
     work.retry-=dt;
     if(work.retry<=0){
-     work.mode="returning";work.retry=0;
+     work.mode=cargoCount(person.cargo)>0?"returning":"goingHome";work.retry=0;
     }
    }
   }
+ }
+ updateVillagerSleepMarkers(){
+  for(const person of this.people)
+   person.sleepMarker?.setEnabled(person.work?.mode==="sleeping");
  }
  makeCamera(){
   const c=new B.ArcRotateCamera("adventurer camera",-Math.PI/2,1.13,18,V(0,1,0),this.scene);
@@ -1297,6 +1371,7 @@ export class World {
   // time even if this node wasn't loaded while the bush was growing back.
   this.terrain.update(p.x,p.z);
   this.updateVillagerJobs(dt);
+  this.updateVillagerSleepMarkers();
   if(!this.inputBlocked){
    for(const camp of this.tribeCamps.values()){
     const tribe=camp.tribe;
