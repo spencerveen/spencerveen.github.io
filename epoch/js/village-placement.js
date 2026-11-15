@@ -3,6 +3,7 @@
  * Saved structures are data, not predetermined buildable plot markers.
  */
 import {BUILDINGS,PLOTS} from "./settlement.js?v=20261114b";
+import {structureLevel} from "./village-development.js?v=20261114development1";
 import {BUILD_GRID,VILLAGE_RADIUS,LEGACY_HOME,snapGrid} from "./stockpile.js?v=20261114y";
 export const BUILDING_RADIUS=Object.freeze({family:2.6,hearth:2.2,lore:2.5,council:3.3});
 export const UNIQUE_BUILDINGS=Object.freeze(["hearth","lore","council"]);
@@ -18,7 +19,7 @@ export function normalizeBuildings(raw,plots={},home=null){
    if(!id||usedIds.has(id))continue;
    usedIds.add(id);
    result.push({id,kind:data.kind,x:Number(data.x),
-    z:Number(data.z),turn:normalizeTurn(data.turn)});
+    z:Number(data.z),turn:normalizeTurn(data.turn),level:structureLevel(data)});
   }
  }
  // Existing village saves store five fixed plot IDs, including free huts.
@@ -28,7 +29,7 @@ export function normalizeBuildings(raw,plots={},home=null){
   const dx=home?home.x-LEGACY_HOME.x:0,dz=home?home.z-LEGACY_HOME.z:0;
   result.push({id:plot.id,kind:plot.kind,
     x:plot.x+dx,z:plot.z+dz,
-    turn:normalizeTurn(plot.rotation*2/Math.PI)});
+    turn:normalizeTurn(plot.rotation*2/Math.PI),level:1});
   usedIds.add(plot.id);
  }
  return result;
