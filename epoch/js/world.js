@@ -4,7 +4,7 @@ import {BUILDINGS} from "./settlement.js?v=20261115council1";
 import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114development1";
 import {stockpileValidation,nearStockpile,stockpileSpace,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114fish1";
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114development1";
-import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114development1";
+import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261115sleepindoors1";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view2";
 import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
 import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs2";
@@ -16,7 +16,7 @@ import {villagerDayPhase,villagerCanBeginWork,VILLAGER_EXHAUSTED_AT} from "./vil
 import {availableVillageMeals,VILLAGER_MEAL_AT,VILLAGER_CRITICAL_HUNGER} from "./villager-nutrition.js?v=20261115food1";
 import {villagerMaySocialize,villagerLeisureChoice,villageGatherCenter,isLeisureMode,VILLAGE_GATHER_RADIUS,VILLAGE_WANDER_RADIUS} from "./village-life.js?v=20261115life1";
 import {workerGatherDurationMultiplier} from "./village-development.js?v=20261114development1";
-import {hutDoorApproach,villagerBedtimeTarget} from "./villager-sleep-homes.js?v=20261115sleepindoors1";
+import {hutDoorApproach,villagerBedtimeTarget,HUT_DOOR_REACH} from "./villager-sleep-homes.js?v=20261115sleepindoors1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -556,7 +556,7 @@ export class World {
    const canStart=villagerCanBeginWork(hour,needs.energy,needs.resting,person.job,needs.hunger??100);
    const atHome=()=>{const home=sleeping?villagerBedtimeTarget(person):
      {x:person.homeX,z:person.homeZ};
-    return Math.hypot(home.x-person.x,home.z-person.z)<=(sleeping?.85:1.1);
+    return Math.hypot(home.x-person.x,home.z-person.z)<=(sleeping ? .85 : 1.1);
    };
    const resetRoute=()=>{
     work.route=null;work.routeGoal=null;work.stalled=0;work.noProgress=0;
@@ -621,7 +621,7 @@ export class World {
    if(work.mode==="goingHome"){
     const target=sleeping?villagerBedtimeTarget(person):
      {x:person.homeX,z:person.homeZ};
-    if(this.moveVillager(person,target,dt,sleeping&&person.hutEntrance?.55:1.05)){
+    if(this.moveVillager(person,target,dt,sleeping&&person.hutEntrance ? HUT_DOOR_REACH : 1.05)){
      work.mode=sleeping?"sleeping":tired?"resting":"offDuty";
      work.retry=Math.max(1.5,work.pauseAfterSocial||0);
      work.pauseAfterSocial=0;
