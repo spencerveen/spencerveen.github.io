@@ -68,6 +68,7 @@ function storagePanel(ui){
  const hauling=state.villageHaulingStatus(),food=state.villageFoodStatus();
  let html=`<div class="pack-capacity"><span>Village storage</span><strong>${storage.used} / ${storage.capacity}</strong></div>
   <p class="context-note">Only delivered materials can be used for construction. Workers physically haul harvested supplies back to this store. <b>Granary level ${storage.level} / 2</b>.</p>
+  <button type="button" class="game-button alt" data-action="village-section" data-section="buildings">Improve village buildings &amp; storage</button>
   <div class="haul-snapshot"><span>Worker cargo in transit</span><strong>${hauling.inTransit} items</strong></div>
   <div class="haul-snapshot"><span>Villager meals in storage</span><strong>${food.meals} ready</strong></div>
   ${food.critical?`<p class="context-note" role="status">⚠ ${food.critical} villager${food.critical===1?"":"s"} critically hungry. Add berries or roasted meals to village storage.</p>`:""}
