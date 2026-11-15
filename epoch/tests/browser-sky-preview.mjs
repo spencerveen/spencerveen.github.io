@@ -35,7 +35,7 @@ try{
    radius:sky.dome.getBoundingInfo().boundingSphere.radius,
    activeTerrain:!!w.m.terrainSurface?.setFloat};
  });
- assert(/^7:\\d{2} AM$/.test(initial.clock.label),"the clock begins in its first daylight hour");
+ assert(/^7:\d{2} AM$/.test(initial.clock.label),"the clock begins in its first daylight hour");
  assert.equal(initial.clock.phase,"day");
  assert.equal(initial.mode,"day");
  assert.deepEqual(initial.loaded,{day:true,night:true},"both sky panoramas loaded locally");
@@ -45,7 +45,7 @@ try{
  assert.equal(initial.domeEnabled,true);
  assert(initial.radius>300&&initial.radius<1000);
  assert(initial.activeTerrain);
- assert(/^7:\\d{2} AM$/.test(await page.locator("#game-clock .game-clock-time").innerText()),
+ assert(/^7:\d{2} AM$/.test(await page.locator("#game-clock .game-clock-time").innerText()),
   "HUD updates naturally while the game loads");
  assert.equal(await page.locator("#sky-preview").count(),0,
   "manual sky preview control replaced with a real clock");
@@ -98,7 +98,7 @@ try{
  assert.equal(persisted.year,"12,000 BCE","previewing sky must not age the character");
  assert.equal(persisted.heroAge,25);
  assert.equal(await page.locator("#game-clock").getAttribute("data-phase"),"sunset");
- assert(/^7:\\d{2} PM$/.test(await page.locator("#game-clock .game-clock-time").innerText()),
+ assert(/^7:\d{2} PM$/.test(await page.locator("#game-clock .game-clock-time").innerText()),
   "the clock resumes the saved evening time");
  assert.deepEqual(errors,[],"automatic sky and clock should create no browser errors");
  console.log("PASS browser 6C.1D: local sky, automatic hourly phases, lighting, live clock HUD and fractional-year reload");
