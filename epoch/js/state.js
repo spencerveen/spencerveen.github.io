@@ -23,7 +23,7 @@ import {emptyEquipment,normalizeEquipment,equipFromBackpack,unequipToBackpack,CR
 import {WILDLIFE,normalizeWildlife,animalCombatStats} from "./hunting.js?v=20261114hunt1";
 import {VILLAGER_CARRY_CAPACITY,normalizeCargo,normalizeHaulPosition,cargoCount,transferCargo} from "./villager-hauling.js?v=20261114haul1";
 import {FISH_STAMINA_COST,FISH_CATCH_AMOUNT,normalizeFishCatches} from "./fishing.js?v=20261114fish1";
-import {REAL_SECONDS_PER_YEAR,clockAtProgress,normalizeCalendarProgress} from "./game-clock.js?v=20261114clock1";
+import {REAL_SECONDS_PER_YEAR,clockAtProgress,normalizeCalendarProgress} from "./game-clock.js?v=20261115dusk1";
 export const SKILLS=[
   ["woodcutting","Woodcutting"],["mining","Mining"],["foraging","Foraging"],
   ["crafting","Crafting"],["cooking","Cooking"],["fishing","Fishing"],["construction","Construction"],["survival","Survival"]
