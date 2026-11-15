@@ -3,7 +3,7 @@ import {SURVIVAL,freshSurvival,normalizeSurvival,maxStamina,spendStamina,advance
 import {COOKING_RECIPES,COOKING_REACH,prepareCooking} from "./cooking.js?v=20261114development1";
 import {newDevCheats,validDevCheat} from "./dev-cheats.js?v=20261114devpanel1";
 import {LEGACY_KEY,saveSlotKey} from "./save-slots.js?v=20261113m";
-import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261114development1";
+import {BUILDINGS,PLOT_BY_ID,plotAtHome,capacity,emptyVillage} from "./settlement.js?v=20261115council1";
 import {normalizeBuildings,placementCheck,UNIQUE_BUILDINGS} from "./village-placement.js?v=20261114development1";
 import {LEGACY_HOME,createStockpile,normalStockpile,stockpileCount,stockpileUsed,
  stockpileCapacity,STOCKPILE_CAPACITY,stockpileSpace,stockpileHas,payStockpile,nearStockpile,withinVillage,
