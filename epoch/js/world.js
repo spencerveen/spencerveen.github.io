@@ -568,7 +568,7 @@ export class World {
    const foodReady=availableVillageMeals(pile)>0;
    if(!carrying&&hungry&&foodReady&&
       !["working","returning","waiting","toMeal","eating"].includes(work.mode)){
-    work.mode="toMeal";work.task=null;work.dropoff=null;resetRoute();
+    work.mode="toMeal";work.task=null;work.dropoff=null;work.leisure=null;resetRoute();
    }
    if(work.mode==="toMeal"){
     if(!hungry||!foodReady){
@@ -595,8 +595,20 @@ export class World {
    if(!canStart&&work.mode==="outbound"&&!carrying){
     work.task=null;work.mode="goingHome";work.dropoff=null;resetRoute();
    }
-   if(carrying&&["idle","offDuty","sleeping","resting","goingHome"].includes(work.mode)){
-    work.mode="returning";work.task=null;work.dropoff=null;resetRoute();
+   if(carrying&&(["idle","offDuty","sleeping","resting","goingHome"].includes(work.mode)||
+      isLeisureMode(work.mode))){
+    work.mode="returning";work.task=null;work.dropoff=null;work.leisure=null;resetRoute();
+   }
+   // Leisure never overrides work, meals, exhaustion, cargo delivery or
+   // bedtime. Sunset gatherings naturally end at 8 PM.
+   const leisureAllowed=villagerMaySocialize({
+    shift,job:person.job,energy:needs.energy??100,
+    hunger:needs.hunger??100,resting:needs.resting===true,carrying
+   });
+   if(isLeisureMode(work.mode)&&!leisureAllowed){
+    if(canStart){
+     work.mode="idle";work.retry=0;work.leisure=null;resetRoute();
+    }else this.endVillagerLeisure(person,4);
    }
    if(!carrying&&["idle","offDuty","sleeping","resting"].includes(work.mode)){
     if(!canStart){
@@ -609,8 +621,15 @@ export class World {
    if(work.mode==="goingHome"){
     if(this.moveVillager(person,{x:person.homeX,z:person.homeZ},dt,1.05)){
      work.mode=sleeping?"sleeping":tired?"resting":"offDuty";
-     work.retry=1.5;
+     work.retry=Math.max(1.5,work.pauseAfterSocial||0);
+     work.pauseAfterSocial=0;
     }
+    continue;
+   }
+   if(work.mode==="offDuty"&&leisureAllowed)
+    this.beginVillagerLeisure(person,shift,dt);
+   if(isLeisureMode(work.mode)){
+    this.updateVillagerLeisure(person,dt);
     continue;
    }
    if(["sleeping","offDuty","resting"].includes(work.mode))continue;
@@ -706,8 +725,10 @@ export class World {
   }
  }
  updateVillagerSleepMarkers(){
-  for(const person of this.people)
+  for(const person of this.people){
    person.sleepMarker?.setEnabled(person.work?.mode==="sleeping");
+   person.socialMarker?.setEnabled(person.work?.mode==="socializing");
+  }
  }
  makeCamera(){
   const c=new B.ArcRotateCamera("adventurer camera",-Math.PI/2,1.13,18,V(0,1,0),this.scene);
