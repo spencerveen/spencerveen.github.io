@@ -81,11 +81,12 @@ try{
   "dawn and dusk have distinct atmospheric colors");
  assert.equal(phases[3].intensity,initial.intensity);
  // Test an actual saved fractional year, not a volatile visual override.
- await page.evaluate(()=>{
+ // The game saves on pagehide. Seed the evening checkpoint in the
+ // next document before Epoch constructs GameState, after pagehide finishes.
+ await page.addInitScript(()=>{
   const key="epoch.stoneage.slot.1";
-  const saved=JSON.parse(localStorage.getItem(key));
-  saved.calendarProgress=.5;
-  localStorage.setItem(key,JSON.stringify(saved));
+  const saved=JSON.parse(localStorage.getItem(key)||"null");
+  if(saved){saved.calendarProgress=.5;localStorage.setItem(key,JSON.stringify(saved))}
  });
  await page.reload({waitUntil:"domcontentloaded",timeout:45000});
  await continueGame(page);
