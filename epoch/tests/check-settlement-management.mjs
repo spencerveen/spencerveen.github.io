@@ -56,7 +56,7 @@ ui.settlementFilter="all";
 const structures=settlementManagementPage(ui,"buildings");
 assert(structures.includes("Raised Granary"));
 assert(structures.includes("Extended Sleeping Hut"));
-assert(structures.includes("Toolmaker's Workshop"));
+assert(structures.includes("Toolmaker&#39;s Workshop"));
 assert(structures.includes('data-action="settlement-upgrade"'));
 assert(structures.includes('data-id="stockpile"'));
 assert(structures.includes('data-id="building_1"'));
