@@ -197,6 +197,32 @@ function addVillageUpgradeDecor(world,root,kind){
  }
  for(const piece of pieces)piece.isPickable=false;
 }
+/** A single roof-level Zzz sign represents occupied sleeping quarters.
+ * Keep it outside the NPC model so hiding the resident never hides the sign.
+ * Constructed Huts only: no floating sleep markers above empty plots.
+ */
+function makeHutSleepSign(world,root,id){
+ const B=globalThis.BABYLON;
+ const sign=B.MeshBuilder.CreatePlane("Sleeping villagers inside Hut "+id,
+  {width:1.14,height:.4},world.scene);
+ sign.parent=root;sign.position=V(0,3.67,0);
+ sign.billboardMode=B.Mesh.BILLBOARDMODE_ALL;sign.isPickable=false;
+ const texture=new B.DynamicTexture("Hut sleep sign "+id,
+  {width:256,height:96},world.scene,false);
+ texture.hasAlpha=true;
+ const ctx=texture.getContext();
+ ctx.clearRect(0,0,256,96);
+ ctx.fillStyle="rgba(26,37,54,.88)";ctx.fillRect(14,6,228,81);
+ ctx.strokeStyle="#9baacf";ctx.lineWidth=3;ctx.strokeRect(16,8,224,77);
+ ctx.textAlign="center";ctx.font="bold 41px Arial";ctx.fillStyle="#e1edff";
+ ctx.fillText("Zzz",128,65);texture.update();
+ const mat=new B.StandardMaterial("Hut sleep material "+id,world.scene);
+ mat.diffuseTexture=texture;mat.emissiveTexture=texture;
+ mat.useAlphaFromDiffuseTexture=true;mat.disableLighting=true;
+ mat.backFaceCulling=false;sign.material=mat;sign.setEnabled(false);
+ sign.onDisposeObservable.addOnce(()=>{mat.dispose();texture.dispose()});
+ return sign;
+}
 function updateVillageGrid(world,pile){
  const key=pile?pile.x+","+pile.z:null;
  if(world.villageGridHome===key)return;
@@ -239,7 +265,8 @@ export function syncVillageWorld(world,village){
    if(!item||item.entry.kind!==entry.kind){
     if(item)item.root.dispose(false,false);
     const root=makeBuiltStructure(world,entry);
-    item={root,entry:{...entry}};world.villageBuildings.set(entry.id,item);
+    item={root,entry:{...entry},sleepIndicator:entry.kind==="family"?
+     makeHutSleepSign(world,root,entry.id):null};world.villageBuildings.set(entry.id,item);
    }
    item.entry={...entry};
    if((entry.level||1)>=2&&!item.improvement){
