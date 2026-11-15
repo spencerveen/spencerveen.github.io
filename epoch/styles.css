@@ -708,6 +708,13 @@ body.village-established #left .survival-bar {height:7px}
 .sm-person-controls select {width:100%;min-height:40px;margin-top:5px;padding:8px;
  border:1px solid #8aa08470;border-radius:7px;background:#12241a;color:#e9e8d8;font-size:12px}
 .sm-person-controls button {min-height:40px}
+.sm-person-footer {display:flex;align-items:center;justify-content:space-between;gap:12px;
+ flex-wrap:wrap;margin-top:8px;border-top:1px solid #a8b69a22;padding-top:7px}
+.sm-person-footer .sm-link {margin-top:0}
+.sm-person-footer .sm-cargo {margin-top:0}
+.sm-building strong {color:#e8d9b3}
+#modal.is-settlement .sm-kpi strong {overflow-wrap:anywhere;white-space:normal}
+
 .sm-cargo {display:block;margin-top:10px;color:#d5c19a;font-size:11px}
 .sm-leader {background:#38452d65;border-color:#c0ae715a}
 .sm-empty {padding:16px;color:#aabca7;font-size:12px;text-align:center}
