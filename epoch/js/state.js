@@ -933,6 +933,52 @@ export class GameState{
   this.save();
   return true;
  }
+ /** Phase 6D upgrades are purchased with delivered stockpile materials.
+  * This is an atomic state transaction: no cost is paid until all requirements
+  * and the actual built target have been validated.
+  */
+ canUpgradeVillage(id,x,z){
+  const village=this.data.village,pile=village.stockpile;
+  if(this.data.survival.gameOver)return {ok:false,reason:"Your civilization has ended."};
+  if(!pile)return {ok:false,reason:"Found your village stockpile first."};
+  if(!nearStockpile(pile,x,z))
+   return {ok:false,reason:"Visit the stockpile to manage construction."};
+  const isStore=id==="stockpile";
+  const target=isStore?pile:village.buildings.find(b=>b.id===id);
+  if(!target)return {ok:false,reason:"This structure no longer exists."};
+  const definition=VILLAGE_UPGRADES[isStore?"stockpile":target.kind];
+  if(!definition)return {ok:false,reason:"No available upgrade for this structure."};
+  if((isStore?stockpileLevel(target):structureLevel(target))>=DEVELOPMENT_MAX_LEVEL)
+   return {ok:false,reason:"This improvement is already completed."};
+  if(!stockpileHas(pile,definition.cost))
+   return {ok:false,reason:"Deposit "+
+    Object.entries(definition.cost).filter(([item,qty])=>stockpileCount(pile,item)<qty)
+     .map(([item,qty])=>(qty-stockpileCount(pile,item))+" "+item).join(" and ")+
+    " to begin the upgrade."};
+  return {ok:true,target,definition};
+ }
+ upgradeVillage(id,x,z){
+  const check=this.canUpgradeVillage(id,x,z);
+  if(!check.ok)return {ok:false,reason:check.reason};
+  if(!payStockpile(this.data.village.stockpile,check.definition.cost))
+   return {ok:false,reason:"Village supplies changed before construction."};
+  check.target.level=DEVELOPMENT_MAX_LEVEL;
+  if(check.target.kind==="family")normalizeHomes(this.data.village);
+  this.gainXP("construction",45);
+  this.changed("The village completed its "+check.definition.title+".");
+  return {ok:true,reason:check.definition.title+": "+check.definition.benefit,
+   kind:check.definition.kind,level:DEVELOPMENT_MAX_LEVEL};
+ }
+ villageDevelopment(){
+  const village=this.data.village;
+  return {stockpileLevel:stockpileLevel(village.stockpile),
+   buildings:village.buildings.map(b=>({id:b.id,kind:b.kind,level:structureLevel(b)})),
+   housing:capacity(village),storage:stockpileCapacity(village.stockpile),
+   gatheringDuration:upgradedBuilding(village,"lore")?.8:1,
+   knowledgeMultiplier:workshopKnowledgeMultiplier(village),
+   culturePerYear:councilYearCulture(village),
+   bonusCooking:hearthExtraServing(village)};
+ }
  villageCapacity(){return capacity(this.data.village)}
  buildShelter(){return this.buildVillagePlot("family_1")}
  nextGeneration(){
