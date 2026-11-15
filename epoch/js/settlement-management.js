@@ -120,7 +120,7 @@ function people(ui){
    data-sm-worker="${p.job!=="idle"?"true":"false"}" data-sm-needs="${critical?"true":"false"}"
    ${match?"":"hidden"}>
    <div class="sm-person-head"><div><strong>${esc(p.name)}</strong>
-    <small>Age ${Number(p.age)||0} · ${esc(home?.label||"Communal camp")} · ${esc(status)}</small>
+    <small>Age ${Number(p.age)||0}${p.age<18?" · Child":""} · ${esc(home?.label||"Communal camp")} · ${esc(status)}</small>
     <small>${partner?"Partner of "+esc(partner.name)+" · ":""}${friendCount} friend${friendCount===1?"":"s"}</small></div>
     <span class="sm-pill ${chosen?"complete":critical?"attention":""}">${chosen?"Successor":critical?esc(hungryStatus(p.hunger)==="Fed"?"Needs rest":hungryStatus(p.hunger)):"Settler"}</span></div>
    <div class="sm-person-vitals">
@@ -128,7 +128,7 @@ function people(ui){
     <div><span>Hunger</span><strong>${hunger}%</strong>${meter(hunger,100)}</div>
    </div>
    <div class="sm-person-controls">
-    <label>Occupation<select data-settlement-job="${esc(p.id)}" aria-label="Assign occupation for ${esc(p.name)}">${jobOptions(p.job)}</select></label>
+    <label>Occupation<select data-settlement-job="${esc(p.id)}" aria-label="Assign occupation for ${esc(p.name)}" ${p.age<18?"disabled title=\"Children cannot take adult professions until age 18\"":""}>${jobOptions(p.job)}</select></label>
     <label>Residence<select data-settlement-home="${esc(p.id)}" aria-label="Choose residence for ${esc(p.name)}">${homeOptions(p)}</select></label>
     <button type="button" class="sm-secondary" data-action="settlement-profile" data-id="${esc(p.id)}">Profile</button>
    </div>

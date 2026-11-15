@@ -14,9 +14,9 @@ import {harvestAtNode} from "./harvest.js?v=20261115staminabalance1";
 import {tribeAtChunk,normalizeTribeRecords,tribeTrust,tribeAidRequest,
  TRIBE_TRUST_GOAL,TRIBE_AID_TRUST} from "./tribes.js?v=20261114watershed3";
 import {normalizeRelationships,advanceSocialRelationships,advanceHouseholdRelationships,pruneRelationships,
- residentRelationships,relationshipSummary} from "./relationships.js?v=20261115relations1";
+ residentRelationships,relationshipSummary,seedTribePartnerships} from "./relationships.js?v=20261115tribefamily1";
 import {legacyResidents,normalizeResidents,normalizeHomes,housingUnits,
- moveResidentHome,houseCampResidents,assignResidentJob,residentConnections,ageVillageResidents,normalizeDeceasedResidents,
+ moveResidentHome,houseCampResidents,assignResidentJob,residentConnections,residentFamily,ageVillageResidents,normalizeDeceasedResidents,
  NATURAL_DEATH_AGE} from "./residents.js?v=20261115sleepindoors2";
 import {ITEMS,INVENTORY_SLOTS,canonicalItem,emptyInventory,emptyUnpacked,normalizeInventory,
  normalizeUnpacked,migrateResources,addItems,removeItems,countItem,
@@ -373,13 +373,13 @@ export class GameState{
   if(!candidate||!Number.isInteger(candidate.cx)||!Number.isInteger(candidate.cz))return false;
   const previous=this.data.tribes[candidate.id];
   const tribe=tribeAtChunk(this.data.worldSeed,candidate.cx,candidate.cz,
-   !!previous&&previous.placementVersion!==2);
+   !!previous&&previous.placementVersion!==2,previous?.familyVersion??1);
   if(!tribe||tribe.id!==candidate.id)return false;
   if(previous?.discovered||previous?.status==="relocated"||previous?.status==="razed")return false;
   this.data.tribes[tribe.id]={status:previous?.status||"active",
    discovered:true,discoveredYear:this.data.year,
    trust:tribeTrust(tribe,previous),completed:previous?.completed||0,
-   placementVersion:tribe.placementVersion};
+   placementVersion:tribe.placementVersion,familyVersion:tribe.familyVersion??0};
   this.changed("Discovered "+tribe.name+" in the wilderness.");
   return true;
  }
@@ -388,7 +388,7 @@ export class GameState{
   if(!match)return null;
   const record=this.data.tribes[id];
   const tribe=tribeAtChunk(this.data.worldSeed,Number(match[1]),Number(match[2]),
-   !!record&&record.placementVersion!==2);
+   !!record&&record.placementVersion!==2,record?.familyVersion??1);
   return tribe?.id===id?tribe:null;
  }
  tribeProgress(id){
@@ -421,12 +421,18 @@ export class GameState{
   // One transaction: the entire tribe relocates or none of it does.
   const arrivals=tribe.members.map(member=>({
    id:member.id,name:member.name,sex:member.sex,age:member.age,
+   parentIds:[...(member.parentIds||[])],partnerId:member.partnerId||null,
+   householdId:member.householdId||null,familyRole:member.familyRole||"individual",
+   headOfHousehold:member.headOfHousehold===true,
    originTribeId:tribe.id,originTribeName:tribe.name,
    role:member.role==="leader"?"formerLeader":"resident",recruitment:"peaceful",
    joinedYear:this.data.year,homeId:null,job:"idle",energy:100,resting:false,hunger:100,lastMeal:null,cargo:{},haulPosition:null,
    memories:[{year:this.data.year,text:"Welcomed peacefully from "+tribe.name+"."}]
   }));
   this.data.village.residents.push(...arrivals);
+  // Preserve tribal partnerships in the normal reciprocal friendship system.
+  seedTribePartnerships(this.data.village,arrivals,this.data.year);
+  // Family co-housing will be added in 7A.2B; current bed accounting is unchanged.
   normalizeHomes(this.data.village);
   this.data.village.population=this.data.village.residents.length+1;
   this.data.tribes[id].status="relocated";
@@ -443,7 +449,8 @@ export class GameState{
    home:homes.find(h=>h.id===resident.homeId)||null,
    homes,
    connections:residentConnections(this.data.village,id),
-   relationships:residentRelationships(this.data.village,id,this.data.hero)
+   relationships:residentRelationships(this.data.village,id,this.data.hero),
+   family:residentFamily(this.data.village,id,this.data.hero)
   };
  }
  ageResidents(years=1){

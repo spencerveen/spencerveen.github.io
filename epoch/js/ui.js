@@ -1,8 +1,9 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261115relations1";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261115tribefamily1";
 import {COOKING_RECIPES} from "./cooking.js?v=20261114fish2";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
-import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261114m";
+import {TRIBE_INTERACT_RANGE,TRIBE_TRUST_GOAL} from "./tribes.js?v=20261115tribefamily1";
+import {tribeFamilySummary,tribeFamilyDescription} from "./tribe-families.js?v=20261115tribefamily1";
 import {BUILDINGS} from "./settlement.js?v=20261115council1";
 import {villagePanel,selectVillageBuilding,openStockpile,handleVillageAction} from "./village-ui.js?v=20261115council1";
 import {VILLAGER_JOBS} from "./villager-jobs.js?v=20261114jobs2";
@@ -156,12 +157,12 @@ export class UI{
  }
  renderResidentProfile(profile){
   if(!profile)return false;
-  const {resident,home,homes,connections,relationships=[]}=profile;
+  const {resident,home,homes,connections,relationships=[],family={}}=profile;
   const year=y=>y<0?Math.abs(y).toLocaleString()+" BCE":(y+1)+" CE";
   const origin=resident.originTribeName||"the original settlement";
   const arrival=resident.recruitment==="peaceful"?
    "Joined peacefully from "+esc(origin):"Resident of the original settlement";
-  const role=resident.role==="formerLeader"?"Former tribal leader":"Villager";
+  const role=resident.age<18?"Child":resident.role==="formerLeader"?"Former tribal leader":"Villager";
   const selected=this.state.data.successorId===resident.id;
   const worker=this.world.people.find(p=>p.id===resident.id);
   const workStatus=villagerActivityText(worker?.work?.mode||"idle",
@@ -180,6 +181,14 @@ export class UI{
     '" data-home="'+esc(unit.id)+'" '+(isCurrent||full?'disabled':'')+'>'+
     (isCurrent?'Current home':full?'Full':'Move here')+'</button></div>';
   }).join("");
+  const familyLink=(person,kin)=>person.isLeader?
+   '<strong>'+esc(person.name)+' · '+esc(kin)+' · Village leader</strong>':
+   '<button type="button" class="resident-link" data-action="view-resident" data-id="'+esc(person.id)+'">'+
+   esc(person.name)+' · '+esc(kin)+'</button>';
+  const familyNames=(people,empty,kind)=>people?.length?people.map(person=>
+   familyLink(person,kind==="parent"?(person.sex==="female"?"Mother":"Father"):
+    person.sex==="female"?"Daughter":"Son")).join(""):
+   '<span class="context-note">'+empty+'</span>';
   const connectionList=(people,empty)=>people.length?people.map(person=>
    '<button type="button" class="resident-link" data-action="view-resident" data-id="'+esc(person.id)+'">'+
    esc(person.name)+'</button>').join(""):'<span class="context-note">'+empty+'</span>';
@@ -201,11 +210,14 @@ export class UI{
    '<p><strong>Joined:</strong> '+year(resident.joinedYear)+'</p>'+
    '<p class="context-note">Villagers collect food from village storage when hungry. In free time they visit a constructed Cooking Hearth, gather near the communal clearing, or stroll around the settlement. Meals, work, fatigue, cargo deliveries and sleep always take priority.</p></div>'+  
    '<h3 class="section-heading">Work assignment</h3>'+
-   '<p class="context-note">Choose a Stone Age profession. Unassigned villagers remain at home.</p>'+
+   '<p class="context-note">'+(resident.age<18?
+    'Children cannot take adult professions until they reach age 18. Their current work status remains Unassigned.':
+    'Choose a Stone Age profession. Unassigned villagers remain at home.')+'</p>'+
    '<div class="resident-job-options">'+Object.entries(VILLAGER_JOBS).map(([id,job])=>
     '<button type="button" data-action="resident-job" data-id="'+esc(resident.id)+
     '" data-job="'+id+'" class="'+(resident.job===id?"active":"")+'" '+
-    (resident.job===id?'aria-pressed="true"':'aria-pressed="false"')+'>'+esc(job.name)+'</button>').join("")+'</div>'+
+    (resident.job===id?'aria-pressed="true"':'aria-pressed="false"')+
+    (resident.age<18&&id!=="idle"?' disabled':'')+'>'+esc(job.name)+'</button>').join("")+'</div>'+
    '<div class="entry"><h3>Leadership</h3><p>'+
    (selected?esc(resident.name)+' is your designated successor.':
     'If your character dies, a named successor takes control. Without one, a surviving villager is chosen randomly.')+'</p>'+
@@ -223,6 +235,14 @@ export class UI{
      (bond.sharedYears?' · '+bond.sharedYears+' shared Hut year'+(bond.sharedYears===1?'':'s'):'')+
      '</span></div>').join(''):
     '<p class="context-note">No established personal bonds yet. Villagers need time together to become friends.</p>')+'</div>'+
+   '<h3 class="section-heading">Family ties</h3>'+
+   '<div class="entry"><p class="context-note">These are real inherited family records from their original tribe, independent of current housing. Family household management comes in Phase 7A.2B.</p>'+
+   (family.headOfHousehold?'<p><strong>Original household head</strong></p>':'')+
+   '<h3>Parents</h3>'+familyNames(family.parents,'No recorded parents in the village.','parent')+
+   '<h3>Partner</h3>'+(family.partner?familyLink(family.partner,'Partner'):
+    '<span class="context-note">No original tribal partner recorded.</span>')+
+   '<h3>Children</h3>'+familyNames(family.children,'No recorded children in the village.','child')+
+   '</div>'+
    '<h3 class="section-heading">People they know</h3>'+
    '<div class="entry"><h3>Former clanmates</h3>'+
    connectionList(connections.clanmates,"No other villagers from the same tribe.")+
@@ -246,8 +266,13 @@ export class UI{
   const progress=this.state.tribeProgress(tribe.id);
   if(!progress||progress.record.status!=="active")return false;
   const leader=tribe.members.find(m=>m.role==="leader")||tribe.members[0];
-  const members=tribe.members.map(member=>
-   '<div class="timeline"><b>'+esc(member.name)+'</b><span>'+esc(member.role==="leader"?"Tribal leader":"Tribesperson")+' · Age '+member.age+'</span></div>').join("");
+  const familyStats=tribeFamilySummary(tribe);
+  const members=tribe.members.map(member=>{
+   const kin=tribeFamilyDescription(member,tribe);
+   return '<div class="timeline"><b>'+esc(member.name)+'</b><span>'+
+    esc(member.role==="leader"?"Tribal leader":member.age<18?"Child":"Tribesperson")+
+    ' · Age '+member.age+(kin&&kin!=="Tribesperson"?' · '+esc(kin):'')+'</span></div>';
+  }).join("");
   const disposition=tribe.disposition[0].toUpperCase()+tribe.disposition.slice(1);
   const trust=progress.trust,space=progress.space;
   let interaction="";
@@ -286,7 +311,13 @@ export class UI{
    '<div class="bar" role="progressbar" aria-label="Tribal trust" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+trust+
    '"><span style="width:'+trust+'%"></span></div>'+
    '<small>Helping the tribe earns trust. Three unique requests can establish a peaceful alliance.</small></div>'+
-   interaction+'<h3 class="section-heading">People of '+esc(tribe.name)+'</h3>'+members+
+   interaction+
+   (familyStats.families?
+    '<div class="entry"><h3>Families in this tribe</h3><p>'+familyStats.children+
+    ' child'+(familyStats.children===1?'':'ren')+
+    ' with recorded parentage. These ties survive peaceful recruitment.</p></div>':
+    '<p class="context-note">This camp has no documented parent-child household.</p>')+
+   '<h3 class="section-heading">People of '+esc(tribe.name)+'</h3>'+members+
    '<p class="context-note">Peaceful recruitment only. Invited villagers can be given jobs through Village → People.</p>'+
    '<button type="button" class="game-button alt" data-action="resume">Return to the wilderness</button>';
   this.showDialog("tribe",tribe.name,html);

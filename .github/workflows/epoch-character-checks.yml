@@ -26,6 +26,9 @@ jobs:
           node --check epoch/js/village-ui.js
           node --check epoch/js/residents.js
           node --check epoch/js/relationships.js
+          node --check epoch/js/tribe-families.js
+          node --check epoch/js/tribes.js
+          node --check epoch/js/tribe-world.js
           node --check epoch/js/survival.js
           node --check epoch/js/swimming.js
           node --check epoch/js/swim-animation.js
@@ -75,6 +78,8 @@ jobs:
         run: node epoch/tests/check-residents.mjs
       - name: Validate authentic social bonds, partnerships, succession and saved relationships
         run: node epoch/tests/check-relationships.mjs
+      - name: Validate seeded tribal families, child ages, recruitment and old-save migration
+        run: node epoch/tests/check-tribe-families.mjs
       - name: Validate Hut household views and no manual succession
         run: node epoch/tests/check-huts.mjs
       - name: Validate hunger, stamina, berries, injuries and survivor succession

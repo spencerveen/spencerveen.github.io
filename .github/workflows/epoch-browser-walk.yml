@@ -88,6 +88,8 @@ jobs:
         run: node epoch/tests/browser-contextual-ui.mjs
       - name: Explore seeded wilderness tribes and interact with their leaders
         run: node epoch/tests/browser-tribes.mjs
+      - name: Verify wilderness children, family records, and tribal family encounter screens
+        run: node epoch/tests/browser-tribe-families.mjs
       - name: Validate survival HUD, eating, sprinting and permanent death
         run: node epoch/tests/browser-survival.mjs
       - name: Verify E quick eat and F nearby interaction shortcuts

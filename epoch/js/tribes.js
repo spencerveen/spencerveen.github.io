@@ -6,6 +6,7 @@
 import {CHUNK_SIZE,seededRandom,terrainHeight,chunkKey} from "./forest-generation.js?v=20261113k";
 import {waterAt} from "./water-generation.js?v=20261114watershed3";
 import {mountainAt} from "./mountain-generation.js?v=20261114watershed3";
+import {generateTribeFamilies,TRIBE_FAMILY_VERSION} from "./tribe-families.js?v=20261115tribefamily1";
 
 export const TRIBE_CLEARING_RADIUS=9.5;
 export const TRIBE_MIN_SPACING=132;
@@ -127,10 +128,10 @@ export function starterTribeChunk(seed){
  starterCache.set(seed,result);
  return result;
 }
-export function tribeAtChunk(seed,cx,cz,retainLegacy=false){
+export function tribeAtChunk(seed,cx,cz,retainLegacy=false,familyVersion=TRIBE_FAMILY_VERSION){
  seed=Number(seed)>>>0;
  if(!Number.isInteger(cx)||!Number.isInteger(cz))return null;
- if(retainLegacy)return legacyTribeAtChunk(seed,cx,cz);
+ if(retainLegacy)return generateTribeFamilies(legacyTribeAtChunk(seed,cx,cz),seed,familyVersion);
  const [sx,sz]=starterTribeChunk(seed),starter=cx===sx&&cz===sz;
  if(!starter&&!territoryChunk(cx,cz))return null;
  const site=safeSite(seed,cx,cz);
@@ -152,7 +153,7 @@ export function tribeAtChunk(seed,cx,cz,retainLegacy=false){
   return {id:id+":member:"+i,name:person,sex,age:18+Math.floor(rand()*38),
     role:i===0?"leader":"resident",x:x+Math.cos(a)*d,z:z+Math.sin(a)*d};
  });
- return {id,cx,cz,x,z,name,disposition,members,population:count,starter,placementVersion:2};
+ return generateTribeFamilies({id,cx,cz,x,z,name,disposition,members,population:count,starter,placementVersion:2},seed,familyVersion);
 }
 
 export function normalizeTribeRecords(raw){
@@ -168,7 +169,8 @@ export function normalizeTribeRecords(raw){
   result[id]={status,discovered,discoveredYear:discovered&&Number.isInteger(year)?year:null,
    trust:trust===null||!Number.isFinite(trust)?null:Math.max(0,Math.min(100,Math.floor(trust))),
    completed:Number.isInteger(completed)?Math.max(0,Math.min(TRIBE_AID_REQUESTS.length,completed)):0,
-   placementVersion:record.placementVersion===2?2:1};
+   placementVersion:record.placementVersion===2?2:1,
+   familyVersion:record.familyVersion===TRIBE_FAMILY_VERSION?TRIBE_FAMILY_VERSION:0};
  }
  return result;
 }

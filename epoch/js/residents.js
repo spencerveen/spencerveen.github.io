@@ -45,6 +45,13 @@ export function normalizeResidents(raw,max=100){
   const recruitment=fromTribe?"peaceful":"legacy";
   const memories=Array.isArray(resident.memories)?resident.memories.filter(m=>m&&typeof m==="object"&&!Array.isArray(m)).slice(-16)
     .map(m=>({year:safeYear(m.year,year),text:text(m.text,180)})).filter(m=>m.text):[];
+  const parentIds=[...new Set((Array.isArray(resident.parentIds)?resident.parentIds:[])
+   .filter(id=>typeof id==="string"&&VALID_ID.test(id)&&id!==resident.id))];
+  const kinParents=parentIds.slice(0,2);
+  const partnerId=typeof resident.partnerId==="string"&&VALID_ID.test(resident.partnerId)&&
+   resident.partnerId!==id?resident.partnerId:null;
+  const householdId=typeof resident.householdId==="string"&&
+   /^tribe:-?\d+,-?\d+:family:\d+$/.test(resident.householdId)?resident.householdId:null;
   const rememberedHome=resident.homeId===CAMP_HOME?CAMP_HOME:
    typeof resident.homeId==="string"&&resident.homeId.length<=70?resident.homeId:null;
   result.push({
@@ -54,7 +61,10 @@ export function normalizeResidents(raw,max=100){
    originTribeName:fromTribe?text(resident.originTribeName,80):"",
    recruitment,role:fromTribe&&(resident.role==="leader"||id.endsWith(":member:0"))?"formerLeader":"resident",
    joinedYear:year,homeId:rememberedHome,
-   job:validVillagerJob(resident.job)?resident.job:"idle",
+   parentIds:kinParents,partnerId,householdId,
+   familyRole:["parent","child"].includes(resident.familyRole)?resident.familyRole:"individual",
+   headOfHousehold:resident.headOfHousehold===true,
+   job:age<18?"idle":validVillagerJob(resident.job)?resident.job:"idle",
    energy:normalizedEnergy(resident.energy),
    resting:normalizedResting(resident.resting,normalizedEnergy(resident.energy)),
    hunger:normalizedHunger(resident.hunger),lastMeal:normalizedLastMeal(resident.lastMeal),
@@ -129,7 +139,7 @@ export function moveResidentHome(village,id,newHomeId,year){
 export function assignResidentJob(village,id,job,year){
  if(!validVillagerJob(job))return false;
  const person=(village?.residents||[]).find(r=>r.id===id);
- if(!person||person.job===job)return false;
+ if(!person||person.job===job||(person.age<18&&job!=="idle"))return false;
  person.job=job;
  person.memories.push({year:safeYear(year),
   text:job==="idle"?"Stopped working and returned to village life.":
@@ -145,6 +155,25 @@ export function residentConnections(village,id){
   clanmates:person.originTribeId?others.filter(r=>r.originTribeId===person.originTribeId):[],
   housemates:others.filter(r=>r.homeId===person.homeId)
  };
+}
+
+/** Relationships of kin are stable identities, not a housemate guess. */
+export function residentFamily(village,id,hero=null){
+ const people=new Map((village?.residents||[]).map(person=>[person.id,person]));
+ if(hero?.sourceResidentId)people.set(hero.sourceResidentId,{
+  id:hero.sourceResidentId,name:hero.name,age:hero.age,
+  sex:hero.appearance?.sex||"male",parentIds:[],partnerId:null,isLeader:true
+ });
+ const person=people.get(id);
+ if(!person)return {parents:[],children:[],partner:null,headOfHousehold:false};
+ const parents=(person.parentIds||[]).map(parentId=>people.get(parentId))
+  .filter(Boolean);
+ const children=[...people.values()].filter(other=>
+  other.id!==id&&(other.parentIds||[]).includes(id));
+ const partner=people.get(person.partnerId)||null;
+ return {parents,children,partner,
+  headOfHousehold:person.headOfHousehold===true,
+  householdId:person.householdId||null};
 }
 
 /** Persist a bounded memorial without keeping deceased people in live housing. */

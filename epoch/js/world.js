@@ -6,7 +6,7 @@ import {stockpileValidation,nearStockpile,stockpileSpace,LEGACY_HOME,BUILD_GRID}
 import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114development1";
 import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261115sleepindoors1";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view2";
-import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
+import {ForestChunks} from "./forest-chunks.js?v=20261115tribefamily1";
 import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs2";
 import {normalizeCargo,normalizeHaulPosition,cargoCount,landRoute,HAUL_WATER_DEPTH} from "./villager-hauling.js?v=20261114haul1";
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114sky1";
@@ -18,8 +18,9 @@ import {villagerMaySocialize,villagerLeisureChoice,villageGatherCenter,isLeisure
 import {workerGatherDurationMultiplier} from "./village-development.js?v=20261114development1";
 import {hutDoorApproach,villagerBedtimeTarget,HUT_DOOR_REACH} from "./villager-sleep-homes.js?v=20261115sleepindoors1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
-import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
-import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
+import {createTribeWorld} from "./tribe-world.js?v=20261115tribefamily1";
+import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261115tribefamily1";
+import {childVisualScale} from "./tribe-families.js?v=20261115tribefamily1";
 import {WILDLIFE,animalMotion,WILDLIFE_ATTACK_COOLDOWN,
  BOAR_ATTACK_COOLDOWN,HUNT_DISTANCE_BUFFER} from "./hunting.js?v=20261114hunt1";
 import {FISH_SPEAR_REACH} from "./fishing.js?v=20261114fish1";
@@ -351,6 +352,13 @@ export class World {
    person.cargo=normalizeCargo(resident.cargo);
    person.energy=resident.energy??100;person.resting=resident.resting===true;
    person.hunger=resident.hunger??100;
+   // Children remain visibly smaller after joining our village. Update by
+   // ratio because syncVillagers is also called on unrelated save changes.
+   const scale=childVisualScale(resident.age);
+   if(person.visualAgeScale!==scale){
+    person.human.root.scaling.scaleInPlace(scale/(person.visualAgeScale||1));
+    person.visualAgeScale=scale;
+   }
    const carrying=cargoCount(person.cargo)>0;
    const home=resident.homeId||"camp";
    const index=homeCounts.get(home)||0;homeCounts.set(home,index+1);

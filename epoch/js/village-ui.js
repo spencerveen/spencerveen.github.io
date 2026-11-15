@@ -135,6 +135,7 @@ function peoplePanel(ui){
   const hunger=Math.round(normalizedHunger(person.hunger));
   const hungerLabel=hungryStatus(person.hunger);
   html+='<div class="entry resident-row"><div><h3>'+esc(person.name)+'</h3><p>Age '+person.age+
+   (person.age<18?' · Child':'')+
    ' · '+esc(home?.label||"Communal camp")+'</p><small>'+esc(VILLAGER_JOBS[person.job]?.name||"Unassigned")+workNote+' · '+
    (person.recruitment==="peaceful"?"Welcomed from "+esc(source):"Longtime villager")+
    '</small><small class="resident-live-activity" data-resident-activity="'+esc(person.id)+'">'+esc(status)+'</small><div class="resident-energy-meter" data-resident-energy="'+esc(person.id)+'" role="progressbar" aria-label="'+esc(person.name)+' energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+energy+'"><span class="resident-energy-track"><span class="resident-energy-fill" style="width:'+energy+'%"></span></span><span class="resident-energy-value">'+energy+'% energy</span></div>'+

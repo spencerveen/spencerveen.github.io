@@ -41,6 +41,32 @@ const memory=(person,year,text)=>{
 };
 const partnerOccupied=(village,id)=>Object.values(village.relationships||{}).some(
  r=>r.partnerYear!==null&&(r.a===id||r.b===id));
+/** Biological or recorded family ties never become romantic partnerships. */
+export function areCloseKin(a,b){
+ if(!a||!b)return false;
+ const pa=a.parentIds||[],pb=b.parentIds||[];
+ return pa.includes(b.id)||pb.includes(a.id)||
+  pa.some(id=>pb.includes(id));
+}
+/** Seed an established wilderness partnership when its two adults relocate. */
+export function seedTribePartnerships(village,arrivals,year){
+ const living=rosterMap(village);
+ let seeded=0;
+ for(const person of arrivals||[]){
+  if(!person.partnerId||person.id>person.partnerId)continue;
+  const mate=living.get(person.partnerId);
+  if(!mate||mate.partnerId!==person.id||person.age<18||mate.age<18||
+     areCloseKin(person,mate)||partnerOccupied(village,person.id)||
+     partnerOccupied(village,mate.id))continue;
+  const bond=socialRecord(person.id,mate.id,village);
+  bond.affinity=Math.max(bond.affinity,PARTNERSHIP_AT);
+  bond.socialPoints=Math.max(bond.socialPoints,PARTNERSHIP_SOCIAL_POINTS);
+  bond.friendYear??=safeYear(year);
+  bond.partnerYear=safeYear(year);
+  seeded++;
+ }
+ return seeded;
+}
 function milestones(village,record,year,events){
  const people=rosterMap(village),a=people.get(record.a),b=people.get(record.b);
  if(!a||!b)return;
@@ -52,7 +78,7 @@ function milestones(village,record,year,events){
  }
  if(record.partnerYear===null&&record.affinity>=PARTNERSHIP_AT&&
     record.socialPoints>=PARTNERSHIP_SOCIAL_POINTS&&a.age>=18&&b.age>=18&&
-    !partnerOccupied(village,a.id)&&!partnerOccupied(village,b.id)){
+    !areCloseKin(a,b)&&!partnerOccupied(village,a.id)&&!partnerOccupied(village,b.id)){
   record.partnerYear=safeYear(year);
   memory(a,year,"Began a partnership with "+b.name+".");
   memory(b,year,"Began a partnership with "+a.name+".");

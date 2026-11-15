@@ -2,7 +2,8 @@
  * Small, streamed Stone Age camps for the procedural tribes in tribes.js.
  * Visual roots and skinned characters are disposed when their chunk unloads.
  */
-import {TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114watershed3";
+import {TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261115tribefamily1";
+import {childVisualScale} from "./tribe-families.js?v=20261115tribefamily1";
 const B=globalThis.BABYLON;
 const V=(x,y,z)=>new B.Vector3(x,y,z);
 
@@ -103,6 +104,7 @@ export function createTribeWorld(world,createHuman){
   label(this,root,tribe);
   const humans=tribe.members.map((member,i)=>{
    const human=createHuman(this.scene,member,tribe);
+   human.root.scaling.scaleInPlace(childVisualScale(member.age));
    human.root.position=V(member.x,this.groundY(member.x,member.z),member.z);
    human.root.rotation.y=i*1.4;
    // The skinned meshes arrive asynchronously, so mark them after loading.

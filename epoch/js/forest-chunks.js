@@ -1,7 +1,7 @@
 import {CHUNK_SIZE,ACTIVE_RADIUS,DETAIL_RADIUS,TERRAIN_SUBDIVISIONS,terrainHeight,
  forestObjects,forestAnimals,seededRandom,chunkCoord,chunkKey,validForestSite} from "./forest-generation.js?v=20261114view2";
 import {waterAt,waterTerrainHeight} from "./water-generation.js?v=20261114beaches2";
-import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261114watershed3";
+import {tribeAtChunk,TRIBE_CLEARING_RADIUS} from "./tribes.js?v=20261115tribefamily1";
 import {terrainAppearanceAt,mountainOutcropSites,mountainHabitat} from "./mountain-appearance.js?v=20261114beaches2";
 import {mountainAt} from "./mountain-generation.js?v=20261114watershed3";
 import {beachAt,beachFlintSites} from "./beach-generation.js?v=20261114beaches1";
@@ -188,7 +188,8 @@ export class ForestChunks{
   const world=this.world,{cx,cz,key}=chunk,scene=world.scene;
   const record=world.getTribeRecord?.("tribe:"+key);
   const candidate=world.spawnTribeCamp?
-   tribeAtChunk(this.seed,cx,cz,!!record&&record.placementVersion!==2):null;
+   tribeAtChunk(this.seed,cx,cz,!!record&&record.placementVersion!==2,
+     record?.familyVersion??1):null;
   const active=candidate&&world.isTribeSiteActive?.(candidate);
   const relocated=candidate&&world.getTribeRecord?.(candidate.id)?.status==="relocated";
   const dryTribe=candidate&&this.waterAt(candidate.x,candidate.z).depth<.12;

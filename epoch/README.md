@@ -4,6 +4,8 @@
 
 **Phase 7A.1:** [Friendships and partnerships](./RELATIONSHIPS.md) now grow through real nearby conversations and shared Hut years. View reciprocal bonds in the Council Lodge and resident profiles. Family formation and births are future work.
 
+**Phase 7A.2A:** [Wilderness families](./TRIBE_FAMILIES.md) now generate seeded parents, partners and young children in many newly discovered tribes. Their original kinship survives peaceful recruitment and appears in villager profiles; existing discovered tribes keep their previous rosters. Family co-housing and births are later milestones.
+
 **Static site path:** `/epoch/`
 
 **Design:** [GAME_DESIGN.md](./GAME_DESIGN.md)  
