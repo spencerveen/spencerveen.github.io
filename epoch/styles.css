@@ -788,8 +788,8 @@ body.village-established #left .survival-bar {height:7px}
  .sm-stock-item {grid-column:1}
  .sm-stock-num {grid-column:2;text-align:right}
  .sm-stock-backpack {grid-column:1;font-size:11px}
- .sm-stock-buttons {grid-column:2;display:flex;gap:5px}
- .sm-stock-buttons button {min-width:61px;font-size:10px}
+ .sm-stock-buttons {grid-column:1/-1;display:flex;justify-content:flex-start;gap:6px}
+ .sm-stock-buttons button {flex:0 0 90px;min-width:0;font-size:11px}
  .sm-footer-actions {display:block;padding:12px}
  .sm-footer-actions>span {display:block;margin-top:10px}
  .hud-tools button[data-open-settlement] .tool-label {font-size:11px}
