@@ -16,8 +16,9 @@ try{
     version:1,worldSeed:12000,year:-12000,calendarProgress:progress,
     hero:{name:"Village Founder",age:25},
     technologies:hearth?["fire"]:[],
-    village:{population:4,plots:{},buildings:hearth?
-     [{id:"building_1",kind:"hearth",x:4,z:10,turn:0}]:[],
+    village:{population:4,plots:{},buildings:[...(hearth?
+     [{id:"building_1",kind:"hearth",x:4,z:10,turn:0}]:[]),
+     {id:"test_council",kind:"council",x:-10,z:10,turn:0}],
      residents,stockpile:{x:0,z:8,items:{wood:5,stone:5,berries:0,vines:0}}},
     survival:{health:100,stamina:100,hunger:100,gameOver:false},
     lastSavedAt:Date.now()
@@ -72,13 +73,12 @@ try{
   });
   assert(markers.every(m=>m.clickable===false&&m.name.includes("chatting")));
 
-  await clickWorldObject(page,{stockpile:true});
-  await page.locator('nav.section-tabs [data-action="village-section"][data-section="people"]').click();
-  const panel=await page.locator("#panel").innerText();
-  assert(panel.includes("Village conversations"),"People tab explains social gatherings");
-  assert.equal(await page.locator("[data-resident-activity]").count(),3);
-  assert.equal(await page.locator("[data-village-social-count]").count(),1);
-  await page.locator("#close-panel").click();
+  await clickWorldObject(page,{buildingId:"test_council"});
+  await page.locator('.sm-sidebar [data-section="people"]').click();
+  const panel=await page.locator("#guide").innerText();
+  assert(panel.includes("Everyone in the tribe"),"Council Lodge manages the roster");
+  assert.equal(await page.locator("[data-sm-person]").count(),3);
+  await page.locator("#close-modal").click();
 
   const bedtime=await page.evaluate(async()=>{
    const w=window.__epochTestWorld;
@@ -89,13 +89,16 @@ try{
     w.updateVillagerSleepMarkers();
    }
    return w.people.map(p=>({mode:p.work.mode,
-    social:p.socialMarker?.isEnabled(),sleep:p.sleepMarker?.isEnabled(),
+    social:p.socialMarker?.isEnabled(),sleep:p.work.mode==="sleeping",
+    avatarVisible:p.human.root.isEnabled(),bedroll:!!p.campBedroll?.isEnabled(),
     cargo:p.cargo}));
   });
   assert(bedtime.every(p=>!["socialWalk","socializing","wandering"].includes(p.mode)),
    "bedtime always cancels conversations and wandering");
   assert(bedtime.every(p=>p.social===false),"conversation signs disappear at night");
   assert(bedtime.some(p=>p.sleep),"villagers return to their sleep schedule");
+  assert(bedtime.filter(p=>p.sleep).every(p=>!p.avatarVisible&&p.bedroll),
+   "communal campers rest on bedrolls instead of standing outdoors");
   assert.deepEqual(errors,[],"ambient village routines produce no browser runtime errors");
   console.log("PASS browser village life "+(hearth?"hearth":"communal")+
    ": walking, social chats, dry navigation, no free campfire, midnight sleep");
