@@ -1,4 +1,4 @@
-# Epoch — Phase 6C.3: Villager Energy and Sleep
+# Epoch — Phase 6C.3–4: Villager Energy, Sleep and Food
 
 ## What happens every year
 
@@ -55,11 +55,59 @@ Click **View profile** to see the exact energy, exhaustion and sleep status.
 The People panel refreshes only the small meter readouts on energy ticks;
 it does not re-render the 3D world each second.
 
+## Phase 6C.4 — Hunger and shared meals (implemented)
+
+Villagers now track their own **hunger (0–100)** as a saved value alongside
+energy, exhaustion, job and cargo. Old saves start residents at 100 hunger;
+the player's separate hunger and inventory are not changed. Hunger decreases
+with active game time: roughly 0.22/sec gathering, 0.19/sec traveling,
+0.085/sec sleeping, and 0.13–0.145/sec when awake or resting. A single
+7m12s in-game year therefore requires modest but meaningful village rations.
+
+**Meal trips:** When a villager reaches **48 hunger or below**, and edible
+food is available in village storage, their next priority is to walk to the
+stockpile and spend 2.5 seconds eating. They finish already claimed cargo
+deliveries first, and never take a meal from another villager's cargo or from
+the player's personal backpack. At the store they consume **exactly one**
+real unit, then head home or resume the normal daily schedule.
+
+Rations are served in this priority order:
+
+| Stored item | Hunger restored |
+| --- | ---: |
+| Berry-Roasted Meat | 52 |
+| Roasted Meat | 38 |
+| Roasted Fish | 31 |
+| Wild Berries | 24 |
+
+**Raw fish and meat cannot be consumed without cooking.** If the village
+runs out of edible food, villager hunger continues dropping. At 25 hunger,
+energy recovery slows sharply; starving at zero hunger can lose energy even
+while sleeping. Workers at 15 hunger or below cannot begin new work trips,
+except for foragers, who can still try to rescue the settlement by bringing
+back wild berries if they have the stamina to do so. Starvation currently
+affects work and recovery, not mortality (a separate future balancing step).
+
+Village → Storage shows the quantity of ready-to-eat meals and a warning
+for critically hungry residents. Village → People displays each villager's
+hunger and energy bars. Individual profiles show exact hunger status and
+the last meal eaten.
+
+The hunger, energy, cargo and clock values are authoritative in GameState:
+visual updates and Babylon's render loop never generate extra meals.
+Meal consumption, remaining stock and the last eaten item persist in a save.
+Workers outside local simulation range do not fabricate offline meals or
+silently consume stockpile supplies.
+
+Tests: `tests/check-villager-food.mjs` and
+`tests/browser-villager-food.mjs`.
+
 ## Future phase
 
-Phase 6C.4 will add hunger, food consumption, daily meals, reduced recovery
-when hungry, and food storage priorities. Phase 6C.5 can add more complex
-camp and hut routines, socializing and ambient village behavior.
+Phase 6C.5 can add more complex camp and hut routines, socializing,
+bonfires, cooking and dining animations, food rationing policies, and
+eventual starvation/health consequences. Phase 6C.4 hunger and
+stockpile meal consumption are now implemented.
 
 Implementation: `js/villager-routines.js`, `js/residents.js`,
 `js/state.js`, `js/world.js` and the People panels.
