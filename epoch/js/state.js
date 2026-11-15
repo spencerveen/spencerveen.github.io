@@ -978,8 +978,10 @@ export class GameState{
     this.changed("The Toolmaker's Shelter produced "+gained+" Knowledge.");
    }
   }
-  if(d.calendarProgress>=1){
-   d.calendarProgress-=1;d.year++;
+  // Floating-point ticks may total 0.9999999999999998 at precisely 432s.
+  // Treat this as one full day, so aging never takes an extra second.
+  if(d.calendarProgress>=1-1e-10){
+   d.calendarProgress=Math.max(0,d.calendarProgress-1);d.year++;
    const deceased=this.ageResidents(1);
    const memorial=deceased.length?
     " "+deceased.map(p=>p.name).join(", ")+" died of old age.":"";
