@@ -1,10 +1,10 @@
 import {founderAppearance,randomAppearance,normalizeAppearance} from "./characters.js?v=20261113k";
 import {createQuaterniusHuman} from "./quaternius-models.js?v=20261114swimanim1";
-import {BUILDINGS} from "./settlement.js?v=20261114u";
+import {BUILDINGS} from "./settlement.js?v=20261114development1";
 import {choosePlacement,placementCheck} from "./village-placement.js?v=20261114y";
 import {stockpileValidation,nearStockpile,stockpileSpace,LEGACY_HOME,BUILD_GRID} from "./stockpile.js?v=20261114fish1";
-import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114b";
-import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114u";
+import {createStockpileWorld,syncStockpileWorld,showStockpilePreview} from "./stockpile-world.js?v=20261114development1";
+import {createVillageWorld,syncVillageWorld,showVillagePreview} from "./village-world.js?v=20261114development1";
 import {STARTER_SEED,terrainHeight,chunkCoord,chunkKey} from "./forest-generation.js?v=20261114view2";
 import {ForestChunks} from "./forest-chunks.js?v=20261114flint1";
 import {findVillagerWork,JOB_SPEED,JOB_WORK_SECONDS} from "./villager-jobs.js?v=20261114jobs2";
@@ -15,6 +15,7 @@ import {REAL_SECONDS_PER_YEAR,hourAtProgress} from "./game-clock.js?v=20261115du
 import {villagerDayPhase,villagerCanBeginWork,VILLAGER_EXHAUSTED_AT} from "./villager-routines.js?v=20261115life1";
 import {availableVillageMeals,VILLAGER_MEAL_AT,VILLAGER_CRITICAL_HUNGER} from "./villager-nutrition.js?v=20261115food1";
 import {villagerMaySocialize,villagerLeisureChoice,villageGatherCenter,isLeisureMode,VILLAGE_GATHER_RADIUS,VILLAGE_WANDER_RADIUS} from "./village-life.js?v=20261115life1";
+import {workerGatherDurationMultiplier} from "./village-development.js?v=20261114development1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -664,7 +665,7 @@ export class World {
      task.x=animal.node.position.x;task.z=animal.node.position.z;
     }
     if(this.moveVillager(person,task,dt,task.kind==="fish"?.55:2.1)){
-     work.mode="working";work.timer=JOB_WORK_SECONDS[person.job]||4;
+     work.mode="working";work.timer=(JOB_WORK_SECONDS[person.job]||4)*workerGatherDurationMultiplier(this.currentVillage);
      work.route=null;work.routeGoal=null;
     }
    }else if(work.mode==="working"){
