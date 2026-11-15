@@ -1,6 +1,6 @@
 import {GameState} from "./state.js?v=20261114haul1";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
-import {World} from "./world.js?v=20261114haul1";
+import {World} from "./world.js?v=20261114sky1";
 import {UI} from "./ui.js?v=20261114haul1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
@@ -52,6 +52,25 @@ async function startEpoch({slot,newGame=false,founder=null}){
      getFishCaught:id=>state.fishCaught(id),
      onFishCatch:site=>state.catchFish(site)
     });
+  // The temporary preview switches only sky appearance and lighting.
+  // Calendar/aging, saved time, villagers, and other gameplay remain unchanged.
+  const skyPreview=document.getElementById("sky-preview");
+  if(skyPreview){
+   const syncSkyButton=()=>{
+    const night=world.skyMode==="night";
+    skyPreview.dataset.mode=world.skyMode;
+    skyPreview.setAttribute("aria-pressed",String(night));
+    skyPreview.setAttribute("aria-label",night?
+     "Switch to day sky preview":"Switch to night sky preview");
+    skyPreview.querySelector(".sky-preview-icon").textContent=night?"☾":"☀";
+    skyPreview.querySelector(".sky-preview-label").textContent=night?"Night":"Day";
+   };
+   syncSkyButton();
+   skyPreview.addEventListener("click",()=>{
+    world.setSkyPreview(world.skyMode==="day"?"night":"day");
+    syncSkyButton();
+   });
+  }
   ui=new UI(state,world);
   sessionStarted=true;
   state.save();
@@ -73,6 +92,7 @@ async function startEpoch({slot,newGame=false,founder=null}){
     lastDeath:state.data.lastDeath?{...state.data.lastDeath}:null,
     ui:{panelOpen:ui.panelOpen,context:ui.tab,sourceBuildingId:ui.sourceBuildingId,villageSection:ui.villageSection,modal:ui.modal,activeResidentId:ui.activeResidentId},
     forest:world.terrain.status,
+    sky:world.skyAtmosphere?.status()||null,
     resourceNodes:state.resourceStatistics(),
     wildlife:world.animals.map(a=>({id:a.id,species:a.species,dead:a.dead,
      status:state.wildlifeStatus(a.definition),
