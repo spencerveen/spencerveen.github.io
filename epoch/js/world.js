@@ -12,7 +12,8 @@ import {normalizeCargo,normalizeHaulPosition,cargoCount,landRoute,HAUL_WATER_DEP
 import {setupSurfaceTextures} from "./terrain-textures.js?v=20261114sky1";
 import {createSkyAtmosphere} from "./sky-atmosphere.js?v=20261115dusk1";
 import {REAL_SECONDS_PER_YEAR,hourAtProgress} from "./game-clock.js?v=20261115dusk1";
-import {villagerDayPhase,villagerCanBeginWork,VILLAGER_EXHAUSTED_AT} from "./villager-routines.js?v=20261115sleep1";
+import {villagerDayPhase,villagerCanBeginWork,VILLAGER_EXHAUSTED_AT} from "./villager-routines.js?v=20261115food1";
+import {availableVillageMeals,VILLAGER_MEAL_AT,VILLAGER_CRITICAL_HUNGER} from "./villager-nutrition.js?v=20261115food1";
 import {SWIM,isSwimmingDepth,swimCost} from "./swimming.js?v=20261114watershed3";
 import {createTribeWorld} from "./tribe-world.js?v=20261114watershed3";
 import {TRIBE_DISCOVERY_RANGE,TRIBE_INTERACT_RANGE,tribeCampIsActive} from "./tribes.js?v=20261114watershed3";
@@ -30,7 +31,8 @@ export class World {
   this.onResidentSelect=tribeHandlers.onResidentSelect||(()=>{});
   this.onVillagerCollect=tribeHandlers.onVillagerCollect||(()=>({ok:false}));
   this.onVillagerDeliver=tribeHandlers.onVillagerDeliver||(()=>({ok:false}));
-  this.getVillagerEnergy=tribeHandlers.getVillagerEnergy||(()=>({energy:100,resting:false}));
+  this.getVillagerEnergy=tribeHandlers.getVillagerEnergy||(()=>({energy:100,resting:false,hunger:100}));
+  this.onVillagerEat=tribeHandlers.onVillagerEat||(()=>({ok:false}));
   this.getWildlifeStatus=tribeHandlers.getWildlifeStatus||(()=>null);
   this.onWildlifeHunt=tribeHandlers.onWildlifeHunt||(()=>({ok:false,reason:"Hunting unavailable."}));
   this.onWildlifeHarvest=tribeHandlers.onWildlifeHarvest||(()=>({ok:false,reason:"Harvest unavailable."}));
@@ -327,6 +329,7 @@ export class World {
    person.job=resident.job||"idle";
    person.cargo=normalizeCargo(resident.cargo);
    person.energy=resident.energy??100;person.resting=resident.resting===true;
+   person.hunger=resident.hunger??100;
    const carrying=cargoCount(person.cargo)>0;
    const home=resident.homeId||"camp";
    const index=homeCounts.get(home)||0;homeCounts.set(home,index+1);
@@ -444,13 +447,42 @@ export class World {
    if(!work)continue;
    work.moving=false;
    const carrying=cargoCount(person.cargo)>0;
-   const needs=this.getVillagerEnergy(person.id)||{energy:100,resting:false};
+   const needs=this.getVillagerEnergy(person.id)||{energy:100,resting:false,hunger:100};
    const tired=needs.resting===true||needs.energy<=VILLAGER_EXHAUSTED_AT;
-   const canStart=villagerCanBeginWork(hour,needs.energy,needs.resting,person.job);
+   const canStart=villagerCanBeginWork(hour,needs.energy,needs.resting,person.job,needs.hunger??100);
    const atHome=()=>Math.hypot(person.homeX-person.x,person.homeZ-person.z)<=1.1;
    const resetRoute=()=>{
     work.route=null;work.routeGoal=null;work.stalled=0;work.noProgress=0;
    };
+   // If hungry, take a real trip to village food stores. Already collected
+   // cargo is always delivered first, and a worker actively gathering will
+   // finish that short task rather than discarding the target's resources.
+   const hungry=(needs.hunger??100)<=VILLAGER_MEAL_AT;
+   const foodReady=availableVillageMeals(pile)>0;
+   if(!carrying&&hungry&&foodReady&&
+      !["working","returning","waiting","toMeal","eating"].includes(work.mode)){
+    work.mode="toMeal";work.task=null;work.dropoff=null;resetRoute();
+   }
+   if(work.mode==="toMeal"){
+    if(!hungry||!foodReady){
+     work.mode="goingHome";work.dropoff=null;resetRoute();
+    }else{
+     if(!work.dropoff)work.dropoff=this.villagerDropoff(person,pile);
+     if(this.moveVillager(person,work.dropoff,dt,.85)){
+      work.mode="eating";work.timer=2.5;resetRoute();
+     }
+     continue;
+    }
+   }
+   if(work.mode==="eating"){
+    work.timer-=dt;
+    if(work.timer<=0){
+     this.onVillagerEat(person.id);
+     work.mode="goingHome";work.retry=1;
+     work.dropoff=null;resetRoute();
+    }
+    continue;
+   }
    // End outbound trips without claiming resources, but finish active
    // collections and all deliveries. Cargo is never dropped at sundown.
    if(!canStart&&work.mode==="outbound"&&!carrying){
