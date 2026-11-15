@@ -1,6 +1,6 @@
-import {BUILDINGS} from "./settlement.js?v=20261114u";
-import {BUILDING_RADIUS,footprint} from "./village-placement.js?v=20261114b";
-import {BUILD_GRID,VILLAGE_RADIUS} from "./stockpile.js?v=20261114a";
+import {BUILDINGS} from "./settlement.js?v=20261114development1";
+import {BUILDING_RADIUS,footprint} from "./village-placement.js?v=20261114development1";
+import {BUILD_GRID,VILLAGE_RADIUS} from "./stockpile.js?v=20261114development1";
 // Low-poly architectural placeholders for the first settlement-building slice.
 // Each visual occupies a fixed build plot; meshes and interaction metadata are
 // kept separate from saved game state. Only constructed models cause collision.
@@ -163,6 +163,40 @@ function makeBuiltStructure(world,entry){
  }
  return root;
 }
+/** Reinforcements make level-two structures visibly different without
+ * replacing the underlying mesh, flame light or interaction metadata.
+ */
+function addVillageUpgradeDecor(world,root,kind){
+ const m=world.villageMats;
+ const pieces=[];
+ const add=(shape,name,pos,scale,mat)=>pieces.push(
+  obj(world,shape,name,root,pos,scale,mat));
+ if(kind==="family"){
+  // Extra alcove and woven awning outside the original hut footprint.
+  add("box","Upgraded hut sleeping alcove",[1.68,.64,0],[.85,1.13,1.48],m.mud);
+  add("box","Upgraded hut thatch awning",[1.65,1.33,0],[1.27,.21,2.02],m.thatch);
+  for(const z of [-.82,.82])add("cylinder","Hut awning post",[2.16,.73,z],[.14,1.45,.14],m.wood);
+ }else if(kind==="hearth"){
+  for(const a of [-1.03,-.51,0,.51,1.03]){
+   add("box","Cooking hearth stone windbreak",
+    [Math.sin(a)*1.38,.55,-Math.cos(a)*1.32],[.32,.9,.33],m.stone);
+  }
+  add("box","Reinforced cooking bench",[1.92,.5,0],[.9,.23,1.4],m.wood);
+ }else if(kind==="lore"){
+  add("box","Toolmaker upgraded equipment bench",[1.45,.78,0],[.38,1.3,1.58],m.wood);
+  for(const x of [-.32,.32])add("box","Toolmaker stone tools display",
+   [1.39,1.5,x],[.5,.14,.2],m.stoneDark);
+  add("box","Toolmaker roof reinforcement",[0,2.13,-.68],[2.8,.19,.26],m.wood);
+ }else if(kind==="council"){
+  for(const x of [-1.55,1.55]){
+   add("cylinder","Elders lodge ceremonial banner pole",[x,1.35,2.01],
+    [.12,2.7,.12],m.wood);
+   add("box","Elders lodge woven banner",[x,2.06,2.01],
+    [.54,.76,.10],m.fur);
+  }
+ }
+ for(const piece of pieces)piece.isPickable=false;
+}
 function updateVillageGrid(world,pile){
  const key=pile?pile.x+","+pile.z:null;
  if(world.villageGridHome===key)return;
@@ -208,6 +242,9 @@ export function syncVillageWorld(world,village){
     item={root,entry:{...entry}};world.villageBuildings.set(entry.id,item);
    }
    item.entry={...entry};
+   if((entry.level||1)>=2&&!item.improvement){
+    addVillageUpgradeDecor(world,item.root,entry.kind);item.improvement=true;
+   }
    item.root.position=V(entry.x,world.groundY(entry.x,entry.z)+.12,entry.z);
    item.root.rotation.y=entry.turn*Math.PI/2;
   }
