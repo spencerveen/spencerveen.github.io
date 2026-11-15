@@ -1,6 +1,6 @@
 import {GameState} from "./state.js?v=20261114manager1";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
-import {World} from "./world.js?v=20261114development1";
+import {World} from "./world.js?v=20261115sleepindoors1";
 import {UI} from "./ui.js?v=20261115council1";
 import {TitleScreen} from "./title-screen.js?v=20261114r";
 import {readSlot} from "./save-slots.js?v=20261113m";
@@ -68,7 +68,10 @@ async function startEpoch({slot,newGame=false,founder=null}){
    return {
     mode:person.work?.mode||"idle",
     moving:person.work?.moving===true,
-    atHome:Math.hypot(person.x-person.homeX,person.z-person.homeZ)<=1.5,
+    // Once inside a Hut (or tucked into camp bedding), sleep counts as
+    // home recovery even though the old daytime outdoor idling point differs.
+    atHome:person.work?.mode==="sleeping"||
+     Math.hypot(person.x-person.homeX,person.z-person.homeZ)<=1.5,
     local:!pile||Math.hypot(world.player.position.x-pile.x,
      world.player.position.z-pile.z)<=100
    };
@@ -149,7 +152,11 @@ async function startEpoch({slot,newGame=false,founder=null}){
        energy:state.data.village.residents.find(v=>v.id===p.id)?.energy??100,
        resting:state.data.village.residents.find(v=>v.id===p.id)?.resting??false,
        hunger:state.data.village.residents.find(v=>v.id===p.id)?.hunger??100,
-       sleeping:!!p.sleepMarker?.isEnabled(),
+       sleeping:p.work?.mode==="sleeping",
+       insideHut:!!p.hiddenForSleep&&!!p.hutEntrance,
+       avatarVisible:p.human.root.isEnabled(),
+       campBedroll:!!p.campBedroll?.isEnabled(),
+       doorway:p.hutEntrance?{...p.hutEntrance}:null,
        cargo:{...p.cargo},cargoVisible:!!p.cargoVisual?.isEnabled(),
        routeLength:p.work?.route?.length||0})),
       hauling:state.villageHaulingStatus(),
