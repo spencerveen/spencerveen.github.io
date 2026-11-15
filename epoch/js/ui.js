@@ -1,4 +1,4 @@
-import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261115life1";
+import {SKILLS,TECH,CIVICS,skillLevel} from "./state.js?v=20261114manager1";
 import {COOKING_RECIPES} from "./cooking.js?v=20261114fish2";
 import {ITEMS} from "./inventory.js?v=20261114fish1";
 import {FOOD_EFFECTS} from "./survival.js?v=20261114fish1";
