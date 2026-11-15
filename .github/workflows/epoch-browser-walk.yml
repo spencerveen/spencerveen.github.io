@@ -35,6 +35,8 @@ jobs:
         run: node epoch/tests/check-villager-hauling.mjs
       - name: Verify villager work shifts, saved energy, exhaustion and sleep recovery
         run: node epoch/tests/check-villager-routines.mjs
+      - name: Verify edible food stockpile transactions, hunger and save migration
+        run: node epoch/tests/check-villager-food.mjs
       - name: Validate locally bundled CC0 sky textures and rendering setup
         run: |
           node epoch/tests/check-sky-preview.mjs
@@ -50,6 +52,8 @@ jobs:
         run: node epoch/tests/browser-sky-preview.mjs
       - name: Verify sleeping villagers, energy displays and work shift boundaries
         run: node epoch/tests/browser-villager-sleep.mjs
+      - name: Verify villagers travel for meals and show hunger in Chromium
+        run: node epoch/tests/browser-villager-food.mjs
       - name: Verify villager jobs, movement, and saved assignments in Chromium
         run: node epoch/tests/browser-villager-jobs.mjs
       - name: Verify visible supplies travel to village storage and survive reload
