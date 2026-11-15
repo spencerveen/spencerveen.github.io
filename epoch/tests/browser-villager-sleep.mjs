@@ -14,13 +14,16 @@ try{
  residents[0].resting=true;
  residents[1].job="idle";
  residents[1].energy=55;
+ residents[0].homeId="test_hut";
+ residents[1].homeId="camp";
  const start=progressAtHour(22);
  await page.addInitScript(({people,progress})=>{
   if(localStorage.getItem("epoch.stoneage.slot.1"))return;
   localStorage.setItem("epoch.stoneage.slot.1",JSON.stringify({
    version:1,worldSeed:12000,year:-12000,calendarProgress:progress,
    hero:{name:"Village Founder",age:25},
-   village:{population:3,plots:{},buildings:[{id:"test_council",kind:"council",x:0,z:-8,turn:0,level:1}],residents:people,
+   village:{population:3,plots:{},buildings:[{id:"test_council",kind:"council",x:0,z:-8,turn:0,level:1},
+     {id:"test_hut",kind:"family",x:12,z:8,turn:1,level:1}],residents:people,
     stockpile:{x:0,z:8,items:{wood:0,stone:0,berries:0,vines:0}}},
    survival:{health:100,stamina:100,hunger:100,gameOver:false},
    lastSavedAt:Date.now()
@@ -33,7 +36,7 @@ try{
   const d=window.epochDebug();
   return d?.settlement?.people?.length===2&&
    d.settlement.people.every(p=>p.work==="sleeping"&&p.sleeping);
- },null,{timeout:20000});
+ },null,{timeout:30000});
  const night=await page.evaluate(()=>{
   const d=window.epochDebug();
   return {phase:d.clock.phase,people:d.settlement.people,
@@ -42,6 +45,23 @@ try{
  assert.equal(night.phase,"night");
  assert.equal(night.people[0].sleeping,true);
  assert.equal(night.people[1].sleeping,true,"unassigned villagers also sleep");
+ assert.equal(night.people[0].homeId,"test_hut");
+ assert(night.people[0].insideHut&&!night.people[0].avatarVisible,
+  "assigned resident walks to the Hut door and disappears inside");
+ assert.equal(night.people[0].campBedroll,false);
+ assert.equal(night.people[1].homeId,"camp");
+ assert(night.people[1].campBedroll&&!night.people[1].avatarVisible,
+  "communal camp resident sleeps on a bedroll instead of standing");
+ const roof=await page.evaluate(()=>{
+  const w=window.__epochTestWorld;
+  return {sign:!!w.villageBuildings.get("test_hut")?.sleepIndicator?.isEnabled(),
+   hat:!!w.people[0].sleepMarker,
+   distance:Math.hypot(w.people[0].x-w.people[0].hutEntrance.x,
+    w.people[0].z-w.people[0].hutEntrance.z)};
+ });
+ assert(roof.sign,"sleeping occupants show one roof-level sign");
+ assert.equal(roof.hat,false,"no floating Zzz sign should be tied to an invisible NPC");
+ assert(roof.distance<.9,"resident must reach the actual doorway before sleeping");
  assert(night.residents[0].energy>=25);
  assert.equal(night.residents[0].job,"woodcutter");
  await page.waitForTimeout(2400);
@@ -68,11 +88,15 @@ try{
   const resident=w.people[0];
   for(let i=0;i<280;i++)w.update(.15);
   return {mode:resident.work.mode,hasTask:!!resident.work.task,
-   energy:window.epochDebug().settlement.residents[0].energy};
+   energy:window.epochDebug().settlement.residents[0].energy,
+   visible:resident.human.root.isEnabled(),
+   roof:!!w.villageBuildings.get("test_hut")?.sleepIndicator?.isEnabled()};
  });
  // They may still be recovering: under the fatigue gate this is correct.
  assert(!["sleeping","offDuty"].includes(daytime.mode),
   "during a work shift, a tired worker stays on rest rather than sleeping at night");
+ assert(daytime.visible,"residents reappear at their Hut entrance at dawn");
+ assert.equal(daytime.roof,false,"Hut sleep sign disappears after waking");
  const evening=await page.evaluate(async()=>{
   const w=window.__epochTestWorld;
   const {progressAtHour}=await import("./js/game-clock.js?v=20261115sleep1");
@@ -84,5 +108,5 @@ try{
  assert(!["outbound","working"].includes(evening.mode),
   "no new outbound trips or gathering begins after 6 PM");
  assert.deepEqual(errors,[],"sleeping UI and villager schedules create no runtime errors");
- console.log("PASS browser 6C.3: night Zzz markers, saved energy, People meters, profile and evening shift");
+ console.log("PASS browser indoor sleep: real Hut entrances, hidden sleepers, communal bedrolls, dawn wake, energy and profiles");
 }finally{await browser.close()}
